@@ -37,7 +37,7 @@ jobs:
   
     - name: Cache onnxruntime
       id: cache-onnxruntime
-      uses: actions/cache@2
+      uses: actions/cache@v2
       with:
         path: $ONNXRUNTIME_DIR
         key: ${{ runner.os }}-onnxruntime
