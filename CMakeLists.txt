@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.5)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 11)
 
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 #
 # Options
@@ -42,7 +42,8 @@ include(IonUtil)
 #
 file(GLOB ION_SRC src/*)
 add_library(ion-core SHARED ${ION_SRC})
-target_link_libraries(ion-core Halide dl pthread z)
+target_include_directories(ion-core PUBLIC "${PROJECT_SOURCE_DIR}/include;${HALIDE_INCLUDE_DIR}")
+target_link_libraries(ion-core ${HALIDE_LIBRARY} dl pthread z)
 
 #
 # ion-bb
