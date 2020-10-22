@@ -23,7 +23,7 @@ jobs:
 
     - name: Install dependencies
       shell: bash
-      run: sudo apt-get update && sudo apt-get install -y libopencv-dev uuid-dev zlib1g-dev && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
+      run: sudo apt-get update && sudo apt-get install -y ninja-build libopencv-dev uuid-dev zlib1g-dev && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
 
     - name: Cache Halide
       id: cache-halide
