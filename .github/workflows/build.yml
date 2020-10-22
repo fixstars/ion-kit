@@ -25,7 +25,7 @@ jobs:
 
     - name: Cache Halide
       id: cache-halide
-      uses: actions/cache@2
+      uses: actions/cache@v2
       with:
         path: $HALIDE_DIR
         key: ${{ runner.os }}-halide
