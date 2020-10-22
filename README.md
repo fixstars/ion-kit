@@ -2,7 +2,7 @@
 A framework to compile user-defined pipeline.
 
 ## Depedencies
-* [Halide (release_2019_08_27)](https://github.com/halide/Halide/releases/tag/v8.0.0)
+* [Halide (v8.0.0)](https://github.com/halide/Halide/releases/tag/v8.0.0)
 * doxygen
 * sphinx
 
@@ -27,7 +27,7 @@ cmake --build . --target install
 
 ##### 2.b.2 Build and install Halide
 ```sh
-git clone https://github.com/halide/Halide.git -b release_2019_08_27 --depth=1
+git clone https://github.com/halide/Halide.git -b v8.0.0 --depth=1
 mkdir build && cd build
 cmake -GNinja -DCMAKE_INSTALL_PREFIX=<path-to-halide-install> -DLLVM_DIR=<path-to-llvm-install>/lib/cmake/llvm/ -DLLVM_PACKAGE_VERSION=90 -DHALIDE_ENABLE_RTTI=ON -DWITH_APPS=OFF ..
 cmake --build . --target install
