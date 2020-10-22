@@ -62,14 +62,15 @@ ctest
 ```
 
 ## CMake variables
-| Variable          | Type   | Descriotion                                                                                                 |
-| ----------------- | ------ | ----------------------------------------------------------------------------------------------------------- |
-| HALIDE_ROOT       | Path   | Path to Halide `install` directory.                                                                         |
-| ION_CORE_ROOT     | Path   | Path to ion-core `source root` directory (Optional. if you don't set, it is cloned from remote repository.) |
-| ION_TARGET_BB_ALL | ON/OFF | Enable to buld all building blocks. (Default: ON)                                                           |
-| ION_TARGET_BBS    | String | The building blocks of target to build. (This overrides ION_BUILD_ALL_BB)                                   |
-| BUILD_EXAMPLE     | ON/OFF | Enable to bulid examples. (Default: ON)                                                                     |
-| WITH_CUDA         | ON/OFF | Enable CUDA with buliding examples. (Default: ON)                                                           |
+| Variable          | Type   | Descriotion                                                               |
+| ----------------- | ------ | ------------------------------------------------------------------------- |
+| HALIDE_ROOT       | Path   | Path to Halide install directory.                                         |
+| ION_TARGET_BB_ALL | ON/OFF | Enable to buld all building blocks. (Default: ON)                         |
+| ION_TARGET_BBS    | String | The building blocks of target to build. (This overrides ION_BUILD_ALL_BB) |
+| ION_BUILD_DOC     | ON/OFF | Enable to bulid documents. (Default: ON)                                  |
+| ION_BUILD_TEST    | ON/OFF | Enable to bulid tests. (Default: ON)                                      |
+| ION_BUILD_EXAMPLE | ON/OFF | Enable to bulid examples. (Default: ON)                                   |
+| WITH_CUDA         | ON/OFF | Enable CUDA with buliding examples. (Default: ON)                         |
 
 ## Authors
 The ion-kit is an open-source project created by Fixstars Corporation and its subsidiary companies including Fixstars Solutions Inc, Fixstars Autonomous Technologies.
