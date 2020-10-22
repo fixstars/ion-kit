@@ -5,7 +5,7 @@ on: [push, pull_request]
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
-  HALIDE_ROOT: halide
+  HALIDE_ROOT: $HOME/halide
 
 jobs:
   build:
@@ -19,7 +19,7 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Download Halide package
-      run: curl -L https://github.com/halide/Halide/releases/download/v8.0.0/halide-linux-64-gcc53-800-65c26cba6a3eca2d08a0bccf113ca28746012cc3.tgz | tar zx $HALIDE_ROOT
+      run: curl -L https://github.com/halide/Halide/releases/download/v8.0.0/halide-linux-64-gcc53-800-65c26cba6a3eca2d08a0bccf113ca28746012cc3.tgz | tar zx
 
     - name: Create Build Environment
       # Some projects don't allow in-source building, so create a separate build directory
