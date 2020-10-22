@@ -70,3 +70,9 @@ ctest
 | ION_TARGET_BBS    | String | The building blocks of target to build. (This overrides ION_BUILD_ALL_BB)                                   |
 | BUILD_EXAMPLE     | ON/OFF | Enable to bulid examples. (Default: ON)                                                                     |
 | WITH_CUDA         | ON/OFF | Enable CUDA with buliding examples. (Default: ON)                                                           |
+
+## Authors
+The ion-kit is an open-source project created by Fixstars Corporation and its subsidiary companies including Fixstars Solutions Inc, Fixstars Autonomous Technologies.
+
+## Remark
+This source code is based on results obtained from a project commissioned by the New Energy and Industrial Technology Development Organization (NEDO).
