@@ -18,6 +18,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      with:
+        lfs: true
 
     - name: Install dependencies
       shell: bash
@@ -60,7 +62,7 @@ jobs:
       # Note the current convention is to use the -S and -B options here to specify source
       # and build directories, but this is only available with CMake 3.13 and higher.
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-      run: ls $HOME/halide/include && ls $HOME/halide/bin && cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DHALIDE_ROOT=$HOME/halide -DONNXRUNTIME_ROOT=$ONNXRUNTIME_DIR -DWITH_CUDA=OFF
+      run: make $GITHUB_WORKSPACE -GNinja -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DHALIDE_ROOT=$HOME/halide -DONNXRUNTIME_ROOT=$ONNXRUNTIME_DIR -DWITH_CUDA=OFF
 
     - name: Build
       working-directory: ${{runner.workspace}}/build
