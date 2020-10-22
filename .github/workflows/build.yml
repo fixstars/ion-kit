@@ -17,6 +17,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - uses: Dovyski/setup-opencv-action@v1
+      with:
+        opencv-version: '3.4.12'
 
     - name: Create Build Environment
       # Some projects don't allow in-source building, so create a separate build directory
@@ -28,6 +31,11 @@ jobs:
       working-directory: ${{runner.workspace}}/build
       run: curl -L https://github.com/halide/Halide/releases/download/v8.0.0/halide-linux-64-gcc53-800-65c26cba6a3eca2d08a0bccf113ca28746012cc3.tgz | tar zx halide
 
+    - name: Download onnxruntime package
+      shell: bash
+      working-directory: ${{runner.workspace}}/build
+      run: curl -L https://github.com/microsoft/onnxruntime/releases/download/v1.4.0/onnxruntime-linux-x64-1.4.0.tgz | tar zx onnxruntime
+
     - name: Configure CMake
       # Use a bash shell so we can use the same syntax for environment variable
       # access regardless of the host operating system
@@ -36,7 +44,7 @@ jobs:
       # Note the current convention is to use the -S and -B options here to specify source
       # and build directories, but this is only available with CMake 3.13 and higher.
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DHALIDE_ROOT=halide -DWITH_CUDA=OFF
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DHALIDE_ROOT=halide -DONNXRUNTIME_ROOT=onnxruntime -DWITH_CUDA=OFF
 
     - name: Build
       working-directory: ${{runner.workspace}}/build
