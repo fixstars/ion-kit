@@ -6,7 +6,7 @@ env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
   HALIDE_DIR: $HOME/halide
-  ONNXRUNTIME_DIR: $HOME/onnxruntime-linux-x64-1.4.0
+  ONNXRUNTIME_DIR: $HOME/onnxruntime-linux-x64-1.5.2
 
 jobs:
   build:
