@@ -104,7 +104,7 @@ public:
     }
 
     RealSense(int32_t width, int32_t height)
-        : dm_("realsense2"), device_is_available_(false), ctx_(nullptr), devices_(nullptr), pipeline_(nullptr), config_(nullptr), frameset_(nullptr) {
+        : dm_("realsense2", false), device_is_available_(false), ctx_(nullptr), devices_(nullptr), pipeline_(nullptr), config_(nullptr), frameset_(nullptr) {
 
         if (!init_symbols()) {
             return;
@@ -181,7 +181,9 @@ public:
 
     ~RealSense() {
         rs2_error_t *err = nullptr;
-        rs2_pipeline_stop(pipeline_, &err);
+        if (init_symbols()) {
+            rs2_pipeline_stop(pipeline_, &err);
+        }
         // TODO: Delete recources
     }
 
