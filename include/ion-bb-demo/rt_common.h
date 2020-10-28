@@ -32,83 +32,88 @@ std::string format(const char *fmt, const Rest &... rest) {
 }
 
 class DynamicModule {
- public:
-
+public:
 #ifdef _WIN32
-  using Handle = HMODULE;
+    using Handle = HMODULE;
 #else
-  using Handle = void*;
+    using Handle = void *;
 #endif
 
-     DynamicModule(const std::string& module_name) {
-         if (module_name == "") {
-             handle_ = nullptr;
-             return;
-         }
+    DynamicModule(const std::string &module_name, bool essential) {
+        if (module_name == "") {
+            handle_ = nullptr;
+            return;
+        }
 
 #ifdef _WIN32
-         auto file_name = module_name + ".dll";
-         handle_ = LoadLibraryA(file_name.c_str());
-         if (handle_ == nullptr) {
-             throw std::runtime_error(get_error_string());
-         }
+        auto file_name = module_name + ".dll";
+        handle_ = LoadLibraryA(file_name.c_str());
 #else
-         auto file_name = "lib" + module_name + ".so";
-         handle_ = dlopen(file_name.c_str(), RTLD_NOW);
-         if (handle_ == nullptr) {
-             throw std::runtime_error(get_error_string());
-         }
+        auto file_name = "lib" + module_name + ".so";
+        handle_ = dlopen(file_name.c_str(), RTLD_NOW);
 #endif
-     }
 
-     ~DynamicModule() {
-         if (handle_ != nullptr) {
+        if (handle_ == nullptr) {
+            if (essential) {
+                throw std::runtime_error(get_error_string());
+            } else {
+                std::cerr << format("WARNING: Not found the not essential dynamic library: %s, it may work as a simulation mode", module_name.c_str());
+            }
+        }
+    }
+
+    ~DynamicModule() {
+        if (handle_ != nullptr) {
 #ifdef _WIN32
-             FreeLibrary(handle_);
+            FreeLibrary(handle_);
 #else
-             dlclose(handle_);
+            dlclose(handle_);
 #endif
-         }
-     }
+        }
+    }
 
-     bool is_available(void) const { return handle_ != NULL; }
+    DynamicModule(const std::string &module_name)
+        : DynamicModule(module_name, true) {
+    }
 
-     template <typename T>
-     T get_symbol(const std::string& symbol_name) const {
+    bool is_available(void) const {
+        return handle_ != NULL;
+    }
+
+    template<typename T>
+    T get_symbol(const std::string &symbol_name) const {
 #if defined(_WIN32)
-         return reinterpret_cast<T>(GetProcAddress(handle_, symbol_name.c_str()));
+        return reinterpret_cast<T>(GetProcAddress(handle_, symbol_name.c_str()));
 #else
-         return reinterpret_cast<T>(dlsym(handle_, symbol_name.c_str()));
+        return reinterpret_cast<T>(dlsym(handle_, symbol_name.c_str()));
 #endif
-     }
+    }
 
- private:
-
-     std::string get_error_string(void) const {
-         std::string error_msg;
+private:
+    std::string get_error_string(void) const {
+        std::string error_msg;
 
 #ifdef _WIN32
-         LPVOID lpMsgBuf;
-         FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
-             FORMAT_MESSAGE_IGNORE_INSERTS,
-             nullptr, GetLastError(),
-             MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
-             (LPTSTR)&lpMsgBuf, 0, nullptr);
-         std::size_t len = 0;
-         wcstombs_s(&len, nullptr, 0, reinterpret_cast<const wchar_t*>(lpMsgBuf), _TRUNCATE);
-         std::vector<char> buf(len + 1, 0);
-         wcstombs_s(nullptr, &buf[0], len, reinterpret_cast<const wchar_t*>(lpMsgBuf), _TRUNCATE);
-         error_msg.assign(buf.begin(), buf.end());
-         LocalFree(lpMsgBuf);
+        LPVOID lpMsgBuf;
+        FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
+                          FORMAT_MESSAGE_IGNORE_INSERTS,
+                      nullptr, GetLastError(),
+                      MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
+                      (LPTSTR)&lpMsgBuf, 0, nullptr);
+        std::size_t len = 0;
+        wcstombs_s(&len, nullptr, 0, reinterpret_cast<const wchar_t *>(lpMsgBuf), _TRUNCATE);
+        std::vector<char> buf(len + 1, 0);
+        wcstombs_s(nullptr, &buf[0], len, reinterpret_cast<const wchar_t *>(lpMsgBuf), _TRUNCATE);
+        error_msg.assign(buf.begin(), buf.end());
+        LocalFree(lpMsgBuf);
 #else
-         const char* buf(dlerror());
-         error_msg.assign(buf ? buf : "none");
+        const char *buf(dlerror());
+        error_msg.assign(buf ? buf : "none");
 #endif
-         return error_msg;
-     }
+        return error_msg;
+    }
 
-
-     Handle handle_;
+    Handle handle_;
 };
 
 }  // namespace demo

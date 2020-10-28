@@ -1,0 +1,81 @@
+name: CMake
+
+on: [pull_request]
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+  HALIDE_DIR: $HOME/halide
+  ONNXRUNTIME_DIR: $HOME/onnxruntime-linux-x64-1.5.2
+
+jobs:
+  build:
+    # The CMake configure and build commands are platform agnostic and should work equally
+    # well on Windows or Mac.  You can convert this to a matrix build if you need
+    # cross-platform coverage.
+    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+    runs-on: ubuntu-18.04
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        lfs: true
+
+    - name: Checkout LFS objects
+      run: git lfs checkout
+
+    - name: Install dependencies
+      shell: bash
+      run: sudo apt-get update && sudo apt-get install -y ninja-build libopencv-dev uuid-dev zlib1g-dev && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
+
+    - name: Cache Halide
+      id: cache-halide
+      uses: actions/cache@v2
+      with:
+        path: $HALIDE_DIR
+        key: ${{ runner.os }}-halide
+
+    - name: Download Halide package
+      if: steps.cache-halide.outputs.cache-hit != 'true'
+      shell: bash
+      run: curl -L https://github.com/halide/Halide/releases/download/v8.0.0/halide-linux-64-gcc53-800-65c26cba6a3eca2d08a0bccf113ca28746012cc3.tgz | tar zx -C $HOME
+
+    - name: Cache onnxruntime
+      id: cache-onnxruntime
+      uses: actions/cache@v2
+      with:
+        path: $ONNXRUNTIME_DIR
+        key: ${{ runner.os }}-onnxruntime
+
+    - name: Download onnxruntime package
+      if: steps.cache-onnxruntime.outputs.cache-hit != 'true'
+      shell: bash
+      run: curl -L https://github.com/microsoft/onnxruntime/releases/download/v1.5.2/onnxruntime-linux-x64-1.5.2.tgz | tar zx -C $HOME
+
+    - name: Create Build Environment
+      # Some projects don't allow in-source building, so create a separate build directory
+      # We'll use this as our working directory for all subsequent commands
+      run: cmake -E make_directory ${{runner.workspace}}/ion-kit/build
+
+    - name: Configure CMake
+      # Use a bash shell so we can use the same syntax for environment variable
+      # access regardless of the host operating system
+      shell: bash
+      working-directory: ${{runner.workspace}}/ion-kit/build
+      # Note the current convention is to use the -S and -B options here to specify source
+      # and build directories, but this is only available with CMake 3.13 and higher.
+      # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
+      run: cmake $GITHUB_WORKSPACE -GNinja -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DHALIDE_ROOT=$HOME/halide -DONNXRUNTIME_ROOT=$HOME/onnxruntime-linux-x64-1.5.2 -DWITH_CUDA=OFF
+
+    - name: Build
+      working-directory: ${{runner.workspace}}/ion-kit/build
+      shell: bash
+      # Execute the build.  You can specify a specific target with "--target <NAME>"
+      run: cmake --build . --config $BUILD_TYPE
+
+    - name: Test
+      working-directory: ${{runner.workspace}}/ion-kit/build
+      shell: bash
+      # Execute tests defined by the CMake configuration.
+      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
+      run: ctest -v -C $BUILD_TYPE

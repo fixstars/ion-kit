@@ -2,7 +2,7 @@
 A framework to compile user-defined pipeline.
 
 ## Depedencies
-* [Halide (release_2019_08_27)](https://github.com/halide/Halide/releases/tag/v8.0.0)
+* [Halide (v8.0.0)](https://github.com/halide/Halide/releases/tag/v8.0.0)
 * doxygen
 * sphinx
 
@@ -27,7 +27,7 @@ cmake --build . --target install
 
 ##### 2.b.2 Build and install Halide
 ```sh
-git clone https://github.com/halide/Halide.git -b release_2019_08_27 --depth=1
+git clone https://github.com/halide/Halide.git -b v8.0.0 --depth=1
 mkdir build && cd build
 cmake -GNinja -DCMAKE_INSTALL_PREFIX=<path-to-halide-install> -DLLVM_DIR=<path-to-llvm-install>/lib/cmake/llvm/ -DLLVM_PACKAGE_VERSION=90 -DHALIDE_ENABLE_RTTI=ON -DWITH_APPS=OFF ..
 cmake --build . --target install
@@ -62,14 +62,15 @@ ctest
 ```
 
 ## CMake variables
-| Variable          | Type   | Descriotion                                                                                                 |
-| ----------------- | ------ | ----------------------------------------------------------------------------------------------------------- |
-| HALIDE_ROOT       | Path   | Path to Halide `install` directory.                                                                         |
-| ION_CORE_ROOT     | Path   | Path to ion-core `source root` directory (Optional. if you don't set, it is cloned from remote repository.) |
-| ION_TARGET_BB_ALL | ON/OFF | Enable to buld all building blocks. (Default: ON)                                                           |
-| ION_TARGET_BBS    | String | The building blocks of target to build. (This overrides ION_BUILD_ALL_BB)                                   |
-| BUILD_EXAMPLE     | ON/OFF | Enable to bulid examples. (Default: ON)                                                                     |
-| WITH_CUDA         | ON/OFF | Enable CUDA with buliding examples. (Default: ON)                                                           |
+| Variable          | Type   | Descriotion                                                               |
+| ----------------- | ------ | ------------------------------------------------------------------------- |
+| HALIDE_ROOT       | Path   | Path to Halide install directory.                                         |
+| ION_TARGET_BB_ALL | ON/OFF | Enable to buld all building blocks. (Default: ON)                         |
+| ION_TARGET_BBS    | String | The building blocks of target to build. (This overrides ION_BUILD_ALL_BB) |
+| ION_BUILD_DOC     | ON/OFF | Enable to bulid documents. (Default: ON)                                  |
+| ION_BUILD_TEST    | ON/OFF | Enable to bulid tests. (Default: ON)                                      |
+| ION_BUILD_EXAMPLE | ON/OFF | Enable to bulid examples. (Default: ON)                                   |
+| WITH_CUDA         | ON/OFF | Enable CUDA with buliding examples. (Default: ON)                         |
 
 ## Authors
 The ion-kit is an open-source project created by Fixstars Corporation and its subsidiary companies including Fixstars Solutions Inc, Fixstars Autonomous Technologies.
