@@ -39,11 +39,11 @@ FROM ion-core-builder AS ion-core-build
 
 COPY . ion-kit
 WORKDIR ion-kit
-RUN git checkout `git describe --tags --abbrev=0`
 RUN mkdir build
 WORKDIR build
 RUN cmake -G Ninja \
         -D CMAKE_BUILD_TYPE=Release \
+        -D CMAKE_INSTALL_PREFIX=ion-kit-install \
         -D HALIDE_ROOT=/usr/local/Halide \
         -D ION_BUILD_ALL_BB=OFF \
         -D ION_BUILD_DOC=ON \
@@ -53,7 +53,7 @@ RUN cmake -G Ninja \
         -D WITH_CUDA=OFF ../
 RUN cmake --build . --target install
 RUN cmake --build . --target package
-RUN mv ion-kit-`git describe --tags --abbrev=0 | sed -e "s/v\([0-9]\)/\1/"`-Linux.deb ion-core.deb
+RUN find ./ -maxdepth 1 -name "ion-kit_*.deb" -exec cp {} ion-core.deb \;
 
 
 #
@@ -103,11 +103,11 @@ FROM ion-kit-builder AS ion-kit-build
 
 COPY . ion-kit
 WORKDIR ion-kit
-RUN git checkout `git describe --tags --abbrev=0`
 RUN mkdir build
 WORKDIR build
 RUN cmake -G Ninja \
         -D CMAKE_BUILD_TYPE=Release \
+        -D CMAKE_INSTALL_PREFIX=ion-kit-install \
         -D HALIDE_ROOT=/usr/local/Halide \
         -D ION_BUILD_ALL_BB=ON \
         -D ION_BUILD_DOC=ON \
@@ -117,7 +117,7 @@ RUN cmake -G Ninja \
         -D WITH_CUDA=OFF ../
 RUN cmake --build . --target install
 RUN cmake --build . --target package
-RUN mv ion-kit-`git describe --tags --abbrev=0 | sed -e "s/v\([0-9]\)/\1/"`-Linux.deb ion-kit.deb
+RUN find ./ -maxdepth 1 -name "ion-kit_*.deb" -exec cp {} ion-kit.deb \;
 
 
 #
