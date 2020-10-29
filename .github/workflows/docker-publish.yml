@@ -32,7 +32,7 @@ jobs:
           fetch-depth: 0
 
       - name: Build image
-        run: docker build --target ion-core-build -t $IMAGE_NAME
+        run: docker build --target ion-core-build -t $IMAGE_NAME .
 
       - name: Run tests
         run: docker run --rm $IMAGE_NAME:latest ctest
