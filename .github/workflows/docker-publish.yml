@@ -37,7 +37,7 @@ jobs:
       - name: Build image
         run: docker build --target ion-core-build -t $IMAGE_NAME .
 
-      - nane: verbose images
+      - name: verbose images
         run: docker images
 
       - name: Run tests
