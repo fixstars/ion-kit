@@ -30,7 +30,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Build image
-        run: docker build --target ion-core-build -t $IMAGE_NAME
+        run: docker build --target ion-core-build -t $IMAGE_NAME .
 
       - name: Run tests
         run: docker run --rm -it $IMAGE_NAME ctest
@@ -75,21 +75,21 @@ jobs:
 
 
       - name: Build image for build stage
-        run: docker build --target ion-core-build -t $IMAGE_ID:$VERSION-build-ubuntu18.04
+        run: docker build --target ion-core-build -t $IMAGE_ID:$VERSION-build-ubuntu18.04 .
 
       - name: Push image for build stage
         run: docker push $IMAGE_ID:$VERSION-build-ubuntu18.04
 
 
       - name: Build image for runtime stage
-        run: docker build --target ion-core-runtime -t $IMAGE_ID:$VERSION-runtime-ubuntu18.04
+        run: docker build --target ion-core-runtime -t $IMAGE_ID:$VERSION-runtime-ubuntu18.04 .
 
       - name: Push image for runtime stage
         run: docker push $IMAGE_ID:$VERSION-runtime-ubuntu18.04
 
 
       - name: Build image for release stage
-        run: docker build --target ion-core-release -t $IMAGE_ID:$VERSION-release-ubuntu18.04
+        run: docker build --target ion-core-release -t $IMAGE_ID:$VERSION-release-ubuntu18.04 .
 
       - name: Push image for relase stage
         run: docker push $IMAGE_ID:$VERSION-relase-ubuntu18.04
