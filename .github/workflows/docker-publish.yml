@@ -31,6 +31,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: echo variables
+        run: echo $IMAGE_NAME
+
       - name: Build image
         run: docker build --target ion-core-build -t $IMAGE_NAME .
 
