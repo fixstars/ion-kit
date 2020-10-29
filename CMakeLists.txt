@@ -16,6 +16,7 @@ set(ION_BBS_TO_BUILD "" CACHE STRING "A List of building blocks to build (This o
 option(ION_BUILD_DOC "Build documents." OFF)
 option(ION_BUILD_TEST "Enable to build tests" ON)
 option(ION_BUILD_EXAMPLE "Enable to build examples" ON)
+option(ION_BUNDLE_HALIDE "Enable to bundle halide binary into package" OFF)
 option(WITH_CUDA "Enable CUDA with buliding examples." ON)
 
 #
@@ -72,7 +73,9 @@ if(ION_BUILD_EXAMPLE)
     add_subdirectory(example)
 endif()
 
+#
 # Documentation
+#
 if (ION_BUILD_DOC)
     find_package(Doxygen)
     find_package(Sphinx)
@@ -96,16 +99,53 @@ if (ION_BUILD_DOC)
             MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/doc/index.rst)
         add_custom_target(Sphinx ALL DEPENDS ${SPHINX_INDEX_FILE})
 
-        install(DIRECTORY ${CMAKE_BINARY_DIR}/doc DESTINATION doc)
+        install(DIRECTORY ${CMAKE_BINARY_DIR}/doc DESTINATION .)
     endif()
 endif()
 
 #
 # Install
 #
+install(FILES cmake/ion-bb-config.cmake DESTINATION share/cmake/)
+
+if (UNIX)
+    install(TARGETS ion-core ion-bb-test DESTINATION lib)
+else()
+    install(FILES ${CMAKE_BINARY_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>/ion-core.dll DESTINATION bin)
+    install(FILES ${CMAKE_BINARY_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>/ion-core.lib DESTINATION lib)
+endif()
+
+install(DIRECTORY include DESTINATION .)
 install(FILES
     ${CMAKE_BINARY_DIR}/VERSION
-    DESTINATION ./)
+    DESTINATION .)
 install(FILES
     ${CMAKE_SOURCE_DIR}/LICENSE
-    DESTINATION ./license)
+    DESTINATION license)
+
+# Halide
+if (ION_BUNDLE_HALIDE)
+    install(DIRECTORY ${HALIDE_INCLUDE_DIR} DESTINATION .)
+    #TODO: Handle for Windows
+    if (UNIX)
+        install(FILES ${HALIDE_LIBRARY} DESTINATION lib)
+    else()
+        install(FILES ${HALIDE_ROOT}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>/Halide.dll DESTINATION bin)
+        install(FILES ${HALIDE_ROOT}/lib/Halide.lib DESTINATION lib)
+    endif()
+endif()
+
+#
+# Packaging
+#
+if (UNIX)
+    set(CPACK_GENERATOR "DEB")
+    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Fixstars Solutions Inc.")
+    execute_process(COMMAND git describe --tags
+        OUTPUT_VARIABLE GIT_DESCRIBE_RESULT
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+    string(STRIP ${GIT_DESCRIBE_RESULT} ION_CORE_VERSION_S)
+    string(REPLACE "v" "" ION_CORE_VERSION ${ION_CORE_VERSION_S})
+    set(CPACK_PACKAGE_VERSION ${ION_CORE_VERSION})
+    include(CPack)
+endif()
