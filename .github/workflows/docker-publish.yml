@@ -35,7 +35,7 @@ jobs:
         run: docker build --target ion-core-build -t $IMAGE_NAME .
 
       - name: Run tests
-        run: docker run --rm -it $IMAGE_NAME ctest
+        run: docker run --rm -it $IMAGE_NAME:latest ctest
 
 
   # Push image to GitHub Packages.
@@ -57,7 +57,7 @@ jobs:
 
       - name: Config image name
         run: |
-          IMAGE_ID=$IMAGE_ID_PREFIX/$IMAGE_NAME
+          IMAGE_ID=${IMAGE_ID_PREFIX}/${IMAGE_NAME}
 
           # Change all uppercase to lowercase
           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')

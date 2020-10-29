@@ -42,15 +42,15 @@ WORKDIR ion-kit
 RUN mkdir build
 WORKDIR build
 RUN cmake -G Ninja \
-        -D CMAKE_BUILD_TYPE=Release \
-        -D CMAKE_INSTALL_PREFIX=ion-kit-install \
-        -D HALIDE_ROOT=/usr/local/Halide \
-        -D ION_BUILD_ALL_BB=OFF \
-        -D ION_BUILD_DOC=ON \
-        -D ION_BUILD_TEST=ON \
-        -D ION_BUILD_EXAMPLE=OFF \
-        -D ION_BUNDLE_HALIDE=ON \
-        -D WITH_CUDA=OFF ../
+-D CMAKE_BUILD_TYPE=Release \
+-D CMAKE_INSTALL_PREFIX=ion-kit-install \
+-D HALIDE_ROOT=/usr/local/Halide \
+-D ION_BUILD_ALL_BB=OFF \
+-D ION_BUILD_DOC=ON \
+-D ION_BUILD_TEST=ON \
+-D ION_BUILD_EXAMPLE=OFF \
+-D ION_BUNDLE_HALIDE=ON \
+-D WITH_CUDA=OFF ../
 RUN cmake --build . --target install
 RUN cmake --build . --target package
 RUN find ./ -maxdepth 1 -name "ion-kit_*.deb" -exec cp {} ion-core.deb \;
@@ -106,15 +106,15 @@ WORKDIR ion-kit
 RUN mkdir build
 WORKDIR build
 RUN cmake -G Ninja \
-        -D CMAKE_BUILD_TYPE=Release \
-        -D CMAKE_INSTALL_PREFIX=ion-kit-install \
-        -D HALIDE_ROOT=/usr/local/Halide \
-        -D ION_BUILD_ALL_BB=ON \
-        -D ION_BUILD_DOC=ON \
-        -D ION_BUILD_TEST=ON \
-        -D ION_BUILD_EXAMPLE=ON \
-        -D ION_BUNDLE_HALIDE=ON \
-        -D WITH_CUDA=OFF ../
+-D CMAKE_BUILD_TYPE=Release \
+-D CMAKE_INSTALL_PREFIX=ion-kit-install \
+-D HALIDE_ROOT=/usr/local/Halide \
+-D ION_BUILD_ALL_BB=ON \
+-D ION_BUILD_DOC=ON \
+-D ION_BUILD_TEST=ON \
+-D ION_BUILD_EXAMPLE=ON \
+-D ION_BUNDLE_HALIDE=ON \
+-D WITH_CUDA=OFF ../
 RUN cmake --build . --target install
 RUN cmake --build . --target package
 RUN find ./ -maxdepth 1 -name "ion-kit_*.deb" -exec cp {} ion-kit.deb \;
