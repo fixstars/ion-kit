@@ -1,6 +1,6 @@
 project(ion-kit LANGUAGES C CXX)
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.6)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 11)
@@ -109,7 +109,7 @@ endif()
 install(FILES cmake/ion-bb-config.cmake DESTINATION share/cmake/)
 
 if (UNIX)
-    install(TARGETS ion-core ion-bb-test DESTINATION lib)
+    install(TARGETS ion-core DESTINATION lib)
 else()
     install(FILES ${CMAKE_BINARY_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>/ion-core.dll DESTINATION bin)
     install(FILES ${CMAKE_BINARY_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>/ion-core.lib DESTINATION lib)
@@ -140,6 +140,7 @@ endif()
 #
 if (UNIX)
     set(CPACK_GENERATOR "DEB")
+    set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
     set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Fixstars Solutions Inc.")
     execute_process(COMMAND git describe --tags
         OUTPUT_VARIABLE GIT_DESCRIBE_RESULT
