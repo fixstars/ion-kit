@@ -1,0 +1,33 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  IMAGE_NAME_BASE: fixstars/ion-kit
+
+jobs:
+  build-ion-core:
+    runs-on: ubuntu-18.04
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          lfs: true
+
+      - name: Login to Github Packages for Containers
+        uses: docker/login-action@v1
+        with:
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+
+      - name: Build and push ion-core build
+        uses: docker/build-push-action@v2
+        with:
+          target: ion-core-build
+          tags: |
+            ${IMAGE_BASE_NAME}/ion-core:latest-build-ubuntu18.04
+            ${IMAGE_BASE_NAME}/ion-core:${{ github.ref }}-build-ubuntu18.04
