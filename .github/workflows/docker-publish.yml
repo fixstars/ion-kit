@@ -104,7 +104,7 @@ jobs:
       - name: Run tests
         run: docker run --rm $IMAGE_NAME:latest ctest
 
-  push-ion-core:
+  push-ion-kit:
     needs: test-ion-kit
 
     runs-on: ubuntu-latest
