@@ -291,12 +291,12 @@ public:
 
 }  // namespace
 
-ION_REGISTER_BUILDING_BLOCK(SplitU8, yolov4_split_u8);
-ION_REGISTER_BUILDING_BLOCK(SplitF32, yolov4_split_f32);
-ION_REGISTER_BUILDING_BLOCK(ReorderHWC2CHW<uint8_t>, yolov4_reorder_hwc2chw);
-ION_REGISTER_BUILDING_BLOCK(RGB2BGR<uint8_t>, yolov4_rgb2bgr);
-ION_REGISTER_BUILDING_BLOCK(BGR2RGB<uint8_t>, yolov4_bgr2rgb);
-ION_REGISTER_BUILDING_BLOCK(Devide255FromU8ToF32, yolov4_devide255);
+// ION_REGISTER_BUILDING_BLOCK(SplitU8, yolov4_split_u8);
+// ION_REGISTER_BUILDING_BLOCK(SplitF32, yolov4_split_f32);
+// ION_REGISTER_BUILDING_BLOCK(ReorderHWC2CHW<uint8_t>, yolov4_reorder_hwc2chw);
+// ION_REGISTER_BUILDING_BLOCK(RGB2BGR<uint8_t>, yolov4_rgb2bgr);
+// ION_REGISTER_BUILDING_BLOCK(BGR2RGB<uint8_t>, yolov4_bgr2rgb);
+// ION_REGISTER_BUILDING_BLOCK(Devide255FromU8ToF32, yolov4_devide255);
 ION_REGISTER_BUILDING_BLOCK(YOLOv4ObjectDetection, yolov4_object_detection);
 ION_REGISTER_BUILDING_BLOCK(YOLOv4BoxRendering, yolov4_box_rendering);
 ION_REGISTER_BUILDING_BLOCK(YOLOv4ObjectDetectionArray, yolov4_object_detection_array);
