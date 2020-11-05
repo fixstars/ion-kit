@@ -40,12 +40,12 @@
 
 #include "rt_common.h"
 
-#include "edgetpu.h"
+#include "edgetpu_c.h"
 #include "src/cpp/examples/model_utils.h"
 // #include "src/cpp/test_utils.h"
 #include "tensorflow/lite/interpreter.h"
 #include "tensorflow/lite/model.h"
-#include "tensorflow/lite/ops.h"
+#include "tensorflow/lite/kernels/register.h"
 
 std::vector<uint8_t> decode_bmp(const uint8_t* input, int row_size, int width,
                                 int height, int channels, bool top_down) {
@@ -131,7 +131,52 @@ std::vector<uint8_t> read_bmp(const std::string& input_bmp_name, int* width,
                     top_down);
 }
 
-int main(int argc, char* argv[]) {
+std::vector<float> RunInference(const std::vector<uint8_t>& input_data,
+                                tflite::Interpreter* interpreter) {
+  std::vector<float> output_data;
+  uint8_t* input = interpreter->typed_input_tensor<uint8_t>(0);
+  std::memcpy(input, input_data.data(), input_data.size());
+
+  interpreter->Invoke();
+
+  const auto& output_indices = interpreter->outputs();
+  const int num_outputs = output_indices.size();
+  int out_idx = 0;
+  for (int i = 0; i < num_outputs; ++i) {
+    const auto* out_tensor = interpreter->tensor(output_indices[i]);
+    assert(out_tensor != nullptr);
+    if (out_tensor->type == kTfLiteUInt8) {
+      const int num_values = out_tensor->bytes;
+      output_data.resize(out_idx + num_values);
+      const uint8_t* output = interpreter->typed_output_tensor<uint8_t>(i);
+      for (int j = 0; j < num_values; ++j) {
+        output_data[out_idx++] = (output[j] - out_tensor->params.zero_point) *
+                                 out_tensor->params.scale;
+      }
+    } else if (out_tensor->type == kTfLiteFloat32) {
+      const int num_values = out_tensor->bytes / sizeof(float);
+      output_data.resize(out_idx + num_values);
+      const float* output = interpreter->typed_output_tensor<float>(i);
+      for (int j = 0; j < num_values; ++j) {
+        output_data[out_idx++] = output[j];
+      }
+    } else {
+      std::cerr << "Tensor " << out_tensor->name
+                << " has unsupported output type: " << out_tensor->type
+                << std::endl;
+    }
+  }
+  return output_data;
+}
+
+std::array<int, 3> GetInputShape(const tflite::Interpreter& interpreter,
+                                 int index) {
+  const int tensor_index = interpreter.inputs()[index];
+  const TfLiteIntArray* dims = interpreter.tensor(tensor_index)->dims;
+  return std::array<int, 3>{dims->data[1], dims->data[2], dims->data[3]};
+}
+
+int func(int argc, char* argv[]) {
 
   // Modify the following accordingly to try different models and images.
   const std::string model_path =
@@ -151,7 +196,7 @@ int main(int argc, char* argv[]) {
 
   tflite::ops::builtin::BuiltinOpResolver resolver;
   std::unique_ptr<tflite::Interpreter> interpreter;
-  tflite::InterpreterBuilder(model, resolver)(&interpreter);
+  tflite::InterpreterBuilder(*model, resolver)(&interpreter);
 
   // Build interpreter.
   size_t num_devices;
@@ -175,7 +220,7 @@ int main(int argc, char* argv[]) {
   const std::vector<uint8_t>& input =
       read_bmp(resized_image_path, &width, &height, &channels);
 
-  const auto& required_shape = coral::GetInputShape(*interpreter, 0);
+  const auto& required_shape = GetInputShape(*interpreter, 0);
   if (height != required_shape[0] || width != required_shape[1] ||
       channels != required_shape[2]) {
     std::cerr << "Input size mismatches: "
@@ -186,7 +231,7 @@ int main(int argc, char* argv[]) {
     std::abort();
   }
   // Print inference result.
-  const auto& result = coral::RunInference(input, interpreter.get());
+  const auto& result = RunInference(input, interpreter.get());
   auto it = std::max_element(result.begin(), result.end());
   std::cout << "[Image analysis] max value index: "
             << std::distance(result.begin(), it) << " value: " << *it
