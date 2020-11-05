@@ -1,11 +1,11 @@
 #ifndef ION_BB_DEMO_RT_V4L2_H
 #define ION_BB_DEMO_RT_V4L2_H
 
+#include <cstdlib>
 #include <memory>
 #include <stdexcept>
 #include <unordered_map>
 #include <vector>
-#include <cstdlib>
 
 #include <errno.h>
 
@@ -134,7 +134,7 @@ public:
         // Initialize mapped memory
         //
         struct v4l2_requestbuffers req;
-        req.count = 1;
+        req.count = 2;
         req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         req.memory = V4L2_MEMORY_USERPTR;
 
@@ -163,7 +163,7 @@ public:
         //
         // Start capture
         //
-        for (int i = 0; i < buffers_.size(); ++i) {
+        for (int i = 0; i < buffers_.size() - 1; ++i) {
             struct v4l2_buffer buf;
             buf.index = static_cast<__u32>(i);
             buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -178,6 +178,12 @@ public:
                 return;
             }
         }
+        next_buffer_.index = static_cast<__u32>(buffers_.size() - 1);
+        next_buffer_.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        next_buffer_.memory = V4L2_MEMORY_USERPTR;
+        next_buffer_.m.userptr = reinterpret_cast<unsigned long>(buffers_[buffers_.size() - 1].start);
+        next_buffer_.length = buffers_[buffers_.size() - 1].length;
+
         enum v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         /* Start streaming I/O */
         if (-1 == xioctl(fd_, VIDIOC_STREAMON, &type)) {
@@ -210,6 +216,11 @@ public:
     void get(Halide::Runtime::Buffer<uint16_t> &buf) {
         using namespace std;
 
+        /* queue-in buffer */
+        if (-1 == xioctl(fd_, VIDIOC_QBUF, &next_buffer_)) {
+            throw runtime_error(format("%s error %d, %s\n", "VIDIOC_QBUF", errno, strerror(errno)));
+        }
+
         epoll_event event;
         if (-1 == epoll_wait(efd_, &event, 1, -1)) {
             throw runtime_error(format("%s error %d, %s\n", "epoll_wait", errno, strerror(errno)));
@@ -223,7 +234,7 @@ public:
         v4l2_buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         v4l2_buf.memory = V4L2_MEMORY_USERPTR;
 
-        if (-1 == xioctl(fd_, VIDIOC_DQBUF, &v4l2_buf)) {
+        if (-1 == xioctl(fd_, VIDIOC_DQBUF, &next_buffer_)) {
             if (EAGAIN == errno) {
                 return;
             } else {
@@ -231,12 +242,7 @@ public:
             }
         }
 
-        memcpy(buf.data(), buffers_[v4l2_buf.index].start, buf.size_in_bytes());
-
-        /* queue-in buffer */
-        if (-1 == xioctl(fd_, VIDIOC_QBUF, &v4l2_buf)) {
-            throw runtime_error(format("%s error %d, %s\n", "VIDIOC_QBUF", errno, strerror(errno)));
-        }
+        memcpy(buf.data(), reinterpret_cast<void *>(next_buffer_.m.userptr), buf.size_in_bytes());
     }
 
     void dispose() {
@@ -249,6 +255,7 @@ public:
 private:
     int fd_;
     std::vector<Buffer> buffers_;
+    v4l2_buffer next_buffer_;
     bool device_is_available_;
 
     int efd_;
@@ -280,9 +287,9 @@ std::tuple<std::string, std::string> parse_url(const std::string &url) {
 
 std::unordered_map<int32_t, cv::Mat> camera_stub_cache;
 
-} // namespace dnn
-} // namespace bb
-} // namespace ion
+}  // namespace demo
+}  // namespace bb
+}  // namespace ion
 
 extern "C" int ION_EXPORT ion_bb_demo_v4l2(int32_t index, int32_t width, int32_t height, uint32_t pixel_format, halide_buffer_t *out) {
     try {
