@@ -38,11 +38,7 @@
 #include <ostream>
 #include <string>
 
-#include "rt_common.h"
-
 #include "edgetpu_c.h"
-#include "src/cpp/examples/model_utils.h"
-// #include "src/cpp/test_utils.h"
 #include "tensorflow/lite/interpreter.h"
 #include "tensorflow/lite/model.h"
 #include "tensorflow/lite/kernels/register.h"
@@ -178,6 +174,8 @@ std::array<int, 3> GetInputShape(const tflite::Interpreter& interpreter,
 
 int func(int argc, char* argv[]) {
 
+ edgetpu_init();
+
   // Modify the following accordingly to try different models and images.
   const std::string model_path =
       argc == 3 ? argv[1]
@@ -200,8 +198,8 @@ int func(int argc, char* argv[]) {
 
   // Build interpreter.
   size_t num_devices;
-  std::unique_ptr<edgetpu_device, decltype(&edgetpu_free_devices)> devices(
-      edgetpu_list_devices(&num_devices), &edgetpu_free_devices);
+  std::unique_ptr<edgetpu_device, decltype(edgetpu_free_devices)> devices(
+      edgetpu_list_devices(&num_devices), edgetpu_free_devices);
 
   const auto& device = devices.get()[0];
 

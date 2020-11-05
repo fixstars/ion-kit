@@ -2,6 +2,8 @@
 #define ION_BB_DNN_RT_COMMON_H
 
 #include <dlfcn.h>
+#include <algorithm>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -26,20 +28,20 @@ public:
     using Handle = void *;
 #endif
 
-    DynamicModule(const std::string &module_name) {
+    DynamicModule(const std::string &module_name, bool with_extension = false) {
         if (module_name == "") {
             handle_ = nullptr;
             return;
         }
 
 #ifdef _WIN32
-        auto file_name = module_name + ".dll";
+        auto file_name = with_extension ? module_name : module_name + ".dll";
         handle_ = LoadLibraryA(file_name.c_str());
         if (handle_ == nullptr) {
             throw std::runtime_error(get_error_string());
         }
 #else
-        auto file_name = "lib" + module_name + ".so";
+        auto file_name = with_extension ? module_name : "lib" + module_name + ".so";
         handle_ = dlopen(file_name.c_str(), RTLD_NOW);
         if (handle_ == nullptr) {
             throw std::runtime_error(get_error_string());

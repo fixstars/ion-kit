@@ -86,28 +86,44 @@ struct edgetpu_option {
   const char* value;
 };
 
-// Returns array of connected edge TPU devices.
-EDGETPU_EXPORT struct edgetpu_device* edgetpu_list_devices(size_t* num_devices);
-
+// // Returns array of connected edge TPU devices.
+// EDGETPU_EXPORT struct edgetpu_device* edgetpu_list_devices(size_t* num_devices);
+//
 // Frees array returned by `edgetpu_list_devices`.
-EDGETPU_EXPORT void edgetpu_free_devices(struct edgetpu_device* dev);
+// EDGETPU_EXPORT void edgetpu_free_devices(struct edgetpu_device* dev);
+//
+// // Creates a delegate which handles all edge TPU custom ops inside
+// // `tflite::Interpreter`. Options must be available only during the call of this
+// // function.
+// EDGETPU_EXPORT TfLiteDelegate* edgetpu_create_delegate(
+//     enum edgetpu_device_type type, const char* name,
+//     const struct edgetpu_option* options, size_t num_options);
+//
+// // Frees delegate returned by `edgetpu_create_delegate`.
+// EDGETPU_EXPORT void edgetpu_free_delegate(TfLiteDelegate* delegate);
+//
+// // Sets verbosity of operating logs related to edge TPU.
+// // Verbosity level can be set to [0-10], in which 10 is the most verbose.
+// EDGETPU_EXPORT void edgetpu_verbosity(int verbosity);
+//
+// // Returns the version of edge TPU runtime stack.
+// EDGETPU_EXPORT const char* edgetpu_version();
 
-// Creates a delegate which handles all edge TPU custom ops inside
-// `tflite::Interpreter`. Options must be available only during the call of this
-// function.
-EDGETPU_EXPORT TfLiteDelegate* edgetpu_create_delegate(
-    enum edgetpu_device_type type, const char* name,
-    const struct edgetpu_option* options, size_t num_options);
+using edgetpu_list_devices_t = struct edgetpu_device* (*)(size_t* num_devices);
+using edgetpu_free_devices_t = void (*)(struct edgetpu_device* dev);
+using edgetpu_create_delegate_t = TfLiteDelegate* (*)(enum edgetpu_device_type type, const char* name, const struct edgetpu_option* options, size_t num_options);
+using edgetpu_free_delegate_t = void (*)(TfLiteDelegate* delegate);
+using edgetpu_verbosity_t = void (*)(int verbosity);
+using edgetpu_version_t = const char* (*)();
 
-// Frees delegate returned by `edgetpu_create_delegate`.
-EDGETPU_EXPORT void edgetpu_free_delegate(TfLiteDelegate* delegate);
+extern edgetpu_list_devices_t    edgetpu_list_devices;
+extern edgetpu_free_devices_t    edgetpu_free_devices;
+extern edgetpu_create_delegate_t edgetpu_create_delegate;
+extern edgetpu_free_delegate_t   edgetpu_free_delegate;
+extern edgetpu_verbosity_t       edgetpu_verbosity;
+extern edgetpu_version_t         edgetpu_version;
 
-// Sets verbosity of operating logs related to edge TPU.
-// Verbosity level can be set to [0-10], in which 10 is the most verbose.
-EDGETPU_EXPORT void edgetpu_verbosity(int verbosity);
-
-// Returns the version of edge TPU runtime stack.
-EDGETPU_EXPORT const char* edgetpu_version();
+void edgetpu_init();
 
 #ifdef __cplusplus
 }  // extern "C"
