@@ -45,6 +45,7 @@
 // #include "src/cpp/test_utils.h"
 #include "tensorflow/lite/interpreter.h"
 #include "tensorflow/lite/model.h"
+#include "tensorflow/lite/ops.h"
 
 std::vector<uint8_t> decode_bmp(const uint8_t* input, int row_size, int width,
                                 int height, int channels, bool top_down) {
@@ -148,12 +149,15 @@ int main(int argc, char* argv[]) {
     std::abort();
   }
 
+  tflite::ops::builtin::BuiltinOpResolver resolver;
+  std::unique_ptr<tflite::Interpreter> interpreter;
+  tflite::InterpreterBuilder(model, resolver)(&interpreter);
+
   // Build interpreter.
   size_t num_devices;
   std::unique_ptr<edgetpu_device, decltype(&edgetpu_free_devices)> devices(
       edgetpu_list_devices(&num_devices), &edgetpu_free_devices);
 
-  assert(num_devices > 0);
   const auto& device = devices.get()[0];
 
   auto* delegate =
@@ -161,11 +165,10 @@ int main(int argc, char* argv[]) {
   interpreter->ModifyGraphWithDelegate({delegate, edgetpu_free_delegate});
 
 
-
-  std::shared_ptr<edgetpu::EdgeTpuContext> edgetpu_context =
-      edgetpu::EdgeTpuManager::GetSingleton()->OpenDevice();
-  std::unique_ptr<tflite::Interpreter> interpreter =
-      coral::BuildEdgeTpuInterpreter(*model, edgetpu_context.get());
+  // std::shared_ptr<edgetpu::EdgeTpuContext> edgetpu_context =
+  //     edgetpu::EdgeTpuManager::GetSingleton()->OpenDevice();
+  // std::unique_ptr<tflite::Interpreter> interpreter =
+  //     coral::BuildEdgeTpuInterpreter(*model, edgetpu_context.get());
 
   // Read the resized image file.
   int width, height, channels;
