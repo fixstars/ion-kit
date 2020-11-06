@@ -1,5 +1,5 @@
-#ifndef ION_BB_DNN_RT_COMMON_H
-#define ION_BB_DNN_RT_COMMON_H
+#ifndef ION_BB_DNN_UTIL_H
+#define ION_BB_DNN_UTIL_H
 
 #include <dlfcn.h>
 #include <algorithm>

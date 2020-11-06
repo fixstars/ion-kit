@@ -165,7 +165,7 @@ public:
         const int32_t width = width_;
         const bool cuda_enable = this->get_target().has_feature(Target::Feature::CUDA);
 
-        std::vector<ExternFuncArgument> params{input, session_id_buf, model_buf, cache_path_buf, model_size_in_bytes, height, width, cuda_enable};
+        std::vector<ExternFuncArgument> params{input, session_id_buf, model_buf, cache_path_buf, height, width, cuda_enable};
 
         Func yolov4_object_detection(static_cast<std::string>(gc_prefix) + "yolov4_object_detection");
         yolov4_object_detection.define_extern("yolov4_object_detection", params, {Float(32), Float(32)}, D - 1);

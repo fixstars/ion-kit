@@ -221,3 +221,157 @@ int func(int argc, char* argv[]) {
             << std::endl;
   return 0;
 }
+
+namespace ion {
+namespace bb {
+namespace dnn {
+
+class TflSessionManager {
+ public:
+     TflSessionManager& get_instance() {
+         static TflSessionManager instance;
+         return instance;
+     }
+
+     bool is_available_tflite() {
+         return is_available_tflite_;
+     }
+
+     bool is_available_edgetpu() {
+         return is_available_edgetpu_;
+     }
+
+ private:
+
+    TflSessionManager()
+        : is_available_tflite_(true), is_available_edgetpu_(true)
+    {
+        if (!tensorflowlite_init()) {
+            is_available_tflite_ = false;
+            return;
+        }
+
+        if (!edgetpu_init()) {
+            is_available_edgetpu_ = false;
+            return;
+        }
+    }
+
+     bool is_available_tflite_;
+     bool is_available_edgetpu_;
+};
+
+bool is_tfl_available() {
+    return TflSessionManager::get_instance().is_available_tflite();
+}
+
+void enable_edgetpu(TfLiteInterpreterOptions *options) {
+  // Determin device
+  size_t num_devices;
+  std::unique_ptr<edgetpu_device, decltype(edgetpu_free_devices)>
+      devices(edgetpu_list_devices(&num_devices), edgetpu_free_devices);
+  if (num_devices == 0) {
+      std::cerr << "No device found" << std::endl;
+      return;
+  }
+  const auto& device = devices.get()[0];
+
+  // Create EdgeTpu delegate
+  std::unique_ptr<TfLiteDelegate, decltype(edgetpu_free_delegate)>
+      delegate(edgetpu_create_delegate(device.type, device.path, nullptr, 0), edgetpu_free_delegate);
+
+  // Build interpreter.
+  TfLiteInterpreterOptionsAddDelegate(options, delegate.get());
+}
+
+int yolov4_object_detection_tfl(halide_buffer_t *in,
+                                const std::string&, // unused
+                                const std::string&, // unused
+                                const uint8_t *model_data,
+                                int model_size,
+                                int height, int width,
+                                bool, // unused
+                                halide_buffer_t *boxes,
+                                halide_buffer_t *confs) {
+
+  // Create model
+  std::unique_ptr<TfLiteModel, decltype(TfLiteModelDelete)>
+      model(TfLiteModelCreate(model_data, model_size), TfLiteModelDelete);
+  if (model == nullptr) {
+    std::cerr << "Failed to create model" << std::endl;
+    return -1;
+  }
+
+  std::unique_ptr<TfLiteInterpreterOptions, decltype(TfLiteInterpreterOptionsDelete)>
+      options(TfLiteInterpreterOptionsCreate(), TfLiteInterpreterOptionsDelete);
+  TfLiteInterpreterOptionsSetNumThreads(options.get(), 1);
+  if (TflSessionManager::get_instance().is_available_edgetpu()) {
+      enable_edgetpu(options.get())
+  }
+
+  // Build interpreter
+  std::unique_ptr<TfLiteInterpreter, decltype(TfLiteInterpreterDelete)>
+      interpreter(TfLiteInterpreterCreate(model.get(), options.get()), TfLiteInterpreterDelete);
+  if (interpreter == nullptr) {
+      std::cerr << "Failed to build interpreter" << std::endl;
+      return -1;
+  }
+
+  if (TfLiteInterpreterAllocateTensors(interpreter.get())!= kTfLiteOk) {
+    std::cerr << "Failed to allocate tensors." << std::endl;
+    return -1;
+  }
+
+  // Prepare input
+  TfLiteTensor *tensor = TfLiteInterpreterGetInputTensor(interpreter.get(), index);
+
+  if (TfLiteTensorByteSize(tensor) != in->size_in_bytes()) {
+      std::cerr << "Input size mismatches: "
+          << in->size_in_bytes() " vs " << TfLiteTensorByteSize(tensor)
+          << std::endl;
+      return -1;
+  }
+
+  if (TfLiteTensorDim(tensor, 1) != height ||
+      TfLiteTensorDim(tensor, 2) != width ||
+      TfLiteTensorDim(tensor, 3) != 3) {
+      std::cerr << "Input size mismatches: "
+              << "channels: " << 3 << " vs " << TfLiteTensorDim(tensor, 3)
+              << ", width: " << width << " vs " << TfLiteTensorDim(tensor, 2)
+              << ", height: " << height << " vs " << TfLiteTensorDim(tensor, 1)
+              << std::endl;
+      return -1;
+  }
+  std::memcpy(reinterpret_cast<uint8_t*>(TfLiteTensorData(tensor)),
+              in->host,
+              in->size_in_bytes());
+
+  // Invoke
+  if (TfLiteInterpreterInvoke(interpreter.get()) != kTfLiteOk) {
+      std::cerr << "Failed to invoke" << std::endl;
+      return -1;
+  }
+
+  // Prepare output
+  const int num_outputs = TfLiteInterpreterGetOutputTensorCount(interpreter.get());
+  if (num_outputs != 2) {
+      std::cerr << "Unexpected number of output" << std::endl;
+      return -1;
+  }
+
+  const auto* boxes_tensor = TfLiteInterpreterGetOutputTensor(interpreter.get(), 0);
+  const auto* confs_tensor = TfLiteInterpreterGetOutputTensor(interpreter.get(), 1);
+
+
+  // const auto& result = RunInference(input, interpreter.get());
+  // auto it = std::max_element(result.begin(), result.end());
+  // std::cout << "[Image analysis] max value index: "
+  //           << std::distance(result.begin(), it) << " value: " << *it
+  //           << std::endl;
+  return 0;
+}
+
+
+}  // namespace dnn
+}  // namespace bb
+}  // namespace ion
