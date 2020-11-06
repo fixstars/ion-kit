@@ -33,15 +33,19 @@
 #include <algorithm>
 #include <chrono>  // NOLINT
 #include <iostream>
+#include <cassert>
+#include <cstring>
 #include <fstream>
 #include <memory>
 #include <ostream>
 #include <string>
+#include <vector>
 
 #include "edgetpu_c.h"
-#include "tensorflow/lite/interpreter.h"
-#include "tensorflow/lite/model.h"
-#include "tensorflow/lite/kernels/register.h"
+#include "c_api.h"
+// #include "tensorflow/lite/interpreter.h"
+// #include "tensorflow/lite/model.h"
+// #include "tensorflow/lite/kernels/register.h"
 
 std::vector<uint8_t> decode_bmp(const uint8_t* input, int row_size, int width,
                                 int height, int channels, bool top_down) {
@@ -146,48 +150,52 @@ std::vector<uint8_t> read_bmp(const std::string& input_bmp_name, int* width,
 // }
 
 std::vector<float> RunInference(const std::vector<uint8_t>& input_data,
-                                tflite::Interpreter* interpreter) {
+                                TfLiteInterpreter* interpreter) {
   std::vector<float> output_data;
-  uint8_t* input = interpreter->typed_input_tensor<uint8_t>(0);
+  uint8_t* input = reinterpret_cast<uint8_t*>(TfLiteTensorData(
+      TfLiteInterpreterGetInputTensor(interpreter, 0)));
+
   std::memcpy(input, input_data.data(), input_data.size());
 
-  interpreter->Invoke();
+  if (TfLiteInterpreterInvoke(interpreter) != kTfLiteOk) {
+      std::cerr << "Failed to invoke" << std::endl;
+      return {};
+  }
 
-  const auto& output_indices = interpreter->outputs();
-  const int num_outputs = output_indices.size();
+  const int num_outputs = TfLiteInterpreterGetOutputTensorCount(interpreter);
   int out_idx = 0;
   for (int i = 0; i < num_outputs; ++i) {
-    const auto* out_tensor = interpreter->tensor(output_indices[i]);
+    const auto* out_tensor = TfLiteInterpreterGetOutputTensor(interpreter, i);
     assert(out_tensor != nullptr);
-    if (out_tensor->type == kTfLiteUInt8) {
-      const int num_values = out_tensor->bytes;
+    if (TfLiteTensorType(out_tensor) == kTfLiteUInt8) {
+      const int num_values = TfLiteTensorByteSize(out_tensor);
       output_data.resize(out_idx + num_values);
-      const uint8_t* output = interpreter->typed_output_tensor<uint8_t>(i);
+      const uint8_t* output = reinterpret_cast<uint8_t*>(TfLiteTensorData(out_tensor));
       for (int j = 0; j < num_values; ++j) {
-        output_data[out_idx++] = (output[j] - out_tensor->params.zero_point) *
-                                 out_tensor->params.scale;
+        TfLiteQuantizationParams params(TfLiteTensorQuantizationParams(out_tensor));
+        output_data[out_idx++] = (output[j] - params.zero_point) *
+                                 params.scale;
       }
-    } else if (out_tensor->type == kTfLiteFloat32) {
-      const int num_values = out_tensor->bytes / sizeof(float);
+    } else if (TfLiteTensorType(out_tensor) == kTfLiteFloat32) {
+      const int num_values = TfLiteTensorByteSize(out_tensor) / sizeof(float);
       output_data.resize(out_idx + num_values);
-      const float* output = interpreter->typed_output_tensor<float>(i);
+      const float* output = reinterpret_cast<float*>(TfLiteTensorData(out_tensor));
       for (int j = 0; j < num_values; ++j) {
         output_data[out_idx++] = output[j];
       }
     } else {
-      std::cerr << "Tensor " << out_tensor->name
-                << " has unsupported output type: " << out_tensor->type
+      std::cerr << "Tensor " << TfLiteTensorName(out_tensor)
+                << " has unsupported output type: " << TfLiteTensorType(out_tensor)
                 << std::endl;
     }
   }
   return output_data;
 }
 
-std::array<int, 3> GetInputShape(const tflite::Interpreter& interpreter,
+std::array<int, 3> GetInputShape(const TfLiteInterpreter* interpreter,
                                  int index) {
-  const int tensor_index = interpreter.inputs()[index];
-  const TfLiteIntArray* dims = interpreter.tensor(tensor_index)->dims;
-  return std::array<int, 3>{dims->data[1], dims->data[2], dims->data[3]};
+  TfLiteTensor *tensor = TfLiteInterpreterGetInputTensor(interpreter, index);
+  return std::array<int, 3>{TfLiteTensorDim(tensor, 1), TfLiteTensorDim(tensor, 2), TfLiteTensorDim(tensor, 3)};
 }
 
 int func(int argc, char* argv[]) {
@@ -202,8 +210,8 @@ int func(int argc, char* argv[]) {
       argc == 3 ? argv[2] : "resized_cat.bmp";
 
   // Read model.
-  std::unique_ptr<tflite::FlatBufferModel> model =
-      tflite::FlatBufferModel::BuildFromFile(model_path.c_str());
+  std::unique_ptr<TfLiteModel, decltype(&TfLiteModelDelete)> model(
+      TfLiteModelCreateFromFile(model_path.c_str()), &TfLiteModelDelete);
   if (model == nullptr) {
     std::cerr << "Fail to build FlatBufferModel from file: " << model_path
               << std::endl;
@@ -211,12 +219,11 @@ int func(int argc, char* argv[]) {
   }
 
   // Build interpreter.
-  tflite::ops::builtin::BuiltinOpResolver resolver;
-  std::unique_ptr<tflite::Interpreter> interpreter;
-  if (tflite::InterpreterBuilder(*model, resolver)(&interpreter) != kTfLiteOk) {
-    std::cerr << "Failed to build interpreter." << std::endl;
-    return -1;
-  }
+
+  std::unique_ptr<TfLiteInterpreterOptions, decltype(&TfLiteInterpreterOptionsDelete)> options(
+      TfLiteInterpreterOptionsCreate(), &TfLiteInterpreterOptionsDelete);
+
+  TfLiteInterpreterOptionsSetNumThreads(options.get(), 1);
 
   size_t num_devices;
   std::unique_ptr<edgetpu_device, decltype(edgetpu_free_devices)> devices(
@@ -224,14 +231,15 @@ int func(int argc, char* argv[]) {
 
   const auto& device = devices.get()[0];
 
-  auto* delegate =
-      edgetpu_create_delegate(device.type, device.path, nullptr, 0);
-  if (interpreter->ModifyGraphWithDelegate({delegate, edgetpu_free_delegate}) != kTfLiteOk) {
-    std::cerr << "Failed to modify graph." << std::endl;
-    return -1;
-  };
+  std::unique_ptr<TfLiteDelegate, decltype(edgetpu_free_delegate)> delegate(
+      edgetpu_create_delegate(device.type, device.path, nullptr, 0), edgetpu_free_delegate);
 
-  if (interpreter->AllocateTensors() != kTfLiteOk) {
+  TfLiteInterpreterOptionsAddDelegate(options.get(), delegate.get());
+
+  std::unique_ptr<TfLiteInterpreter, decltype(&TfLiteInterpreterDelete)> interpreter(
+      TfLiteInterpreterCreate(model.get(), options.get()), &TfLiteInterpreterDelete);
+
+  if (TfLiteInterpreterAllocateTensors(interpreter.get())!= kTfLiteOk) {
     std::cerr << "Failed to allocate tensors." << std::endl;
     return -1;
   }
@@ -241,7 +249,7 @@ int func(int argc, char* argv[]) {
   const std::vector<uint8_t>& input =
       read_bmp(resized_image_path, &width, &height, &channels);
 
-  const auto& required_shape = GetInputShape(*interpreter, 0);
+  const auto& required_shape = GetInputShape(interpreter.get(), 0);
   if (height != required_shape[0] || width != required_shape[1] ||
       channels != required_shape[2]) {
     std::cerr << "Input size mismatches: "
@@ -251,7 +259,7 @@ int func(int argc, char* argv[]) {
               << std::endl;
     std::abort();
   }
-  
+
   // Print inference result.
   const auto& result = RunInference(input, interpreter.get());
   auto it = std::max_element(result.begin(), result.end());
