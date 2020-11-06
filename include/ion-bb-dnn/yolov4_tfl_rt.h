@@ -127,6 +127,24 @@ std::vector<uint8_t> read_bmp(const std::string& input_bmp_name, int* width,
                     top_down);
 }
 
+// std::unique_ptr<tflite::Interpreter> BuildEdgeTpuInterpreter(
+//     const tflite::FlatBufferModel& model,
+//     edgetpu::EdgeTpuContext* edgetpu_context) {
+//   tflite::ops::builtin::BuiltinOpResolver resolver;
+//   resolver.AddCustom(edgetpu::kCustomOp, edgetpu::RegisterCustomOp());
+//   std::unique_ptr<tflite::Interpreter> interpreter;
+//   if (tflite::InterpreterBuilder(model, resolver)(&interpreter) != kTfLiteOk) {
+//     std::cerr << "Failed to build interpreter." << std::endl;
+//   }
+//   // Bind given context with interpreter.
+//   interpreter->SetExternalContext(kTfLiteEdgeTpuContext, edgetpu_context);
+//   interpreter->SetNumThreads(1);
+//   if (interpreter->AllocateTensors() != kTfLiteOk) {
+//     std::cerr << "Failed to allocate tensors." << std::endl;
+//   }
+//   return interpreter;
+// }
+
 std::vector<float> RunInference(const std::vector<uint8_t>& input_data,
                                 tflite::Interpreter* interpreter) {
   std::vector<float> output_data;
@@ -174,7 +192,7 @@ std::array<int, 3> GetInputShape(const tflite::Interpreter& interpreter,
 
 int func(int argc, char* argv[]) {
 
- edgetpu_init();
+  edgetpu_init();
 
   // Modify the following accordingly to try different models and images.
   const std::string model_path =
@@ -192,11 +210,14 @@ int func(int argc, char* argv[]) {
     std::abort();
   }
 
+  // Build interpreter.
   tflite::ops::builtin::BuiltinOpResolver resolver;
   std::unique_ptr<tflite::Interpreter> interpreter;
-  tflite::InterpreterBuilder(*model, resolver)(&interpreter);
+  if (tflite::InterpreterBuilder(*model, resolver)(&interpreter) != kTfLiteOk) {
+    std::cerr << "Failed to build interpreter." << std::endl;
+    return -1;
+  }
 
-  // Build interpreter.
   size_t num_devices;
   std::unique_ptr<edgetpu_device, decltype(edgetpu_free_devices)> devices(
       edgetpu_list_devices(&num_devices), edgetpu_free_devices);
@@ -205,13 +226,15 @@ int func(int argc, char* argv[]) {
 
   auto* delegate =
       edgetpu_create_delegate(device.type, device.path, nullptr, 0);
-  interpreter->ModifyGraphWithDelegate({delegate, edgetpu_free_delegate});
+  if (interpreter->ModifyGraphWithDelegate({delegate, edgetpu_free_delegate}) != kTfLiteOk) {
+    std::cerr << "Failed to modify graph." << std::endl;
+    return -1;
+  };
 
-
-  // std::shared_ptr<edgetpu::EdgeTpuContext> edgetpu_context =
-  //     edgetpu::EdgeTpuManager::GetSingleton()->OpenDevice();
-  // std::unique_ptr<tflite::Interpreter> interpreter =
-  //     coral::BuildEdgeTpuInterpreter(*model, edgetpu_context.get());
+  if (interpreter->AllocateTensors() != kTfLiteOk) {
+    std::cerr << "Failed to allocate tensors." << std::endl;
+    return -1;
+  }
 
   // Read the resized image file.
   int width, height, channels;
@@ -228,6 +251,7 @@ int func(int argc, char* argv[]) {
               << std::endl;
     std::abort();
   }
+  
   // Print inference result.
   const auto& result = RunInference(input, interpreter.get());
   auto it = std::max_element(result.begin(), result.end());
