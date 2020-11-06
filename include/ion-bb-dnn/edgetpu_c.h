@@ -1,71 +1,8 @@
-/*
-Copyright 2019 Google LLC
+#ifndef ION_BB_DNN_EDGETPU_C_H
+#define ION_BB_DNN_EDGETPU_C_H
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-==============================================================================*/
-//
-// This header defines C API to provide edge TPU support for TensorFlow Lite
-// framework. It is only available for non-NNAPI use cases.
-//
-// Typical API usage from C++ code involves serveral steps:
-//
-// 1. Create tflite::FlatBufferModel which may contain edge TPU custom op.
-//
-// auto model =
-//    tflite::FlatBufferModel::BuildFromFile(model_file_name.c_str());
-//
-// 2. Create tflite::Interpreter.
-//
-// tflite::ops::builtin::BuiltinOpResolver resolver;
-// std::unique_ptr<tflite::Interpreter> interpreter;
-// tflite::InterpreterBuilder(model, resolver)(&interpreter);
-//
-// 3. Enumerate edge TPU devices.
-//
-// size_t num_devices;
-// std::unique_ptr<edgetpu_device, decltype(&edgetpu_free_devices)> devices(
-//     edgetpu_list_devices(&num_devices), &edgetpu_free_devices);
-//
-// assert(num_devices > 0);
-// const auto& device = devices.get()[0];
-//
-// 4. Modify interpreter with the delegate.
-//
-// auto* delegate =
-//     edgetpu_create_delegate(device.type, device.path, nullptr, 0);
-// interpreter->ModifyGraphWithDelegate({delegate, edgetpu_free_delegate});
-//
-// 5. Prepare input tensors and run inference.
-//
-// interpreter->AllocateTensors();
-//   .... (Prepare input tensors)
-// interpreter->Invoke();
-//   .... (Retrieve the result from output tensors)
-
-#ifndef TFLITE_PUBLIC_EDGETPU_C_H_
-#define TFLITE_PUBLIC_EDGETPU_C_H_
-
-#include "c_api.h"
-
-#if defined(_WIN32)
-#ifdef EDGETPU_COMPILE_LIBRARY
-#define EDGETPU_EXPORT __declspec(dllexport)
-#else
-#define EDGETPU_EXPORT __declspec(dllimport)
-#endif  // EDGETPU_COMPILE_LIBRARY
-#else
-#define EDGETPU_EXPORT __attribute__((visibility("default")))
-#endif  // _WIN32
+#include "tensorflowlite_c.h"
+#include "util.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -86,29 +23,6 @@ struct edgetpu_option {
   const char* value;
 };
 
-// // Returns array of connected edge TPU devices.
-// EDGETPU_EXPORT struct edgetpu_device* edgetpu_list_devices(size_t* num_devices);
-//
-// Frees array returned by `edgetpu_list_devices`.
-// EDGETPU_EXPORT void edgetpu_free_devices(struct edgetpu_device* dev);
-//
-// // Creates a delegate which handles all edge TPU custom ops inside
-// // `tflite::Interpreter`. Options must be available only during the call of this
-// // function.
-// EDGETPU_EXPORT TfLiteDelegate* edgetpu_create_delegate(
-//     enum edgetpu_device_type type, const char* name,
-//     const struct edgetpu_option* options, size_t num_options);
-//
-// // Frees delegate returned by `edgetpu_create_delegate`.
-// EDGETPU_EXPORT void edgetpu_free_delegate(TfLiteDelegate* delegate);
-//
-// // Sets verbosity of operating logs related to edge TPU.
-// // Verbosity level can be set to [0-10], in which 10 is the most verbose.
-// EDGETPU_EXPORT void edgetpu_verbosity(int verbosity);
-//
-// // Returns the version of edge TPU runtime stack.
-// EDGETPU_EXPORT const char* edgetpu_version();
-
 using edgetpu_list_devices_t = struct edgetpu_device* (*)(size_t* num_devices);
 using edgetpu_free_devices_t = void (*)(struct edgetpu_device* dev);
 using edgetpu_create_delegate_t = TfLiteDelegate* (*)(enum edgetpu_device_type type, const char* name, const struct edgetpu_option* options, size_t num_options);
@@ -116,17 +30,39 @@ using edgetpu_free_delegate_t = void (*)(TfLiteDelegate* delegate);
 using edgetpu_verbosity_t = void (*)(int verbosity);
 using edgetpu_version_t = const char* (*)();
 
-extern edgetpu_list_devices_t    edgetpu_list_devices;
-extern edgetpu_free_devices_t    edgetpu_free_devices;
-extern edgetpu_create_delegate_t edgetpu_create_delegate;
-extern edgetpu_free_delegate_t   edgetpu_free_delegate;
-extern edgetpu_verbosity_t       edgetpu_verbosity;
-extern edgetpu_version_t         edgetpu_version;
+edgetpu_list_devices_t    edgetpu_list_devices;
+edgetpu_free_devices_t    edgetpu_free_devices;
+edgetpu_create_delegate_t edgetpu_create_delegate;
+edgetpu_free_delegate_t   edgetpu_free_delegate;
+edgetpu_verbosity_t       edgetpu_verbosity;
+edgetpu_version_t         edgetpu_version;
 
-void edgetpu_init();
+bool edgetpu_init() {
+    static ion::bb::dnn::DynamicModule dm("libedgetpu.so.1", true);
+    if (!dm.is_available()) {
+        return false;
+    }
 
+#define RESOLVE_SYMBOL(SYM_NAME)                                 \
+        SYM_NAME = dm.get_symbol<SYM_NAME ## _t>(#SYM_NAME);     \
+        if (SYM_NAME == nullptr) {                               \
+            throw std::runtime_error(                            \
+                #SYM_NAME " is unavailable on your edgetpu DSO"); \
+        }
+
+    RESOLVE_SYMBOL(edgetpu_list_devices);
+    RESOLVE_SYMBOL(edgetpu_free_devices);
+    RESOLVE_SYMBOL(edgetpu_create_delegate);
+    RESOLVE_SYMBOL(edgetpu_free_delegate);
+    RESOLVE_SYMBOL(edgetpu_verbosity);
+    RESOLVE_SYMBOL(edgetpu_version);
+
+#undef RESOLVE_SYMBOL
+
+    return true;
+}
 #ifdef __cplusplus
 }  // extern "C"
 #endif
 
-#endif  // TFLITE_PUBLIC_EDGETPU_C_H_
+#endif  // ION_BB_DNN_EDGETPU_C_H

@@ -1,35 +1,3 @@
-// #include "edgetpu.h"
-// #include "tflite/.h"
-//
-// int yolov4_object_detection_tfl() {
-//
-// //
-//   // Create model and interpreter options:
-//   //
-//   model_ = TfLiteModelCreateFromFile(params_.model.c_str());
-//   options_ = TfLiteInterpreterOptionsCreate();
-//
-//   //
-//   // Create the interpreter:
-//   //
-//   interpreter_ = TfLiteInterpreterCreate(model_, options_);
-//
-//   //
-//   // Modify interpreter with the delegate:
-//   //
-//
-//   delegate_ = edgetpu_create_delegate(device.type, device.path, nullptr, 0);
-//   TfLiteInterpreterOptionsAddDelegate(options_, delegate_);
-//   TfLiteInterpreterOptionsAddCustomOp(options_,
-//                                       edgetpu::kCustomOp,
-//                                       edgetpu::RegisterCustomOp(), 10, 13);
-//
-//   return 0;
-// }
-
-// Example to run a model using one Edge TPU.
-// It depends only on tflite and edgetpu.h
-
 #include <algorithm>
 #include <chrono>  // NOLINT
 #include <iostream>
@@ -42,10 +10,7 @@
 #include <vector>
 
 #include "edgetpu_c.h"
-#include "c_api.h"
-// #include "tensorflow/lite/interpreter.h"
-// #include "tensorflow/lite/model.h"
-// #include "tensorflow/lite/kernels/register.h"
+#include "tensorflowlite_c.h"
 
 std::vector<uint8_t> decode_bmp(const uint8_t* input, int row_size, int width,
                                 int height, int channels, bool top_down) {
@@ -131,24 +96,6 @@ std::vector<uint8_t> read_bmp(const std::string& input_bmp_name, int* width,
                     top_down);
 }
 
-// std::unique_ptr<tflite::Interpreter> BuildEdgeTpuInterpreter(
-//     const tflite::FlatBufferModel& model,
-//     edgetpu::EdgeTpuContext* edgetpu_context) {
-//   tflite::ops::builtin::BuiltinOpResolver resolver;
-//   resolver.AddCustom(edgetpu::kCustomOp, edgetpu::RegisterCustomOp());
-//   std::unique_ptr<tflite::Interpreter> interpreter;
-//   if (tflite::InterpreterBuilder(model, resolver)(&interpreter) != kTfLiteOk) {
-//     std::cerr << "Failed to build interpreter." << std::endl;
-//   }
-//   // Bind given context with interpreter.
-//   interpreter->SetExternalContext(kTfLiteEdgeTpuContext, edgetpu_context);
-//   interpreter->SetNumThreads(1);
-//   if (interpreter->AllocateTensors() != kTfLiteOk) {
-//     std::cerr << "Failed to allocate tensors." << std::endl;
-//   }
-//   return interpreter;
-// }
-
 std::vector<float> RunInference(const std::vector<uint8_t>& input_data,
                                 TfLiteInterpreter* interpreter) {
   std::vector<float> output_data;
@@ -200,7 +147,13 @@ std::array<int, 3> GetInputShape(const TfLiteInterpreter* interpreter,
 
 int func(int argc, char* argv[]) {
 
-  edgetpu_init();
+  if (!edgetpu_init()) {
+      return -1;
+  }
+
+  if (!tensorflowlite_init()) {
+      return -1;
+  }
 
   // Modify the following accordingly to try different models and images.
   const std::string model_path =
@@ -210,8 +163,8 @@ int func(int argc, char* argv[]) {
       argc == 3 ? argv[2] : "resized_cat.bmp";
 
   // Read model.
-  std::unique_ptr<TfLiteModel, decltype(&TfLiteModelDelete)> model(
-      TfLiteModelCreateFromFile(model_path.c_str()), &TfLiteModelDelete);
+  std::unique_ptr<TfLiteModel, decltype(TfLiteModelDelete)> model(
+      TfLiteModelCreateFromFile(model_path.c_str()), TfLiteModelDelete);
   if (model == nullptr) {
     std::cerr << "Fail to build FlatBufferModel from file: " << model_path
               << std::endl;
@@ -220,8 +173,8 @@ int func(int argc, char* argv[]) {
 
   // Build interpreter.
 
-  std::unique_ptr<TfLiteInterpreterOptions, decltype(&TfLiteInterpreterOptionsDelete)> options(
-      TfLiteInterpreterOptionsCreate(), &TfLiteInterpreterOptionsDelete);
+  std::unique_ptr<TfLiteInterpreterOptions, decltype(TfLiteInterpreterOptionsDelete)> options(
+      TfLiteInterpreterOptionsCreate(), TfLiteInterpreterOptionsDelete);
 
   TfLiteInterpreterOptionsSetNumThreads(options.get(), 1);
 
@@ -236,8 +189,8 @@ int func(int argc, char* argv[]) {
 
   TfLiteInterpreterOptionsAddDelegate(options.get(), delegate.get());
 
-  std::unique_ptr<TfLiteInterpreter, decltype(&TfLiteInterpreterDelete)> interpreter(
-      TfLiteInterpreterCreate(model.get(), options.get()), &TfLiteInterpreterDelete);
+  std::unique_ptr<TfLiteInterpreter, decltype(TfLiteInterpreterDelete)> interpreter(
+      TfLiteInterpreterCreate(model.get(), options.get()), TfLiteInterpreterDelete);
 
   if (TfLiteInterpreterAllocateTensors(interpreter.get())!= kTfLiteOk) {
     std::cerr << "Failed to allocate tensors." << std::endl;

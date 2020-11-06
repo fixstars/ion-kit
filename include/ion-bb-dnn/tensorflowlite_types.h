@@ -33,8 +33,8 @@ limitations under the License.
 // NOTE: The order of values in these structs are "semi-ABI stable". New values
 // should be added only to the end of structs and never reordered.
 
-#ifndef TENSORFLOW_LITE_C_COMMON_H_
-#define TENSORFLOW_LITE_C_COMMON_H_
+#ifndef ION_BB_DNN_TENSORFLOWLITE_TYPES_H
+#define ION_BB_DNN_TENSORFLOWLITE_TYPES_H
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -825,4 +825,4 @@ TfLiteDelegate TfLiteDelegateCreate();
 #ifdef __cplusplus
 }  // extern "C"
 #endif  // __cplusplus
-#endif  // TENSORFLOW_LITE_C_COMMON_H_
+#endif // ION_BB_DNN_TENSORFLOWLITE_TYPES_H
