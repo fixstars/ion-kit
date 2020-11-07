@@ -109,7 +109,7 @@ public:
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
 
     GeneratorParam<std::string> model_root_{"model_root", "resource/dnn/model"};
-    GeneratorParam<std::string> model_name_{"model_name", "/yolov4-tiny_416_416.onnx"};
+    GeneratorParam<std::string> model_name_{"model_name", "/yolov4-tiny_416_416"};
     GeneratorParam<std::string> cache_root_{"cache_root", "/tmp"};
     GeneratorParam<int32_t> width_{"width", 416};
     GeneratorParam<int32_t> height_{"height", 416};
@@ -124,25 +124,30 @@ public:
         const std::string model_name(model_name_);
 
         char *model_root_from_env = getenv("ION_BB_DNN_MODELS_ROOT");
-        std::string model_path;
-        if (model_root_from_env != nullptr) {
-            model_path = model_root_from_env + model_name;
-        } else {
-            model_path = model_root_ + model_name;
-        }
 
-        std::ifstream ifs(model_path, std::ifstream::ate | std::ifstream::binary);
-        if (!ifs) {
-            std::cout << model_path << " not found..." << std::endl;
-            return;
-        }
+        Halide::Buffer<uint8_t> model_buf[2];
+        const char* model_exts[] = {".onnx", ".tflite"};
+        for (int i=0; i<2; ++i)
+        {
+            std::string model_path;
+            if (model_root_from_env != nullptr) {
+                model_path = model_root_from_env + model_name + model_exts[i];
+            } else {
+                model_path = model_root_ + model_name + model_exts[i];
+            }
 
-        Halide::Buffer<uint8_t> model_buf;
-        model_buf = Buffer<uint8_t>(static_cast<int>(ifs.tellg()));
-        const int32_t model_size_in_bytes = model_buf.size_in_bytes();
-        ifs.clear();
-        ifs.seekg(ifs.beg);
-        ifs.read(reinterpret_cast<char *>(model_buf.data()), model_size_in_bytes);
+            std::ifstream ifs(model_path, std::ifstream::ate | std::ifstream::binary);
+            if (ifs) {
+                model_buf[i] = Buffer<uint8_t>(static_cast<int>(ifs.tellg()));
+                const int32_t model_size_in_bytes = model_buf[i].size_in_bytes();
+                ifs.clear();
+                ifs.seekg(ifs.beg);
+                ifs.read(reinterpret_cast<char *>(model_buf[i].data()), model_size_in_bytes);
+            } else {
+                std::cout << model_path << " not found..." << std::endl;
+                model_buf[i] = Buffer<uint8_t>::make_scalar();
+            }
+        }
 
         input = Func(static_cast<std::string>(gc_prefix) + "yolov4_input");
 
@@ -165,7 +170,7 @@ public:
         const int32_t width = width_;
         const bool cuda_enable = this->get_target().has_feature(Target::Feature::CUDA);
 
-        std::vector<ExternFuncArgument> params{input, session_id_buf, model_buf, cache_path_buf, height, width, cuda_enable};
+        std::vector<ExternFuncArgument> params{input, session_id_buf, model_buf[0], model_buf[1], cache_path_buf, height, width, cuda_enable};
 
         Func yolov4_object_detection(static_cast<std::string>(gc_prefix) + "yolov4_object_detection");
         yolov4_object_detection.define_extern("yolov4_object_detection", params, {Float(32), Float(32)}, D - 1);
@@ -291,12 +296,12 @@ public:
 
 }  // namespace
 
-// ION_REGISTER_BUILDING_BLOCK(SplitU8, yolov4_split_u8);
-// ION_REGISTER_BUILDING_BLOCK(SplitF32, yolov4_split_f32);
-// ION_REGISTER_BUILDING_BLOCK(ReorderHWC2CHW<uint8_t>, yolov4_reorder_hwc2chw);
-// ION_REGISTER_BUILDING_BLOCK(RGB2BGR<uint8_t>, yolov4_rgb2bgr);
-// ION_REGISTER_BUILDING_BLOCK(BGR2RGB<uint8_t>, yolov4_bgr2rgb);
-// ION_REGISTER_BUILDING_BLOCK(Devide255FromU8ToF32, yolov4_devide255);
+ION_REGISTER_BUILDING_BLOCK(SplitU8, yolov4_split_u8);
+ION_REGISTER_BUILDING_BLOCK(SplitF32, yolov4_split_f32);
+ION_REGISTER_BUILDING_BLOCK(ReorderHWC2CHW<uint8_t>, yolov4_reorder_hwc2chw);
+ION_REGISTER_BUILDING_BLOCK(RGB2BGR<uint8_t>, yolov4_rgb2bgr);
+ION_REGISTER_BUILDING_BLOCK(BGR2RGB<uint8_t>, yolov4_bgr2rgb);
+ION_REGISTER_BUILDING_BLOCK(Devide255FromU8ToF32, yolov4_devide255);
 ION_REGISTER_BUILDING_BLOCK(YOLOv4ObjectDetection, yolov4_object_detection);
 ION_REGISTER_BUILDING_BLOCK(YOLOv4BoxRendering, yolov4_box_rendering);
 ION_REGISTER_BUILDING_BLOCK(YOLOv4ObjectDetectionArray, yolov4_object_detection_array);

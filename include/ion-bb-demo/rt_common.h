@@ -1,15 +1,26 @@
-#ifndef ION_BB_DNN_UTIL_H
-#define ION_BB_DNN_UTIL_H
+#ifndef ION_BB_DEMO_RT_COMMON_H
+#define ION_BB_DEMO_RT_COMMON_H
 
-#include <dlfcn.h>
 #include <algorithm>
-#include <stdexcept>
+#include <cstdio>
 #include <string>
-#include <vector>
+
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#else
+#include <dlfcn.h>
+#endif
+
+#ifdef _WIN32
+#define ION_EXPORT __declspec(dllexport)
+#else
+#define ION_EXPORT
+#endif
 
 namespace ion {
 namespace bb {
-namespace dnn {
+namespace demo {
 
 template<typename... Rest>
 std::string format(const char *fmt, const Rest &... rest) {
@@ -28,27 +39,27 @@ public:
     using Handle = void *;
 #endif
 
-    DynamicModule(const std::string &module_name, bool with_extension = false) {
+    DynamicModule(const std::string &module_name, bool essential) {
         if (module_name == "") {
             handle_ = nullptr;
             return;
         }
 
 #ifdef _WIN32
-        auto file_name = with_extension ? module_name : module_name + ".dll";
+        auto file_name = module_name + ".dll";
         handle_ = LoadLibraryA(file_name.c_str());
-        if (handle_ == nullptr) {
-            std::cerr << get_error_string() << std::endl;
-            return;
-        }
 #else
-        auto file_name = with_extension ? module_name : "lib" + module_name + ".so";
+        auto file_name = "lib" + module_name + ".so";
         handle_ = dlopen(file_name.c_str(), RTLD_NOW);
-        if (handle_ == nullptr) {
-            std::cerr << get_error_string() << std::endl;
-            return;
-        }
 #endif
+
+        if (handle_ == nullptr) {
+            if (essential) {
+                throw std::runtime_error(get_error_string());
+            } else {
+                std::cerr << format("WARNING: Not found the not essential dynamic library: %s, it may work as a simulation mode", module_name.c_str());
+            }
+        }
     }
 
     ~DynamicModule() {
@@ -61,22 +72,21 @@ public:
         }
     }
 
+    DynamicModule(const std::string &module_name)
+        : DynamicModule(module_name, true) {
+    }
+
     bool is_available(void) const {
         return handle_ != NULL;
     }
 
     template<typename T>
     T get_symbol(const std::string &symbol_name) const {
-        void *func_handle;
 #if defined(_WIN32)
-        func_handle = GetProcAddress(handle_, symbol_name.c_str());
+        return reinterpret_cast<T>(GetProcAddress(handle_, symbol_name.c_str()));
 #else
-        func_handle = dlsym(handle_, symbol_name.c_str());
+        return reinterpret_cast<T>(dlsym(handle_, symbol_name.c_str()));
 #endif
-        if (func_handle == nullptr) {
-            throw std::runtime_error(get_error_string());
-        }
-        return reinterpret_cast<T>(func_handle);
     }
 
 private:
@@ -106,7 +116,7 @@ private:
     Handle handle_;
 };
 
-}  // namespace dnn
+}  // namespace demo
 }  // namespace bb
 }  // namespace ion
 

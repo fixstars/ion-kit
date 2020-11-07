@@ -228,7 +228,7 @@ namespace dnn {
 
 class TflSessionManager {
  public:
-     TflSessionManager& get_instance() {
+     static TflSessionManager& get_instance() {
          static TflSessionManager instance;
          return instance;
      }
@@ -306,7 +306,7 @@ int yolov4_object_detection_tfl(halide_buffer_t *in,
       options(TfLiteInterpreterOptionsCreate(), TfLiteInterpreterOptionsDelete);
   TfLiteInterpreterOptionsSetNumThreads(options.get(), 1);
   if (TflSessionManager::get_instance().is_available_edgetpu()) {
-      enable_edgetpu(options.get())
+      enable_edgetpu(options.get());
   }
 
   // Build interpreter
@@ -323,11 +323,11 @@ int yolov4_object_detection_tfl(halide_buffer_t *in,
   }
 
   // Prepare input
-  TfLiteTensor *tensor = TfLiteInterpreterGetInputTensor(interpreter.get(), index);
+  TfLiteTensor *tensor = TfLiteInterpreterGetInputTensor(interpreter.get(), 0);
 
   if (TfLiteTensorByteSize(tensor) != in->size_in_bytes()) {
       std::cerr << "Input size mismatches: "
-          << in->size_in_bytes() " vs " << TfLiteTensorByteSize(tensor)
+          << in->size_in_bytes() << " vs " << TfLiteTensorByteSize(tensor)
           << std::endl;
       return -1;
   }

@@ -15,7 +15,7 @@ ion_run(yolov4 yolov4_compile SRCS yolov4_run.cc TARGET_STRING "host-profile")
 ion_run(demo demo_compile SRCS demo_run.cc
   COMPILE_ARGS
     ${CMAKE_SOURCE_DIR}/data/dnn/model
-    /yolov4-tiny_416_416_batch6.onnx
+    /yolov4-tiny_416_416_batch6
   TARGET_STRING "host-profile")
 if(WITH_CUDA)
     ion_run(producerx3_gpu producerx3_compile SRCS producerx3_run.cc TARGET_STRING "host-cuda-cuda_capability_50-profile")
@@ -24,7 +24,7 @@ if(WITH_CUDA)
     ion_run(demo_gpu demo_compile SRCS demo_run.cc
     COMPILE_ARGS
       ${CMAKE_SOURCE_DIR}/data/dnn/model
-      /yolov4-tiny_416_416_batch6.onnx
+      /yolov4-tiny_416_416_batch6
     TARGET_STRING "host-cuda-cuda_capability_50-profile")
 endif()
 

@@ -15,7 +15,7 @@
 
 #include <HalideBuffer.h>
 
-#include "rt_common.h"
+#include "util.h"
 
 namespace ion {
 namespace bb {
@@ -1074,10 +1074,13 @@ public:
     using OrtSessionOptionsAppendExecutionProvider_Tensorrt_t = OrtStatus *(*)(OrtSessionOptions *options, int device_id);
 
     ONNXRuntime()
-        : dm_{"onnxruntime"} {
-        OrtGetApiBase_t get_ort_api_base = dm_.get_symbol<OrtGetApiBase_t>("OrtGetApiBase");
-        const OrtApi *api = get_ort_api_base()->GetApi(ORT_API_VERSION);
-        api_ = const_cast<OrtApi *>(api);
+        : dm_{"onnxruntime"}, api_(nullptr)
+    {
+        if (dm_.is_available()) {
+            OrtGetApiBase_t get_ort_api_base = dm_.get_symbol<OrtGetApiBase_t>("OrtGetApiBase");
+            const OrtApi *api = get_ort_api_base()->GetApi(ORT_API_VERSION);
+            api_ = const_cast<OrtApi *>(api);
+        }
     }
 
     const OrtApi *get_api() const {

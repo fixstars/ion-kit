@@ -33,7 +33,7 @@ public:
             set_tensorrt_cache_env(cache_root);
             ort_->enable_tensorrt_provider(session_options, 0);
         }
-        ort_->check_status(api->CreateSessionFromArray(env, model, model_size, session_options, &session));
+        ort_->check_status(api->CreateSessionFromArray(env, model_data, model_size, session_options, &session));
     }
 
     inline const ONNXRuntime *get_ort() const {
@@ -52,7 +52,7 @@ public:
         static std::map<std::string, std::unique_ptr<OrtSessionManager>> map_;
         OrtSessionManager *ort_manager;
         if (map_.count(uuid) == 0) {
-            map_[uuid] = std::unique_ptr<OrtSessionManager>(new OrtSessionManager(model, model_size, cache_root, cuda_enable));
+            map_[uuid] = std::unique_ptr<OrtSessionManager>(new OrtSessionManager(model_data, model_size, cache_root, cuda_enable));
         }
         return map_[uuid].get();
     }
@@ -70,19 +70,14 @@ private:
     }
 
     int set_tensorrt_cache_env(const std ::string &cache_root) const {
-        static char env_buf[3][200];
-        snprintf(env_buf[0], sizeof(env_buf[0]), "ORT_TENSORRT_ENGINE_CACHE_ENABLE=1");
-        if (putenv(env_buf[0]) == -1) {
-            std::cout << "set ORT_TENSORRT_ENGINE_CACHE_ENABLE failed..." << std::endl;
+        if (setenv("ORT_TENSORRT_ENGINE_CACHE_ENABLE", "1", 1) == -1) {
+            std::cerr << "set ORT_TENSORRT_ENGINE_CACHE_ENABLE failed..." << std::endl;
         }
-        snprintf(env_buf[1], sizeof(env_buf[1]), "ORT_TENSORRT_FP16_ENABLE=1");
-        if (putenv(env_buf[1]) == -1) {
-            std::cout << "set ORT_TENSORRT_FP16_ENABLE failed..." << std::endl;
+        if (setenv("ORT_TENSORRT_FP16_ENABLE", "1", 1) == -1) {
+            std::cerr << "set ORT_TENSORRT_FP16_ENABLE failed..." << std::endl;
         }
-        const std::string ort_cache_path = "ORT_TENSORRT_ENGINE_CACHE_PATH=" + cache_root;
-        snprintf(env_buf[2], sizeof(env_buf[2]), ort_cache_path.c_str());
-        if (putenv(env_buf[2]) == -1) {
-            std::cout << "set ORT_TENSORRT_ENGINE_CACHE_PATH failed..." << std::endl;
+        if (setenv("ORT_TENSORRT_ENGINE_CACHE_PATH", cache_root.c_str(), 1) == -1) {
+            std::cerr << "set ORT_TENSORRT_ENGINE_CACHE_PATH failed..." << std::endl;
         }
     }
 
@@ -91,6 +86,11 @@ private:
     OrtSession *session;
     OrtSessionOptions *session_options;
 };
+
+bool is_ort_available() {
+    ONNXRuntime ort;
+    return ort.get_api() != nullptr;
+}
 
 int yolov4_object_detection_ort(halide_buffer_t *in,
                                 const std::string& session_id,
