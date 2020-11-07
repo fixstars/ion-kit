@@ -14,11 +14,6 @@
 
 #include <HalideBuffer.h>
 
-#include <opencv2/core/core.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-
-#include <HalideBuffer.h>
-
 #include "yolov4_utils.h"
 #include "yolov4_ort.h"
 #include "yolov4_tfl.h"
