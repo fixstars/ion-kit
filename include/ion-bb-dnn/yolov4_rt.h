@@ -26,7 +26,8 @@
 
 extern "C" ION_EXPORT int yolov4_object_detection(halide_buffer_t *in,
                                                   halide_buffer_t *session_id_buf,
-                                                  halide_buffer_t *model_buf,
+                                                  halide_buffer_t *model_buf_ort,
+                                                  halide_buffer_t *model_buf_tfl,
                                                   halide_buffer_t *cache_path_buf,
                                                   int height, int width,
                                                   bool cuda_enable,
@@ -64,12 +65,13 @@ extern "C" ION_EXPORT int yolov4_object_detection(halide_buffer_t *in,
     std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
     std::string cache_root(reinterpret_cast<const char *>(cache_path_buf->host));
 
-    const uint8_t *model_data = reinterpret_cast<const uint8_t *>(model_buf->host);
-    int model_size = model_buf->size_in_bytes();
-
     if (is_tfl_available()) {
+        const uint8_t *model_data = reinterpret_cast<const uint8_t *>(model_buf_tfl->host);
+        int model_size = model_buf_tfl->size_in_bytes();
         return yolov4_object_detection_tfl(in, session_id, cache_root, model_data, model_size, height, width, cuda_enable, boxes, confs);
     } else if (is_ort_available()) {
+        const uint8_t *model_data = reinterpret_cast<const uint8_t *>(model_buf_ort->host);
+        int model_size = model_buf_ort->size_in_bytes();
         return yolov4_object_detection_ort(in, session_id, cache_root, model_data, model_size, height, width, cuda_enable, boxes, confs);
     } else {
         return -1;
