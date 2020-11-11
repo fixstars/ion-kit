@@ -121,7 +121,7 @@ public:
         using namespace Halide;
 
         const std::string model_root(model_root_);
-        const std::string model_name(model_name_);
+        std::string model_name(model_name_);
 
         char *model_root_from_env = getenv("ION_BB_DNN_MODELS_ROOT");
 
@@ -129,6 +129,12 @@ public:
         const char* model_exts[] = {".onnx", ".tflite"};
         for (int i=0; i<2; ++i)
         {
+            // TODO: How can we embed different model for different devices?
+            if (std::string(model_exts[i]) == ".tflite") {
+                model_name = "/ssd_mobilenet_v2_coco_quant_postprocess";
+                // model_name = "/ssd_mobilenet_v2_coco_quant_postprocess_edgetpu";
+            }
+
             std::string model_path;
             if (model_root_from_env != nullptr) {
                 model_path = model_root_from_env + model_name + model_exts[i];

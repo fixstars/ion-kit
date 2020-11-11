@@ -38,14 +38,12 @@ public:
         auto file_name = with_extension ? module_name : module_name + ".dll";
         handle_ = LoadLibraryA(file_name.c_str());
         if (handle_ == nullptr) {
-            std::cerr << get_error_string() << std::endl;
             return;
         }
 #else
         auto file_name = with_extension ? module_name : "lib" + module_name + ".so";
         handle_ = dlopen(file_name.c_str(), RTLD_NOW);
         if (handle_ == nullptr) {
-            std::cerr << get_error_string() << std::endl;
             return;
         }
 #endif

@@ -324,7 +324,7 @@ int yolov4_object_detection_tfl(halide_buffer_t *in,
 
   // Prepare input
   TfLiteTensor *tensor = TfLiteInterpreterGetInputTensor(interpreter.get(), 0);
-
+#if 0
   if (TfLiteTensorByteSize(tensor) != in->size_in_bytes()) {
       std::cerr << "Input size mismatches: "
           << in->size_in_bytes() << " vs " << TfLiteTensorByteSize(tensor)
@@ -345,20 +345,20 @@ int yolov4_object_detection_tfl(halide_buffer_t *in,
   std::memcpy(reinterpret_cast<uint8_t*>(TfLiteTensorData(tensor)),
               in->host,
               in->size_in_bytes());
-
+#endif
   // Invoke
   if (TfLiteInterpreterInvoke(interpreter.get()) != kTfLiteOk) {
       std::cerr << "Failed to invoke" << std::endl;
       return -1;
   }
-
+#if 0
   // Prepare output
   const int num_outputs = TfLiteInterpreterGetOutputTensorCount(interpreter.get());
   if (num_outputs != 2) {
       std::cerr << "Unexpected number of output" << std::endl;
       return -1;
   }
-
+#endif
   const auto* boxes_tensor = TfLiteInterpreterGetOutputTensor(interpreter.get(), 0);
   const auto* confs_tensor = TfLiteInterpreterGetOutputTensor(interpreter.get(), 1);
 
