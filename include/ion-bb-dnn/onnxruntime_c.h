@@ -15,7 +15,7 @@
 
 #include <HalideBuffer.h>
 
-#include "util.h"
+#include "rt_util.h"
 
 namespace ion {
 namespace bb {

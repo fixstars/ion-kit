@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #include "tensorflowlite_types.h"
-#include "util.h"
+#include "rt_util.h"
 
 #ifdef __cplusplus
 extern "C" {

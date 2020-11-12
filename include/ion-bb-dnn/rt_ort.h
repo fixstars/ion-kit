@@ -15,7 +15,7 @@
 #include <HalideBuffer.h>
 
 #include "onnxruntime_c.h"
-#include "yolov4_utils.h"
+#include "rt_yolo.h"
 
 namespace ion {
 namespace bb {
@@ -225,7 +225,7 @@ int object_detection_ort(halide_buffer_t *in,
     const int num = 2535;
     const int num_classes = 80;
 
-    const auto prediceted_boxes = post_processing(boxes_ptr, confs_ptr, num, num_classes);
+    const auto prediceted_boxes = yolo_post_processing(boxes_ptr, confs_ptr, num, num_classes);
     cv::Mat out_(height, width, CV_32FC3, out->host);
     in_.copyTo(out_);
 

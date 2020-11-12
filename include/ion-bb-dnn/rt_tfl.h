@@ -6,6 +6,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
+#include "rt_ssd.h"
 #include "httplib.h"
 #include "edgetpu_c.h"
 #include "tensorflowlite_c.h"
@@ -134,153 +135,6 @@ bool is_tfl_available() {
     return TflSessionManager::get_instance().is_available();
 }
 
-int ssd_render_boxes(cv::Mat &frame, float *boxes, float *classes, float *scores, int nums, int32_t w, int32_t h) {
-
-    static const std::map<int, std::pair<const char *, cv::Scalar>> label_color_map = {
-        { 0, {"person", cv::Scalar(111, 221, 142)}},
-        { 1, {"bicycle", cv::Scalar(199, 151, 121)}},
-        { 2, {"car", cv::Scalar(145, 233, 34)}},
-        { 3, {"motorbike", cv::Scalar(110, 131, 63)}},
-        { 4, {"aeroplane", cv::Scalar(251, 141, 195)}},
-        { 5, {"bus", cv::Scalar(136, 137, 194)}},
-        { 6, {"train", cv::Scalar(114, 27, 34)}},
-        { 7, {"truck", cv::Scalar(172, 221, 65)}},
-        { 8, {"boat", cv::Scalar(7, 30, 178)}},
-        { 9, {"traffic light", cv::Scalar(31, 28, 230)}},
-        {10, {"fire hydrant", cv::Scalar(66, 214, 26)}},
-        {12, {"stop sign", cv::Scalar(133, 39, 182)}},
-        {13, {"parking meter", cv::Scalar(33, 20, 48)}},
-        {14, {"bench", cv::Scalar(174, 253, 25)}},
-        {15, {"bird", cv::Scalar(212, 160, 0)}},
-        {16, {"cat", cv::Scalar(88, 78, 255)}},
-        {17, {"dog", cv::Scalar(183, 35, 220)}},
-        {18, {"horse", cv::Scalar(118, 157, 99)}},
-        {19, {"sheep", cv::Scalar(81, 39, 129)}},
-        {20, {"cow", cv::Scalar(253, 97, 253)}},
-        {21, {"elephant", cv::Scalar(208, 170, 203)}},
-        {22, {"bear", cv::Scalar(209, 175, 193)}},
-        {23, {"zebra", cv::Scalar(43, 32, 163)}},
-        {24, {"giraffe", cv::Scalar(246, 162, 213)}},
-        {26, {"backpack", cv::Scalar(150, 199, 251)}},
-        {27, {"umbrella", cv::Scalar(225, 165, 42)}},
-        {30, {"handbag", cv::Scalar(56, 139, 51)}},
-        {31, {"tie", cv::Scalar(235, 82, 61)}},
-        {32, {"suitcase", cv::Scalar(219, 129, 248)}},
-        {33, {"frisbee", cv::Scalar(120, 74, 139)}},
-        {34, {"skis", cv::Scalar(164, 201, 240)}},
-        {35, {"snowboard", cv::Scalar(238, 83, 85)}},
-        {36, {"sports ball", cv::Scalar(134, 120, 102)}},
-        {37, {"kite", cv::Scalar(166, 149, 183)}},
-        {38, {"baseball bat", cv::Scalar(243, 13, 18)}},
-        {39, {"baseball glove", cv::Scalar(56, 182, 85)}},
-        {40, {"skateboard", cv::Scalar(117, 60, 48)}},
-        {41, {"surfboard", cv::Scalar(109, 204, 30)}},
-        {42, {"tennis racket", cv::Scalar(245, 221, 109)}},
-        {43, {"bottle", cv::Scalar(74, 27, 47)}},
-        {45, {"wine glass", cv::Scalar(229, 166, 29)}},
-        {46, {"cup", cv::Scalar(158, 219, 241)}},
-        {47, {"fork", cv::Scalar(95, 153, 84)}},
-        {48, {"knife", cv::Scalar(218, 183, 12)}},
-        {49, {"spoon", cv::Scalar(146, 37, 136)}},
-        {50, {"bowl", cv::Scalar(63, 212, 25)}},
-        {51, {"banana", cv::Scalar(174, 9, 96)}},
-        {52, {"apple", cv::Scalar(180, 104, 193)}},
-        {53, {"sandwich", cv::Scalar(160, 117, 33)}},
-        {54, {"orange", cv::Scalar(224, 42, 115)}},
-        {55, {"broccoli", cv::Scalar(9, 49, 96)}},
-        {56, {"carrot", cv::Scalar(124, 213, 203)}},
-        {57, {"hot dog", cv::Scalar(187, 193, 196)}},
-        {58, {"pizza", cv::Scalar(57, 25, 171)}},
-        {59, {"donut", cv::Scalar(189, 74, 145)}},
-        {60, {"cake", cv::Scalar(73, 119, 11)}},
-        {61, {"chair", cv::Scalar(37, 253, 178)}},
-        {62, {"sofa", cv::Scalar(83, 223, 49)}},
-        {63, {"pottedplant", cv::Scalar(111, 216, 113)}},
-        {64, {"bed", cv::Scalar(167, 152, 203)}},
-        {66, {"diningtable", cv::Scalar(99, 144, 184)}},
-        {69, {"toilet", cv::Scalar(100, 204, 167)}},
-        {71, {"tvmonitor", cv::Scalar(203, 87, 87)}},
-        {72, {"laptop", cv::Scalar(139, 188, 41)}},
-        {73, {"mouse", cv::Scalar(23, 84, 185)}},
-        {74, {"remote", cv::Scalar(79, 160, 205)}},
-        {75, {"keyboard", cv::Scalar(63, 7, 87)}},
-        {76, {"cell phone", cv::Scalar(197, 255, 152)}},
-        {77, {"microwave", cv::Scalar(199, 123, 207)}},
-        {78, {"oven", cv::Scalar(211, 86, 200)}},
-        {79, {"toaster", cv::Scalar(232, 184, 61)}},
-        {80, {"sink", cv::Scalar(226, 254, 156)}},
-        {81, {"refrigerator", cv::Scalar(195, 207, 141)}},
-        {83, {"book", cv::Scalar(238, 101, 223)}},
-        {84, {"clock", cv::Scalar(24, 84, 233)}},
-        {85, {"vase", cv::Scalar(39, 104, 233)}},
-        {86, {"scissors", cv::Scalar(49, 115, 78)}},
-        {87, {"teddy bear", cv::Scalar(199, 193, 20)}},
-        {88, {"hair drier", cv::Scalar(156, 85, 108)}},
-        {89, {"toothbrush", cv::Scalar(189, 59, 8)}},
-    };
-
-    for (int i = 0; i < nums; ++i) {
-        const auto lc = label_color_map.at(static_cast<int>(classes[i]));
-        const auto label = lc.first;
-        const auto color = lc.second / 255.0;
-        const float top = boxes[4 * i + 0];
-        const float left = boxes[4 * i + 1];
-        const float bottom = boxes[4 * i + 2];
-        const float right = boxes[4 * i + 3];
-        const int x1 = left * w;
-        const int y1 = top * h;
-        const int x2 = right * w;
-        const int y2 = bottom * h;
-        const cv::Point2d p1(x1, y1);
-        const cv::Point2d p2(x2, y2);
-        cv::rectangle(frame, p1, p2, color);
-        // s += ":" + std::to_string(scores[i]);
-        cv::putText(frame, label, cv::Point(x1, y1 - 3), cv::FONT_HERSHEY_COMPLEX, 0.5, color);
-    }
-
-    return 0;
-}
-
-std::vector<DetectionBox> post_processing(const float *boxes, const float *classes, const float *scores, const int num, const float conf_thresh = 0.4, const float nms_thresh = 0.4) {
-    std::vector<DetectionBox> all_boxes;
-
-    for (int i = 0; i < num; i++) {
-        const auto max_conf = scores[i];
-        const auto max_id = classes[i];
-
-        if (max_conf > conf_thresh) {
-            DetectionBox b;
-            b.max_conf = max_conf;
-            b.max_id = max_id;
-            b.x1 = boxes[i * 4 + 1];
-            b.y1 = boxes[i * 4 + 0];
-            b.x2 = boxes[i * 4 + 3];
-            b.y2 = boxes[i * 4 + 2];
-            all_boxes.push_back(b);
-        }
-    }
-
-    std::vector<bool> is_valid(all_boxes.size(), true);
-
-    for (int i = 0; i < all_boxes.size(); i++) {
-        if (!is_valid[i]) continue;
-        const auto main = all_boxes[i];
-        for (int j = i + 1; j < all_boxes.size(); j++) {
-            if (!is_valid[j]) continue;
-            const auto other = all_boxes[j];
-            const auto iou = intersection(main, other) / union_(main, other);
-            is_valid[j] = iou <= nms_thresh;
-        }
-    }
-
-    std::vector<DetectionBox> detected_boxes;
-    for (int i = 0; i < all_boxes.size(); i++) {
-        if (is_valid[i]) detected_boxes.push_back(all_boxes[i]);
-    }
-
-    return detected_boxes;
-}
-
 int object_detection_tfl(halide_buffer_t *in,
                          const std::string& model_root_url,
                          halide_buffer_t *out) {
@@ -344,17 +198,15 @@ int object_detection_tfl(halide_buffer_t *in,
     float *scores_ptr = reinterpret_cast<float*>(TfLiteTensorData(scores));
     float *num_ptr = reinterpret_cast<float*>(TfLiteTensorData(num));
 
-    const auto detected_boxes = post_processing(boxes_ptr, classes_ptr, scores_ptr, static_cast<int>(*num_ptr));
+    const auto detected_boxes = ssd_post_processing(boxes_ptr, classes_ptr, scores_ptr, static_cast<int>(*num_ptr));
 
     cv::Mat out_(height, width, CV_32FC3, out->host);
     in_.copyTo(out_);
 
     render_boxes(out_, detected_boxes, width, height);
-    //ssd_render_boxes(out_, boxes_ptr, classes_ptr, scores_ptr, static_cast<int>(*num_ptr), width, height);
 
     return 0;
 }
-
 
 }  // namespace dnn
 }  // namespace bb
