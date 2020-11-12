@@ -23,6 +23,21 @@ private:
     Halide::Var x, y, c;
 };
 
+template<typename T>
+class ReorderCHW2HWC : public BuildingBlock<ReorderCHW2HWC<T>> {
+public:
+    constexpr static const int dim = 3;
+    GeneratorInput<Halide::Func> input{"input", Halide::type_of<T>(), dim};
+    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), dim};
+
+    void generate() {
+        output(c, x, y) = input(x, y, c);
+    }
+
+private:
+    Halide::Var c, x, y;
+};
+
 template<typename X, int32_t D>
 class ObjectDetectionBase : public BuildingBlock<X> {
     static_assert(D == 3 || D == 4, "D must be 3 or 4.");
@@ -77,11 +92,11 @@ public:
     }
 
     void schedule() {
-        Halide::Var x = input.args()[0];
-        Halide::Var y = input.args()[1];
-        Halide::Var c = input.args()[2];
+        Halide::Var c = input.args()[0];
+        Halide::Var x = input.args()[1];
+        Halide::Var y = input.args()[2];
 
-        input.reorder(c, x, y).bound(c, 0, 3).unroll(c);
+        input.bound(c, 0, 3).unroll(c);
 
         if (this->get_target().has_gpu_feature()) {
             Halide::Var xi, yi;
@@ -110,8 +125,9 @@ public:
 } // bb
 } // ion
 
+ION_REGISTER_BUILDING_BLOCK(ion::bb::dnn::ReorderCHW2HWC<uint8_t>, dnn_reorder_chw2hwc);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::dnn::ReorderHWC2CHW<uint8_t>, dnn_reorder_hwc2chw);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::dnn::ObjectDetection, dnn_object_detection);
-ION_REGISTER_BUILDING_BLOCK(ion::bb::dnn::ObjectDetectionBatched, dnn_object_detection_bached);
+// TODO: ION_REGISTER_BUILDING_BLOCK(ion::bb::dnn::ObjectDetectionBatched, dnn_object_detection_bached);
 
 #endif // ION_BB_DNN_BB__H

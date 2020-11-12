@@ -22,7 +22,7 @@ namespace dnn {
 
 class OrtSessionManager {
 public:
-    OrtSessionManager(const uint8_t *model_data, int model_size, const std ::string &cache_root, bool cuda_enable)
+    OrtSessionManager(const std::string& model_root_url, const std ::string &cache_root, bool cuda_enable)
         : ort_{new ONNXRuntime()} {
         const OrtApi *api = ort_->get_api();
         ort_->check_status(api->CreateEnv(ORT_LOGGING_LEVEL_WARNING, "YOLOv4", &env));
@@ -33,7 +33,29 @@ public:
             set_tensorrt_cache_env(cache_root);
             ort_->enable_tensorrt_provider(session_options, 0);
         }
-        ort_->check_status(api->CreateSessionFromArray(env, model_data, model_size, session_options, &session));
+
+        std::string model_url = model_root_url + "yolov4-tiny_416_416.onnx";
+
+        std::string host_name;
+        std::string path_name;
+        std::tie(host_name, path_name) = parse_url(model_url);
+        if (host_name.empty() || path_name.empty()) {
+            std::cerr << "Invalid model URL : " << model_url << std::endl;
+            return;
+        }
+
+        httplib::Client cli(host_name.c_str());
+        cli.set_follow_location(true);
+        auto res = cli.Get(path_name.c_str());
+        if (!res || res->status != 200) {
+            std::cerr << "Failed to download model : " << model_url << std::endl;
+            return;
+        }
+
+        model_.resize(res->body.size());
+        std::memcpy(model_.data(), res->body.c_str(), res->body.size());
+
+        ort_->check_status(api->CreateSessionFromArray(env, model_.data(), model_.size(), session_options, &session));
     }
 
     inline const ONNXRuntime *get_ort() const {
@@ -48,11 +70,11 @@ public:
         return session;
     }
 
-    static OrtSessionManager *make(const std::string &uuid, const uint8_t *model_data, int model_size, const std ::string &cache_root, bool cuda_enable) {
+    static OrtSessionManager *make(const std::string &uuid, const std::string& model_root_url, const std ::string &cache_root, bool cuda_enable) {
         static std::map<std::string, std::unique_ptr<OrtSessionManager>> map_;
         OrtSessionManager *ort_manager;
         if (map_.count(uuid) == 0) {
-            map_[uuid] = std::unique_ptr<OrtSessionManager>(new OrtSessionManager(model_data, model_size, cache_root, cuda_enable));
+            map_[uuid] = std::unique_ptr<OrtSessionManager>(new OrtSessionManager(model_root_url, cache_root, cuda_enable));
         }
         return map_[uuid].get();
     }
@@ -85,6 +107,7 @@ private:
     OrtEnv *env;
     OrtSession *session;
     OrtSessionOptions *session_options;
+    std::vector<uint8_t> model_;
 };
 
 bool is_ort_available() {
@@ -98,8 +121,12 @@ int object_detection_ort(halide_buffer_t *in,
                          const std::string& cache_root,
                          bool cuda_enable,
                          halide_buffer_t *out) {
-#if 0
-    OrtSessionManager *session_manager = OrtSessionManager::make(session_id, model_data, model_size, cache_root, cuda_enable);
+
+    const int channel = 3;
+    const int width = in->dim[1].extent;
+    const int height = in->dim[2].extent;
+
+    OrtSessionManager *session_manager = OrtSessionManager::make(session_id, model_root_url, cache_root, cuda_enable);
     const ONNXRuntime *ort = session_manager->get_ort();
     const OrtApi *api = session_manager->get_ort_api();
     OrtSession *session = session_manager->get_ort_session();
@@ -123,28 +150,47 @@ int object_detection_ort(halide_buffer_t *in,
 
     size_t num_dims;
     ort->check_status(api->GetDimensionsCount(tensor_info, &num_dims));
+    if (num_dims != 4) {
+        std::cerr << "This model is not supported." << std::endl;
+        return -1;
+    }
 
-    std::vector<int64_t> input_node_dims;
-    input_node_dims.resize(num_dims);
-    ort->check_status(api->GetDimensions(tensor_info, (int64_t *)input_node_dims.data(), num_dims));
+    std::vector<int64_t> input_node_dims(num_dims);
+    ort->check_status(api->GetDimensions(tensor_info, reinterpret_cast<int64_t *>(input_node_dims.data()), num_dims));
     size_t input_size;
     ort->check_status(api->GetTensorShapeElementCount(tensor_info, &input_size));
 
     api->ReleaseTypeInfo(typeinfo);
 
-    const int out_num = boxes->dimensions == 2 ? 1 : boxes->dim[2].extent;
-    const int input_stride = boxes->dimensions == 2 ? 0 /*UNUSED*/ : in->dim[3].stride;
-    const int boxes_stride = boxes->dimensions == 2 ? 0 /*UNUSED*/ : boxes->dim[2].stride;
-    const int confs_stride = boxes->dimensions == 2 ? 0 /*UNUSED*/ : confs->dim[2].stride;
+    // const int out_num = boxes->dimensions == 2 ? 1 : boxes->dim[2].extent;
+    // const int input_stride = boxes->dimensions == 2 ? 0 /*UNUSED*/ : in->dim[3].stride;
+    // const int boxes_stride = boxes->dimensions == 2 ? 0 /*UNUSED*/ : boxes->dim[2].stride;
+    // const int confs_stride = boxes->dimensions == 2 ? 0 /*UNUSED*/ : confs->dim[2].stride;
+    const int out_num = 1;
+    const int input_stride = 0;
+    const int boxes_stride = 0;
+    const int confs_stride = 0;
 
-    const int batch = input_node_dims.data()[0];
+    const int batch = input_node_dims[0];
     if (out_num != batch) {
         std::cout << "Batch size must be " << batch << " (ONNX expected) but " << out_num << " given..." << std::endl;
         exit(-1);
     }
 
+    cv::Mat in_(height, width, CV_32FC3, in->host);
+
+    const int internal_width = input_node_dims.at(3);
+    const int internal_height = input_node_dims.at(2);
+
+    cv::Mat resized(internal_height, internal_width, CV_32FC3);
+    cv::resize(in_, resized, resized.size());
+
+    cv::Mat input_tensor_data(std::vector<int>{3, internal_height*internal_width}, CV_32FC1);
+
+    cv::transpose(resized.reshape(1, internal_width*internal_height), input_tensor_data);
+
     int i = 0;
-    float *input_tensor_ptr = reinterpret_cast<float *>(in->host) + input_stride * i;
+    float *input_tensor_ptr = reinterpret_cast<float*>(input_tensor_data.ptr());
     std::vector<const char *> output_tensor_names = {"boxes", "confs"};
 
     OrtMemoryInfo *memory_info;
@@ -175,17 +221,17 @@ int object_detection_ort(halide_buffer_t *in,
     ort->check_status(api->GetTensorShapeElementCount(boxes_info, &boxes_size));
     ort->check_status(api->GetTensorShapeElementCount(confs_info, &confs_size));
 
-    for (int i = 0; i < out_num; i++) {
-        int real_box_size = boxes_size / out_num;
-        memcpy(reinterpret_cast<float *>(boxes->host) + boxes_stride * i, boxes_ptr + real_box_size * i, sizeof(float) * real_box_size);
-        int real_conf_size = confs_size / out_num;
-        memcpy(reinterpret_cast<float *>(confs->host) + confs_stride * i, confs_ptr + real_conf_size * i, sizeof(float) * real_conf_size);
-    }
+    // for (int i = 0; i < out_num; i++) {
+    //     int real_box_size = boxes_size / out_num;
+    //     memcpy(reinterpret_cast<float *>(boxes->host) + boxes_stride * i, boxes_ptr + real_box_size * i, sizeof(float) * real_box_size);
+    //     int real_conf_size = confs_size / out_num;
+    //     memcpy(reinterpret_cast<float *>(confs->host) + confs_stride * i, confs_ptr + real_conf_size * i, sizeof(float) * real_conf_size);
+    // }
 
     api->ReleaseValue(output_tensors[0]);
     api->ReleaseValue(output_tensors[1]);
     api->ReleaseValue(input_tensor);
-#endif
+
     return 0;
 }
 

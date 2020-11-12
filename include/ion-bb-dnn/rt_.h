@@ -17,7 +17,7 @@
 #include "rt_tfl.h"
 #include "rt_ort.h"
 
-#include "yolov4_tfl.h"
+// #include "yolov4_tfl.h"
 
 #ifdef _WIN32
 #define ION_EXPORT __declspec(dllexport)
@@ -32,16 +32,10 @@ extern "C" ION_EXPORT int ion_bb_dnn_generic_object_detection(halide_buffer_t *i
                                                               bool cuda_enable,
                                                               halide_buffer_t *out) {
     if (in->is_bounds_query()) {
-        // Input is (N)CHW, output is (N)HWC
-        in->dim[0].min = out->dim[1].min;
-        in->dim[0].extent = out->dim[1].extent;
-        in->dim[1].min = out->dim[2].min;
-        in->dim[1].extent = out->dim[2].extent;
-        in->dim[2].min = out->dim[0].min;
-        in->dim[2].extent = out->dim[0].extent;
-        if (in->dimensions == 4) {
-            in->dim[3].min = out->dim[3].min;
-            in->dim[3].extent = out->dim[3].extent;
+        // Both input and output is (N)HWC
+        for (int i=0; i<in->dimensions; ++i) {
+            in->dim[i].min = out->dim[i].min;
+            in->dim[i].extent = out->dim[i].extent;
         }
         return 0;
     }

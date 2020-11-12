@@ -3,6 +3,9 @@
 
 #include <memory>
 
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
 #include "httplib.h"
 #include "edgetpu_c.h"
 #include "tensorflowlite_c.h"
@@ -18,7 +21,16 @@ class TflSessionManager {
          return instance;
      }
 
-     TfLiteInterpreter *get_interpreter(const std::string& model_root_url) {
+     struct TfLiteObjects {
+         // Need to hold model data permanently
+         std::shared_ptr<std::vector<uint8_t>> model_data;
+         std::shared_ptr<TfLiteModel> model;
+         std::shared_ptr<TfLiteDelegate> delegate;
+         std::shared_ptr<TfLiteInterpreterOptions> options;
+         std::shared_ptr<TfLiteInterpreter> interpreter;
+     };
+
+     std::shared_ptr<TfLiteInterpreter> get_interpreter(const std::string& model_root_url) {
         std::string model_url(model_root_url);
         if (is_available_edgetpu_) {
             model_url += "ssd_mobilenet_v2_coco_quant_postprocess_edgetpu.tflite";
@@ -26,8 +38,8 @@ class TflSessionManager {
             model_url += "ssd_mobilenet_v2_coco_quant_postprocess.tflite";
         }
 
-        if (interpreters_.count(model_url)) {
-            return interpreters_[model_url].get();
+        if (objects_.count(model_url)) {
+            return objects_[model_url].interpreter;
         }
 
         std::string host_name;
@@ -46,19 +58,17 @@ class TflSessionManager {
             return nullptr;
         }
 
-        std::vector<char> model_data(res->body.size());
-        std::memcpy(model_data.data(), res->body.c_str(), res->body.size());
-        std::unique_ptr<TfLiteModel, decltype(TfLiteModelDelete)> model(
-            TfLiteModelCreate(model_data.data(), model_data.size()), TfLiteModelDelete);
+        std::shared_ptr<std::vector<uint8_t>> model_data(new std::vector<uint8_t>(res->body.size()));
+        std::memcpy(model_data->data(), res->body.c_str(), res->body.size());
+        std::shared_ptr<TfLiteModel> model(TfLiteModelCreate(model_data->data(), model_data->size()), TfLiteModelDelete);
         if (model == nullptr) {
             std::cerr << "Illegal model format : " << model_url << std::endl;
             return nullptr;
         }
 
-        std::unique_ptr<TfLiteInterpreterOptions, decltype(TfLiteInterpreterOptionsDelete)>
-            options(TfLiteInterpreterOptionsCreate(), TfLiteInterpreterOptionsDelete);
+        std::shared_ptr<TfLiteInterpreterOptions> options(TfLiteInterpreterOptionsCreate(), TfLiteInterpreterOptionsDelete);
         TfLiteInterpreterOptionsSetNumThreads(options.get(), 1);
-        std::unique_ptr<TfLiteDelegate, decltype(edgetpu_free_delegate)> delegate(nullptr, edgetpu_free_delegate);
+        std::shared_ptr<TfLiteDelegate> delegate;
         if (is_available_edgetpu_) {
             // Determin device
             size_t num_devices;
@@ -71,8 +81,7 @@ class TflSessionManager {
             const auto& device = devices.get()[0];
 
             // Create EdgeTpu delegate
-            delegate = std::unique_ptr<TfLiteDelegate, decltype(edgetpu_free_delegate)>(
-                edgetpu_create_delegate(device.type, device.path, nullptr, 0), edgetpu_free_delegate);
+            delegate = std::shared_ptr<TfLiteDelegate>(edgetpu_create_delegate(device.type, device.path, nullptr, 0), edgetpu_free_delegate);
 
             TfLiteInterpreterOptionsAddDelegate(options.get(), delegate.get());
         }
@@ -90,8 +99,10 @@ class TflSessionManager {
             return nullptr;
         }
 
-        interpreters_[model_url] = interpreter;
-        return interpreter.get();
+        objects_[model_url] = TfLiteObjects{
+            model_data, model, delegate, options, interpreter
+        };
+        return interpreter;
      }
 
      bool is_available() {
@@ -113,22 +124,10 @@ class TflSessionManager {
         is_available_edgetpu_ = true;
     }
 
-    std::tuple<std::string, std::string> parse_url(const std::string &url) {
-        auto protocol_end_pos = url.find("://");
-        if (protocol_end_pos == std::string::npos) {
-            return std::tuple<std::string, std::string>("", "");
-        }
-        auto host_name_pos = protocol_end_pos + 3;
-        auto path_name_pos = url.find("/", host_name_pos);
-        auto host_name = url.substr(0, path_name_pos);
-        auto path_name = url.substr(path_name_pos);
-        return std::tuple<std::string, std::string>(host_name, path_name);
-    }
-
     bool is_available_tflite_;
     bool is_available_edgetpu_;
 
-    std::unordered_map<std::string, std::shared_ptr<TfLiteInterpreter>> interpreters_;
+    std::unordered_map<std::string, TfLiteObjects> objects_;
 };
 
 bool is_tfl_available() {
@@ -139,54 +138,66 @@ int object_detection_tfl(halide_buffer_t *in,
                          const std::string& model_root_url,
                          halide_buffer_t *out) {
 
-    auto& session = TflSessionManager::get_instance();
+    const int channel = 3;
+    const int width = in->dim[1].extent;
+    const int height = in->dim[2].extent;
 
-    TfLiteInterpreter *interpreter = session.get_interpreter(model_root_url);
+    cv::Mat in_(height, width, CV_32FC3, in->host);
+
+    auto interpreter = TflSessionManager::get_instance().get_interpreter(model_root_url);
 
     // Prepare input
-    TfLiteTensor *input = TfLiteInterpreterGetInputTensor(interpreter, 0);
-#if 0
-  if (TfLiteTensorByteSize(tensor) != in->size_in_bytes()) {
-      std::cerr << "Input size mismatches: "
-          << in->size_in_bytes() << " vs " << TfLiteTensorByteSize(tensor)
-          << std::endl;
-      return -1;
-  }
+    TfLiteTensor *input = TfLiteInterpreterGetInputTensor(interpreter.get(), 0);
 
-  if (TfLiteTensorDim(tensor, 1) != height ||
-      TfLiteTensorDim(tensor, 2) != width ||
-      TfLiteTensorDim(tensor, 3) != 3) {
-      std::cerr << "Input size mismatches: "
-              << "channels: " << 3 << " vs " << TfLiteTensorDim(tensor, 3)
-              << ", width: " << width << " vs " << TfLiteTensorDim(tensor, 2)
-              << ", height: " << height << " vs " << TfLiteTensorDim(tensor, 1)
-              << std::endl;
-      return -1;
-  }
-  std::memcpy(reinterpret_cast<uint8_t*>(TfLiteTensorData(tensor)),
-              in->host,
-              in->size_in_bytes());
-#endif
+    if (channel != TfLiteTensorDim(input, 3)) {
+        std::cerr << "Input channel mismatches: "
+            << channel << " vs " << TfLiteTensorDim(input, 3) << std::endl;
+        return -1;
+    }
 
-  // Invoke
-  if (TfLiteInterpreterInvoke(interpreter) != kTfLiteOk) {
-      std::cerr << "Failed to invoke" << std::endl;
-      return -1;
-  }
+    const int internal_width = TfLiteTensorDim(input, 2);
+    const int internal_height = TfLiteTensorDim(input, 1);
 
-  // Prepare output
-  const int num_outputs = TfLiteInterpreterGetOutputTensorCount(interpreter);
-  if (num_outputs != 4) {
-      std::cerr << "Unexpected number of output" << std::endl;
-      return -1;
-  }
+    cv::Mat resized(internal_height, internal_width, CV_32FC3);
+    cv::resize(in_, resized, resized.size());
 
-  const TfLiteTensor* boxes = TfLiteInterpreterGetOutputTensor(interpreter, 0);
-  const TfLiteTensor* classes = TfLiteInterpreterGetOutputTensor(interpreter, 1);
-  const TfLiteTensor* scores = TfLiteInterpreterGetOutputTensor(interpreter, 2);
-  const TfLiteTensor* num = TfLiteInterpreterGetOutputTensor(interpreter, 3);
+    cv::Mat input_tensor_data(internal_height, internal_width, CV_8UC3);
 
-  return 0;
+    resized.convertTo(input_tensor_data, CV_8UC3, 255.0);
+
+    if ((3*input_tensor_data.total()) != TfLiteTensorByteSize(input)) {
+        std::cerr << "Input size mismatches: "
+            << 3*input_tensor_data.total() << " vs " << TfLiteTensorByteSize(input)
+            << std::endl;
+        return -1;
+    }
+
+    std::memcpy(TfLiteTensorData(input), input_tensor_data.ptr(), TfLiteTensorByteSize(input));
+
+    // Invoke
+    if (TfLiteInterpreterInvoke(interpreter.get()) != kTfLiteOk) {
+        std::cerr << "Failed to invoke" << std::endl;
+        return -1;
+    }
+
+    // Prepare output
+    const int num_outputs = TfLiteInterpreterGetOutputTensorCount(interpreter.get());
+    if (num_outputs != 4) {
+        std::cerr << "Unexpected number of output" << std::endl;
+        return -1;
+    }
+
+    const TfLiteTensor* boxes = TfLiteInterpreterGetOutputTensor(interpreter.get(), 0);
+    const TfLiteTensor* classes = TfLiteInterpreterGetOutputTensor(interpreter.get(), 1);
+    const TfLiteTensor* scores = TfLiteInterpreterGetOutputTensor(interpreter.get(), 2);
+    const TfLiteTensor* num = TfLiteInterpreterGetOutputTensor(interpreter.get(), 3);
+
+    std::cout << TfLiteTensorNumDims(boxes) << std::endl;
+    std::cout << TfLiteTensorNumDims(classes) << std::endl;
+    std::cout << TfLiteTensorNumDims(scores) << std::endl;
+    std::cout << *reinterpret_cast<float*>(TfLiteTensorData(num)) << std::endl;
+
+    return 0;
 }
 
 

@@ -102,7 +102,7 @@ std::vector<float> RunInference(const std::vector<uint8_t>& input_data,
   uint8_t* input = reinterpret_cast<uint8_t*>(TfLiteTensorData(
       TfLiteInterpreterGetInputTensor(interpreter, 0)));
 
-  std::memcpy(input, input_data.data(), input_data.size());
+  // std::memcpy(input, input_data.data(), input_data.size());
 
   if (TfLiteInterpreterInvoke(interpreter) != kTfLiteOk) {
       std::cerr << "Failed to invoke" << std::endl;
@@ -148,7 +148,7 @@ std::array<int, 3> GetInputShape(const TfLiteInterpreter* interpreter,
 int func(int argc, char* argv[]) {
 
   if (!edgetpu_init()) {
-      return -1;
+      // return -1;
   }
 
   if (!tensorflowlite_init()) {
@@ -177,7 +177,7 @@ int func(int argc, char* argv[]) {
       TfLiteInterpreterOptionsCreate(), TfLiteInterpreterOptionsDelete);
 
   TfLiteInterpreterOptionsSetNumThreads(options.get(), 1);
-
+#if 0
   size_t num_devices;
   std::unique_ptr<edgetpu_device, decltype(edgetpu_free_devices)> devices(
       edgetpu_list_devices(&num_devices), edgetpu_free_devices);
@@ -188,7 +188,7 @@ int func(int argc, char* argv[]) {
       edgetpu_create_delegate(device.type, device.path, nullptr, 0), edgetpu_free_delegate);
 
   TfLiteInterpreterOptionsAddDelegate(options.get(), delegate.get());
-
+#endif
   std::unique_ptr<TfLiteInterpreter, decltype(TfLiteInterpreterDelete)> interpreter(
       TfLiteInterpreterCreate(model.get(), options.get()), TfLiteInterpreterDelete);
 
@@ -196,7 +196,7 @@ int func(int argc, char* argv[]) {
     std::cerr << "Failed to allocate tensors." << std::endl;
     return -1;
   }
-
+#if 0
   // Read the resized image file.
   int width, height, channels;
   const std::vector<uint8_t>& input =
@@ -212,13 +212,16 @@ int func(int argc, char* argv[]) {
               << std::endl;
     std::abort();
   }
-
+#else
+  std::vector<uint8_t> input;
+#endif
   // Print inference result.
   const auto& result = RunInference(input, interpreter.get());
-  auto it = std::max_element(result.begin(), result.end());
-  std::cout << "[Image analysis] max value index: "
-            << std::distance(result.begin(), it) << " value: " << *it
-            << std::endl;
+  // auto it = std::max_element(result.begin(), result.end());
+  // std::cout << "[Image analysis] max value index: "
+  //           << std::distance(result.begin(), it) << " value: " << *it
+  //           << std::endl;
+  std::cout << "done" << std::endl;
   return 0;
 }
 
@@ -283,7 +286,7 @@ void enable_edgetpu(TfLiteInterpreterOptions *options) {
   // Build interpreter.
   TfLiteInterpreterOptionsAddDelegate(options, delegate.get());
 }
-
+#if 0
 int yolov4_object_detection_tfl(halide_buffer_t *in,
                                 const std::string&, // unused
                                 const std::string&, // unused
@@ -370,7 +373,7 @@ int yolov4_object_detection_tfl(halide_buffer_t *in,
   //           << std::endl;
   return 0;
 }
-
+#endif
 
 }  // namespace dnn
 }  // namespace bb

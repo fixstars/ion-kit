@@ -11,6 +11,18 @@ namespace ion {
 namespace bb {
 namespace dnn {
 
+std::tuple<std::string, std::string> parse_url(const std::string &url) {
+    auto protocol_end_pos = url.find("://");
+    if (protocol_end_pos == std::string::npos) {
+        return std::tuple<std::string, std::string>("", "");
+    }
+    auto host_name_pos = protocol_end_pos + 3;
+    auto path_name_pos = url.find("/", host_name_pos);
+    auto host_name = url.substr(0, path_name_pos);
+    auto path_name = url.substr(path_name_pos);
+    return std::tuple<std::string, std::string>(host_name, path_name);
+}
+
 template<typename... Rest>
 std::string format(const char *fmt, const Rest &... rest) {
     int length = snprintf(NULL, 0, fmt, rest...) + 1;  // Explicit place for null termination

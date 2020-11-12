@@ -28,7 +28,6 @@ int main(int argc, char *argv[]) {
                  Param{"input_height", std::to_string(input_height)},
                  Param{"input_width", std::to_string(input_width)},
                  Param{"scale", std::to_string(scale)});
-        n = b.add("dnn_reorder_hwc2chw")(n["output"]);
         n = b.add("genesis_cloud_normalize_u8x3")(n["output"]);
         n = b.add("dnn_object_detection")(n["output"]);
         n = b.add("genesis_cloud_denormalize_u8x3")(n["output"]);
