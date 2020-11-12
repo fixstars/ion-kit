@@ -15,6 +15,7 @@
 #include <HalideBuffer.h>
 
 #include "onnxruntime_c.h"
+#include "yolov4_utils.h"
 
 namespace ion {
 namespace bb {
@@ -221,12 +222,14 @@ int object_detection_ort(halide_buffer_t *in,
     ort->check_status(api->GetTensorShapeElementCount(boxes_info, &boxes_size));
     ort->check_status(api->GetTensorShapeElementCount(confs_info, &confs_size));
 
-    // for (int i = 0; i < out_num; i++) {
-    //     int real_box_size = boxes_size / out_num;
-    //     memcpy(reinterpret_cast<float *>(boxes->host) + boxes_stride * i, boxes_ptr + real_box_size * i, sizeof(float) * real_box_size);
-    //     int real_conf_size = confs_size / out_num;
-    //     memcpy(reinterpret_cast<float *>(confs->host) + confs_stride * i, confs_ptr + real_conf_size * i, sizeof(float) * real_conf_size);
-    // }
+    const int num = 2535;
+    const int num_classes = 80;
+
+    const auto prediceted_boxes = post_processing(boxes_ptr, confs_ptr, num, num_classes);
+    cv::Mat out_(height, width, CV_32FC3, out->host);
+    in_.copyTo(out_);
+
+    render_boxes(out_, prediceted_boxes, height, width);
 
     api->ReleaseValue(output_tensors[0]);
     api->ReleaseValue(output_tensors[1]);
