@@ -220,8 +220,8 @@ int object_detection_tfl(halide_buffer_t *in,
     cv::Mat out_(height, width, CV_32FC3, out->host);
     in_.copyTo(out_);
 
-    // NOTE: Specifying -1 as id_offset because of the model is trained by tweaked dataset.
-    coco_render_boxes(out_, detected_boxes, width, height, -1);
+    // NOTE: Specifying 1 as id_offset because of the model is trained by tweaked dataset.
+    coco_render_boxes(out_, detected_boxes, width, height, 1);
 
     return 0;
 }
