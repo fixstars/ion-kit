@@ -1179,6 +1179,62 @@ public:
     }
 };
 
+class Tile6Images3DArrayFloatHWC : public BuildingBlock<Tile6Images3DArrayFloatHWC> {
+    // Currently available only 3x2 layout
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Tile6Images3DArrayFloatHWC"};
+    GeneratorParam<std::string> gc_description{"gc_description", "Tile images."};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "image,tile-image"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [v.input[0], v.input[1] * 3, v.input[2] * 2] }}))"};
+    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "input_width,input_height"};
+    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+
+    GeneratorParam<int32_t> input_width{"input_width", 0};
+    GeneratorParam<int32_t> input_height{"input_height", 0};
+    GeneratorInput<Halide::Func> input{"input", Halide::type_of<float>(), 4};
+    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<float>(), 3};
+
+    void generate() {
+        Halide::Var x, y, c;
+
+        Halide::Func input_wrapper = Halide::BoundaryConditions::constant_exterior(input, 0, {{Halide::Expr(), Halide::Expr()}, {0, input_width}, {0, input_height}});
+
+        output(c, x, y) = Halide::select(
+            y < input_height,
+            Halide::select(
+                x < input_width,
+                input_wrapper(c, x, y, 0),
+                Halide::select(
+                    x < input_width * 2,
+                    input_wrapper(c, x - input_width, y, 1),
+                    input_wrapper(c, x - input_width * 2, y, 2))),
+            Halide::select(
+                x < input_width,
+                input_wrapper(c, x, y - input_height, 3),
+                Halide::select(
+                    x < input_width * 2,
+                    input_wrapper(c, x - input_width, y - input_height, 4),
+                    input_wrapper(c, x - input_width * 2, y - input_height, 5))));
+    }
+
+    void schedule() {
+#ifndef DISABLE_SCHEDULE
+        Halide::Var x = output.args()[1];
+        Halide::Var y = output.args()[2];
+
+        if (this->get_target().has_gpu_feature()) {
+            Halide::Var xi, yi;
+            output.gpu_tile(x, y, xi, yi, 32, 16);
+        } else {
+            Halide::Var xi, yi;
+            output.vectorize(x, this->natural_vector_size(Halide::Float(32))).parallel(y, 16);
+        }
+
+        output.compute_root();
+#endif
+    }
+};
+
 class Tile6Images3DArrayUInt8HWC : public BuildingBlock<Tile6Images3DArrayUInt8HWC> {
     // Currently available only 3x2 layout
 public:
@@ -1897,6 +1953,7 @@ ION_REGISTER_BUILDING_BLOCK(ion::bb::demo::Tile4Images3DArrayUInt8HWC, demo_tile
 ION_REGISTER_BUILDING_BLOCK(ion::bb::demo::Tile6Images3DFloat, demo_tile_6images_3d_float);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::demo::Tile6Images3DUInt8HWC, demo_tile_6images_3d_uint8_hwc);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::demo::Tile6Images3DArrayFloat, demo_tile_6images_3d_array_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::demo::Tile6Images3DArrayFloatHWC, demo_tile_6images_3d_array_float_hwc);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::demo::Tile6Images3DArrayUInt8HWC, demo_tile_6images_3d_array_uint8_hwc);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::demo::Pack3DFloat, demo_pack_3d_float);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::demo::Pack2Images3DFloat, demo_pack_2images_3d_float);

@@ -178,80 +178,84 @@ int object_detection_ort(halide_buffer_t *in,
 
     api->ReleaseTypeInfo(typeinfo);
 
-    cv::Mat in_(height, width, CV_32FC3, in->host);
+    int num_images = in->dimensions == 3 ? 1 : in->dim[3].extent;
 
-    const int internal_width = input_node_dims.at(2);
-    const int internal_height = input_node_dims.at(1);
+    for (int i=0; i<num_images; ++i) {
+        int offset = input_size * i;
+        cv::Mat in_(height, width, CV_32FC3, in->host + offset);
 
-    cv::Mat resized(internal_height, internal_width, CV_32FC3);
-    cv::resize(in_, resized, resized.size());
+        const int internal_width = input_node_dims.at(2);
+        const int internal_height = input_node_dims.at(1);
 
-    // cv::Mat input_tensor_data(std::vector<int>{3, internal_height*internal_width}, CV_32FC1);
+        cv::Mat resized(internal_height, internal_width, CV_32FC3);
+        cv::resize(in_, resized, resized.size());
 
-    // cv::transpose(resized.reshape(1, internal_width*internal_height), input_tensor_data);
+        // cv::Mat input_tensor_data(std::vector<int>{3, internal_height*internal_width}, CV_32FC1);
 
-    cv::Mat input_tensor_data(internal_height, internal_width, CV_8UC3);
+        // cv::transpose(resized.reshape(1, internal_width*internal_height), input_tensor_data);
 
-    resized.convertTo(input_tensor_data, CV_8UC3, 255.0);
+        cv::Mat input_tensor_data(internal_height, internal_width, CV_8UC3);
 
-    int i = 0;
-    uint8_t *input_tensor_ptr = reinterpret_cast<uint8_t*>(input_tensor_data.ptr());
+        resized.convertTo(input_tensor_data, CV_8UC3, 255.0);
 
-    OrtMemoryInfo *memory_info;
-    ort->check_status(api->CreateCpuMemoryInfo(OrtArenaAllocator, OrtMemTypeDefault, &memory_info));
-    OrtValue *input_tensor = NULL;
-    ort->check_status(api->CreateTensorWithDataAsOrtValue(memory_info, input_tensor_ptr, input_size * sizeof(uint8_t), input_node_dims.data(), 4, ONNX_TENSOR_ELEMENT_DATA_TYPE_UINT8, &input_tensor));
-    int is_tensor;
-    ort->check_status(api->IsTensor(input_tensor, &is_tensor));
-    assert(is_tensor);
-    api->ReleaseMemoryInfo(memory_info);
+        uint8_t *input_tensor_ptr = reinterpret_cast<uint8_t*>(input_tensor_data.ptr());
 
-    //std::vector<const char *> output_tensor_names = {"boxes", "confs"};
-    std::vector<const char *> output_tensor_names = {"detection_boxes:0", "detection_classes:0", "detection_scores:0", "num_detections:0"};
-    std::vector<OrtValue *> output_tensors(4);
-    ort->check_status(api->Run(session, NULL, &input_name, (const OrtValue *const *)&input_tensor, 1, output_tensor_names.data(), 4, output_tensors.data()));
-    ort->check_status(api->IsTensor(output_tensors[0], &is_tensor));
-    assert(is_tensor);
-    ort->check_status(api->IsTensor(output_tensors[1], &is_tensor));
-    assert(is_tensor);
-    ort->check_status(api->IsTensor(output_tensors[2], &is_tensor));
-    assert(is_tensor);
-    ort->check_status(api->IsTensor(output_tensors[3], &is_tensor));
-    assert(is_tensor);
+        OrtMemoryInfo *memory_info;
+        ort->check_status(api->CreateCpuMemoryInfo(OrtArenaAllocator, OrtMemTypeDefault, &memory_info));
+        OrtValue *input_tensor = NULL;
+        ort->check_status(api->CreateTensorWithDataAsOrtValue(memory_info, input_tensor_ptr, input_size * sizeof(uint8_t), input_node_dims.data(), 4, ONNX_TENSOR_ELEMENT_DATA_TYPE_UINT8, &input_tensor));
+        int is_tensor;
+        ort->check_status(api->IsTensor(input_tensor, &is_tensor));
+        assert(is_tensor);
+        api->ReleaseMemoryInfo(memory_info);
 
-    float *boxes_ptr, *classes_ptr, *scores_ptr, *nums_ptr;
-    ort->check_status(api->GetTensorMutableData(output_tensors[0], reinterpret_cast<void **>(&boxes_ptr)));
-    ort->check_status(api->GetTensorMutableData(output_tensors[1], reinterpret_cast<void **>(&classes_ptr)));
-    ort->check_status(api->GetTensorMutableData(output_tensors[2], reinterpret_cast<void **>(&scores_ptr)));
-    ort->check_status(api->GetTensorMutableData(output_tensors[3], reinterpret_cast<void **>(&nums_ptr)));
+        //std::vector<const char *> output_tensor_names = {"boxes", "confs"};
+        std::vector<const char *> output_tensor_names = {"detection_boxes:0", "detection_classes:0", "detection_scores:0", "num_detections:0"};
+        std::vector<OrtValue *> output_tensors(4);
+        ort->check_status(api->Run(session, NULL, &input_name, (const OrtValue *const *)&input_tensor, 1, output_tensor_names.data(), 4, output_tensors.data()));
+        ort->check_status(api->IsTensor(output_tensors[0], &is_tensor));
+        assert(is_tensor);
+        ort->check_status(api->IsTensor(output_tensors[1], &is_tensor));
+        assert(is_tensor);
+        ort->check_status(api->IsTensor(output_tensors[2], &is_tensor));
+        assert(is_tensor);
+        ort->check_status(api->IsTensor(output_tensors[3], &is_tensor));
+        assert(is_tensor);
 
-    OrtTensorTypeAndShapeInfo *boxes_info, *classes_info, *scores_info, *nums_info;
-    ort->check_status(api->GetTensorTypeAndShape(output_tensors[0], &boxes_info));
-    ort->check_status(api->GetTensorTypeAndShape(output_tensors[1], &classes_info));
-    ort->check_status(api->GetTensorTypeAndShape(output_tensors[2], &scores_info));
-    ort->check_status(api->GetTensorTypeAndShape(output_tensors[3], &nums_info));
+        float *boxes_ptr, *classes_ptr, *scores_ptr, *nums_ptr;
+        ort->check_status(api->GetTensorMutableData(output_tensors[0], reinterpret_cast<void **>(&boxes_ptr)));
+        ort->check_status(api->GetTensorMutableData(output_tensors[1], reinterpret_cast<void **>(&classes_ptr)));
+        ort->check_status(api->GetTensorMutableData(output_tensors[2], reinterpret_cast<void **>(&scores_ptr)));
+        ort->check_status(api->GetTensorMutableData(output_tensors[3], reinterpret_cast<void **>(&nums_ptr)));
 
-    size_t boxes_size, classes_size, scores_size, nums_size;
-    ort->check_status(api->GetTensorShapeElementCount(boxes_info, &boxes_size));
-    ort->check_status(api->GetTensorShapeElementCount(classes_info, &classes_size));
-    ort->check_status(api->GetTensorShapeElementCount(scores_info, &scores_size));
-    ort->check_status(api->GetTensorShapeElementCount(nums_info, &nums_size));
+        OrtTensorTypeAndShapeInfo *boxes_info, *classes_info, *scores_info, *nums_info;
+        ort->check_status(api->GetTensorTypeAndShape(output_tensors[0], &boxes_info));
+        ort->check_status(api->GetTensorTypeAndShape(output_tensors[1], &classes_info));
+        ort->check_status(api->GetTensorTypeAndShape(output_tensors[2], &scores_info));
+        ort->check_status(api->GetTensorTypeAndShape(output_tensors[3], &nums_info));
 
-    // const int num = 2535;
-    // const int num_classes = 80;
+        size_t boxes_size, classes_size, scores_size, nums_size;
+        ort->check_status(api->GetTensorShapeElementCount(boxes_info, &boxes_size));
+        ort->check_status(api->GetTensorShapeElementCount(classes_info, &classes_size));
+        ort->check_status(api->GetTensorShapeElementCount(scores_info, &scores_size));
+        ort->check_status(api->GetTensorShapeElementCount(nums_info, &nums_size));
 
-    //const auto prediceted_boxes = yolo_post_processing(boxes_ptr, confs_ptr, num, num_classes);
-    const auto prediceted_boxes = ssd_post_processing(boxes_ptr, classes_ptr, scores_ptr, static_cast<int>(lround(*nums_ptr)));
-    cv::Mat out_(height, width, CV_32FC3, out->host);
-    in_.copyTo(out_);
+        // const int num = 2535;
+        // const int num_classes = 80;
 
-    coco_render_boxes(out_, prediceted_boxes, width, height);
+        //const auto prediceted_boxes = yolo_post_processing(boxes_ptr, confs_ptr, num, num_classes);
+        const auto prediceted_boxes = ssd_post_processing(boxes_ptr, classes_ptr, scores_ptr, static_cast<int>(lround(*nums_ptr)));
+        cv::Mat out_(height, width, CV_32FC3, out->host + offset);
+        in_.copyTo(out_);
 
-    api->ReleaseValue(output_tensors[0]);
-    api->ReleaseValue(output_tensors[1]);
-    api->ReleaseValue(output_tensors[2]);
-    api->ReleaseValue(output_tensors[3]);
-    api->ReleaseValue(input_tensor);
+        coco_render_boxes(out_, prediceted_boxes, width, height);
+
+        api->ReleaseValue(output_tensors[0]);
+        api->ReleaseValue(output_tensors[1]);
+        api->ReleaseValue(output_tensors[2]);
+        api->ReleaseValue(output_tensors[3]);
+        api->ReleaseValue(input_tensor);
+    }
 
     return 0;
 }

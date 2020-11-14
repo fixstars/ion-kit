@@ -57,11 +57,8 @@ int main(int argc, char *argv[]) {
         // DNN
         int32_t yolo_width = 416;
         int32_t yolo_height = 416;
-        std::string yolo_model_root = argv[1];
-        std::string yolo_model_name = argv[2];
 
         Port dnn_inputs[6];
-        Port dnn_inputs_opencv[6];
 
         for (int i = 0; i < 6; i++) {
             // IMX219
@@ -128,11 +125,8 @@ int main(int argc, char *argv[]) {
                 fit_image["output"]);
             Node reorder_channel = b.add("demo_reorder_color_channel_float")(
                 reorder_chw2hwc["output"]);
-            Node denormalize = b.add("genesis_cloud_denormalize_u8x3")(
-                reorder_channel["output"]);
 
-            dnn_inputs[i] = fit_image["output"];
-            dnn_inputs_opencv[i] = denormalize["output"];
+            dnn_inputs[i] = reorder_channel["output"];
         }
 
         Node pack_dnn_inputs = b.add("demo_pack_6images_3d_float")
@@ -156,48 +150,15 @@ int main(int argc, char *argv[]) {
                                        dnn_inputs[4],
                                        dnn_inputs[5]);
 
-        Node pack_dnn_inputs_opencv = b.add("demo_pack_6images_3d_uint8_hwc")
-                                          .set_param(
-                                              Param{"input0_width", std::to_string(output_width)},
-                                              Param{"input0_height", std::to_string(output_height)},
-                                              Param{"input1_width", std::to_string(output_width)},
-                                              Param{"input1_height", std::to_string(output_height)},
-                                              Param{"input2_width", std::to_string(output_width)},
-                                              Param{"input2_height", std::to_string(output_height)},
-                                              Param{"input3_width", std::to_string(output_width)},
-                                              Param{"input3_height", std::to_string(output_height)},
-                                              Param{"input4_width", std::to_string(output_width)},
-                                              Param{"input4_height", std::to_string(output_height)},
-                                              Param{"input5_width", std::to_string(output_width)},
-                                              Param{"input5_height", std::to_string(output_height)})(
-                                              dnn_inputs_opencv[0],
-                                              dnn_inputs_opencv[1],
-                                              dnn_inputs_opencv[2],
-                                              dnn_inputs_opencv[3],
-                                              dnn_inputs_opencv[4],
-                                              dnn_inputs_opencv[5]);
+        Node object_detection = b.add("dnn_object_detection_array")(pack_dnn_inputs["output"]);
 
-        Node yolo_object_detection = b.add("yolov4_object_detection_array")
-                                         .set_param(
-                                             Param{"model_root", yolo_model_root},
-                                             Param{"model_name", yolo_model_name},
-                                             Param{"height", std::to_string(yolo_height)},
-                                             Param{"width", std::to_string(yolo_width)})(
-                                             pack_dnn_inputs["output"]);
-
-        Node yolo_box_rendering = b.add("yolov4_box_rendering_array")
-                                      .set_param(
-                                          Param{"height", std::to_string(yolo_height)},
-                                          Param{"width", std::to_string(yolo_width)})(
-                                          pack_dnn_inputs_opencv["output"],
-                                          yolo_object_detection["boxes"],
-                                          yolo_object_detection["confs"]);
-
-        Node tile_images = b.add("demo_tile_6images_3d_array_uint8_hwc")
+        Node tile_images = b.add("demo_tile_6images_3d_array_float_hwc")
                                .set_param(
                                    Param{"input_height", std::to_string(output_width)},
                                    Param{"input_width", std::to_string(output_height)})(
-                                   yolo_box_rendering["output"]);
+                                   object_detection["output"]);
+
+        Node denormalized = b.add("genesis_cloud_denormalize_u8x3")(tile_images["output"]);
 
         // d435
         auto d435 = b.add("demo_d435");
@@ -247,7 +208,7 @@ int main(int argc, char *argv[]) {
             pm.set(gain_b, gain_b_);
             pm.set(gamma, gamma_);
 
-            pm.set(tile_images["output"], yolo_buf);
+            pm.set(denormalized["output"], yolo_buf);
             pm.set(d435["output_d"], depth_buf);
             pm.set(sgm["output"], sgm_buf);
 

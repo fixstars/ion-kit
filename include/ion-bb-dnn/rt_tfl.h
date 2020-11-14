@@ -160,68 +160,75 @@ int object_detection_tfl(halide_buffer_t *in,
     const int width = in->dim[1].extent;
     const int height = in->dim[2].extent;
 
-    cv::Mat in_(height, width, CV_32FC3, in->host);
+    size_t input_size = 3 * width * height * sizeof(float);
 
-    auto interpreter = TflSessionManager::get_instance().get_interpreter(model_root_url, cache_root);
+    int num_images = in->dimensions == 3 ? 1 : in->dim[3].extent;
 
-    // Prepare input
-    TfLiteTensor *input = TfLiteInterpreterGetInputTensor(interpreter.get(), 0);
+    for (int i=0; i<num_images; ++i) {
+        int offset = input_size * i;
+        cv::Mat in_(height, width, CV_32FC3, in->host + offset);
 
-    if (channel != TfLiteTensorDim(input, 3)) {
-        std::cerr << "Input channel mismatches: "
-            << channel << " vs " << TfLiteTensorDim(input, 3) << std::endl;
-        return -1;
+        auto interpreter = TflSessionManager::get_instance().get_interpreter(model_root_url, cache_root);
+
+        // Prepare input
+        TfLiteTensor *input = TfLiteInterpreterGetInputTensor(interpreter.get(), 0);
+
+        if (channel != TfLiteTensorDim(input, 3)) {
+            std::cerr << "Input channel mismatches: "
+                << channel << " vs " << TfLiteTensorDim(input, 3) << std::endl;
+            return -1;
+        }
+
+        const int internal_width = TfLiteTensorDim(input, 2);
+        const int internal_height = TfLiteTensorDim(input, 1);
+
+        cv::Mat resized(internal_height, internal_width, CV_32FC3);
+        cv::resize(in_, resized, resized.size());
+
+        cv::Mat input_tensor_data(internal_height, internal_width, CV_8UC3);
+
+        resized.convertTo(input_tensor_data, CV_8UC3, 255.0);
+
+        if ((3*input_tensor_data.total()) != TfLiteTensorByteSize(input)) {
+            std::cerr << "Input size mismatches: "
+                << 3*input_tensor_data.total() << " vs " << TfLiteTensorByteSize(input)
+                << std::endl;
+            return -1;
+        }
+
+        std::memcpy(TfLiteTensorData(input), input_tensor_data.ptr(), TfLiteTensorByteSize(input));
+
+        // Invoke
+        if (TfLiteInterpreterInvoke(interpreter.get()) != kTfLiteOk) {
+            std::cerr << "Failed to invoke" << std::endl;
+            return -1;
+        }
+
+        // Prepare output
+        const int num_outputs = TfLiteInterpreterGetOutputTensorCount(interpreter.get());
+        if (num_outputs != 4) {
+            std::cerr << "Unexpected number of output" << std::endl;
+            return -1;
+        }
+
+        const TfLiteTensor* boxes = TfLiteInterpreterGetOutputTensor(interpreter.get(), 0);
+        const TfLiteTensor* classes = TfLiteInterpreterGetOutputTensor(interpreter.get(), 1);
+        const TfLiteTensor* scores = TfLiteInterpreterGetOutputTensor(interpreter.get(), 2);
+        const TfLiteTensor* num = TfLiteInterpreterGetOutputTensor(interpreter.get(), 3);
+
+        float *boxes_ptr = reinterpret_cast<float*>(TfLiteTensorData(boxes));
+        float *classes_ptr = reinterpret_cast<float*>(TfLiteTensorData(classes));
+        float *scores_ptr = reinterpret_cast<float*>(TfLiteTensorData(scores));
+        float *num_ptr = reinterpret_cast<float*>(TfLiteTensorData(num));
+
+        const auto detected_boxes = ssd_post_processing(boxes_ptr, classes_ptr, scores_ptr, static_cast<int>(*num_ptr));
+
+        cv::Mat out_(height, width, CV_32FC3, out->host + offset);
+        in_.copyTo(out_);
+
+        // NOTE: Specifying 1 as id_offset because of the model is trained by tweaked dataset.
+        coco_render_boxes(out_, detected_boxes, width, height, 1);
     }
-
-    const int internal_width = TfLiteTensorDim(input, 2);
-    const int internal_height = TfLiteTensorDim(input, 1);
-
-    cv::Mat resized(internal_height, internal_width, CV_32FC3);
-    cv::resize(in_, resized, resized.size());
-
-    cv::Mat input_tensor_data(internal_height, internal_width, CV_8UC3);
-
-    resized.convertTo(input_tensor_data, CV_8UC3, 255.0);
-
-    if ((3*input_tensor_data.total()) != TfLiteTensorByteSize(input)) {
-        std::cerr << "Input size mismatches: "
-            << 3*input_tensor_data.total() << " vs " << TfLiteTensorByteSize(input)
-            << std::endl;
-        return -1;
-    }
-
-    std::memcpy(TfLiteTensorData(input), input_tensor_data.ptr(), TfLiteTensorByteSize(input));
-
-    // Invoke
-    if (TfLiteInterpreterInvoke(interpreter.get()) != kTfLiteOk) {
-        std::cerr << "Failed to invoke" << std::endl;
-        return -1;
-    }
-
-    // Prepare output
-    const int num_outputs = TfLiteInterpreterGetOutputTensorCount(interpreter.get());
-    if (num_outputs != 4) {
-        std::cerr << "Unexpected number of output" << std::endl;
-        return -1;
-    }
-
-    const TfLiteTensor* boxes = TfLiteInterpreterGetOutputTensor(interpreter.get(), 0);
-    const TfLiteTensor* classes = TfLiteInterpreterGetOutputTensor(interpreter.get(), 1);
-    const TfLiteTensor* scores = TfLiteInterpreterGetOutputTensor(interpreter.get(), 2);
-    const TfLiteTensor* num = TfLiteInterpreterGetOutputTensor(interpreter.get(), 3);
-
-    float *boxes_ptr = reinterpret_cast<float*>(TfLiteTensorData(boxes));
-    float *classes_ptr = reinterpret_cast<float*>(TfLiteTensorData(classes));
-    float *scores_ptr = reinterpret_cast<float*>(TfLiteTensorData(scores));
-    float *num_ptr = reinterpret_cast<float*>(TfLiteTensorData(num));
-
-    const auto detected_boxes = ssd_post_processing(boxes_ptr, classes_ptr, scores_ptr, static_cast<int>(*num_ptr));
-
-    cv::Mat out_(height, width, CV_32FC3, out->host);
-    in_.copyTo(out_);
-
-    // NOTE: Specifying 1 as id_offset because of the model is trained by tweaked dataset.
-    coco_render_boxes(out_, detected_boxes, width, height, 1);
 
     return 0;
 }

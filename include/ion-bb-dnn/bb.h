@@ -92,17 +92,18 @@ public:
     }
 
     void schedule() {
-        Halide::Var c = input.args()[0];
-        Halide::Var x = input.args()[1];
-        Halide::Var y = input.args()[2];
+        using namespace Halide;
+        Var c = input.args()[0];
+        Var x = input.args()[1];
+        Var y = input.args()[2];
 
         input.bound(c, 0, 3).unroll(c);
 
         if (this->get_target().has_gpu_feature()) {
-            Halide::Var xi, yi;
+            Var xi, yi;
             input.gpu_tile(x, y, xi, yi, 32, 16);
         } else {
-            input.vectorize(x, this->natural_vector_size(Halide::Float(32))).parallel(y, 16);
+            input.vectorize(x, this->natural_vector_size(Float(32))).parallel(y, 16);
         }
         input.compute_root();
     }
@@ -116,9 +117,9 @@ public:
     GeneratorParam<std::string> gc_title{"gc_title", "Object Detection"};
 };
 
-class ObjectDetectionBatched : public ObjectDetectionBase<ObjectDetection, 4> {
+class ObjectDetectionArray : public ObjectDetectionBase<ObjectDetectionArray, 4> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "Object Detection (Batched)"};
+    GeneratorParam<std::string> gc_title{"gc_title", "Object Detection (Array)"};
 };
 
 } // dnn
@@ -128,6 +129,6 @@ public:
 ION_REGISTER_BUILDING_BLOCK(ion::bb::dnn::ReorderCHW2HWC<uint8_t>, dnn_reorder_chw2hwc);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::dnn::ReorderHWC2CHW<uint8_t>, dnn_reorder_hwc2chw);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::dnn::ObjectDetection, dnn_object_detection);
-// TODO: ION_REGISTER_BUILDING_BLOCK(ion::bb::dnn::ObjectDetectionBatched, dnn_object_detection_bached);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::dnn::ObjectDetectionArray, dnn_object_detection_array);
 
 #endif  // ION_BB_DNN_BB_H
