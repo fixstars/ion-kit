@@ -31,14 +31,14 @@ extern "C" ION_EXPORT int ion_bb_dnn_generic_object_detection(halide_buffer_t *i
     in_buf.copy_to_host();
 
     std::string model_root_url(reinterpret_cast<const char *>(model_root_url_buf->host));
+    std::string cache_root(reinterpret_cast<const char *>(cache_root_buf->host));
 
     using namespace ion::bb::dnn;
 
     if (is_tfl_available()) {
-        return object_detection_tfl(in, model_root_url, out);
+        return object_detection_tfl(in, model_root_url, cache_root, out);
     } else if (is_ort_available()) {
         std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
-        std::string cache_root(reinterpret_cast<const char *>(cache_root_buf->host));
         return object_detection_ort(in, session_id, model_root_url, cache_root, cuda_enable, out);
     } else {
         return -1;

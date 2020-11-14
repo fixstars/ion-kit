@@ -50,7 +50,7 @@ public:
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
 
     GeneratorParam<std::string> model_root_url_{"model_base_url", "http://ion-archives.s3-us-west-2.amazonaws.com/models/"};
-    GeneratorParam<std::string> cache_root_{"cache_root", "~/.cache/"};
+    GeneratorParam<std::string> cache_root_{"cache_root", "/var/cache/"};
 
     // TODO: Embed model at compilation time
     // GeneratorParam<bool> embed_model{"embed_model", false};

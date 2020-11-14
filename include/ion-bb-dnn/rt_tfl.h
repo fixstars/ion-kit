@@ -31,36 +31,52 @@ class TflSessionManager {
          std::shared_ptr<TfLiteInterpreter> interpreter;
      };
 
-     std::shared_ptr<TfLiteInterpreter> get_interpreter(const std::string& model_root_url) {
-        std::string model_url(model_root_url);
+     std::shared_ptr<TfLiteInterpreter> get_interpreter(const std::string& model_root_url, const std::string& cache_root) {
+         std::string model_name;
         if (is_available_edgetpu_) {
-            model_url += "ssd_mobilenet_v2_coco_quant_postprocess_edgetpu.tflite";
+            model_name = "ssd_mobilenet_v2_coco_quant_postprocess_edgetpu.tflite";
         } else {
-            model_url += "ssd_mobilenet_v2_coco_quant_postprocess.tflite";
+            model_name = "ssd_mobilenet_v2_coco_quant_postprocess.tflite";
         }
 
+        std::string model_url = model_root_url + model_name;
         if (objects_.count(model_url)) {
             return objects_[model_url].interpreter;
         }
 
-        std::string host_name;
-        std::string path_name;
-        std::tie(host_name, path_name) = parse_url(model_url);
-        if (host_name.empty() || path_name.empty()) {
-            std::cerr << "Invalid model URL : " << model_url << std::endl;
-            return nullptr;
+        std::shared_ptr<std::vector<uint8_t>> model_data;
+        std::ifstream ifs(cache_root + model_name, std::ios::binary);
+        if (ifs.is_open()) {
+            auto begin = ifs.tellg();
+            ifs.seekg(0, std::ios::end);
+            auto end = ifs.tellg();
+            ifs.seekg(0, std::ios::beg);
+            model_data = std::shared_ptr<std::vector<uint8_t>>(new std::vector<uint8_t>(end-begin));
+            ifs.read(reinterpret_cast<char *>(model_data->data()), model_data->size());
+        }  else {
+            std::string host_name;
+            std::string path_name;
+            std::tie(host_name, path_name) = parse_url(model_url);
+            if (host_name.empty() || path_name.empty()) {
+                std::cerr << "Invalid model URL : " << model_url << std::endl;
+                return nullptr;
+            }
+
+            httplib::Client cli(host_name.c_str());
+            cli.set_follow_location(true);
+            auto res = cli.Get(path_name.c_str());
+            if (!res || res->status != 200) {
+                std::cerr << "Failed to download model : " << model_url << std::endl;
+                return nullptr;
+            }
+
+            model_data = std::shared_ptr<std::vector<uint8_t>>(new std::vector<uint8_t>(res->body.size()));
+            std::memcpy(model_data->data(), res->body.c_str(), res->body.size());
+
+            std::ofstream ofs (cache_root + model_name, std::ios::binary);
+            ofs.write(reinterpret_cast<const char*>(model_data->data()), model_data->size());
         }
 
-        httplib::Client cli(host_name.c_str());
-        cli.set_follow_location(true);
-        auto res = cli.Get(path_name.c_str());
-        if (!res || res->status != 200) {
-            std::cerr << "Failed to download model : " << model_url << std::endl;
-            return nullptr;
-        }
-
-        std::shared_ptr<std::vector<uint8_t>> model_data(new std::vector<uint8_t>(res->body.size()));
-        std::memcpy(model_data->data(), res->body.c_str(), res->body.size());
         std::shared_ptr<TfLiteModel> model(TfLiteModelCreate(model_data->data(), model_data->size()), TfLiteModelDelete);
         if (model == nullptr) {
             std::cerr << "Illegal model format : " << model_url << std::endl;
@@ -137,6 +153,7 @@ bool is_tfl_available() {
 
 int object_detection_tfl(halide_buffer_t *in,
                          const std::string& model_root_url,
+                         const std::string& cache_root,
                          halide_buffer_t *out) {
 
     const int channel = 3;
@@ -145,7 +162,7 @@ int object_detection_tfl(halide_buffer_t *in,
 
     cv::Mat in_(height, width, CV_32FC3, in->host);
 
-    auto interpreter = TflSessionManager::get_instance().get_interpreter(model_root_url);
+    auto interpreter = TflSessionManager::get_instance().get_interpreter(model_root_url, cache_root);
 
     // Prepare input
     TfLiteTensor *input = TfLiteInterpreterGetInputTensor(interpreter.get(), 0);
@@ -203,7 +220,8 @@ int object_detection_tfl(halide_buffer_t *in,
     cv::Mat out_(height, width, CV_32FC3, out->host);
     in_.copyTo(out_);
 
-    render_boxes(out_, detected_boxes, width, height);
+    // NOTE: Specifying -1 as id_offset because of the model is trained by tweaked dataset.
+    coco_render_boxes(out_, detected_boxes, width, height, -1);
 
     return 0;
 }

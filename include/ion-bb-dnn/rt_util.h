@@ -144,7 +144,7 @@ float union_(const DetectionBox &a, const DetectionBox &b) {
     return area1 + area2 - inter;
 }
 
-void render_boxes(cv::Mat &frame, const std::vector<DetectionBox> &boxes, const int h, const int w) {
+void coco_render_boxes(cv::Mat &frame, const std::vector<DetectionBox> &boxes, const int w, const int h, int id_offset = 0) {
 
     static const std::map<int, std::pair<const char *, cv::Scalar>> label_color_map = {
         { 0, {"person", cv::Scalar(111, 221, 142)}},
@@ -230,7 +230,7 @@ void render_boxes(cv::Mat &frame, const std::vector<DetectionBox> &boxes, const 
     };
 
     for (const auto &b : boxes) {
-        const auto lc = label_color_map.at(b.max_id);
+        const auto lc = label_color_map.at(b.max_id + id_offset);
         const auto label = lc.first;
         const auto color = lc.second / 255.0;
         const int x1 = b.x1 * w;
