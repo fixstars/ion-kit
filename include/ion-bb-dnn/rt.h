@@ -41,6 +41,7 @@ extern "C" ION_EXPORT int ion_bb_dnn_generic_object_detection(halide_buffer_t *i
         std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
         return object_detection_ort(in, session_id, model_root_url, cache_root, cuda_enable, out);
     } else {
+        std::cerr << "No available runtime" << std::endl;
         return -1;
     }
 }
