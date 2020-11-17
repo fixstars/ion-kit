@@ -13,7 +13,7 @@ class Camera : public ion::BuildingBlock<Camera> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "USBCamera"};
     GeneratorParam<std::string> gc_description{"gc_description", "This captures USB camera image."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,camera"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "input,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference",  R"((function(v){ return { output: [3, parseInt(v.width), parseInt(v.height)] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
@@ -61,7 +61,7 @@ class FBDisplay : public ion::BuildingBlock<FBDisplay> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "FBDisplay"};
     GeneratorParam<std::string> gc_description{"gc_description", "This draws image into framebuffer display."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,display"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "output,display"};
     GeneratorParam<std::string> gc_inference{"gc_inference",  R"((function(v){ return { output: [] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self,assume_compute_root"};
@@ -102,7 +102,7 @@ class ImageLoader : public ion::BuildingBlock<ImageLoader> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "Image Loader"};
     GeneratorParam<std::string> gc_description{"gc_description", "This loads image from specified URL."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,image-loader"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "input,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference",  R"((function(v){ return { output: [3, parseInt(v.width), parseInt(v.height)] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height,url"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
@@ -144,7 +144,7 @@ class ImageSaver : public ion::BuildingBlock<ImageSaver> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "Image Saver"};
     GeneratorParam<std::string> gc_description{"gc_description", "This saves image to specified path."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,image-saver"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "output,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference",  R"((function(v){ return { output: [] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self,assume_compute_root"};
@@ -188,7 +188,7 @@ template<typename X, typename T, int32_t D>
 class Denormalize : public ion::BuildingBlock<X> {
 public:
     GeneratorParam<std::string> gc_description{"gc_description", "This denormalize [0..1.0] values into target type range."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,denormalize"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference",  R"((function(v){ return { output: v.input }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorInput<Halide::Func> input{"input", Halide::type_of<float>(), D};
@@ -224,7 +224,7 @@ template<typename X, typename T, int32_t D>
 class Normalize : public ion::BuildingBlock<X> {
 public:
     GeneratorParam<std::string> gc_description{"gc_description", "This normalize values into range [0..1.0]."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,normalize"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference",  R"((function(v){ return { output: v.input }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorInput<Halide::Func> input{"input", Halide::type_of<T>(), D};
@@ -272,7 +272,7 @@ template<typename X, typename T, int32_t D>
 class Copy : public ion::BuildingBlock<X> {
 public:
     GeneratorParam<std::string> gc_description{"gc_description", "This just copies input to output."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,copy"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,file"};
     GeneratorParam<std::string> gc_inference{"gc_inference",  R"((function(v){ return { output: v.input }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorInput<Halide::Func> input{"input", Halide::type_of<T>(), D};
@@ -308,7 +308,7 @@ class OpticalBlackClamp : public ion::BuildingBlock<OpticalBlackClamp> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "Optical Black Clamp"};
     GeneratorParam<std::string> gc_description{"gc_description", "This subtracts each pixel values by clamp_value parameter value. This expects 16-bit RAW input and emits 16-bit RAW output."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,optical-black-clamp"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,arithmetic"};
     GeneratorParam<std::string> gc_inference{"gc_inference",  R"((function(v){ return { output: v.input }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorParam<uint16_t> clamp_value{"clamp_value", 0};
@@ -335,7 +335,7 @@ class ColorInterpolationRawToRGB : public ion::BuildingBlock<ColorInterpolationR
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "Color Interpolation RAW to RGB"};
     GeneratorParam<std::string> gc_description{"gc_description", "This converts color space from Bayered 16-bit RAW into RGB (normalized)."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,color-interpolation-raw-to-rgb"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference",  R"((function(v){ return { output: [3, v.input[0], v.input[1]] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorParam<int32_t> available_bits{"available_bits", 12};
@@ -386,7 +386,7 @@ class ColorInterpolationRGBToHSV : public ion::BuildingBlock<ColorInterpolationR
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "Color Interpolation RGB to HSV"};
     GeneratorParam<std::string> gc_description{"gc_description", "This converts color space from RGB into HSV."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,color-interpolation-rgb-to-hsv"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference",  R"((function(v){ return { output: v.input }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorInput<Halide::Func> input{"input", Halide::type_of<float>(), 3};
@@ -440,7 +440,7 @@ class ColorInterpolationHSVToRGB : public ion::BuildingBlock<ColorInterpolationH
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "Color Interpolation HSV to RGB"};
     GeneratorParam<std::string> gc_description{"gc_description", "This converts color space from HSV into RGB."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,color-interpolation-hsv-to-rgb"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference",  R"((function(v){ return { output: v.input }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorInput<Halide::Func> input{"input", Halide::type_of<float>(), 3};
@@ -514,7 +514,7 @@ class SaturationAdjustment : public ion::BuildingBlock<SaturationAdjustment> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "Saturation Adjustment"};
     GeneratorParam<std::string> gc_description{"gc_description", "This applies saturation adjustment."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,saturation-adjustment"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "proccessing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference",  R"((function(v){ return { output: v.input }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorParam<float> saturation_value{"saturation_value", 1.0f};
@@ -548,7 +548,7 @@ class GammaCorrection : public ion::BuildingBlock<GammaCorrection> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "Gamma Correction"};
     GeneratorParam<std::string> gc_description{"gc_description", "This applies gamma correction."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,gamma-correction"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference",  R"((function(v){ return { output: v.input }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorParam<float> gamma_value{"gamma_value", 1.0f};
@@ -577,7 +577,7 @@ class ColorInterpolationRGBToRaw : public ion::BuildingBlock<ColorInterpolationR
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "Color Interpolation RGB to RAW"};
     GeneratorParam<std::string> gc_description{"gc_description", "This converts color space from RGB24 into Bayered 16-bit RAW."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,color-interpolation-rgb-to-raw"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference",  R"((function(v){ return { output: [v.input[1], v.input[2]] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorParam<int32_t> available_bits{"available_bits", 12};
@@ -619,7 +619,7 @@ class ColorInterpolationRGB8ToMono8 : public ion::BuildingBlock<ColorInterpolati
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "Color Interpolation RGB8 to Mono8"};
     GeneratorParam<std::string> gc_description{"gc_description", "This converts color space from RGB8 into Mono8."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,color-interpolation,rgb8,mono8"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference",  R"((function(v){ return { output: [v.input[1], v.input[2]] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorInput<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 3};
@@ -652,7 +652,7 @@ template<typename X, typename T>
 class Scalex2 : public ion::BuildingBlock<X> {
 public:
     GeneratorParam<std::string> gc_description{"gc_description", "This changes size of the image."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,scale"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference",  R"((function(v){ return { output: v.input.map(function(e){ return Math.trunc(e * parseFloat(v.scale)); })}; }))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "input_width,input_height,scale"};
     GeneratorParam<int> input_width{"input_width", 0};
@@ -679,7 +679,7 @@ template<typename X, typename T>
 class Scalex3 : public ion::BuildingBlock<X> {
 public:
     GeneratorParam<std::string> gc_description{"gc_description", "This changes size of the image."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,scale"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference",  R"((function(v){ return { output: [v.input[0], Math.trunc(v.input[1] * parseFloat(v.scale)), Math.trunc(v.input[2] * parseFloat(v.scale))] }; }))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "input_width,input_height,scale"};
     GeneratorParam<int> input_width{"input_width", 0};

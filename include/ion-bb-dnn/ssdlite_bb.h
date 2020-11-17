@@ -333,7 +333,7 @@ class SSDObjectDetection : public ion::BuildingBlock<SSDObjectDetection> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "Object Detection"};
     GeneratorParam<std::string> gc_description{"gc_description", "Detect object."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,dnn"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,recognition"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output0: [400], output1:[100] , output2:[100] , output3:[100] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<int32_t> width_{"width", -1};
@@ -384,7 +384,7 @@ class SSDBoundingBoxRenderer : public ion::BuildingBlock<SSDBoundingBoxRenderer>
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "Bounding Box Renderer"};
     GeneratorParam<std::string> gc_description{"gc_description", "Render bounding box."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,dnn"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [3, parseInt(v.width), parseInt(v.height)] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<int32_t> width_{"width", -1};
