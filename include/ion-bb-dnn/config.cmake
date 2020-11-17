@@ -3,20 +3,31 @@ if(HALIDE_ROOT STREQUAL "")
     message(FATAL_ERROR "Set appropriate path to Halide")
 endif()
 
+# OpenCV
 find_package(OpenCV 3 REQUIRED)
 add_compile_options(-Wno-format-security)
 
+# onnxruntime
+set(ONNXRUNTIME_ROOT $ENV{ONNXRUNTIME_ROOT} CACHE PATH "Path to onnxruntime")
+if(ONNXRUNTIME_ROOT STREQUAL "")
+    message(FATAL_ERROR "Set appropriate path to onnxruntime")
+endif()
+
+
 set(INCLUDE_DIRS
     ${HALIDE_ROOT}/include
-    ${OpenCV_INCLUDE_DIRS})
+    ${OpenCV_INCLUDE_DIRS}
+    ${ONNXRUNTIME_ROOT}/include)
 
 set(LINK_DIRS
     ${HALIDE_ROOT}/bin
-    ${OpenCV_DIR}/lib)
+    ${OpenCV_DIR}/lib
+    ${ONNXRUNTIME_ROOT}/lib)
 
 set(RUNTIME_ENVS
     LD_LIBRARY_PATH ${HALIDE_ROOT}/bin
-    LD_LIBRARY_PATH ${OpenCV_DIR}/lib)
+    LD_LIBRARY_PATH ${OpenCV_DIR}/lib
+    LD_LIBRARY_PATH ${ONNXRUNTIME_ROOT}/lib)
 
 set(LIBRARIES
     rt
