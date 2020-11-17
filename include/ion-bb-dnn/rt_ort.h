@@ -107,7 +107,7 @@ private:
         return tensorrt_enable;
     }
 
-    int set_tensorrt_cache_env(const std ::string &cache_root) const {
+    void set_tensorrt_cache_env(const std ::string &cache_root) const {
         if (setenv("ORT_TENSORRT_ENGINE_CACHE_ENABLE", "1", 1) == -1) {
             std::cerr << "set ORT_TENSORRT_ENGINE_CACHE_ENABLE failed..." << std::endl;
         }

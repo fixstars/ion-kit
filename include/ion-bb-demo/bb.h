@@ -134,6 +134,8 @@ public:
         default:
             internal_error << "Unknown Luminance method";
         }
+
+        return Halide::Expr();
     }
 };
 
