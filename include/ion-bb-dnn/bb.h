@@ -1,6 +1,11 @@
 #ifndef ION_BB_DNN_BB_H
 #define ION_BB_DNN_BB_H
 
+// For before uuid-v2014.01 undefined UUID_STR_LEN
+#ifndef UUID_STR_LEN
+#define UUID_STR_LEN 36
+#endif
+
 #include <ion/ion.h>
 #include <uuid/uuid.h>
 
