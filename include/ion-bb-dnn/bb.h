@@ -17,6 +17,7 @@ template<typename T>
 class ReorderHWC2CHW : public BuildingBlock<ReorderHWC2CHW<T>> {
 public:
     constexpr static const int dim = 3;
+
     GeneratorInput<Halide::Func> input{"input", Halide::type_of<T>(), dim};
     GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), dim};
 
@@ -50,6 +51,7 @@ class ObjectDetectionBase : public BuildingBlock<X> {
 public:
     GeneratorParam<std::string> gc_description{"gc_description", "Detect objects by various DNN models."};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { outputs: inputs }))"};
+    GeneratorParam<std::string> gc_mandatory{"gc_tags", "processing,recognition"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
