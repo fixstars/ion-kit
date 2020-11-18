@@ -52,7 +52,7 @@ jobs:
         key: ${{ runner.os }}-halide
 
     - name: Download Halide package
-      # if: steps.cache-halide.outputs.cache-hit != 'true'
+      if: steps.cache-halide.outputs.cache-hit != 'true'
       shell: bash
       run: curl -L https://github.com/halide/Halide/releases/download/v8.0.0/halide-linux-64-gcc53-800-65c26cba6a3eca2d08a0bccf113ca28746012cc3.tgz | tar zx -C $HOME
 
@@ -64,7 +64,7 @@ jobs:
         key: ${{ runner.os }}-onnxruntime
 
     - name: Download onnxruntime package
-      # if: steps.cache-onnxruntime.outputs.cache-hit != 'true'
+      if: steps.cache-onnxruntime.outputs.cache-hit != 'true'
       shell: bash
       run: curl -L https://github.com/microsoft/onnxruntime/releases/download/v1.5.2/onnxruntime-linux-x64-1.5.2.tgz | tar zx -C $HOME
 
@@ -81,7 +81,7 @@ jobs:
       # Note the current convention is to use the -S and -B options here to specify source
       # and build directories, but this is only available with CMake 3.13 and higher.
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-      run: ls ${HOME} && cmake $GITHUB_WORKSPACE -GNinja -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DHALIDE_ROOT=$HOME/halide -DONNXRUNTIME_ROOT=$HOME/onnxruntime-linux-x64-1.5.2 -DWITH_CUDA=OFF
+      run: cmake $GITHUB_WORKSPACE -GNinja -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DHALIDE_ROOT=$HOME/halide -DONNXRUNTIME_ROOT=$HOME/onnxruntime-linux-x64-1.5.2 -DWITH_CUDA=OFF
 
     - name: Build
       working-directory: ${{runner.workspace}}/ion-kit/build
