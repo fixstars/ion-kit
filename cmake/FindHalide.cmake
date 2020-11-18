@@ -4,11 +4,11 @@ endif()
 
 # Find paths
 find_path(HALIDE_INCLUDE_DIR NAMES Halide.h PATHS ${HALIDE_ROOT}/include)
-if (WIN32)
+if (UNIX)
+  find_library(HALIDE_LIBRARY NAMES Halide PATHS ${HALIDE_ROOT}/bin ${HALIDE_ROOT}/lib)
+else()
   find_library(HALIDE_LIBRARY_DEBUG NAMES Halide PATHS ${HALIDE_ROOT}/Debug)
   find_library(HALIDE_LIBRARY_RELEASE NAMES Halide PATHS ${HALIDE_ROOT}/Release)
-else()
-  find_library(HALIDE_LIBRARY NAMES Halide PATHS ${HALIDE_ROOT}/bin ${HALIDE_ROOT}/lib)
 endif()
 find_path(HALIDE_TOOLS_DIR NAMES tools PATHS ${HALIDE_ROOT})
 

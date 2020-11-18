@@ -17,10 +17,15 @@ set(RUNTIME_ENVS
     LD_LIBRARY_PATH ${HALIDE_ROOT}/bin
     LD_LIBRARY_PATH ${OpenCV_DIR}/lib)
 
-set(LIBRARIES
-    rt
-    dl
-    pthread
-    m
-    z
-    ${OpenCV_LIBS})
+if (UNIX)
+    set(LIBRARIES
+        rt
+        dl
+        pthread
+        m
+        z
+        ${OpenCV_LIBS})
+else()
+    set(LIBRARIES
+        ${OpenCV_LIBS})
+endif()

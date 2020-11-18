@@ -4,7 +4,9 @@ if(HALIDE_ROOT STREQUAL "")
 endif()
 
 find_package(OpenCV 3 REQUIRED)
-add_compile_options(-Wno-format-security)
+if (UNIX)
+    add_compile_options(-Wno-format-security)
+endif()
 
 set(ONNXRUNTIME_ROOT $ENV{ONNXRUNTIME_ROOT} CACHE PATH "Path to onnxruntime")
 if(ONNXRUNTIME_ROOT STREQUAL "")
@@ -26,11 +28,16 @@ set(RUNTIME_ENVS
     LD_LIBRARY_PATH ${OpenCV_DIR}/lib
     LD_LIBRARY_PATH ${ONNXRUNTIME_ROOT}/lib)
 
+if (UNIX)
 set(LIBRARIES
     rt
     dl
     pthread
     m
     z
-    uuid
     ${OpenCV_LIBS})
+else()
+set(LIBRARIES
+    ${OpenCV_LIBS})
+endif()
+

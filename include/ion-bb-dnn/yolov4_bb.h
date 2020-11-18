@@ -4,12 +4,7 @@
 #include <fstream>
 
 #include <ion/ion.h>
-#include <uuid/uuid.h>
-
-// For before uuid-v2014.01 undefined UUID_STR_LEN
-#ifndef UUID_STR_LEN
-#define UUID_STR_LEN 36
-#endif
+#include "sole.hpp"
 
 namespace {
 
@@ -148,13 +143,10 @@ public:
 
         input(_) = input_(_);
 
-        uuid_t session_id;
-        uuid_generate(session_id);
-        char session_id_chars[UUID_STR_LEN];
-        uuid_unparse(session_id, session_id_chars);
-
-        Buffer<uint8_t> session_id_buf(UUID_STR_LEN);
-        std::memcpy(session_id_buf.data(), session_id_chars, UUID_STR_LEN);
+        std::string session_id = sole::uuid4().str();
+        Buffer<uint8_t> session_id_buf(session_id.size() + 1);
+        session_id_buf.fill(0);
+        std::memcpy(session_id_buf.data(), session_id.c_str(), session_id.size());
 
         std::string cache_root(cache_root_);
         Halide::Buffer<uint8_t> cache_path_buf(cache_root.size() + 1);
