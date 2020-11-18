@@ -107,6 +107,7 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,recognition"};
 
     GeneratorParam<std::string> model_root_{"model_root", "resource/dnn/model"};
     GeneratorParam<std::string> model_name_{"model_name", "/yolov4-tiny_416_416.onnx"};
@@ -217,6 +218,7 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "height,width"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
 
     GeneratorParam<int32_t> height_{"height", 512};
     GeneratorParam<int32_t> width_{"width", 512};
