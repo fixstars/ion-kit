@@ -81,6 +81,8 @@ public:
         default:
             internal_error << "Unknown ColorDifference method";
         }
+
+        return Halide::Expr();
     }
 };
 
@@ -113,6 +115,8 @@ public:
         default:
             internal_error << "Unknown Luminance method";
         }
+
+        return Halide::Expr();
     }
 };
 
@@ -150,6 +154,8 @@ public:
         default:
             internal_error << "Unknown BoundaryCondition method";
         }
+
+        return Halide::Func();
     }
 
     static Halide::Func calc3D(Method method, Halide::Func f, Halide::Expr width, Halide::Expr height) {
@@ -167,6 +173,8 @@ public:
         default:
             internal_error << "Unknown BoundaryCondition method";
         }
+
+        return Halide::Func();
     }
 };
 
