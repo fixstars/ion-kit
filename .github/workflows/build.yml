@@ -52,7 +52,7 @@ jobs:
         key: ${{ runner.os }}-halide
 
     - name: Download Halide package
-      if: steps.cache-halide.outputs.cache-hit != 'true'
+      # if: steps.cache-halide.outputs.cache-hit != 'true'
       shell: bash
       run: curl -L https://github.com/halide/Halide/releases/download/v8.0.0/halide-linux-64-gcc53-800-65c26cba6a3eca2d08a0bccf113ca28746012cc3.tgz | tar zx -C $HOME
 
@@ -64,7 +64,7 @@ jobs:
         key: ${{ runner.os }}-onnxruntime
 
     - name: Download onnxruntime package
-      if: steps.cache-onnxruntime.outputs.cache-hit != 'true'
+      # if: steps.cache-onnxruntime.outputs.cache-hit != 'true'
       shell: bash
       run: curl -L https://github.com/microsoft/onnxruntime/releases/download/v1.5.2/onnxruntime-linux-x64-1.5.2.tgz | tar zx -C $HOME
 
