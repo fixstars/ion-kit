@@ -13,7 +13,7 @@ class Camera : public ion::BuildingBlock<Camera> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "USBCamera"};
     GeneratorParam<std::string> gc_description{"gc_description", "This captures USB camera image."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "input,imgproc"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "input,sensor"};
     GeneratorParam<std::string> gc_inference{"gc_inference",  R"((function(v){ return { output: [3, parseInt(v.width), parseInt(v.height)] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
@@ -308,7 +308,7 @@ class OpticalBlackClamp : public ion::BuildingBlock<OpticalBlackClamp> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "Optical Black Clamp"};
     GeneratorParam<std::string> gc_description{"gc_description", "This subtracts each pixel values by clamp_value parameter value. This expects 16-bit RAW input and emits 16-bit RAW output."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,arithmetic"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference",  R"((function(v){ return { output: v.input }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorParam<uint16_t> clamp_value{"clamp_value", 0};
