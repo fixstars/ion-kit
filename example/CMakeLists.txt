@@ -6,32 +6,24 @@
 # AOT
 ion_compile(producerx3_compile SRCS producerx3_compile.cc PIPELINE_NAME producerx3)
 ion_compile(sgm_compile SRCS sgm_compile.cc PIPELINE_NAME sgm)
-ion_compile(yolov4_compile SRCS yolov4_compile.cc PIPELINE_NAME yolov4)
+ion_compile(dnn_compile SRCS dnn_compile.cc PIPELINE_NAME dnn)
 ion_compile(demo_compile SRCS demo_compile.cc PIPELINE_NAME demo)
 
 ion_run(producerx3 producerx3_compile SRCS producerx3_run.cc TARGET_STRING "host-profile")
 ion_run(sgm sgm_compile SRCS sgm_run.cc TARGET_STRING "host-profile")
-ion_run(yolov4 yolov4_compile SRCS yolov4_run.cc TARGET_STRING "host-profile")
-ion_run(demo demo_compile SRCS demo_run.cc
-  COMPILE_ARGS
-    ${CMAKE_SOURCE_DIR}/data/dnn/model
-    /yolov4-tiny_416_416_batch6.onnx
-  TARGET_STRING "host-profile")
+ion_run(dnn dnn_compile SRCS dnn_run.cc TARGET_STRING "host-profile")
+ion_run(demo demo_compile SRCS demo_run.cc TARGET_STRING "host-profile")
 if(WITH_CUDA)
     ion_run(producerx3_gpu producerx3_compile SRCS producerx3_run.cc TARGET_STRING "host-cuda-cuda_capability_50-profile")
     ion_run(sgm_gpu sgm_compile SRCS sgm_run.cc TARGET_STRING "host-cuda-cuda_capability_50-profile")
-    ion_run(yolov4_gpu yolov4_compile SRCS yolov4_run.cc TARGET_STRING "host-cuda-cuda_capability_50-profile")
-    ion_run(demo_gpu demo_compile SRCS demo_run.cc
-    COMPILE_ARGS
-      ${CMAKE_SOURCE_DIR}/data/dnn/model
-      /yolov4-tiny_416_416_batch6.onnx
-    TARGET_STRING "host-cuda-cuda_capability_50-profile")
+    ion_run(dnn_gpu dnn_compile SRCS dnn_run.cc TARGET_STRING "host-cuda-cuda_capability_50-profile")
+    ion_run(demo_gpu demo_compile SRCS demo_run.cc TARGET_STRING "host-cuda-cuda_capability_50-profile")
 endif()
 
 # JIT
 ion_jit(isp_jit SRCS isp.cc)
 ion_jit(isp_and_sgm_jit SRCS isp_and_sgm.cc)
-ion_jit(yolov4_jit SRCS yolov4.cc)
+ion_jit(dnn_jit SRCS dnn.cc)
 ion_jit(v4l2_jit SRCS v4l2.cc)
 ion_jit(realsense_jit SRCS realsense.cc)
 ion_jit(demo_jit SRCS demo.cc)

@@ -242,7 +242,7 @@ public:
     // TODO: Write suitable description
     GeneratorParam<std::string> gc_title{"gc_title", "Census Transform"};
     GeneratorParam<std::string> gc_description{"gc_description", "Census transform."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,stereo"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,3D"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }; }))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
 
@@ -274,7 +274,7 @@ public:
     // TODO: Write suitable description
     GeneratorParam<std::string> gc_title{"gc_title", "Matching cost"};
     GeneratorParam<std::string> gc_description{"gc_description", "Matching cost."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,stereo"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,3D"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.disp), parseInt(v.width), parseInt(v.height)]}; }))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
 
@@ -309,7 +309,7 @@ public:
     // TODO: Write suitable description
     GeneratorParam<std::string> gc_title{"gc_title", "Scan cost"};
     GeneratorParam<std::string> gc_description{"gc_description", "Scan cost."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,stereo"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,3D"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }; }))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
 
@@ -342,7 +342,7 @@ public:
     // TODO: Write suitable description
     GeneratorParam<std::string> gc_title{"gc_title", "Add cost"};
     GeneratorParam<std::string> gc_description{"gc_description", "Add cost."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,stereo"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,3D"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input0 }; }))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
 
@@ -380,7 +380,7 @@ public:
     // TODO: Write suitable description
     GeneratorParam<std::string> gc_title{"gc_title", "Disparity"};
     GeneratorParam<std::string> gc_description{"gc_description", "Disparity."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,stereo"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,3D"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.width), parseInt(v.height)]}; }))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
 
@@ -412,7 +412,7 @@ class SGM : public ion::BuildingBlock<SGM> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "Stereo Matching"};
     GeneratorParam<std::string> gc_description{"gc_description", "This calculates disparity from stereo image."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,stereo"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,3D"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input_l }; }))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
