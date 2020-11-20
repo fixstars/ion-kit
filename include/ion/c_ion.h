@@ -32,7 +32,7 @@ typedef struct ion_builder_t_ *ion_builder_t;
 typedef struct ion_buffer_t_ *ion_buffer_t;
 typedef struct ion_port_map_t_ *ion_port_map_t;
 
-int ion_port_create(ion_port_t *, const char *, ion_type_t);
+int ion_port_create(ion_port_t *, const char *, ion_type_t, int);
 int ion_port_destroy(ion_port_t);
 
 int ion_param_create(ion_param_t *, const char *, const char *);
@@ -55,36 +55,26 @@ int ion_builder_load(ion_builder_t, const char *);
 int ion_builder_bb_metadata(ion_builder_t, char *, int, int *);
 int ion_builder_run(ion_builder_t, ion_port_map_t);
 
-int ion_buffer_create_u1(ion_buffer_t *, int *, int);
-int ion_buffer_create_u8(ion_buffer_t *, int *, int);
-int ion_buffer_create_u16(ion_buffer_t *, int *, int);
-int ion_buffer_create_u32(ion_buffer_t *, int *, int);
-int ion_buffer_create_u64(ion_buffer_t *, int *, int);
-int ion_buffer_create_i8(ion_buffer_t *, int *, int);
-int ion_buffer_create_i16(ion_buffer_t *, int *, int);
-int ion_buffer_create_i32(ion_buffer_t *, int *, int);
-int ion_buffer_create_i64(ion_buffer_t *, int *, int);
-int ion_buffer_create_f32(ion_buffer_t *, int *, int);
-int ion_buffer_create_f64(ion_buffer_t *, int *, int);
+int ion_buffer_create(ion_buffer_t *, ion_type_t, int *, int);
+int ion_buffer_destroy(ion_buffer_t);
 int ion_buffer_write(ion_buffer_t, void *, size_t size);
 int ion_buffer_read(ion_buffer_t, void *, size_t size);
-int ion_buffer_destroy(ion_buffer_t);
 
 int ion_port_map_create(ion_port_map_t *);
 int ion_port_map_destroy(ion_port_map_t);
-int ion_port_map_set_u1(ion_port_map_t, bool);
-int ion_port_map_set_u8(ion_port_map_t, uint8_t);
-int ion_port_map_set_u16(ion_port_map_t, uint16_t);
-int ion_port_map_set_u32(ion_port_map_t, uint32_t);
-int ion_port_map_set_u64(ion_port_map_t, uint64_t);
-int ion_port_map_set_i8(ion_port_map_t, int8_t);
-int ion_port_map_set_i16(ion_port_map_t, int16_t);
-int ion_port_map_set_i32(ion_port_map_t, int32_t);
-int ion_port_map_set_i64(ion_port_map_t, int64_t);
-int ion_port_map_set_f32(ion_port_map_t, float);
-int ion_port_map_set_f64(ion_port_map_t, double);
-int ion_port_map_set_buffer(ion_port_map_t, ion_buffer_t);
-int ion_port_map_set_buffer_array(ion_port_map_t, ion_buffer_t *, int);
+int ion_port_map_set_i8(ion_port_map_t, ion_port_t, int8_t);
+int ion_port_map_set_i16(ion_port_map_t, ion_port_t, int16_t);
+int ion_port_map_set_i32(ion_port_map_t, ion_port_t, int32_t);
+int ion_port_map_set_i64(ion_port_map_t, ion_port_t, int64_t);
+int ion_port_map_set_u1(ion_port_map_t, ion_port_t, bool);
+int ion_port_map_set_u8(ion_port_map_t, ion_port_t, uint8_t);
+int ion_port_map_set_u16(ion_port_map_t, ion_port_t, uint16_t);
+int ion_port_map_set_u32(ion_port_map_t, ion_port_t, uint32_t);
+int ion_port_map_set_u64(ion_port_map_t, ion_port_t, uint64_t);
+int ion_port_map_set_f32(ion_port_map_t, ion_port_t, float);
+int ion_port_map_set_f64(ion_port_map_t, ion_port_t, double);
+int ion_port_map_set_buffer(ion_port_map_t, ion_port_t, ion_buffer_t);
+int ion_port_map_set_buffer_array(ion_port_map_t, ion_port_t, ion_buffer_t *, int);
 
 #if defined __cplusplus
 }

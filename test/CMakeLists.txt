@@ -10,7 +10,7 @@ endif()
 target_link_libraries(ion-bb-test ion-core)
 
 # C interface test
-ion_jit(c_test SRCS c_test.c)
+ion_jit(c_test SRCS c_test.c test-rt.cc)
 add_dependencies(c_test ion-bb-test)
 
 # Error case test
