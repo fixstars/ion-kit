@@ -1,8 +1,9 @@
 #include <exception>
 
 #include <ion/ion.h>
-
 #include <ion/c_ion.h>
+
+#include <HalideBuffer.h>
 
 using namespace ion;
 
@@ -293,6 +294,43 @@ int ion_builder_bb_metadata(ion_builder_t obj, char *ptr, int n, int *ret_n)
                 *ret_n = static_cast<int>(md.size());
             }
         }
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        return -1;
+    } catch (...) {
+        std::cerr << "Unknown exception was happened." << std::endl;
+        return -1;
+    }
+
+    return 0;
+}
+
+int ion_builder_bb_run(ion_builder_t obj, ion_port_map_t pm)
+{
+    try {
+        reinterpret_cast<Builder*>(obj)->run(*reinterpret_cast<PortMap*>(pm));
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        return -1;
+    } catch (...) {
+        std::cerr << "Unknown exception was happened." << std::endl;
+        return -1;
+    }
+
+    return 0;
+}
+
+int ion_buffer_create_u1(ion_buffer_t *ptr, ion_type_t type_, int *sizes_, int dim)
+{
+    try {
+        halide_type_t type {
+            static_cast<halide_type_code_t>(type_.code),
+            type_.bits,
+            type_.lanes,
+        };
+        std::vector<int> sizes(dim);
+        std::memcpy(sizes.data(), sizes_, dim * sizeof(int));
+        *ptr = reinterpret_cast<ion_buffer_t>(new Halide::Runtime::Buffer<void>(type, sizes));
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
         return -1;
