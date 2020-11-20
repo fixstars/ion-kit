@@ -12,56 +12,6 @@ namespace ion {
 namespace bb {
 namespace demo {
 
-class Schedule : public ion::BuildingBlock<Schedule> {
-public:
-    GeneratorParam<std::string> gc_title{"gc_title", "Schedule"};
-    GeneratorParam<std::string> gc_description{"gc_description", "This applies various scheduling."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,network"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
-    GeneratorParam<std::string> output_name{"output_name", ""};
-    GeneratorParam<bool> output_replace{"output_replace", false};
-    GeneratorInput<Halide::Func> input{"input"};
-    GeneratorOutput<Halide::Func> output{"output"};
-
-    void generate() {
-        using namespace Halide;
-        Func f(static_cast<std::string>(output_name));
-        f(_) = input(_);
-        f.compute_root();
-
-        if (get_target().has_gpu_feature()) {
-            if (f.args().size() == 1) {
-                Var i = f.args()[0];
-                Var block, thread;
-                f.split(i, block, thread, 64);
-                f.gpu_blocks(block).gpu_threads(thread);
-            } else {
-                Var x = f.args()[f.args().size() - 2];
-                Var y = f.args()[f.args().size() - 1];
-                Var xo, yo, xi, yi;
-                f.gpu_tile(x, y, xo, yo, xi, yi, 16, 16);
-            }
-        }
-
-        if (static_cast<bool>(output_replace)) {
-            output = f;
-        } else {
-            output(_) = f(_);
-        }
-    }
-};
-
-}  // namespace demo
-}  // namespace bb
-}  // namespace ion
-
-ION_REGISTER_BUILDING_BLOCK(ion::bb::demo::Schedule, demo_schedule);
-
-namespace ion {
-namespace bb {
-namespace demo {
-
 class BayerMap {
 public:
     enum class Pattern {
@@ -239,7 +189,7 @@ class BayerDemosaicSimple : public BuildingBlock<BayerDemosaicSimple> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "BayerDemosaicSimple"};
     GeneratorParam<std::string> gc_description{"gc_description", "Demosaic bayer image by simple algorithm."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,arithmetic"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.map(x => x / 2).concat([3]) }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
@@ -409,7 +359,7 @@ class CalcLuminance : public BuildingBlock<CalcLuminance> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "CalcLuminance"};
     GeneratorParam<std::string> gc_description{"gc_description", "Calc luminance of image."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,arithmetic"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.slice(0, -1) }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
@@ -1186,7 +1136,7 @@ class Tile6Images3DArrayFloatHWC : public BuildingBlock<Tile6Images3DArrayFloatH
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "Tile6Images3DArrayFloatHWC"};
     GeneratorParam<std::string> gc_description{"gc_description", "Tile images."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,tile-image"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [v.input[0], v.input[1] * 3, v.input[2] * 2] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "input_width,input_height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
@@ -1300,7 +1250,7 @@ class Pack : public BuildingBlock<X> {
 
 public:
     GeneratorParam<std::string> gc_description{"gc_description", "Pack data to array."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,file"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.concat([1]) }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
@@ -1331,7 +1281,7 @@ class Pack2Images3DFloat : public BuildingBlock<Pack2Images3DFloat> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "Pack2Images3DFloat"};
     GeneratorParam<std::string> gc_description{"gc_description", "Pack data to array."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,file"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input0.map((x, i) => Math.max(x, v.input1[i])).concat([2]) }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "input0_width,input0_height,input1_width,input1_height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
@@ -1365,7 +1315,7 @@ class Pack2Images3DUInt8HWC : public BuildingBlock<Pack2Images3DUInt8HWC> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "Pack2Images3DUInt8HWC"};
     GeneratorParam<std::string> gc_description{"gc_description", "Pack data to array."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,file"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input0.map((x, i) => Math.max(x, v.input1[i])).concat([2]) }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "input0_width,input0_height,input1_width,input1_height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
@@ -1399,7 +1349,7 @@ class Pack4Images3DFloat : public BuildingBlock<Pack4Images3DFloat> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "Pack4Images3DFloat"};
     GeneratorParam<std::string> gc_description{"gc_description", "Pack data to array."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,file"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input0.map((x, i) => Math.max(x, v.input1[i], v.input2[i], v.input3[i])).concat([4]) }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "input0_width,input0_height,input1_width,input1_height,input2_width,input2_height,input3_width,input3_height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
@@ -1447,7 +1397,7 @@ class Pack4Images3DUInt8HWC : public BuildingBlock<Pack4Images3DUInt8HWC> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "Pack4Images3DUInt8HWC"};
     GeneratorParam<std::string> gc_description{"gc_description", "Pack data to array."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,file"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input0.map((x, i) => Math.max(x, v.input1[i], v.input2[i], v.input3[i])).concat([4]) }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "input0_width,input0_height,input1_width,input1_height,input2_width,input2_height,input3_width,input3_height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
@@ -1495,7 +1445,7 @@ class Pack6Images3DFloat : public BuildingBlock<Pack6Images3DFloat> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "Pack6Images3DFloat"};
     GeneratorParam<std::string> gc_description{"gc_description", "Pack data to array."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,file"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input0.map((x, i) => Math.max(x, v.input1[i], v.input2[i], v.input3[i], v.input4[i], v.input5[i])).concat([6]) }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "input0_width,input0_height,input1_width,input1_height,input2_width,input2_height,input3_width,input3_height,input4_width,input4_height,input5_width,input5_height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
@@ -1557,7 +1507,7 @@ class Pack6Images3DUInt8HWC : public BuildingBlock<Pack6Images3DUInt8HWC> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "Pack6Images3DUInt8HWC"};
     GeneratorParam<std::string> gc_description{"gc_description", "Pack data to array."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,file"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input0.map((x, i) => Math.max(x, v.input1[i], v.input2[i], v.input3[i], v.input4[i], v.input5[i])).concat([6]) }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "input0_width,input0_height,input1_width,input1_height,input2_width,input2_height,input3_width,input3_height,input4_width,input4_height,input5_width,input5_height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
@@ -1622,7 +1572,7 @@ class Concat : public BuildingBlock<X> {
 
 public:
     GeneratorParam<std::string> gc_description{"gc_description", "Concat array."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,arithmetic"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input0.slice(0, -1).map((x, i) => Math.max(x, v.input1[i])).concat([v.input0.slice(-1)[0] + v.input1.slice(-1)[0]]) }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
@@ -2035,7 +1985,7 @@ class IMX219 : public ion::BuildingBlock<IMX219> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "IMX219"};
     GeneratorParam<std::string> gc_description{"gc_description", "This captures IMX219 image."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "ouput,imgproc"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "input,sensor"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [3264, 2464] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
@@ -2076,7 +2026,7 @@ class D435 : public ion::BuildingBlock<D435> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "D435"};
     GeneratorParam<std::string> gc_description{"gc_description", "This captures D435 stereo image and depth."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "ouput,imgproc"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "input,sensor"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output_l: [1280, 720], output_r: [1280, 720], output_d: [1280, 720] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
@@ -2119,7 +2069,7 @@ class GUIDisplay : public ion::BuildingBlock<GUIDisplay> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "GUI Display"};
     GeneratorParam<std::string> gc_description{"gc_description", "This renders RGB image on GUI window."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "ouput,display"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "output,display"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: []  }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self,assume_compute_root"};

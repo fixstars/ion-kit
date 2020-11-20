@@ -514,7 +514,7 @@ class SaturationAdjustment : public ion::BuildingBlock<SaturationAdjustment> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "Saturation Adjustment"};
     GeneratorParam<std::string> gc_description{"gc_description", "This applies saturation adjustment."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "proccessing,imgproc"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference",  R"((function(v){ return { output: v.input }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorParam<float> saturation_value{"saturation_value", 1.0f};
