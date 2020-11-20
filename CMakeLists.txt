@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 3.6)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON) # This is required to export symbols on windows platform
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
@@ -44,7 +45,11 @@ include(IonUtil)
 file(GLOB ION_SRC src/*)
 add_library(ion-core SHARED ${ION_SRC})
 target_include_directories(ion-core PUBLIC "${PROJECT_SOURCE_DIR}/include;${HALIDE_INCLUDE_DIR}")
-target_link_libraries(ion-core ${HALIDE_LIBRARY} dl pthread z)
+if (UNIX)
+  target_link_libraries(ion-core ${HALIDE_LIBRARY} dl pthread z)
+else()
+  target_link_libraries(ion-core ${HALIDE_LIBRARY})
+endif()
 
 #
 # ion-bb

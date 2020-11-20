@@ -46,10 +46,23 @@ function(ion_run NAME COMPILE_NAME)
     add_custom_command(OUTPUT ${OUTPUT_PATH}
         COMMAND ${CMAKE_COMMAND} -E make_directory ${OUTPUT_PATH}
     )
-    add_custom_command(OUTPUT ${HEADER} ${STATIC_LIB}
-        COMMAND ${CMAKE_COMMAND} -E env HL_TARGET=${IER_TARGET_STRING} $<TARGET_FILE:${COMPILE_NAME}> ${IER_COMPILE_ARGS}
-        DEPENDS ${COMPILE_NAME} ${OUTPUT_PATH}
-        WORKING_DIRECTORY ${OUTPUT_PATH})
+    if (UNIX)
+        add_custom_command(OUTPUT ${HEADER} ${STATIC_LIB}
+            COMMAND ${CMAKE_SOURCE_DIR}/script/invoke.sh $<TARGET_FILE:${COMPILE_NAME}>
+                HL_TARGET ${IER_TARGET_STRING}
+                LD_LIBRARY_PATH ${HALIDE_ROOT}/bin
+                LD_LIBRARY_PATH ${CMAKE_BINARY_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>
+            DEPENDS ${COMPILE_NAME} ${OUTPUT_PATH}
+            WORKING_DIRECTORY ${OUTPUT_PATH})
+    else()
+        add_custom_command(OUTPUT ${HEADER} ${STATIC_LIB}
+            COMMAND ${CMAKE_SOURCE_DIR}/script/invoke.bat $<TARGET_FILE:${COMPILE_NAME}>
+                HL_TARGET ${IER_TARGET_STRING}
+                PATH ${HALIDE_ROOT}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>
+                PATH ${CMAKE_BINARY_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>
+            DEPENDS ${COMPILE_NAME} ${OUTPUT_PATH}
+            WORKING_DIRECTORY ${OUTPUT_PATH})
+    endif()
 
     # Build run
     add_executable(${NAME} ${IER_SRCS} ${HEADER})

@@ -5,7 +5,9 @@ endif()
 
 # OpenCV
 find_package(OpenCV 3 REQUIRED)
-add_compile_options(-Wno-format-security)
+if (UNIX)
+    add_compile_options(-Wno-format-security)
+endif()
 
 # onnxruntime
 set(ONNXRUNTIME_ROOT $ENV{ONNXRUNTIME_ROOT} CACHE PATH "Path to onnxruntime")
@@ -29,10 +31,15 @@ set(RUNTIME_ENVS
     LD_LIBRARY_PATH ${OpenCV_DIR}/lib
     LD_LIBRARY_PATH ${ONNXRUNTIME_ROOT}/lib)
 
-set(LIBRARIES
-    rt
-    dl
-    pthread
-    m
-    z
-    uuid)
+if (UNIX)
+    set(LIBRARIES
+        rt
+        dl
+        pthread
+        m
+        z
+        ${OpenCV_LIBS})
+else()
+    set(LIBRARIES
+        ${OpenCV_LIBS})
+endif()
