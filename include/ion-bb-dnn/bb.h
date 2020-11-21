@@ -50,7 +50,7 @@ class ObjectDetectionBase : public BuildingBlock<X> {
 
 public:
     GeneratorParam<std::string> gc_description{"gc_description", "Detect objects by various DNN models."};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { outputs: v.inputs }}))"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
     GeneratorParam<std::string> gc_tags{"gc_tags", "processing,recognition"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
