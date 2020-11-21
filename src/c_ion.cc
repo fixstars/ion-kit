@@ -193,10 +193,10 @@ int ion_builder_destroy(ion_builder_t obj)
     return 0;
 }
 
-int ion_builder_with_bb_module(ion_builder_t obj, const char *module_name)
+int ion_builder_set_target(ion_builder_t obj, const char *target)
 {
     try {
-        reinterpret_cast<Builder *>(obj)->with_bb_module(module_name);
+        reinterpret_cast<Builder *>(obj)->set_target(Halide::Target(target));
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
         return -1;
@@ -208,10 +208,10 @@ int ion_builder_with_bb_module(ion_builder_t obj, const char *module_name)
     return 0;
 }
 
-int ion_builder_set_target(ion_builder_t obj, const char *target)
+int ion_builder_with_bb_module(ion_builder_t obj, const char *module_name)
 {
     try {
-        reinterpret_cast<Builder *>(obj)->set_target(Halide::Target(target));
+        reinterpret_cast<Builder *>(obj)->with_bb_module(module_name);
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
         return -1;
@@ -238,10 +238,10 @@ int ion_builder_add_node(ion_builder_t obj, const char *key, ion_node_t *node_pt
     return 0;
 }
 
-int ion_builder_compile(ion_builder_t obj, const char *function_name, ion_builder_compile_option_t *option)
+int ion_builder_compile(ion_builder_t obj, const char *function_name, ion_builder_compile_option_t option)
 {
     try {
-        reinterpret_cast<Builder*>(obj)->compile(function_name, Builder::CompileOption{option->output_directory});
+        reinterpret_cast<Builder*>(obj)->compile(function_name, Builder::CompileOption{option.output_directory});
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
         return -1;
@@ -392,7 +392,7 @@ int ion_buffer_destroy(ion_buffer_t obj)
     return 0;
 }
 
-int ion_buffer_write(ion_buffer_t obj, void *ptr, size_t size)
+int ion_buffer_write(ion_buffer_t obj, void *ptr, int size)
 {
     try {
         // NOTE: Halide::Buffer class layout is safe to call Halide::Buffer<void>::type()
@@ -445,7 +445,7 @@ int ion_buffer_write(ion_buffer_t obj, void *ptr, size_t size)
     return 0;
 }
 
-int ion_buffer_read(ion_buffer_t obj, void *ptr, size_t size)
+int ion_buffer_read(ion_buffer_t obj, void *ptr, int size)
 {
     try {
         // NOTE: Halide::Buffer class layout is safe to call Halide::Buffer<void>::type()

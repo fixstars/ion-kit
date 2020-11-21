@@ -49,7 +49,7 @@ int ion_builder_destroy(ion_builder_t);
 int ion_builder_set_target(ion_builder_t, const char *);
 int ion_builder_with_bb_module(ion_builder_t, const char *);
 int ion_builder_add_node(ion_builder_t, const char *, ion_node_t *);
-int ion_builder_compile(ion_builder_t, const char *, ion_builder_compile_option_t *option);
+int ion_builder_compile(ion_builder_t, const char *, ion_builder_compile_option_t option);
 int ion_builder_save(ion_builder_t, const char *);
 int ion_builder_load(ion_builder_t, const char *);
 int ion_builder_bb_metadata(ion_builder_t, char *, int, int *);
@@ -57,8 +57,8 @@ int ion_builder_run(ion_builder_t, ion_port_map_t);
 
 int ion_buffer_create(ion_buffer_t *, ion_type_t, int *, int);
 int ion_buffer_destroy(ion_buffer_t);
-int ion_buffer_write(ion_buffer_t, void *, size_t size);
-int ion_buffer_read(ion_buffer_t, void *, size_t size);
+int ion_buffer_write(ion_buffer_t, void *, int size);
+int ion_buffer_read(ion_buffer_t, void *, int size);
 
 int ion_port_map_create(ion_port_map_t *);
 int ion_port_map_destroy(ion_port_map_t);
