@@ -3,6 +3,7 @@
 
 #include <dlfcn.h>
 #include <algorithm>
+#include <map>
 #include <stdexcept>
 #include <string>
 #include <vector>
