@@ -40,7 +40,7 @@ If you use only cpu, you can get binary release.
 curl -L https://github.com/microsoft/onnxruntime/releases/download/v1.4.0/onnxruntime-linux-x64-1.4.0.tgz | tar zx <path-to-onnxruntime-install>
 ```
 
-### 5. Place additional building blocks (Appendix)
+### 3. Place additional building blocks (Appendix)
 If you want to use additional `ion-bb-xx` directories, place them directly under ` `ion-kit`  directory.
 
 
