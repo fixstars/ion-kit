@@ -2,6 +2,7 @@
 #define ION_BB_DNN_RT_TFL_H
 
 #include <memory>
+#include <unordered_map>
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
