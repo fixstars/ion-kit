@@ -8,7 +8,6 @@ FROM ubuntu:18.04 AS ion-core-builder
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
         build-essential \
-        cmake \
         curl \
         doxygen \
         g++ \
@@ -24,10 +23,9 @@ RUN apt-get update && apt-get install -y \
         && apt-get clean \
         && rm -rf /var/lib/apt/lists/*
 
-RUN curl -L https://ion-archives.s3-us-west-2.amazonaws.com/Halide-8c7129af4.tar.gz | tar zx -C /usr/local/
-ENV HALIDE_ROOT=/usr/local/Halide
+RUN curl -L https://github.com/halide/Halide/releases/download/v10.0.0/Halide-10.0.0-x86-64-linux-db901f7f7084025abc3cbb9d17b0f2d3f1745900.tar.gz | tar zx -C /usr/local/
 
-RUN pip3 install sphinx_rtd_theme breathe
+RUN pip3 install sphinx_rtd_theme breathe cmake==3.18.4.post1
 
 
 #
@@ -42,15 +40,15 @@ WORKDIR ion-kit
 RUN mkdir build
 WORKDIR build
 RUN cmake -G Ninja \
--D CMAKE_BUILD_TYPE=Release \
--D CMAKE_INSTALL_PREFIX=ion-kit-install \
--D HALIDE_ROOT=/usr/local/Halide \
--D ION_BUILD_ALL_BB=OFF \
--D ION_BUILD_DOC=ON \
--D ION_BUILD_TEST=ON \
--D ION_BUILD_EXAMPLE=OFF \
--D ION_BUNDLE_HALIDE=ON \
--D WITH_CUDA=OFF ../
+        -D CMAKE_BUILD_TYPE=Release \
+        -D CMAKE_INSTALL_PREFIX=ion-kit-install \
+        -D Halide_DIR=/usr/local/halide/lib/cmake/Halide \
+        -D ION_BUILD_ALL_BB=OFF \
+        -D ION_BUILD_DOC=ON \
+        -D ION_BUILD_TEST=ON \
+        -D ION_BUILD_EXAMPLE=OFF \
+        -D ION_BUNDLE_HALIDE=ON \
+        -D WITH_CUDA=OFF ../
 RUN cmake --build . --target install
 RUN cmake --build . --target package
 RUN find ./ -maxdepth 1 -name "ion-kit_*.deb" -exec cp {} ion-core.deb \;
@@ -106,15 +104,15 @@ WORKDIR ion-kit
 RUN mkdir build
 WORKDIR build
 RUN cmake -G Ninja \
--D CMAKE_BUILD_TYPE=Release \
--D CMAKE_INSTALL_PREFIX=ion-kit-install \
--D HALIDE_ROOT=/usr/local/Halide \
--D ION_BUILD_ALL_BB=ON \
--D ION_BUILD_DOC=ON \
--D ION_BUILD_TEST=ON \
--D ION_BUILD_EXAMPLE=ON \
--D ION_BUNDLE_HALIDE=ON \
--D WITH_CUDA=OFF ../
+        -D CMAKE_BUILD_TYPE=Release \
+        -D CMAKE_INSTALL_PREFIX=ion-kit-install \
+        -D Halide_DIR=/usr/local/halide/lib/cmake/Halide \
+        -D ION_BUILD_ALL_BB=ON \
+        -D ION_BUILD_DOC=ON \
+        -D ION_BUILD_TEST=ON \
+        -D ION_BUILD_EXAMPLE=ON \
+        -D ION_BUNDLE_HALIDE=ON \
+        -D WITH_CUDA=OFF ../
 RUN cmake --build . --target install
 RUN cmake --build . --target package
 RUN find ./ -maxdepth 1 -name "ion-kit_*.deb" -exec cp {} ion-kit.deb \;
