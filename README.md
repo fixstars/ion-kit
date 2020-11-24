@@ -2,7 +2,7 @@
 A framework to compile user-defined pipeline.
 
 ## Depedencies
-* [Halide (v8.0.0)](https://github.com/halide/Halide/releases/tag/v8.0.0)
+* [Halide (v10.0.0)](https://github.com/halide/Halide/releases/tag/v10.0.0)
 * doxygen
 * sphinx
 
@@ -10,12 +10,12 @@ A framework to compile user-defined pipeline.
 ### 1. Install Halide
 #### a. Using a binary release
 ```sh
-curl -L https://github.com/halide/Halide/releases/download/v8.0.0/halide-linux-64-gcc53-800-65c26cba6a3eca2d08a0bccf113ca28746012cc3.tgz | tar zx <path-to-halide-install>
+curl -L https://github.com/halide/Halide/releases/download/v10.0.0/Halide-10.0.0-x86-64-linux-db901f7f7084025abc3cbb9d17b0f2d3f1745900.tar.gz | tar zx <path-to-halide-install>
 ```
 
 #### b. Build from source
 ##### 2.b.1. Build and install LLVM
-Halide release_2019_08_27 requires LLVM 7.0-9.0. In the following, assume install LLVM-9.0.
+Halide v10.0.0 requires LLVM 9.0-10.0. In the following, assume install LLVM-9.0.
 
 ```sh
 git clone https://github.com/llvm/llvm-project.git -b release/9.x --depth=1
@@ -27,7 +27,7 @@ cmake --build . --target install
 
 ##### 2.b.2 Build and install Halide
 ```sh
-git clone https://github.com/halide/Halide.git -b v8.0.0 --depth=1
+git clone https://github.com/halide/Halide.git -b v10.0.0 --depth=1
 mkdir build && cd build
 cmake -GNinja -DCMAKE_INSTALL_PREFIX=<path-to-halide-install> -DLLVM_DIR=<path-to-llvm-install>/lib/cmake/llvm/ -DLLVM_PACKAGE_VERSION=90 -DHALIDE_ENABLE_RTTI=ON -DWITH_APPS=OFF ..
 cmake --build . --target install
@@ -47,7 +47,7 @@ If you want to use additional `ion-bb-xx` directories, place them directly under
 ### 4. Build
 ```sh
 mkdir build && cd build
-cmake -GNinja -DCMAKE_INSTALL_PREFIX=<path-to-ion-kit-install> -DHALIDE_ROOT=<path-to-halide-install> -DONNXRUNTIME_ROOT=<path-to-onnxruntime-root> ../
+cmake -GNinja -DCMAKE_INSTALL_PREFIX=<path-to-ion-kit-install> -DHalide_DIR=<path-to-HalideConfig.cmake> -DONNXRUNTIME_ROOT=<path-to-onnxruntime-root> ../
 cmake --build .
 ```
 
@@ -64,9 +64,8 @@ ctest
 ## CMake variables
 | Variable          | Type   | Descriotion                                                               |
 | ----------------- | ------ | ------------------------------------------------------------------------- |
-| HALIDE_ROOT       | Path   | Path to Halide install directory.                                         |
-| ION_TARGET_BB_ALL | ON/OFF | Enable to buld all building blocks. (Default: ON)                         |
-| ION_TARGET_BBS    | String | The building blocks of target to build. (This overrides ION_BUILD_ALL_BB) |
+| ION_BUILD_ALL_BB  | ON/OFF | Enable to buld all building blocks. (Default: ON)                         |
+| ION_BBS_TO_BUILD  | String | The building blocks of target to build. (This overrides ION_BUILD_ALL_BB) |
 | ION_BUILD_DOC     | ON/OFF | Enable to bulid documents. (Default: ON)                                  |
 | ION_BUILD_TEST    | ON/OFF | Enable to bulid tests. (Default: ON)                                      |
 | ION_BUILD_EXAMPLE | ON/OFF | Enable to bulid examples. (Default: ON)                                   |
