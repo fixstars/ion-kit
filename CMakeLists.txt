@@ -12,7 +12,6 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 #
 # Options
 #
-set(HALIDE_ROOT "" CACHE PATH "Path to Halide")
 option(ION_BUILD_ALL_BB "Enable to build all building blocks" ON)
 set(ION_BBS_TO_BUILD "" CACHE STRING "A List of building blocks to build (This overrides ION_BUILD_ALL_BB)")
 option(ION_BUILD_DOC "Build documents." OFF)
@@ -24,7 +23,7 @@ option(WITH_CUDA "Enable CUDA with buliding examples." ON)
 #
 # Dependent libraries
 #
-find_package(Halide REQUIRED)
+find_package(Halide REQUIRED COMPONENTS shared)
 if (WITH_CUDA)
     find_package(CUDA REQUIRED)
 endif()
@@ -131,14 +130,9 @@ install(FILES
 
 # Halide
 if (ION_BUNDLE_HALIDE)
-    install(DIRECTORY ${HALIDE_INCLUDE_DIR} DESTINATION .)
-    #TODO: Handle for Windows
-    if (UNIX)
-        install(FILES Halide::Halide DESTINATION lib)
-    else()
-        install(FILES ${HALIDE_ROOT}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>/Halide.dll DESTINATION bin)
-        install(FILES ${HALIDE_ROOT}/lib/Halide.lib DESTINATION lib)
-    endif()
+    install(DIRECTORY Halide::Runtime DESTINATION .)
+    install(DIRECTORY Halide::Tools DESTINATION .)
+    install(FILES Halide::Halide DESTINATION lib)
 endif()
 
 #
