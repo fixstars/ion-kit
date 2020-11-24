@@ -1825,9 +1825,11 @@ public:
     HALIDE_FORWARD_METHOD_CONST(Halide::ImageParam, trace_loads)
     HALIDE_FORWARD_METHOD_CONST(Halide::ImageParam, add_trace_tag)
 
+#ifdef HALIDE_FOR_FPGA
     HALIDE_FORWARD_METHOD(Halide::ImageParam, hls_interface)
     HALIDE_FORWARD_METHOD(Halide::ImageParam, hls_bundle)
     HALIDE_FORWARD_METHOD(Halide::ImageParam, hls_burst)
+#endif // HALIDE_FOR_FPGA
     // }@
 };
 
@@ -1956,9 +1958,11 @@ public:
     HALIDE_FORWARD_METHOD_CONST(Halide::Func, value)
     HALIDE_FORWARD_METHOD_CONST(Halide::Func, values)
 
+#ifdef HALIDE_FOR_FPGA
     HALIDE_FORWARD_METHOD(Halide::Func, hls_interface)
     HALIDE_FORWARD_METHOD(Halide::Func, hls_bundle)
     HALIDE_FORWARD_METHOD(Halide::Func, hls_burst)
+#endif // HALIDE_FOR_FPGA
     // }@
 };
 
@@ -2295,9 +2299,11 @@ public:
     HALIDE_FORWARD_METHOD_CONST(Halide::Func, values)
     HALIDE_FORWARD_METHOD(Halide::Func, vectorize)
 
+#ifdef HALIDE_FOR_FPGA
     HALIDE_FORWARD_METHOD(Halide::Func, hls_interface)
     HALIDE_FORWARD_METHOD(Halide::Func, hls_bundle)
     HALIDE_FORWARD_METHOD(Halide::Func, hls_burst)
+#endif // HALIDE_FOR_FPGA
     // }@
 
 #undef HALIDE_OUTPUT_FORWARD
