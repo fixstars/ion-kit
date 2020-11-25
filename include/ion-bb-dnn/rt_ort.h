@@ -30,10 +30,14 @@ public:
         ort_->check_status(api->CreateSessionOptions(&session_options));
         ort_->check_status(api->SetIntraOpNumThreads(session_options, 1));
         ort_->check_status(api->SetSessionGraphOptimizationLevel(session_options, ORT_ENABLE_BASIC));
-        if (cuda_enable && check_tensorrt_enable()) {
-            set_tensorrt_cache_env(cache_root);
-            ort_->enable_tensorrt_provider(session_options, 0);
+        if (cuda_enable) {
+            ort_->enable_cuda_provider(session_options, 0);
         }
+        // NOTE: Currently TensorRT provider cannot import ssd_mobilenet_v2 then just disable it ATM.
+        // if (cuda_enable && check_tensorrt_enable()) {
+        //     set_tensorrt_cache_env(cache_root);
+        //     ort_->enable_tensorrt_provider(session_options, 0);
+        // }
 
         //std::string model_url = model_root_url + "yolov4-tiny_416_416.onnx";
         std::string model_name = "ssd_mobilenet_v2_coco_2018_03_29.onnx";
