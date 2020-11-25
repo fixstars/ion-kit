@@ -49,11 +49,11 @@ include(IonUtil)
 #
 file(GLOB ION_SRC src/*)
 add_library(ion-core SHARED ${ION_SRC})
-target_include_directories(ion-core PUBLIC ${PROJECT_SOURCE_DIR}/include Halide::Runtime)
+target_include_directories(ion-core PUBLIC ${PROJECT_SOURCE_DIR}/include)
 if (UNIX)
-  target_link_libraries(ion-core Halide::Halide dl pthread z)
+  target_link_libraries(ion-core PUBLIC Halide::Halide Halide::Runtime dl pthread z)
 else()
-  target_link_libraries(ion-core Halide::Halide)
+  target_link_libraries(ion-core PUBLIC Halide::Halide Halide::Runtime)
 endif()
 
 #

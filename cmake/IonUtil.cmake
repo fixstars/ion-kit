@@ -22,8 +22,8 @@ function(ion_compile NAME)
             PUBLIC -fno-rtti  # For Halide::Generator
             PUBLIC -rdynamic) # For JIT compiling
     endif()
-    target_include_directories(${NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include;${ION_BB_INCLUDE_DIRS};${HALIDE_INCLUDE_DIR}")
-    target_link_libraries(${NAME} ion-core Halide::Halide ${ION_BB_LIBRARIES} ${PLATFORM_LIBRARIES})
+    target_include_directories(${NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include;${ION_BB_INCLUDE_DIRS}")
+    target_link_libraries(${NAME} PRIVATE ion-core ${ION_BB_LIBRARIES} ${PLATFORM_LIBRARIES})
     set_target_properties(${NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY compile PIPELINE_NAME ${IEC_PIPELINE_NAME})
 endfunction()
 
@@ -66,8 +66,8 @@ function(ion_run NAME COMPILE_NAME)
 
     # Build run
     add_executable(${NAME} ${IER_SRCS} ${HEADER})
-    target_include_directories(${NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include;${ION_BB_INCLUDE_DIRS};${HALIDE_INCLUDE_DIR};${OUTPUT_PATH}")
-    target_link_libraries(${NAME} ${STATIC_LIB} ${ION_BB_LIBRARIES} Halide::Halide ${PLATFORM_LIBRARIES})
+    target_include_directories(${NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include;${ION_BB_INCLUDE_DIRS};${OUTPUT_PATH}")
+    target_link_libraries(${NAME} PRIVATE ${STATIC_LIB} Halide::Runtime ${ION_BB_LIBRARIES} ${PLATFORM_LIBRARIES})
 
     add_test(NAME ${NAME} COMMAND $<TARGET_FILE:${NAME}> ${IER_RUNTIME_ARGS})
     set_tests_properties(${NAME} PROPERTIES ENVIRONMENT "${IER_RUNTIME_ENVS}")
@@ -94,8 +94,8 @@ function(ion_jit NAME)
         # For JIT compiling
         target_compile_options(${NAME} PUBLIC -rdynamic)
     endif()
-    target_include_directories(${NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include;${ION_BB_INCLUDE_DIRS};${HALIDE_INCLUDE_DIR}")
-    target_link_libraries(${NAME} ion-core Halide::Halide ${ION_BB_LIBRARIES} ${PLATFORM_LIBRARIES})
+    target_include_directories(${NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include;${ION_BB_INCLUDE_DIRS}")
+    target_link_libraries(${NAME} PRIVATE ion-core ${ION_BB_LIBRARIES} ${PLATFORM_LIBRARIES})
     set_target_properties(${NAME} PROPERTIES ENABLE_EXPORTS ON)
 endfunction()
 
