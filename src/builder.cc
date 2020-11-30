@@ -1,5 +1,9 @@
 #include <fstream>
 
+#ifdef __linux__
+#include <unistd.h>
+#endif
+
 #include "ion/builder.h"
 #include "ion/generator.h"
 #include "ion/json.hpp"
@@ -121,13 +125,28 @@ void Builder::compile(const std::string& function_name, const CompileOption& opt
     output_prefix += "/" + function_name;
 
     std::set<Output> outputs;
-    outputs.insert(Output::c_header);
-    outputs.insert(Output::static_library);
-
-    // TODO: Add hook for hls backend
+    if (target_.has_fpga_feature()) {
+        outputs.insert(Output::hls_package);
+    } else {
+        outputs.insert(Output::c_header);
+        outputs.insert(Output::static_library);
+    }
 
     const auto output_files = compute_output_files(target_, output_prefix, outputs);
     m.compile(output_files);
+
+#ifdef __linux__
+    if (target_.has_fpga_feature()) {
+        std::string hls_dir = output_files.at(Output::hls_package);
+        chdir(hls_dir.c_str());
+        int ret = system("make -f Makefile.csim.static");
+        internal_assert(ret == 0) << "Building hls package is failed.\n";
+        std::string cmd = "mv " + function_name + ".a " + function_name + ".h ..";
+        ret = system(cmd.c_str());
+        internal_assert(ret == 0) << "Building hls package is failed.\n";
+        chdir("..");
+    }
+#endif
 
     return;
 }
