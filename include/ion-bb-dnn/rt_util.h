@@ -65,9 +65,10 @@ public:
     ~DynamicModule() {
         if (handle_ != nullptr) {
 #ifdef _WIN32
-            FreeLibrary(handle_);
+            // NOTE: Do not closing DLL explicitly
+            // to avoid SEGV at the ORT threadpoool.
 #else
-            dlclose(handle_);
+            // dlclose(handle_);
 #endif
         }
     }
