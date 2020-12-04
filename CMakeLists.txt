@@ -56,6 +56,8 @@ else()
   target_link_libraries(ion-core PUBLIC Halide::Halide Halide::Runtime)
 endif()
 
+configure_file(${CMAKE_SOURCE_DIR}/ion-core.pc.in ${CMAKE_BINARY_DIR}/ion-core.pc @ONLY)
+
 #
 # ion-bb
 #
@@ -116,6 +118,7 @@ endif()
 #
 # Install
 #
+install(FILES ${CMAKE_BINARY_DIR}/ion-core.pc DESTINATION lib/pkgconfig/)
 install(FILES cmake/ion-bb-config.cmake DESTINATION share/cmake/)
 
 if (UNIX)
