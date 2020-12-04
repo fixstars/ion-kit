@@ -542,7 +542,7 @@ public:
     }
 
     operator Halide::Expr() const {
-        return make_const(Halide::type_of<T>(), this->value());
+        return Halide::Internal::make_const(Halide::type_of<T>(), this->value());
     }
 
 #define HALIDE_GENERATOR_PARAM_TYPED_SETTER(TYPE)  \
