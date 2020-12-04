@@ -135,9 +135,8 @@ install(FILES
 
 # Halide
 if (ION_BUNDLE_HALIDE)
-    install(DIRECTORY Halide::Runtime DESTINATION .)
-    install(DIRECTORY Halide::Tools DESTINATION .)
-    install(FILES Halide::Halide DESTINATION lib)
+    set(Halide_INSTALL_DIR ${Halide_DIR}/../../../)
+    install(DIRECTORY ${Halide_INSTALL_DIR}/ DESTINATION .)
 endif()
 
 #
