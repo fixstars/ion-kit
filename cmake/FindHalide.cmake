@@ -1,14 +1,17 @@
 if(HALIDE_ROOT STREQUAL "")
+    message(STATUS ${HALIDE_ROOT})
     message(FATAL_ERROR "Set appropriate path to Halide")
 endif()
 
 # Find paths
 find_path(HALIDE_INCLUDE_DIR NAMES Halide.h PATHS ${HALIDE_ROOT}/include)
-if (UNIX)
+if(UNIX)
   find_library(HALIDE_LIBRARY NAMES Halide PATHS ${HALIDE_ROOT}/bin ${HALIDE_ROOT}/lib)
-else()
+elseif(WIN32)
+  find_library(HALIDE_LIBRARY NAMES Halide PATHS ${HALIDE_ROOT}/Release)
   find_library(HALIDE_LIBRARY_DEBUG NAMES Halide PATHS ${HALIDE_ROOT}/Debug)
-  find_library(HALIDE_LIBRARY_RELEASE NAMES Halide PATHS ${HALIDE_ROOT}/Release)
+else()
+  message(FATAL_ERROR "Unsupported platform")
 endif()
 find_path(HALIDE_TOOLS_DIR NAMES tools PATHS ${HALIDE_ROOT})
 
@@ -24,8 +27,8 @@ if(HALIDE_FOUND AND NOT TARGET Halide::Halide)
   add_library(Halide::Halide SHARED IMPORTED)
   set_target_properties(Halide::Halide PROPERTIES
     IMPORTED_LINK_INTERFACE_LANGUAGES "C;CXX"
+    IMPORTED_LOCATION "${HALIDE_LIBRARY}"
     IMPORTED_LOCATION_DEBUG "${HALIDE_LIBRARY_DEBUG}"
-    IMPORTED_LOCATION_RELEASE "${HALIDE_LIBRARY_RELEASE}"
     INTERFACE_INCLUDE_DIRECTORIES "${HALIDE_INCLUDE_DIR}"
   )
 endif()
