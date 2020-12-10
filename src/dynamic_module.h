@@ -56,18 +56,25 @@ class DynamicModule {
          std::string error_msg;
 
 #ifdef _WIN32
-         LPVOID lpMsgBuf;
-         FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
-             FORMAT_MESSAGE_IGNORE_INSERTS,
-             nullptr, GetLastError(),
-             MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
-             (LPTSTR)&lpMsgBuf, 0, nullptr);
-         std::size_t len = 0;
-         wcstombs_s(&len, nullptr, 0, reinterpret_cast<const wchar_t*>(lpMsgBuf), _TRUNCATE);
-         std::vector<char> buf(len + 1, 0);
-         wcstombs_s(nullptr, &buf[0], len, reinterpret_cast<const wchar_t*>(lpMsgBuf), _TRUNCATE);
-         error_msg.assign(buf.begin(), buf.end());
-         LocalFree(lpMsgBuf);
+         DWORD error = GetLastError();
+         if (error)
+         {
+             LPVOID lpMsgBuf;
+             DWORD bufLen = FormatMessage(
+                 FORMAT_MESSAGE_ALLOCATE_BUFFER |
+                 FORMAT_MESSAGE_FROM_SYSTEM |
+                 FORMAT_MESSAGE_IGNORE_INSERTS,
+                 nullptr,
+                 error,
+                 MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
+                 (LPTSTR) &lpMsgBuf, 0, nullptr );
+             if (bufLen)
+             {
+                 LPCSTR lpMsgStr = (LPCSTR)lpMsgBuf;
+                 error_msg = std::string(lpMsgStr, lpMsgStr+bufLen);
+                 LocalFree(lpMsgBuf);
+             }
+         }
 #else
          const char* buf(dlerror());
          error_msg.assign(buf ? buf : "none");

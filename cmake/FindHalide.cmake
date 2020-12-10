@@ -9,6 +9,7 @@ if (UNIX)
 else()
   find_library(HALIDE_LIBRARY_DEBUG NAMES Halide PATHS ${HALIDE_ROOT}/Debug)
   find_library(HALIDE_LIBRARY_RELEASE NAMES Halide PATHS ${HALIDE_ROOT}/Release)
+  set(HALIDE_LIBRARY ${HALIDE_LIBRARY_DEBUG})
 endif()
 find_path(HALIDE_TOOLS_DIR NAMES tools PATHS ${HALIDE_ROOT})
 
