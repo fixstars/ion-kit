@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 #include <Halide.h>
 
@@ -15,6 +16,7 @@ namespace ion {
 
 using json = nlohmann::json;
 
+class DynamicModule;
 
 /**
  * Builder class is used to build graph, compile, run, save and load it.
@@ -98,7 +100,7 @@ private:
 
     Halide::Target target_;
     std::vector<Node> nodes_;
-    std::vector<std::string> bb_modules_;
+    std::unorderred_map<std::string, std::shared_ptr<DynamicModule>> bb_modules_;
     Halide::Pipeline pipeline_;
 };
 
