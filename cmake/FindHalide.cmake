@@ -5,8 +5,10 @@ endif()
 
 # Find paths
 find_path(HALIDE_INCLUDE_DIR NAMES Halide.h PATHS ${HALIDE_ROOT}/include)
+message(STATUS ${HALIDE_INCLUDE_DIR})
 if(UNIX)
   find_library(HALIDE_LIBRARY NAMES Halide PATHS ${HALIDE_ROOT}/bin ${HALIDE_ROOT}/lib)
+  message(STATUS ${HALIDE_LIBRARY})
 elseif(WIN32)
   find_library(HALIDE_LIBRARY NAMES Halide.dll PATHS ${HALIDE_ROOT}/Release)
   find_library(HALIDE_LIBRARY_DEBUG NAMES Halide.dll PATHS ${HALIDE_ROOT}/Debug)
