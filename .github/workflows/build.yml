@@ -44,27 +44,11 @@ jobs:
       shell: bash
       run: sudo apt-get update && sudo apt-get install -y ninja-build libopencv-dev uuid-dev zlib1g-dev && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
 
-    - name: Cache Halide
-      id: cache-halide
-      uses: actions/cache@v2
-      with:
-        path: $HOME/halide
-        key: ${{ runner.os }}-halide
-
     - name: Download Halide package
-      if: steps.cache-halide.outputs.cache-hit != 'true'
       shell: bash
       run: curl -L https://github.com/halide/Halide/releases/download/v8.0.0/halide-linux-64-gcc53-800-65c26cba6a3eca2d08a0bccf113ca28746012cc3.tgz | tar zx -C $HOME
 
-    - name: Cache onnxruntime
-      id: cache-onnxruntime
-      uses: actions/cache@v2
-      with:
-        path: $HOME//onnxruntime-linux-x64-1.5.2
-        key: ${{ runner.os }}-onnxruntime
-
     - name: Download onnxruntime package
-      if: steps.cache-onnxruntime.outputs.cache-hit != 'true'
       shell: bash
       run: curl -L https://github.com/microsoft/onnxruntime/releases/download/v1.5.2/onnxruntime-linux-x64-1.5.2.tgz | tar zx -C $HOME
 
