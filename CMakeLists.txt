@@ -46,9 +46,9 @@ file(GLOB ION_SRC src/*)
 add_library(ion-core SHARED ${ION_SRC})
 target_include_directories(ion-core PUBLIC "${PROJECT_SOURCE_DIR}/include;${HALIDE_INCLUDE_DIR}")
 if (UNIX)
-  target_link_libraries(ion-core ${HALIDE_LIBRARY} dl pthread z)
+  target_link_libraries(ion-core Halide::Halide dl pthread z)
 else()
-  target_link_libraries(ion-core ${HALIDE_LIBRARY})
+  target_link_libraries(ion-core Halide::Halide)
 endif()
 
 #
