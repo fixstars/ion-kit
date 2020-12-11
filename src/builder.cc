@@ -139,7 +139,7 @@ void Builder::compile(const std::string& function_name, const CompileOption& opt
     if (target_.has_fpga_feature()) {
         std::string hls_dir = output_files.at(Output::hls_package);
         chdir(hls_dir.c_str());
-        int ret = system("make -f Makefile.csim.static");
+        int ret = std::getenv("ION_CSIM") ? system("make -f Makefile.csim.static") : system("make -f Makefile.ultra96v2");
         internal_assert(ret == 0) << "Building hls package is failed.\n";
         std::string cmd = "mv " + function_name + ".a " + function_name + ".h ..";
         ret = system(cmd.c_str());
