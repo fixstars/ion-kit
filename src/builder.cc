@@ -72,8 +72,8 @@ Builder Builder::set_target(const Halide::Target& target) {
     return *this;
 }
 
-Builder Builder::with_bb_module(const std::string& module_path){
-    bb_modules_.push_back(module_path);
+Builder Builder::with_bb_module(const std::string& module_path) {
+    bb_modules_[module_path] = std::make_shared<DynamicModule>(module_path);
     return *this;
 }
 
@@ -132,12 +132,6 @@ void Builder::run(const ion::PortMap& pm) {
 }
 
 Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buffer<>> *outputs) {
-
-    // Load BB modules
-    std::vector<std::shared_ptr<DynamicModule>> ms;
-    for (auto m : bb_modules_) {
-        ms.push_back(std::make_shared<DynamicModule>(m));
-    }
 
     if (pipeline_.defined()) {
         return pipeline_;
@@ -262,10 +256,6 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
 }
 
 std::string Builder::bb_metadata(void) {
-    std::vector<std::shared_ptr<DynamicModule>> ms;
-    for (auto m : bb_modules_) {
-        ms.push_back(std::make_shared<DynamicModule>(m));
-    }
 
     std::vector<Metadata> md;
     for (auto n : Internal::GeneratorRegistry::enumerate()) {

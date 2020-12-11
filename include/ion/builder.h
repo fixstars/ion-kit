@@ -100,7 +100,7 @@ private:
 
     Halide::Target target_;
     std::vector<Node> nodes_;
-    std::unorderred_map<std::string, std::shared_ptr<DynamicModule>> bb_modules_;
+    std::unordered_map<std::string, std::shared_ptr<DynamicModule>> bb_modules_;
     Halide::Pipeline pipeline_;
 };
 
