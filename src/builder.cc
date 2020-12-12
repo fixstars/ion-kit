@@ -126,9 +126,8 @@ Halide::Realization Builder::run(const std::vector<int32_t>& sizes, const ion::P
 }
 
 void Builder::run(const ion::PortMap& pm) {
-    std::vector<Halide::Buffer<>> outputs;
-    auto p = build(pm, &outputs);
-    return p.realize(Halide::Realization(outputs), target_, pm.get_param_map());
+    auto p = build(pm, &outputs_);
+    return p.realize(Halide::Realization(outputs_), target_, pm.get_param_map());
 }
 
 Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buffer<>> *outputs) {
