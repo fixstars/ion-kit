@@ -102,6 +102,7 @@ private:
     std::vector<Node> nodes_;
     std::unordered_map<std::string, std::shared_ptr<DynamicModule>> bb_modules_;
     Halide::Pipeline pipeline_;
+    std::vector<Halide::Buffer<>> outputs_;
 };
 
 } // namespace ion
