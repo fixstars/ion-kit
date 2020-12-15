@@ -2303,6 +2303,10 @@ public:
     HALIDE_FORWARD_METHOD(Halide::Func, hls_interface)
     HALIDE_FORWARD_METHOD(Halide::Func, hls_bundle)
     HALIDE_FORWARD_METHOD(Halide::Func, hls_burst)
+
+    std::tuple<std::vector<Halide::Func>, std::vector<Halide::Func>> accelerate(const std::vector<Halide::Func> &inputs, const std::vector<Halide::Func> &outputs, Halide::Var x = Halide::Var::outermost(), bool dma_for_this = true) {
+        return this->as<Halide::Func>().accelerate(inputs, outputs, x, dma_for_this);
+    }
 #endif // HALIDE_FOR_FPGA
     // }@
 
