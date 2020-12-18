@@ -1049,6 +1049,10 @@ template<typename Other, typename T>
 auto operator+(const GeneratorParam<T> &a, const Other &b) -> decltype((T)a + b) {
     return (T)a + b;
 }
+template<typename T>
+auto operator+(const GeneratorParam<T> &a, const GeneratorParam<T> &b) -> decltype((T)a + (T)b) {
+    return (T)a + (T)b;
+}
 // @}
 
 /** Subtraction between GeneratorParam<T> and any type that supports operator- with T.
@@ -1062,7 +1066,16 @@ template<typename Other, typename T>
 auto operator-(const GeneratorParam<T> &a, const Other &b) -> decltype((T)a - b) {
     return (T)a - b;
 }
+template<typename T>
+auto operator-(const GeneratorParam<T> &a, const GeneratorParam<T> &b) -> decltype((T)a - (T)b) {
+    return (T)a - (T)b;
+}
 // @}
+
+template<typename T>
+auto operator-(const GeneratorParam<T> &a) -> decltype(-(T)a) {
+    return -(T)a;
+}
 
 /** Multiplication between GeneratorParam<T> and any type that supports operator* with T.
  * Returns type of underlying operator*. */
@@ -1074,6 +1087,10 @@ auto operator*(const Other &a, const GeneratorParam<T> &b) -> decltype(a * (T)b)
 template<typename Other, typename T>
 auto operator*(const GeneratorParam<T> &a, const Other &b) -> decltype((T)a * b) {
     return (T)a * b;
+}
+template<typename T>
+auto operator*(const GeneratorParam<T> &a, const GeneratorParam<T> &b) -> decltype((T)a * (T)b) {
+    return (T)a * (T)b;
 }
 // @}
 
@@ -1088,6 +1105,10 @@ template<typename Other, typename T>
 auto operator/(const GeneratorParam<T> &a, const Other &b) -> decltype((T)a / b) {
     return (T)a / b;
 }
+template<typename T>
+auto operator/(const GeneratorParam<T> &a, const GeneratorParam<T> &b) -> decltype((T)a / (T)b) {
+    return (T)a / (T)b;
+}
 // @}
 
 /** Modulo between GeneratorParam<T> and any type that supports operator% with T.
@@ -1100,6 +1121,10 @@ auto operator%(const Other &a, const GeneratorParam<T> &b) -> decltype(a % (T)b)
 template<typename Other, typename T>
 auto operator%(const GeneratorParam<T> &a, const Other &b) -> decltype((T)a % b) {
     return (T)a % b;
+}
+template<typename T>
+auto operator%(const GeneratorParam<T> &a, const GeneratorParam<T> &b) -> decltype((T)a % (T)b) {
+    return (T)a % (T)b;
 }
 // @}
 
@@ -1114,6 +1139,10 @@ template<typename Other, typename T>
 auto operator>(const GeneratorParam<T> &a, const Other &b) -> decltype((T)a > b) {
     return (T)a > b;
 }
+template<typename T>
+auto operator>(const GeneratorParam<T> &a, const GeneratorParam<T> &b) -> decltype((T)a > (T)b) {
+    return (T)a > (T)b;
+}
 // @}
 
 /** Less than comparison between GeneratorParam<T> and any type that supports operator< with T.
@@ -1126,6 +1155,10 @@ auto operator<(const Other &a, const GeneratorParam<T> &b) -> decltype(a < (T)b)
 template<typename Other, typename T>
 auto operator<(const GeneratorParam<T> &a, const Other &b) -> decltype((T)a < b) {
     return (T)a < b;
+}
+template<typename T>
+auto operator<(const GeneratorParam<T> &a, const GeneratorParam<T> &b) -> decltype((T)a < (T)b) {
+    return (T)a < (T)b;
 }
 // @}
 
@@ -1140,6 +1173,10 @@ template<typename Other, typename T>
 auto operator>=(const GeneratorParam<T> &a, const Other &b) -> decltype((T)a >= b) {
     return (T)a >= b;
 }
+template<typename T>
+auto operator>=(const GeneratorParam<T> &a, const GeneratorParam<T> &b) -> decltype((T)a >= (T)b) {
+    return (T)a >= (T)b;
+}
 // @}
 
 /** Less than or equal comparison between GeneratorParam<T> and any type that supports operator<= with T.
@@ -1152,6 +1189,10 @@ auto operator<=(const Other &a, const GeneratorParam<T> &b) -> decltype(a <= (T)
 template<typename Other, typename T>
 auto operator<=(const GeneratorParam<T> &a, const Other &b) -> decltype((T)a <= b) {
     return (T)a <= b;
+}
+template<typename T>
+auto operator<=(const GeneratorParam<T> &a, const GeneratorParam<T> &b) -> decltype((T)a <= (T)b) {
+    return (T)a <= (T)b;
 }
 // @}
 
@@ -1166,6 +1207,10 @@ template<typename Other, typename T>
 auto operator==(const GeneratorParam<T> &a, const Other &b) -> decltype((T)a == b) {
     return (T)a == b;
 }
+template<typename T>
+auto operator==(const GeneratorParam<T> &a, const GeneratorParam<T> &b) -> decltype((T)a == (T)b) {
+    return (T)a == (T)b;
+}
 // @}
 
 /** Inequality comparison between between GeneratorParam<T> and any type that supports operator!= with T.
@@ -1178,6 +1223,10 @@ auto operator!=(const Other &a, const GeneratorParam<T> &b) -> decltype(a != (T)
 template<typename Other, typename T>
 auto operator!=(const GeneratorParam<T> &a, const Other &b) -> decltype((T)a != b) {
     return (T)a != b;
+}
+template<typename T>
+auto operator!=(const GeneratorParam<T> &a, const GeneratorParam<T> &b) -> decltype((T)a != (T)b) {
+    return (T)a != (T)b;
 }
 // @}
 
