@@ -1,12 +1,10 @@
-#include <ion/ion.h>
-#include <iostream>
-
-#include <HalideBuffer.h>
+#include "dnn.h"
 
 #include "ion-bb-dnn/rt.h"
 #include "ion-bb-genesis-cloud/rt.h"
+#include <HalideBuffer.h>
 
-#include "dnn.h"
+#include <iostream>
 
 using namespace ion;
 

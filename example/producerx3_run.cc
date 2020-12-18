@@ -1,10 +1,8 @@
-#include <ion/ion.h>
+#include "producerx3.h"
 
 #include <HalideBuffer.h>
 
-#include "producerx3.h"
-
-using namespace ion;
+#include <iostream>
 
 int main() {
     try {
