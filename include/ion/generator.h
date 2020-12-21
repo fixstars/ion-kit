@@ -3058,7 +3058,7 @@ protected:
         return Halide::cast(t, std::move(e));
     }
     template<typename T>
-    using GeneratorParam = Halide::GeneratorParam<T>;
+    using GeneratorParam = ion::GeneratorParam<T>;
     template<typename T = void>
     using Buffer = Halide::Buffer<T>;
     template<typename T>
