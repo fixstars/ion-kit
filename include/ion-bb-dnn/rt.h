@@ -5,6 +5,7 @@
 
 #include "rt_tfl.h"
 #include "rt_ort.h"
+#include "rt_trt.h"
 
 #ifdef _WIN32
 #define ION_EXPORT __declspec(dllexport)
@@ -35,7 +36,10 @@ extern "C" ION_EXPORT int ion_bb_dnn_generic_object_detection(halide_buffer_t *i
 
     using namespace ion::bb::dnn;
 
-    if (is_tfl_available()) {
+    if (trt::is_available()) {
+        std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
+        return trt::object_detection(in, session_id, model_root_url, out);
+    } else if (is_tfl_available()) {
         return object_detection_tfl(in, model_root_url, cache_root, out);
     } else if (is_ort_available()) {
         std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
