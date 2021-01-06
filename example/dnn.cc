@@ -10,7 +10,7 @@ using namespace ion;
 
 int main(int argc, char *argv[]) {
     try {
-        const int height = 512;
+        const int height = 369;
         const int width = 512;
         const int channel = 3;
 
@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
         b.set_target(Halide::get_target_from_environment());
 
         Node n;
-        n = b.add("genesis_cloud_image_loader").set_param(Param{"url", "http://ion-archives.s3-us-west-2.amazonaws.com/pedestrian.jpg"});
+        n = b.add("genesis_cloud_image_loader").set_param(Param{"url", "http://ion-archives.s3-us-west-2.amazonaws.com/cars-small.png"});
         n = b.add("genesis_cloud_normalize_u8x3")(n["output"]);
         n = b.add("dnn_object_detection")(n["output"]);
         n = b.add("genesis_cloud_denormalize_u8x3")(n["output"]);
