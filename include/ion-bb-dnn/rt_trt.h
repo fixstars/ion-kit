@@ -7,6 +7,9 @@
 //
 // CUDA
 //
+// NOTE: Guard with anonymous ns to prevent symbol collision
+namespace {
+
 enum cudaMemcpyKind
 {
     cudaMemcpyHostToHost          =   0,      /**< Host   -> Host */
@@ -34,6 +37,8 @@ cudaMemcpy_t cudaMemcpy = nullptr;
 cudaFree_t cudaFree = nullptr;
 cudaGetDevice_t cudaGetDevice = nullptr;
 cudaDeviceGetAttribute_t cudaDeviceGetAttribute = nullptr;
+
+} // anonymous
 
 //
 // NvInfer
