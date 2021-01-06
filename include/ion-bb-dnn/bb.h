@@ -142,6 +142,7 @@ namespace dnn {
 
 class TLTObjectDetectionSSD : public BuildingBlock<TLTObjectDetectionSSD> {
 public:
+    GeneratorParam<std::string> gc_title{"gc_title", "TLT Object Detection SSD"};
     GeneratorParam<std::string> gc_description{"gc_description", "Detect objects by TLT Object Detection SSD models."};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
     GeneratorParam<std::string> gc_tags{"gc_tags", "processing,recognition"};
