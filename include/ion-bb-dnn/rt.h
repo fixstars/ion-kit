@@ -59,11 +59,11 @@ extern "C" ION_EXPORT int ion_bb_dnn_generic_object_detection(halide_buffer_t *i
     }
 }
 
-extern "C" ION_EXPORT int ion_bb_dnn_tlt_object_detection(halide_buffer_t *in,
-                                                          halide_buffer_t *session_id_buf,
-                                                          halide_buffer_t *model_root_url_buf,
-                                                          halide_buffer_t *cache_root_buf,
-                                                          halide_buffer_t *out) {
+extern "C" ION_EXPORT int ion_bb_dnn_tlt_object_detection_ssd(halide_buffer_t *in,
+                                                              halide_buffer_t *session_id_buf,
+                                                              halide_buffer_t *model_root_url_buf,
+                                                              halide_buffer_t *cache_root_buf,
+                                                              halide_buffer_t *out) {
     try {
 
         if (in->is_bounds_query()) {

@@ -341,8 +341,6 @@ int object_detection_ssd(halide_buffer_t *in,
 
     cv::normalize(in_, in_, 0, 255.0, cv::NORM_MINMAX, CV_32FC3);
 
-    cv::cvtColor(in_, in_, cv::COLOR_BGR2RGB);
-
     in_ = in_.reshape(1, internal_width*internal_height).t();
 
     // cv::Mat test;
