@@ -127,6 +127,9 @@ install(FILES
 install(FILES
     ${CMAKE_SOURCE_DIR}/LICENSE
     DESTINATION license)
+install(FILES
+    ${CMAKE_SOURCE_DIR}/thirdparty_notice.txt
+    DESTINATION license)
 
 # Halide
 if (ION_BUNDLE_HALIDE)
