@@ -163,7 +163,10 @@ public:
         std::memcpy(path_buf.data(), path_str.c_str(), path_str.size());
 
         Func input_(static_cast<std::string>(gc_prefix)+"input");
-        input_(_) = input(_);
+        Var c, x, y;
+        input_(c, x, y) = select(c == 0, input(2, x, y),
+                                 c == 1, input(1, x, y),
+                                         input(0, x, y));
         input_.compute_root();
 
         std::vector<ExternFuncArgument> params = {input_, static_cast<int32_t>(width), static_cast<int32_t>(height), path_buf};
