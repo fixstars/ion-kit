@@ -7,6 +7,7 @@
 //#include "bb_dnn.h"
 
 #include <cmath>
+#include <linux/videodev2.h>
 
 namespace ion {
 namespace bb {
@@ -2012,11 +2013,134 @@ public:
     }
 };
 
+class GenericV4L2Bayer : public ion::BuildingBlock<GenericV4L2Bayer> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "GenericV4L2Bayer"};
+    GeneratorParam<std::string> gc_description{"gc_description", "This captures Bayer image from V4L2."};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "input,sensor"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.width), parseInt(v.height)] }}))"};
+    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
+    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+    GeneratorParam<int32_t> index{"index", 0};
+    GeneratorParam<int32_t> width{"width", 0};
+    GeneratorParam<int32_t> height{"height", 0};
+    GeneratorParam<int32_t> bit_width{"bit_width", 10};
+    // Format
+    // 0: RGGB
+    // 1: BGGR
+    // 2: GRBG
+    // 3: GBRG
+    GeneratorParam<int32_t> format{"format", 0};
+    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint16_t>(), 2};
+
+    void generate() {
+        using namespace Halide;
+
+        uint32_t pix_format;
+        switch (bit_width * 10 + format) {
+        case 80:  // RGGB 8bit
+            pix_format = V4L2_PIX_FMT_SRGGB8;
+            break;
+        case 81:  // BGGR 8bit
+            pix_format = V4L2_PIX_FMT_SBGGR8;
+            break;
+        case 82:  // GRBG 8bit
+            pix_format = V4L2_PIX_FMT_SGRBG8;
+            break;
+        case 83:  // GBRG 8bit
+            pix_format = V4L2_PIX_FMT_SGBRG8;
+            break;
+        case 100:  // RGGB 10bit
+            pix_format = V4L2_PIX_FMT_SRGGB10;
+            break;
+        case 101:  // BGGR 10bit
+            pix_format = V4L2_PIX_FMT_SBGGR10;
+            break;
+        case 102:  // GRBG 10bit
+            pix_format = V4L2_PIX_FMT_SGRBG10;
+            break;
+        case 103:  // GBRG 10bit
+            pix_format = V4L2_PIX_FMT_SGBRG10;
+            break;
+        case 120:  // RGGB 12bit
+            pix_format = V4L2_PIX_FMT_SRGGB12;
+            break;
+        case 121:  // BGGR 12bit
+            pix_format = V4L2_PIX_FMT_SBGGR12;
+            break;
+        case 122:  // GRBG 12bit
+            pix_format = V4L2_PIX_FMT_SGRBG12;
+            break;
+        case 123:  // GBRG 12bit
+            pix_format = V4L2_PIX_FMT_SGBRG12;
+            break;
+        default:
+            internal_error << "Unknown Luminance method";
+        }
+
+        std::vector<ExternFuncArgument> params = {cast<int32_t>(index), cast<int32_t>(width), cast<int32_t>(height), Expr(pix_format)};
+        Func v4l2(static_cast<std::string>(gc_prefix) + "v4l2");
+        v4l2.define_extern("ion_bb_demo_v4l2", params, type_of<uint16_t>(), 2);
+        v4l2.compute_root();
+
+        Var x, y;
+        output(x, y) = v4l2(x, y);
+    }
+};
+
+class CameraSimulation : public ion::BuildingBlock<CameraSimulation> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "CameraSimulation"};
+    GeneratorParam<std::string> gc_description{"gc_description", "This simulates Bayer image."};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "input,sensor"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.width), parseInt(v.height)] }}))"};
+    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height,url"};
+    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
+    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+
+    GeneratorParam<int32_t> index{"index", 0};
+    GeneratorParam<std::string> url{"url", ""};
+    GeneratorParam<int32_t> width{"width", 0};
+    GeneratorParam<int32_t> height{"height", 0};
+    GeneratorParam<int32_t> bit_width{"bit_width", 10};
+    GeneratorParam<int32_t> bit_shift{"bit_shift", 0};
+    // Format
+    // 0: RGGB
+    // 1: BGGR
+    // 2: GRBG
+    // 3: GBRG
+    GeneratorParam<int32_t> format{"format", 0};
+    GeneratorParam<float> gain_r{"gain_r", 1.f};
+    GeneratorParam<float> gain_g{"gain_g", 1.f};
+    GeneratorParam<float> gain_b{"gain_b", 1.f};
+    GeneratorParam<float> offset{"offset", 0.f};
+    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint16_t>(), 2};
+
+    void generate() {
+        using namespace Halide;
+        std::string url_str = url;
+        Halide::Buffer<uint8_t> url_buf(url_str.size() + 1);
+        url_buf.fill(0);
+        std::memcpy(url_buf.data(), url_str.c_str(), url_str.size());
+
+        std::vector<ExternFuncArgument> params = {url_buf, cast<int32_t>(index), cast<int32_t>(width), cast<int32_t>(height), cast<float>(gain_r), cast<float>(gain_g), cast<float>(gain_b), cast<float>(offset), cast<int32_t>(bit_width), cast<int32_t>(bit_shift), cast<int32_t>(format)};
+        Func camera(static_cast<std::string>(gc_prefix) + "camera_simulation");
+        camera.define_extern("ion_bb_demo_camera_stub", params, type_of<uint16_t>(), 2);
+        camera.compute_root();
+
+        Var x, y;
+        output(x, y) = camera(x, y);
+    }
+};
+
 }  // namespace demo
 }  // namespace bb
 }  // namespace ion
 
 ION_REGISTER_BUILDING_BLOCK(ion::bb::demo::IMX219, demo_imx219);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::demo::GenericV4L2Bayer, demo_generic_v4l2_bayer);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::demo::CameraSimulation, demo_camera_simulation);
 
 namespace ion {
 namespace bb {

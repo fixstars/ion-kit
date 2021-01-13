@@ -120,15 +120,15 @@ public:
 
         /* 10-bit Bayer is stored as 16-bit so bytes per pixel is 2 */
 
-        unsigned int min;
-        min = fmt.fmt.pix.width * 2;
-        if (fmt.fmt.pix.bytesperline < min) {
-            fmt.fmt.pix.bytesperline = min;
-        }
-        min = fmt.fmt.pix.bytesperline * fmt.fmt.pix.height;
-        if (fmt.fmt.pix.sizeimage < min) {
-            fmt.fmt.pix.sizeimage = min;
-        }
+        // unsigned int min;
+        // min = fmt.fmt.pix.width * 2;
+        // if (fmt.fmt.pix.bytesperline < min) {
+        //     fmt.fmt.pix.bytesperline = min;
+        // }
+        // min = fmt.fmt.pix.bytesperline * fmt.fmt.pix.height;
+        // if (fmt.fmt.pix.sizeimage < min) {
+        //     fmt.fmt.pix.sizeimage = min;
+        // }
 
         //
         // Initialize mapped memory
@@ -292,6 +292,18 @@ std::unordered_map<int32_t, cv::Mat> camera_stub_cache;
 }  // namespace ion
 
 extern "C" int ION_EXPORT ion_bb_demo_v4l2(int32_t index, int32_t width, int32_t height, uint32_t pixel_format, halide_buffer_t *out) {
+    if (out->is_bounds_query()) {
+        out->dim[0].min = 0;
+        out->dim[0].extent = width;
+        out->dim[1].min = 0;
+        out->dim[1].extent = height;
+        if (out->dimensions == 3) {
+            out->dim[2].min = 0;
+            out->dim[2].extent = 3;
+        }
+        return 0;
+    }
+
     try {
         auto &v4l2(ion::bb::demo::V4L2::get_instance(index, width, height, pixel_format));
         Halide::Runtime::Buffer<uint16_t> obuf(*out);
@@ -307,12 +319,20 @@ extern "C" int ION_EXPORT ion_bb_demo_v4l2(int32_t index, int32_t width, int32_t
         std::cerr << e.what() << std::endl;
         return -1;
     } catch (...) {
-        std::cerr << "Unknown" << std::endl;
+        std::cerr << "Unknown error" << std::endl;
         return -1;
     }
 }
 
 extern "C" ION_EXPORT int ion_bb_demo_camera_stub(halide_buffer_t *url_buf, int index, int width, int height, float gain_r, float gain_g, float gain_b, float offset, int bit_width, int bit_shift, int bayer_pattern, halide_buffer_t *out) {
+    if (out->is_bounds_query()) {
+        out->dim[0].min = 0;
+        out->dim[0].extent = width;
+        out->dim[1].min = 0;
+        out->dim[1].extent = height;
+        return 0;
+    }
+
     auto it = ion::bb::demo::camera_stub_cache.find(index);
     if (it != ion::bb::demo::camera_stub_cache.end()) {
         memcpy(out->host, it->second.data, it->second.total() * it->second.elemSize());
@@ -411,21 +431,14 @@ extern "C" ION_EXPORT int ion_bb_demo_camera_stub(halide_buffer_t *url_buf, int 
 }
 
 extern "C" int ION_EXPORT ion_bb_demo_v4l2_imx219(halide_buffer_t *url_buf, int32_t index, bool force_sim_mode, halide_buffer_t *out) {
-    bool bounds_query = false;
     const int width = 3264;
     const int height = 2464;
 
-    if (url_buf->is_bounds_query()) {
-        bounds_query = true;
-    }
     if (out->is_bounds_query()) {
         out->dim[0].min = 0;
         out->dim[0].extent = width;
         out->dim[1].min = 0;
         out->dim[1].extent = height;
-        bounds_query = true;
-    }
-    if (bounds_query) {
         return 0;
     }
 
