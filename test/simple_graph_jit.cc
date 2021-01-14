@@ -1,27 +1,31 @@
 #include "ion/ion.h"
 
-#include "test-bb.h"
-#include "test-rt.h"
+//#include "test-bb.h"
+//#include "test-rt.h"
+#include "harmony_bb/bb.h"
+#include "harmony_bb/rt.h"
 
 using namespace ion;
 
 int main()
 {
-    Halide::Type t = Halide::type_of<int32_t>();
-    Port min0{"min0", t}, extent0{"extent0", t}, min1{"min1", t}, extent1{"extent1", t}, v{"v", t};
-    Param v41{"v", "41"};
+    Port rp_8x3{"rp_8x3", Halide::type_of<uint8_t>(), 3};
+    auto t = Halide::type_of<int32_t>();
+    Port out0_w_p{"out0_w_p", t}, out0_h_p{"out0_h_p", t}, seq_num_p{"seq_num_p", t};
+    Param output_directory_ptr{"output_directory_ptr", "/tmp/out"};
+    Param ext_name_ptr{"ext_name_ptr", ".jpg"};
     Builder b;
     b.set_target(Halide::get_host_target());
     Node n;
-    n = b.add("test_producer").set_param(v41);
-    n = b.add("test_consumer")(n["output"], min0, extent0, min1, extent1, v);
+    n = b.add("harmony_imagesaver")(rp_8x3, out0_w_p, out0_h_p, seq_num_p).set_param(output_directory_ptr, ext_name_ptr);
+
+    Halide::Buffer<uint8_t> ibuf(std::vector<int>{3, 16, 16});
 
     PortMap pm;
-    pm.set(min0, 0);
-    pm.set(extent0, 2);
-    pm.set(min1, 0);
-    pm.set(extent1, 2);
-    pm.set(v, 1);
+    pm.set(rp_8x3, ibuf);
+    pm.set(out0_w_p, 16);
+    pm.set(out0_h_p, 16);
+    pm.set(seq_num_p, 0);
 
     b.run({}, pm);
 
