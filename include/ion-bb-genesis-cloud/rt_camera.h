@@ -85,22 +85,48 @@ class V4L2 {
              return;
          }
 
+         uint32_t desired_pixel_format = V4L2_PIX_FMT_YUYV;
+
+         struct v4l2_fmtdesc fmtdesc;
+         memset(&fmtdesc,0,sizeof(fmtdesc));
+         fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+
+         bool supported = false;
+         while (0 == xioctl(fd_, VIDIOC_ENUM_FMT, &fmtdesc))
+         {
+             if (fmtdesc.pixelformat == desired_pixel_format) {
+                 supported = true;
+             }
+             fmtdesc.index++;
+         }
+         if (!supported) {
+             std::cerr << format("%s does not support desired pixel format", dev_name) << std::endl;
+             device_is_available_ = false;
+             return;
+         }
+
          struct v4l2_format fmt {
              .type = V4L2_BUF_TYPE_VIDEO_CAPTURE,
-             .fmt = {
-                 .pix = {
-                     .width = static_cast<__u32>(width),
-                     .height = static_cast<__u32>(height),
-                     .pixelformat = V4L2_PIX_FMT_YUYV,
-                     .field = V4L2_FIELD_INTERLACED,
-                 }
-             },
+                 .fmt = {
+                     .pix = {
+                         .width = static_cast<__u32>(width),
+                         .height = static_cast<__u32>(height),
+                         .pixelformat = desired_pixel_format,
+                         .field = V4L2_FIELD_INTERLACED,
+                     }
+                 },
          };
          if (-1 == xioctl(fd_, VIDIOC_S_FMT, &fmt)){
              std::cerr << format("%s error %d, %s\n", "VIDIOC_S_FMT", errno, strerror(errno)) << std::endl;
              device_is_available_ = false;
              return;
          }
+         if (width != fmt.fmt.pix.width || height != fmt.fmt.pix.height) {
+             std::cerr << format("%s does not support desired resolution", dev_name) << std::endl;
+             device_is_available_ = false;
+             return;
+         }
+
          /* YUYV sampling 4 2 2, so bytes per pixel is 2*/
 
          unsigned int min;
