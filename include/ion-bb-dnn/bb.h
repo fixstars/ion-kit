@@ -361,10 +361,93 @@ private:
     Halide::Func input;
 };
 
+ION_REGISTER_BUILDING_BLOCK(ion::bb::dnn::TLTPeopleNetMD, dnn_tlt_peoplenet_md);
+
+class ClassifyGender : public BuildingBlock<ClassifyGender> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ClassifyGender"};
+    GeneratorParam<std::string> gc_description{"gc_description", "Classify gender in image based on detection result."};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.output_size)] }}))"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,recognition"};
+    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
+    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
+    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+
+    GeneratorParam<std::string> model_root_url_{"model_base_url", "http://ion-archives.s3-us-west-2.amazonaws.com/models/classify_gender/"};
+    GeneratorParam<std::string> cache_root_{"cache_root", "/tmp/"};
+    GeneratorParam<int> input_img_width{"width", 640};
+    GeneratorParam<int> input_img_height{"height", 480};
+    GeneratorParam<int> input_md_size{"input_md_size", 16*1024*1024}; // 16MiB
+    GeneratorParam<int> output_size{"output_size", 16*1024*1024}; // 16MiB
+
+    GeneratorInput<Halide::Func> input_img{"image", Halide::type_of<float>(), 3};
+    GeneratorInput<Halide::Func> input_md{"metadata", Halide::type_of<uint8_t>(), 1};
+    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 1};
+
+    void generate() {
+        using namespace Halide;
+
+        std::string session_id = sole::uuid4().str();
+        Buffer<uint8_t> session_id_buf(session_id.size() + 1);
+        session_id_buf.fill(0);
+        std::memcpy(session_id_buf.data(), session_id.c_str(), session_id.size());
+
+        const std::string model_root_url(model_root_url_);
+        Halide::Buffer<uint8_t> model_root_url_buf(model_root_url.size() + 1);
+        model_root_url_buf.fill(0);
+        std::memcpy(model_root_url_buf.data(), model_root_url.c_str(), model_root_url.size());
+
+        const std::string cache_root(cache_root_);
+        Halide::Buffer<uint8_t> cache_path_buf(cache_root.size() + 1);
+        cache_path_buf.fill(0);
+        std::memcpy(cache_path_buf.data(), cache_root.c_str(), cache_root.size());
+
+        input_img_ = Func{static_cast<std::string>(gc_prefix) + "input_img"};
+        input_img_(_) = input_img(_);
+
+        input_md_ = Func{static_cast<std::string>(gc_prefix) + "input_md"};
+        input_md_(_) = input_md(_);
+
+        std::vector<ExternFuncArgument> params{
+            input_img_, static_cast<int>(input_img_width), static_cast<int>(input_img_height),
+            input_md_, static_cast<int>(input_md_size),
+            static_cast<int>(output_size), session_id_buf, model_root_url_buf, cache_path_buf};
+        Func inference(static_cast<std::string>(gc_prefix) + "classify_gender");
+        inference.define_extern("ion_bb_dnn_classify_gender", params, UInt(8), 1);
+        inference.compute_root();
+
+        output(_) = inference(_);
+    }
+
+    void schedule() {
+        using namespace Halide;
+        Var c = input_img_.args()[0];
+        Var x = input_img_.args()[1];
+        Var y = input_img_.args()[2];
+
+        input_img_.bound(c, 0, 3).unroll(c);
+
+        if (this->get_target().has_gpu_feature()) {
+            Var xi, yi;
+            input_img_.gpu_tile(x, y, xi, yi, 32, 16);
+        } else {
+            input_img_.vectorize(x, this->natural_vector_size(Float(32))).parallel(y, 16);
+        }
+        input_img_.compute_root();
+
+        input_md_.compute_root();
+    }
+
+private:
+    Halide::Func input_img_;
+    Halide::Func input_md_;
+};
+
+
 } // dnn
 } // bb
 } // ion
 
-ION_REGISTER_BUILDING_BLOCK(ion::bb::dnn::TLTPeopleNetMD, dnn_tlt_peoplenet_md);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::dnn::ClassifyGender, dnn_classify_gender);
 
 #endif  // ION_BB_DNN_BB_H

@@ -31,9 +31,10 @@ int main(int argc, char *argv[]) {
         //n = b.add("genesis_cloud_image_loader").set_param(Param{"url", "http://ion-archives.s3-us-west-2.amazonaws.com/crosswalk-small.png"});
         n = b.add("genesis_cloud_camera").set_param(wparam, hparam);
         n = b.add("genesis_cloud_normalize_u8x3")(n["output"]);
-        n = b.add("dnn_tlt_peoplenet_md")(n["output"]).set_param(wparam, hparam);
-        n = b.add("dnn_gender_count")(n["output"]);
-        n = b.add("demo_ifttt")(n["output"]);
+        auto img = n["output"];
+        n = b.add("dnn_tlt_peoplenet_md")(img).set_param(wparam, hparam);
+        n = b.add("dnn_classify_gender")(img, n["output"]);
+        // n = b.add("demo_ifttt")(n["output"]);
         // n = b.add("dnn_tlt_peoplenet")(n["output"]);
         // n = b.add("genesis_cloud_denormalize_u8x3")(n["output"]);
         // n = b.add("opencv_display")(n["output"], wport, hport);
