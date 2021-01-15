@@ -45,6 +45,9 @@ add_dependencies(array_dup_names ion-bb-test)
 ion_jit(inverted_dep SRCS inverted_dep.cc)
 add_dependencies(inverted_dep ion-bb-test)
 
+ion_jit(dup SRCS dup.cc)
+add_dependencies(dup ion-bb-test)
+
 # Export test
 ion_jit(export SRCS export.cc)
 
