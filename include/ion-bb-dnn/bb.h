@@ -296,7 +296,7 @@ class TLTPeopleNetMD : public BuildingBlock<TLTPeopleNetMD> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "TLT PeopleNet metadata version"};
     GeneratorParam<std::string> gc_description{"gc_description", "Detect, People, Face and Bag by TLT PeopleNet models and create detection metadata."};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.metadata_size)] }}))"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.output_size)] }}))"};
     GeneratorParam<std::string> gc_tags{"gc_tags", "processing,recognition"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
@@ -304,9 +304,9 @@ public:
 
     GeneratorParam<std::string> model_root_url_{"model_base_url", "http://ion-archives.s3-us-west-2.amazonaws.com/models/tlt_peoplenet_detectnet_v2_resnet18/"};
     GeneratorParam<std::string> cache_root_{"cache_root", "/tmp/"};
-    GeneratorParam<int> metadata_size{"metadata_size", 16*1024*1024}; // 16MiB
     GeneratorParam<int> input_width{"width", 640};
     GeneratorParam<int> input_height{"height", 480};
+    GeneratorParam<int> output_size{"output_size", 16*1024*1024}; // 16MiB
 
     GeneratorInput<Halide::Func> input_{"input", Halide::type_of<float>(), 3};
     GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 1};
@@ -332,7 +332,7 @@ public:
         input = Func{static_cast<std::string>(gc_prefix) + "in"};
         input(_) = input_(_);
 
-        std::vector<ExternFuncArgument> params{input, session_id_buf, model_root_url_buf, cache_path_buf, static_cast<int>(metadata_size)};
+        std::vector<ExternFuncArgument> params{input, static_cast<int>(input_width), static_cast<int>(input_height), static_cast<int>(output_size), session_id_buf, model_root_url_buf, cache_path_buf};
         Func inference(static_cast<std::string>(gc_prefix) + "tlt_peoplenet_md");
         inference.define_extern("ion_bb_dnn_tlt_peoplenet_md", params, UInt(8), 1);
         inference.compute_root();

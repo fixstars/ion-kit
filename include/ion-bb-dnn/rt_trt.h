@@ -7,6 +7,8 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 
+#include <ion/json.hpp>
+
 #include "rt_util.h"
 #include "picosha2.h"
 
@@ -455,8 +457,8 @@ std::vector<DetectionBox> detectnet_v2_post_processing(const float *bboxes, cons
                     }
 
                     DetectionBox b;
-                    b.max_conf = coverage;
-                    b.max_id = c;
+                    b.confidence = coverage;
+                    b.class_id = c;
                     b.x1 = x1;
                     b.y1 = y1;
                     b.x2 = x2;
@@ -488,11 +490,10 @@ std::vector<DetectionBox> detectnet_v2_post_processing(const float *bboxes, cons
     return detected_boxes;
 }
 
-int peoplenet(halide_buffer_t *in,
-              const std::string& session_id,
-              const std::string& model_root_url,
-              const std::string& cache_root,
-              halide_buffer_t *out) {
+std::vector<DetectionBox> peoplenet_(halide_buffer_t *in,
+                                     const std::string& session_id,
+                                     const std::string& model_root_url,
+                                     const std::string& cache_root) {
     using namespace nvinfer1;
 
     const int channel = 3;
@@ -502,9 +503,6 @@ int peoplenet(halide_buffer_t *in,
     auto& session = SessionManager::get_instance(session_id, model_root_url, cache_root);
 
     cv::Mat in_(height, width, CV_32FC3, in->host);
-
-    cv::Mat out_(height, width, CV_32FC3, out->host);
-    in_.copyTo(out_);
 
     const int internal_width = 960;
     const int internal_height = 544;
@@ -562,9 +560,7 @@ int peoplenet(halide_buffer_t *in,
         throw std::runtime_error("Failed to copy output1 data");
     }
 
-    const char* labels[] = {"Person", "Bag", "Face"};
-
-    std::vector<DetectionBox> boxes = detectnet_v2_post_processing(output0_host.data(), output1_host.data(), 60, 34, 3, internal_width, internal_height, 0.4);
+    auto boxes = detectnet_v2_post_processing(output0_host.data(), output1_host.data(), 60, 34, 3, internal_width, internal_height, 0.4);
 
     for (auto& b : boxes) {
         b.x1 -= left;
@@ -577,16 +573,62 @@ int peoplenet(halide_buffer_t *in,
         b.y2 *= resize_ratio;
     }
 
+    return boxes;
+}
+
+int peoplenet(halide_buffer_t *in,
+              const std::string& session_id,
+              const std::string& model_root_url,
+              const std::string& cache_root,
+              halide_buffer_t *out) {
+
+    const int width = in->dim[1].extent;
+    const int height = in->dim[2].extent;
+
+    cv::Mat in_(height, width, CV_32FC3, in->host);
+
+    cv::Mat out_(height, width, CV_32FC3, out->host);
+    in_.copyTo(out_);
+
+    auto boxes = peoplenet_(in, session_id, model_root_url, cache_root);
+
+    const char* labels[] = {"Person", "Bag", "Face"};
+
     for (const auto& b : boxes) {
         const cv::Point2d p1(b.x1, b.y1);
         const cv::Point2d p2(b.x2, b.y2);
         const cv::Scalar color = cv::Scalar(1.0, 0, 0);
-        cv::putText(out_, labels[b.max_id], cv::Point(b.x1, b.y1 - 3), cv::FONT_HERSHEY_COMPLEX, 0.5, color);
+        cv::putText(out_, labels[b.class_id], cv::Point(b.x1, b.y1 - 3), cv::FONT_HERSHEY_COMPLEX, 0.5, color);
         cv::rectangle(out_, p1, p2, color);
     }
 
     return 0;
 }
+
+int peoplenet_md(halide_buffer_t *in,
+                 int32_t output_size,
+                 const std::string& session_id,
+                 const std::string& model_root_url,
+                 const std::string& cache_root,
+                 halide_buffer_t *out) {
+
+    using json = nlohmann::json;
+
+    auto boxes = peoplenet_(in, session_id, model_root_url, cache_root);
+
+    json j = boxes;
+    std::string output_string(j.dump());
+
+    if (output_string.size()+1 >= output_size) {
+        throw std::runtime_error("Output buffer size is not sufficient");
+    }
+
+    std::memcpy(out->host, output_string.c_str(), output_string.size());
+    out->host[output_string.size()] = 0;
+
+    return 0;
+}
+
 
 } // trt
 } // dnn
