@@ -29,7 +29,13 @@ int main()
             pm.set(Halide::Param<int32_t>{"min1"}, 0);
             pm.set(Halide::Param<int32_t>{"extent1"}, 2);
             pm.set(Halide::Param<int32_t>{"v"}, 1);
-            b.run({}, pm);
+
+            Halide::Buffer<int32_t> out = Halide::Buffer<int32_t>::make_scalar();
+
+            auto nodes = b.get_nodes();
+            pm.set(nodes.back()["output"], out);
+
+            b.run(pm);
         }
     }
 
@@ -68,8 +74,12 @@ int main()
         pm.set(Halide::Param<int32_t>{"width"}, size);
         pm.set(Halide::Param<int32_t>{"height"}, size);
 
-        Halide::Realization r = b.run({size, size}, pm);
-        Halide::Buffer<int32_t> out = r[0];
+        Halide::Buffer<int32_t> out(std::vector<int>{size, size});
+
+        auto nodes = b.get_nodes();
+        pm.set(nodes.back()["output"], out);
+
+        b.run(pm);
 
         int y=0;
         for (; y<size/split_n; ++y) {
@@ -118,9 +128,16 @@ int main()
 
             PortMap pm;
             pm.set(Halide::ImageParam(Halide::type_of<int32_t>(), 2, "input"), in);
+
             // TODO: Need to resolve issue #16
-            //pm.set(Halide::ImageParam(Halide::type_of<int32_t>(), 2, "output"), out);
-            Halide::Buffer<int32_t> out = b.run({w, h}, pm)[0];
+            // Halide::Buffer<int32_t> out = b.run({w, h}, pm)[0];
+            // pm.set(Halide::ImageParam(Halide::type_of<int32_t>(), 2, "output"), out);
+            // Halide::Buffer<int32_t> out = b.run({w, h}, pm)[0];
+
+            Halide::Buffer<int32_t> out(std::vector<int>{w, h});
+
+            auto nodes = b.get_nodes();
+            pm.set(nodes.back()["output"], out);
 
             if (out.dimensions() != 2) {
                 return -1;
