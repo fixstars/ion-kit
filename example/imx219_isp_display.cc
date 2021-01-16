@@ -68,11 +68,15 @@ int main(int argc, char *argv[]) {
     pm.set(input1_left, static_cast<int32_t>(quad_width_v));
     pm.set(input1_top, static_cast<int32_t>(0));
 
+    Halide::Buffer<int> out = Halide::Buffer<int>::make_scalar();
+
+    pm.set(n["output"], out);
+
     b.save("graph.json");
 
     while(true) {
         //b.run({}, pm);
-        b.run({}, pm);
+        b.run(pm);
         std::cout << "." << std::flush;
     }
 

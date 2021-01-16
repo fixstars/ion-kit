@@ -79,7 +79,8 @@ public:
      * @return Execution result of the pipeline.
      * See https://halide-lang.org/docs/class_halide_1_1_realization.html for more details.
      */
-    Halide::Realization run(const std::vector<int32_t>& sizes, const ion::PortMap& ports);
+    // NOTE: This function is deprecated
+    // Halide::Realization run(const std::vector<int32_t>& sizes, const ion::PortMap& ports);
 
     /**
      * Compile and execute the pipeline.
@@ -94,6 +95,11 @@ public:
      * Retrieve metadata of Building Block in json format.
      */
     std::string bb_metadata(void);
+
+    /**
+     * Get the node list.
+     */
+    const std::vector<Node>& get_nodes() const;
 
 private:
     Halide::Pipeline build(const ion::PortMap& ports = ion::PortMap(), std::vector<Halide::Buffer<>> *outputs = nullptr);
