@@ -1,6 +1,9 @@
 #ifndef ION_BB_DNN_RT_OPENCV_H
 #define ION_BB_DNN_RT_OPENCV_H
 
+#include <unordered_map>
+#include <vector>
+
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/dnn.hpp>
@@ -14,6 +17,10 @@ namespace bb {
 namespace dnn {
 namespace opencv {
 
+using json = nlohmann::json;
+
+using ClassifyResult = std::unordered_map<std::string, uint32_t>;
+
 class Classifier {
  public:
      static Classifier& get_instance(const std::string& uuid, const std::string& model_root_url, const std::string& cache_root) {
@@ -25,12 +32,35 @@ class Classifier {
          return *map_[uuid].get();
      }
 
-     void classify(
-         halide_buffer_t *in_img,
-         halide_buffer_t *in_md,
-         int32_t output_size,
-         halide_buffer_t *out
-         ) {
+     ClassifyResult classify(
+         const cv::Mat& image,
+         const std::vector<DetectionBox>& boxes) {
+         ClassifyResult result;
+
+         const int PeopleNetClassID_Face = 2;
+         const cv::Scalar MODEL_MEAN_VALUES = cv::Scalar(78.4263377603, 87.7689143744, 114.895847746);
+
+         for (auto b: boxes) {
+             if (b.class_id == PeopleNetClassID_Face) {
+                 cv::Mat face(image, cv::Rect(b.x1, b.y1, b.x2-b.x1, b.y2-b.y1));
+                 cv::normalize(face, face, 0, 255, cv::NORM_MINMAX, CV_8UC3);
+                 cv::cvtColor(face, face, cv::COLOR_RGB2BGR);
+                 cv::imwrite("face.png", face);
+
+                 cv::Mat blob = cv::dnn::blobFromImage(face, 1, cv::Size(227, 227), MODEL_MEAN_VALUES, false);
+                 net_.setInput(blob);
+                 // // string gender_preds;
+                 std::vector<float> genderPreds = net_.forward();
+                 // // printing gender here
+                 // // find max element index
+                 // // distance function does the argmax() work in C++
+                 const char *genderList[] = {"Male", "Female"};
+                 int max_index_gender = std::distance(genderPreds.begin(), max_element(genderPreds.begin(), genderPreds.end()));
+                 std::string gender = genderList[max_index_gender];
+                 result[gender]++;
+             }
+         }
+         return result;
      }
 
  private:
@@ -74,8 +104,10 @@ class Classifier {
      {
          auto model_define = cache_load(model_root_url, "model_define.prototxt", cache_root);
          auto model_weight = cache_load(model_root_url, "model_weight.caffemodel", cache_root);
+         net_ = cv::dnn::readNet(model_weight, model_define, "caffe");
      }
 
+     cv::dnn::Net net_;
 };
 
 void classify_gender(halide_buffer_t *in_img,
@@ -91,29 +123,24 @@ void classify_gender(halide_buffer_t *in_img,
 
     auto& classifier = Classifier::get_instance(session_id, model_root_url, cache_root);
 
-    json j = json::parse(reinterpret_cast<const char*>(in_md->host));
+    const int width = in_img->dim[1].extent;
+    const int height = in_img->dim[2].extent;
 
-    auto boxes = j.get<std::vector<DetectionBox>>();
+    cv::Mat image(height, width, CV_32FC3, in_img->host);
+    auto boxes = json::parse(reinterpret_cast<const char*>(in_md->host)).get<std::vector<DetectionBox>>();
 
-    classifier.classify(in_img, in_md, output_size, out);
+    ClassifyResult classify_result = classifier.classify(image, boxes);
 
-    //Rect rec(it->at(0) - padding, it->at(1) - padding, it->at(2) - it->at(0) + 2*padding, it->at(3) - it->at(1) + 2*padding);
-    //    Mat face = frame(rec); // take the ROI of box on the frame
+    json j = classify_result;
+    std::string output_string(j.dump());
 
-    //    Mat blob;
-    //    blob = blobFromImage(face, 1, Size(227, 227), MODEL_MEAN_VALUES, false);
-    //    genderNet.setInput(blob);
-    //    // string gender_preds;
-    //    vector<float> genderPreds = genderNet.forward();
-    //    // printing gender here
-    //    // find max element index
-    //    // distance function does the argmax() work in C++
-    //    int max_index_gender = std::distance(genderPreds.begin(), max_element(genderPreds.begin(), genderPreds.end()));
-    //    string gender = genderList[max_index_gender];
+    if (output_string.size()+1 >= output_size) {
+        throw std::runtime_error("Output buffer size is not sufficient");
+    }
 
-    out->host[0] = '{';
-    out->host[1] = '}';
-    out->host[2] = 0;
+    std::memcpy(out->host, output_string.c_str(), output_string.size());
+    out->host[output_string.size()] = 0;
+
     return;
 }
 
