@@ -1768,62 +1768,6 @@ public:
 };
 
 template<typename X, typename T>
-class ReorderImageHWC2CHW : public BuildingBlock<X> {
-    static_assert(std::is_arithmetic<T>::value, "T is not arithmetic.");
-
-public:
-    GeneratorParam<std::string> gc_description{"gc_description", "Reorder image from HWC to CHW."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [v.input[1], v.input[2], v.input[0]] }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
-
-    GeneratorInput<Halide::Func> input{"input", Halide::type_of<T>(), 3};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), 3};
-
-    void generate() {
-        Halide::Var x, y, c;
-        output(x, y, c) = input(c, x, y);
-    }
-
-    void schedule() {
-    }
-};
-
-class ReorderImageHWC2CHWFloat : public ReorderImageHWC2CHW<ReorderImageHWC2CHWFloat, float> {
-public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ReorderImageHWC2CHWFloat"};
-};
-
-template<typename X, typename T>
-class ReorderImageCHW2HWC : public BuildingBlock<X> {
-    static_assert(std::is_arithmetic<T>::value, "T is not arithmetic.");
-
-public:
-    GeneratorParam<std::string> gc_description{"gc_description", "Reorder image from CHW to HWC."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [v.input[2], v.input[0], v.input[1]] }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
-
-    GeneratorInput<Halide::Func> input{"input", Halide::type_of<T>(), 3};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), 3};
-
-    void generate() {
-        Halide::Var x, y, c;
-        output(c, x, y) = input(x, y, c);
-    }
-
-    void schedule() {
-    }
-};
-
-class ReorderImageCHW2HWCFloat : public ReorderImageCHW2HWC<ReorderImageCHW2HWCFloat, float> {
-public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ReorderImageCHW2HWCFloat"};
-};
-
-template<typename X, typename T>
 class ReorderColorChannel : public BuildingBlock<X> {
     static_assert(std::is_arithmetic<T>::value, "T is not arithmetic.");
 
