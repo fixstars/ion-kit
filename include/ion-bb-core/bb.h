@@ -891,6 +891,597 @@ public:
     GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer4DFloat"};
 };
 
+template<typename X, typename T, int32_t D>
+class ConstantBuffer : public BuildingBlock<X> {
+    static_assert(std::is_arithmetic<T>::value, "T must be arithmetic type.");
+
+public:
+    GeneratorParam<std::string> gc_description{"gc_description", "This makes constant value buffer."};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "input"};
+    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+
+    GeneratorParam<T> value{"value", 0};
+    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), D};
+
+    void generate() {
+        output(Halide::_) = value;
+    }
+};
+
+template<typename X, typename T>
+class ConstantBuffer0D : public ConstantBuffer<X, T, 0> {
+public:
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.extent0)] }}))"};
+    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
+};
+
+template<typename X, typename T>
+class ConstantBuffer1D : public ConstantBuffer<X, T, 1> {
+public:
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.extent0)] }}))"};
+    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "extent0"};
+
+    GeneratorParam<int32_t> extent0{"extent0", 0};
+};
+
+template<typename X, typename T>
+class ConstantBuffer2D : public ConstantBuffer<X, T, 2> {
+public:
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.extent0), parseInt(v.extent1)] }}))"};
+    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "extent0,extent1"};
+
+    GeneratorParam<int32_t> extent0{"extent0", 0};
+    GeneratorParam<int32_t> extent1{"extent1", 0};
+};
+
+template<typename X, typename T>
+class ConstantBuffer3D : public ConstantBuffer<X, T, 3> {
+public:
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.extent0), parseInt(v.extent1), parseInt(v.extent2)] }}))"};
+    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "extent0,extent1,extent2"};
+
+    GeneratorParam<int32_t> extent0{"extent0", 0};
+    GeneratorParam<int32_t> extent1{"extent1", 0};
+    GeneratorParam<int32_t> extent2{"extent2", 0};
+};
+
+template<typename X, typename T>
+class ConstantBuffer4D : public ConstantBuffer<X, T, 4> {
+public:
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.extent0), parseInt(v.extent1), parseInt(v.extent2), parseInt(v.extent3)] }}))"};
+    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "extent0,extent1,extent2,extent3"};
+
+    GeneratorParam<int32_t> extent0{"extent0", 0};
+    GeneratorParam<int32_t> extent1{"extent1", 0};
+    GeneratorParam<int32_t> extent2{"extent2", 0};
+    GeneratorParam<int32_t> extent3{"extent3", 0};
+};
+
+class ConstantBuffer0DUInt8 : public ConstantBuffer0D<ConstantBuffer0DUInt8, uint8_t> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ConstantBuffer0DUInt8"};
+};
+
+class ConstantBuffer1DUInt8 : public ConstantBuffer1D<ConstantBuffer1DUInt8, uint8_t> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ConstantBuffer1DUInt8"};
+};
+
+class ConstantBuffer2DUInt8 : public ConstantBuffer2D<ConstantBuffer2DUInt8, uint8_t> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ConstantBuffer2DUInt8"};
+};
+
+class ConstantBuffer3DUInt8 : public ConstantBuffer3D<ConstantBuffer3DUInt8, uint8_t> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ConstantBuffer3DUInt8"};
+};
+
+class ConstantBuffer4DUInt8 : public ConstantBuffer4D<ConstantBuffer4DUInt8, uint8_t> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ConstantBuffer4DUInt8"};
+};
+
+class ConstantBuffer0DUInt16 : public ConstantBuffer0D<ConstantBuffer0DUInt16, uint16_t> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ConstantBuffer0DUInt16"};
+};
+
+class ConstantBuffer1DUInt16 : public ConstantBuffer1D<ConstantBuffer1DUInt16, uint16_t> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ConstantBuffer1DUInt16"};
+};
+
+class ConstantBuffer2DUInt16 : public ConstantBuffer2D<ConstantBuffer2DUInt16, uint16_t> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ConstantBuffer2DUInt16"};
+};
+
+class ConstantBuffer3DUInt16 : public ConstantBuffer3D<ConstantBuffer3DUInt16, uint16_t> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ConstantBuffer3DUInt16"};
+};
+
+class ConstantBuffer4DUInt16 : public ConstantBuffer4D<ConstantBuffer4DUInt16, uint16_t> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ConstantBuffer4DUInt16"};
+};
+
+class ConstantBuffer0DFloat : public ConstantBuffer0D<ConstantBuffer0DFloat, float> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ConstantBuffer0DFloat"};
+};
+
+class ConstantBuffer1DFloat : public ConstantBuffer1D<ConstantBuffer1DFloat, float> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ConstantBuffer1DFloat"};
+};
+
+class ConstantBuffer2DFloat : public ConstantBuffer2D<ConstantBuffer2DFloat, float> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ConstantBuffer2DFloat"};
+};
+
+class ConstantBuffer3DFloat : public ConstantBuffer3D<ConstantBuffer3DFloat, float> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ConstantBuffer3DFloat"};
+};
+
+class ConstantBuffer4DFloat : public ConstantBuffer4D<ConstantBuffer4DFloat, float> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ConstantBuffer4DFloat"};
+};
+
+template<typename X, typename T, int D>
+class Add : public BuildingBlock<X> {
+    static_assert(std::is_arithmetic<T>::value, "T must be arithmetic type.");
+
+public:
+    GeneratorParam<std::string> gc_description{"gc_description", "This adds the values of each element."};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,arithmetic"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input0 }}))"};
+    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
+    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+    GeneratorInput<Halide::Func> input0{"input0", Halide::type_of<T>(), D};
+    GeneratorInput<Halide::Func> input1{"input1", Halide::type_of<T>(), D};
+    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), D};
+
+    void generate() {
+        using namespace Halide;
+        output(_) = input0(_) + input1(_);
+    }
+};
+
+class Add0DUInt8 : public Add<Add0DUInt8, uint8_t, 0> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Add0DUInt8"};
+};
+
+class Add1DUInt8 : public Add<Add1DUInt8, uint8_t, 1> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Add1DUInt8"};
+};
+
+class Add2DUInt8 : public Add<Add2DUInt8, uint8_t, 2> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Add2DUInt8"};
+};
+
+class Add3DUInt8 : public Add<Add3DUInt8, uint8_t, 3> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Add3DUInt8"};
+};
+
+class Add4DUInt8 : public Add<Add4DUInt8, uint8_t, 4> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Add4DUInt8"};
+};
+
+class Add0DUInt16 : public Add<Add0DUInt16, uint16_t, 0> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Add0DUInt16"};
+};
+
+class Add1DUInt16 : public Add<Add1DUInt16, uint16_t, 1> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Add1DUInt16"};
+};
+
+class Add2DUInt16 : public Add<Add2DUInt16, uint16_t, 2> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Add2DUInt16"};
+};
+
+class Add3DUInt16 : public Add<Add3DUInt16, uint16_t, 3> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Add3DUInt16"};
+};
+
+class Add4DUInt16 : public Add<Add4DUInt16, uint16_t, 4> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Add4DUInt16"};
+};
+
+class Add0DFloat : public Add<Add0DFloat, float, 0> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Add0DFloat"};
+};
+
+class Add1DFloat : public Add<Add1DFloat, float, 1> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Add1DFloat"};
+};
+
+class Add2DFloat : public Add<Add2DFloat, float, 2> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Add2DFloat"};
+};
+
+class Add3DFloat : public Add<Add3DFloat, float, 3> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Add3DFloat"};
+};
+
+class Add4DFloat : public Add<Add4DFloat, float, 4> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Add4DFloat"};
+};
+
+template<typename X, typename T, int D>
+class Subtract : public BuildingBlock<X> {
+    static_assert(std::is_arithmetic<T>::value, "T must be arithmetic type.");
+
+public:
+    GeneratorParam<std::string> gc_description{"gc_description", "This subtracts the values of each element."};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,arithmetic"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input0 }}))"};
+    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
+    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+    GeneratorInput<Halide::Func> input0{"input0", Halide::type_of<T>(), D};
+    GeneratorInput<Halide::Func> input1{"input1", Halide::type_of<T>(), D};
+    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), D};
+
+    void generate() {
+        using namespace Halide;
+        output(_) = input0(_) - input1(_);
+    }
+};
+
+class Subtract0DUInt8 : public Subtract<Subtract0DUInt8, uint8_t, 0> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Subtract0DUInt8"};
+};
+
+class Subtract1DUInt8 : public Subtract<Subtract1DUInt8, uint8_t, 1> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Subtract1DUInt8"};
+};
+
+class Subtract2DUInt8 : public Subtract<Subtract2DUInt8, uint8_t, 2> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Subtract2DUInt8"};
+};
+
+class Subtract3DUInt8 : public Subtract<Subtract3DUInt8, uint8_t, 3> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Subtract3DUInt8"};
+};
+
+class Subtract4DUInt8 : public Subtract<Subtract4DUInt8, uint8_t, 4> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Subtract4DUInt8"};
+};
+
+class Subtract0DUInt16 : public Subtract<Subtract0DUInt16, uint16_t, 0> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Subtract0DUInt16"};
+};
+
+class Subtract1DUInt16 : public Subtract<Subtract1DUInt16, uint16_t, 1> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Subtract1DUInt16"};
+};
+
+class Subtract2DUInt16 : public Subtract<Subtract2DUInt16, uint16_t, 2> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Subtract2DUInt16"};
+};
+
+class Subtract3DUInt16 : public Subtract<Subtract3DUInt16, uint16_t, 3> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Subtract3DUInt16"};
+};
+
+class Subtract4DUInt16 : public Subtract<Subtract4DUInt16, uint16_t, 4> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Subtract4DUInt16"};
+};
+
+class Subtract0DFloat : public Subtract<Subtract0DFloat, float, 0> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Subtract0DFloat"};
+};
+
+class Subtract1DFloat : public Subtract<Subtract1DFloat, float, 1> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Subtract1DFloat"};
+};
+
+class Subtract2DFloat : public Subtract<Subtract2DFloat, float, 2> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Subtract2DFloat"};
+};
+
+class Subtract3DFloat : public Subtract<Subtract3DFloat, float, 3> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Subtract3DFloat"};
+};
+
+class Subtract4DFloat : public Subtract<Subtract4DFloat, float, 4> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Subtract4DFloat"};
+};
+
+template<typename X, typename T, int D>
+class Multiply : public BuildingBlock<X> {
+    static_assert(std::is_arithmetic<T>::value, "T must be arithmetic type.");
+
+public:
+    GeneratorParam<std::string> gc_description{"gc_description", "This multiplies the values of each element."};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,arithmetic"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input0 }}))"};
+    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
+    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+    GeneratorInput<Halide::Func> input0{"input0", Halide::type_of<T>(), D};
+    GeneratorInput<Halide::Func> input1{"input1", Halide::type_of<T>(), D};
+    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), D};
+
+    void generate() {
+        using namespace Halide;
+        output(_) = input0(_) * input1(_);
+    }
+};
+
+class Multiply0DUInt8 : public Multiply<Multiply0DUInt8, uint8_t, 0> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Multiply0DUInt8"};
+};
+
+class Multiply1DUInt8 : public Multiply<Multiply1DUInt8, uint8_t, 1> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Multiply1DUInt8"};
+};
+
+class Multiply2DUInt8 : public Multiply<Multiply2DUInt8, uint8_t, 2> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Multiply2DUInt8"};
+};
+
+class Multiply3DUInt8 : public Multiply<Multiply3DUInt8, uint8_t, 3> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Multiply3DUInt8"};
+};
+
+class Multiply4DUInt8 : public Multiply<Multiply4DUInt8, uint8_t, 4> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Multiply4DUInt8"};
+};
+
+class Multiply0DUInt16 : public Multiply<Multiply0DUInt16, uint16_t, 0> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Multiply0DUInt16"};
+};
+
+class Multiply1DUInt16 : public Multiply<Multiply1DUInt16, uint16_t, 1> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Multiply1DUInt16"};
+};
+
+class Multiply2DUInt16 : public Multiply<Multiply2DUInt16, uint16_t, 2> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Multiply2DUInt16"};
+};
+
+class Multiply3DUInt16 : public Multiply<Multiply3DUInt16, uint16_t, 3> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Multiply3DUInt16"};
+};
+
+class Multiply4DUInt16 : public Multiply<Multiply4DUInt16, uint16_t, 4> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Multiply4DUInt16"};
+};
+
+class Multiply0DFloat : public Multiply<Multiply0DFloat, float, 0> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Multiply0DFloat"};
+};
+
+class Multiply1DFloat : public Multiply<Multiply1DFloat, float, 1> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Multiply1DFloat"};
+};
+
+class Multiply2DFloat : public Multiply<Multiply2DFloat, float, 2> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Multiply2DFloat"};
+};
+
+class Multiply3DFloat : public Multiply<Multiply3DFloat, float, 3> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Multiply3DFloat"};
+};
+
+class Multiply4DFloat : public Multiply<Multiply4DFloat, float, 4> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Multiply4DFloat"};
+};
+
+template<typename X, typename T, int D>
+class Divide : public BuildingBlock<X> {
+    static_assert(std::is_arithmetic<T>::value, "T must be arithmetic type.");
+
+public:
+    GeneratorParam<std::string> gc_description{"gc_description", "This divides the values of each element."};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,arithmetic"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input0 }}))"};
+    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
+    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+    GeneratorInput<Halide::Func> input0{"input0", Halide::type_of<T>(), D};
+    GeneratorInput<Halide::Func> input1{"input1", Halide::type_of<T>(), D};
+    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), D};
+
+    void generate() {
+        using namespace Halide;
+        output(_) = input0(_) / input1(_);
+    }
+};
+
+class Divide0DUInt8 : public Divide<Divide0DUInt8, uint8_t, 0> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Divide0DUInt8"};
+};
+
+class Divide1DUInt8 : public Divide<Divide1DUInt8, uint8_t, 1> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Divide1DUInt8"};
+};
+
+class Divide2DUInt8 : public Divide<Divide2DUInt8, uint8_t, 2> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Divide2DUInt8"};
+};
+
+class Divide3DUInt8 : public Divide<Divide3DUInt8, uint8_t, 3> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Divide3DUInt8"};
+};
+
+class Divide4DUInt8 : public Divide<Divide4DUInt8, uint8_t, 4> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Divide4DUInt8"};
+};
+
+class Divide0DUInt16 : public Divide<Divide0DUInt16, uint16_t, 0> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Divide0DUInt16"};
+};
+
+class Divide1DUInt16 : public Divide<Divide1DUInt16, uint16_t, 1> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Divide1DUInt16"};
+};
+
+class Divide2DUInt16 : public Divide<Divide2DUInt16, uint16_t, 2> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Divide2DUInt16"};
+};
+
+class Divide3DUInt16 : public Divide<Divide3DUInt16, uint16_t, 3> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Divide3DUInt16"};
+};
+
+class Divide4DUInt16 : public Divide<Divide4DUInt16, uint16_t, 4> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Divide4DUInt16"};
+};
+
+class Divide0DFloat : public Divide<Divide0DFloat, float, 0> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Divide0DFloat"};
+};
+
+class Divide1DFloat : public Divide<Divide1DFloat, float, 1> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Divide1DFloat"};
+};
+
+class Divide2DFloat : public Divide<Divide2DFloat, float, 2> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Divide2DFloat"};
+};
+
+class Divide3DFloat : public Divide<Divide3DFloat, float, 3> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Divide3DFloat"};
+};
+
+class Divide4DFloat : public Divide<Divide4DFloat, float, 4> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Divide4DFloat"};
+};
+
+template<typename X, typename T, int D>
+class Modulo : public BuildingBlock<X> {
+    static_assert(std::is_integral<T>::value, "T must be integral type.");
+
+public:
+    GeneratorParam<std::string> gc_description{"gc_description", "This calculates the remainder of the values of each element."};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,arithmetic"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input0 }}))"};
+    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
+    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+    GeneratorInput<Halide::Func> input0{"input0", Halide::type_of<T>(), D};
+    GeneratorInput<Halide::Func> input1{"input1", Halide::type_of<T>(), D};
+    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), D};
+
+    void generate() {
+        using namespace Halide;
+        output(_) = input0(_) % input1(_);
+    }
+};
+
+class Modulo0DUInt8 : public Modulo<Modulo0DUInt8, uint8_t, 0> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Modulo0DUInt8"};
+};
+
+class Modulo1DUInt8 : public Modulo<Modulo1DUInt8, uint8_t, 1> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Modulo1DUInt8"};
+};
+
+class Modulo2DUInt8 : public Modulo<Modulo2DUInt8, uint8_t, 2> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Modulo2DUInt8"};
+};
+
+class Modulo3DUInt8 : public Modulo<Modulo3DUInt8, uint8_t, 3> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Modulo3DUInt8"};
+};
+
+class Modulo4DUInt8 : public Modulo<Modulo4DUInt8, uint8_t, 4> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Modulo4DUInt8"};
+};
+
+class Modulo0DUInt16 : public Modulo<Modulo0DUInt16, uint16_t, 0> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Modulo0DUInt16"};
+};
+
+class Modulo1DUInt16 : public Modulo<Modulo1DUInt16, uint16_t, 1> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Modulo1DUInt16"};
+};
+
+class Modulo2DUInt16 : public Modulo<Modulo2DUInt16, uint16_t, 2> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Modulo2DUInt16"};
+};
+
+class Modulo3DUInt16 : public Modulo<Modulo3DUInt16, uint16_t, 3> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Modulo3DUInt16"};
+};
+
+class Modulo4DUInt16 : public Modulo<Modulo4DUInt16, uint16_t, 4> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Modulo4DUInt16"};
+};
+
 }  // namespace core
 }  // namespace bb
 }  // namespace ion
@@ -980,5 +1571,90 @@ ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtractBuffer1DFloat, core_extract_bu
 ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtractBuffer2DFloat, core_extract_buffer_2d_float);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtractBuffer3DFloat, core_extract_buffer_3d_float);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtractBuffer4DFloat, core_extract_buffer_4d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ConstantBuffer0DUInt8, core_constant_buffer_0d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ConstantBuffer1DUInt8, core_constant_buffer_1d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ConstantBuffer2DUInt8, core_constant_buffer_2d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ConstantBuffer3DUInt8, core_constant_buffer_3d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ConstantBuffer4DUInt8, core_constant_buffer_4d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ConstantBuffer0DUInt16, core_constant_buffer_0d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ConstantBuffer1DUInt16, core_constant_buffer_1d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ConstantBuffer2DUInt16, core_constant_buffer_2d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ConstantBuffer3DUInt16, core_constant_buffer_3d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ConstantBuffer4DUInt16, core_constant_buffer_4d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ConstantBuffer0DFloat, core_constant_buffer_0d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ConstantBuffer1DFloat, core_constant_buffer_1d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ConstantBuffer2DFloat, core_constant_buffer_2d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ConstantBuffer3DFloat, core_constant_buffer_3d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ConstantBuffer4DFloat, core_constant_buffer_4d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Add0DUInt8, core_add_0d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Add1DUInt8, core_add_1d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Add2DUInt8, core_add_2d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Add3DUInt8, core_add_3d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Add4DUInt8, core_add_4d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Add0DUInt16, core_add_0d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Add1DUInt16, core_add_1d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Add2DUInt16, core_add_2d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Add3DUInt16, core_add_3d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Add4DUInt16, core_add_4d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Add0DFloat, core_add_0d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Add1DFloat, core_add_1d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Add2DFloat, core_add_2d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Add3DFloat, core_add_3d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Add4DFloat, core_add_4d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Subtract0DUInt8, core_subtract_0d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Subtract1DUInt8, core_subtract_1d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Subtract2DUInt8, core_subtract_2d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Subtract3DUInt8, core_subtract_3d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Subtract4DUInt8, core_subtract_4d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Subtract0DUInt16, core_subtract_0d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Subtract1DUInt16, core_subtract_1d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Subtract2DUInt16, core_subtract_2d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Subtract3DUInt16, core_subtract_3d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Subtract4DUInt16, core_subtract_4d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Subtract0DFloat, core_subtract_0d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Subtract1DFloat, core_subtract_1d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Subtract2DFloat, core_subtract_2d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Subtract3DFloat, core_subtract_3d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Subtract4DFloat, core_subtract_4d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Multiply0DUInt8, core_multiply_0d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Multiply1DUInt8, core_multiply_1d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Multiply2DUInt8, core_multiply_2d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Multiply3DUInt8, core_multiply_3d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Multiply4DUInt8, core_multiply_4d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Multiply0DUInt16, core_multiply_0d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Multiply1DUInt16, core_multiply_1d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Multiply2DUInt16, core_multiply_2d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Multiply3DUInt16, core_multiply_3d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Multiply4DUInt16, core_multiply_4d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Multiply0DFloat, core_multiply_0d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Multiply1DFloat, core_multiply_1d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Multiply2DFloat, core_multiply_2d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Multiply3DFloat, core_multiply_3d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Multiply4DFloat, core_multiply_4d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Divide0DUInt8, core_divide_0d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Divide1DUInt8, core_divide_1d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Divide2DUInt8, core_divide_2d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Divide3DUInt8, core_divide_3d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Divide4DUInt8, core_divide_4d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Divide0DUInt16, core_divide_0d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Divide1DUInt16, core_divide_1d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Divide2DUInt16, core_divide_2d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Divide3DUInt16, core_divide_3d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Divide4DUInt16, core_divide_4d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Divide0DFloat, core_divide_0d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Divide1DFloat, core_divide_1d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Divide2DFloat, core_divide_2d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Divide3DFloat, core_divide_3d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Divide4DFloat, core_divide_4d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Modulo0DUInt8, core_modulo_0d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Modulo1DUInt8, core_modulo_1d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Modulo2DUInt8, core_modulo_2d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Modulo3DUInt8, core_modulo_3d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Modulo4DUInt8, core_modulo_4d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Modulo0DUInt16, core_modulo_0d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Modulo1DUInt16, core_modulo_1d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Modulo2DUInt16, core_modulo_2d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Modulo3DUInt16, core_modulo_3d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Modulo4DUInt16, core_modulo_4d_uint16);
 
 #endif
