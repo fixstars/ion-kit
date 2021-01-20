@@ -4,6 +4,7 @@
 #include <numeric>
 
 #include "ion/ion.h"
+#include "sole.hpp"
 
 namespace ion {
 namespace bb {
