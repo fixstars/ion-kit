@@ -600,7 +600,9 @@ class ReorderBuffer4DFloat : public ReorderBuffer4D<ReorderBuffer4DFloat, float>
 };
 
 template<typename X, typename T, int32_t D>
-class Denormalize : public ion::BuildingBlock<X> {
+class Denormalize : public BuildingBlock<X> {
+    static_assert(std::is_arithmetic<T>::value, "T must be arithmetic type.");
+
 public:
     GeneratorParam<std::string> gc_description{"gc_description", "This denormalize [0..1.0] values into target type range."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
@@ -655,7 +657,9 @@ public:
 };
 
 template<typename X, typename T, int32_t D>
-class Normalize : public ion::BuildingBlock<X> {
+class Normalize : public BuildingBlock<X> {
+    static_assert(std::is_arithmetic<T>::value, "T must be arithmetic type.");
+
 public:
     GeneratorParam<std::string> gc_description{"gc_description", "This normalize values into range [0..1.0]."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
