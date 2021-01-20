@@ -2083,7 +2083,9 @@ public:
     void generate() {
         using namespace Halide;
         Func in;
-        in(c, x, y) = input(c, x, y);
+        in(c, x, y) = select(c == 0, input(2, x, y),
+                             c == 1, input(1, x, y),
+                                     input(0, x, y));
         in.compute_root();
         if (get_target().has_gpu_feature()) {
             Var xo, yo, xi, yi;
