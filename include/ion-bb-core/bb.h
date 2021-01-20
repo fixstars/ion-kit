@@ -48,6 +48,7 @@ public:
 
 template<typename X, typename T>
 class BufferLoader1D : public BufferLoader<X, T, 1> {
+public:
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.extent0)] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "extent0"};
 
@@ -60,6 +61,7 @@ class BufferLoader1D : public BufferLoader<X, T, 1> {
 
 template<typename X, typename T>
 class BufferLoader2D : public BufferLoader<X, T, 2> {
+public:
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.extent0), parseInt(v.extent1)] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "extent0,extent1"};
 
@@ -73,6 +75,7 @@ class BufferLoader2D : public BufferLoader<X, T, 2> {
 
 template<typename X, typename T>
 class BufferLoader3D : public BufferLoader<X, T, 3> {
+public:
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.extent0), parseInt(v.extent1), parseInt(v.extent2)] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "extent0,extent1,extent2"};
 
@@ -87,6 +90,7 @@ class BufferLoader3D : public BufferLoader<X, T, 3> {
 
 template<typename X, typename T>
 class BufferLoader4D : public BufferLoader<X, T, 4> {
+public:
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.extent0), parseInt(v.extent1), parseInt(v.extent2), parseInt(v.extent3)] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "extent0,extent1,extent2,extent3"};
 
@@ -101,61 +105,73 @@ class BufferLoader4D : public BufferLoader<X, T, 4> {
 };
 
 class BufferLoader1DUInt8 : public BufferLoader1D<BufferLoader1DUInt8, uint8_t> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "BufferLoader1DUInt8"};
     GeneratorParam<std::string> gc_description{"gc_description", "This loads 1D UInt8 buffer from specified URL."};
 };
 
 class BufferLoader2DUInt8 : public BufferLoader2D<BufferLoader2DUInt8, uint8_t> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "BufferLoader2DUInt8"};
     GeneratorParam<std::string> gc_description{"gc_description", "This loads 2D UInt8 buffer from specified URL."};
 };
 
 class BufferLoader3DUInt8 : public BufferLoader3D<BufferLoader3DUInt8, uint8_t> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "BufferLoader3DUInt8"};
     GeneratorParam<std::string> gc_description{"gc_description", "This loads 3D UInt8 buffer from specified URL."};
 };
 
 class BufferLoader4DUInt8 : public BufferLoader4D<BufferLoader4DUInt8, uint8_t> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "BufferLoader4DUInt8"};
     GeneratorParam<std::string> gc_description{"gc_description", "This loads 4D UInt8 buffer from specified URL."};
 };
 
 class BufferLoader1DUInt16 : public BufferLoader1D<BufferLoader1DUInt16, uint16_t> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "BufferLoader1DUInt16"};
     GeneratorParam<std::string> gc_description{"gc_description", "This loads 1D UInt16 buffer from specified URL."};
 };
 
 class BufferLoader2DUInt16 : public BufferLoader2D<BufferLoader2DUInt16, uint16_t> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "BufferLoader2DUInt16"};
     GeneratorParam<std::string> gc_description{"gc_description", "This loads 2D UInt16 buffer from specified URL."};
 };
 
 class BufferLoader3DUInt16 : public BufferLoader3D<BufferLoader3DUInt16, uint16_t> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "BufferLoader3DUInt16"};
     GeneratorParam<std::string> gc_description{"gc_description", "This loads 3D UInt16 buffer from specified URL."};
 };
 
 class BufferLoader4DUInt16 : public BufferLoader4D<BufferLoader4DUInt16, uint16_t> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "BufferLoader4DUInt16"};
     GeneratorParam<std::string> gc_description{"gc_description", "This loads 4D UInt16 buffer from specified URL."};
 };
 
 class BufferLoader1DFloat : public BufferLoader1D<BufferLoader1DFloat, float> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "BufferLoader1DFloat"};
     GeneratorParam<std::string> gc_description{"gc_description", "This loads 1D Float buffer from specified URL."};
 };
 
 class BufferLoader2DFloat : public BufferLoader2D<BufferLoader2DFloat, float> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "BufferLoader2DFloat"};
     GeneratorParam<std::string> gc_description{"gc_description", "This loads 2D Float buffer from specified URL."};
 };
 
 class BufferLoader3DFloat : public BufferLoader3D<BufferLoader3DFloat, float> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "BufferLoader3DFloat"};
     GeneratorParam<std::string> gc_description{"gc_description", "This loads 3D Float buffer from specified URL."};
 };
 
 class BufferLoader4DFloat : public BufferLoader4D<BufferLoader4DFloat, float> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "BufferLoader4DFloat"};
     GeneratorParam<std::string> gc_description{"gc_description", "This loads 4D Float buffer from specified URL."};
 };
@@ -207,6 +223,7 @@ public:
 
 template<typename X, typename T>
 class BufferSaver1D : public BufferSaver<X, T, 1> {
+public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "extent0"};
 
     GeneratorParam<int32_t> extent0{"extent0", 0};
@@ -218,6 +235,7 @@ class BufferSaver1D : public BufferSaver<X, T, 1> {
 
 template<typename X, typename T>
 class BufferSaver2D : public BufferSaver<X, T, 2> {
+public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "extent0,extent1"};
 
     GeneratorParam<int32_t> extent0{"extent0", 0};
@@ -230,6 +248,7 @@ class BufferSaver2D : public BufferSaver<X, T, 2> {
 
 template<typename X, typename T>
 class BufferSaver3D : public BufferSaver<X, T, 3> {
+public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "extent0,extent1,extent2"};
 
     GeneratorParam<int32_t> extent0{"extent0", 0};
@@ -243,6 +262,7 @@ class BufferSaver3D : public BufferSaver<X, T, 3> {
 
 template<typename X, typename T>
 class BufferSaver4D : public BufferSaver<X, T, 4> {
+public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "extent0,extent1,extent2,extent3"};
 
     GeneratorParam<int32_t> extent0{"extent0", 0};
@@ -256,61 +276,73 @@ class BufferSaver4D : public BufferSaver<X, T, 4> {
 };
 
 class BufferSaver1DUInt8 : public BufferSaver1D<BufferSaver1DUInt8, uint8_t> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "BufferSaver1DUInt8"};
     GeneratorParam<std::string> gc_description{"gc_description", "This saves 1D UInt8 buffer to specified path."};
 };
 
 class BufferSaver2DUInt8 : public BufferSaver2D<BufferSaver2DUInt8, uint8_t> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "BufferSaver2DUInt8"};
     GeneratorParam<std::string> gc_description{"gc_description", "This saves 2D UInt8 buffer to specified path."};
 };
 
 class BufferSaver3DUInt8 : public BufferSaver3D<BufferSaver3DUInt8, uint8_t> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "BufferSaver3DUInt8"};
     GeneratorParam<std::string> gc_description{"gc_description", "This saves 3D UInt8 buffer to specified path."};
 };
 
 class BufferSaver4DUInt8 : public BufferSaver4D<BufferSaver4DUInt8, uint8_t> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "BufferSaver4DUInt8"};
     GeneratorParam<std::string> gc_description{"gc_description", "This saves 4D UInt8 buffer to specified path."};
 };
 
 class BufferSaver1DUInt16 : public BufferSaver1D<BufferSaver1DUInt16, uint16_t> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "BufferSaver1DUInt16"};
     GeneratorParam<std::string> gc_description{"gc_description", "This saves 1D UInt16 buffer to specified path."};
 };
 
 class BufferSaver2DUInt16 : public BufferSaver2D<BufferSaver2DUInt16, uint16_t> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "BufferSaver2DUInt16"};
     GeneratorParam<std::string> gc_description{"gc_description", "This saves 2D UInt16 buffer to specified path."};
 };
 
 class BufferSaver3DUInt16 : public BufferSaver3D<BufferSaver3DUInt16, uint16_t> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "BufferSaver3DUInt16"};
     GeneratorParam<std::string> gc_description{"gc_description", "This saves 3D UInt16 buffer to specified path."};
 };
 
 class BufferSaver4DUInt16 : public BufferSaver4D<BufferSaver4DUInt16, uint16_t> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "BufferSaver4DUInt16"};
     GeneratorParam<std::string> gc_description{"gc_description", "This saves 4D UInt16 buffer to specified path."};
 };
 
 class BufferSaver1DFloat : public BufferSaver1D<BufferSaver1DFloat, float> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "BufferSaver1DFloat"};
     GeneratorParam<std::string> gc_description{"gc_description", "This saves 1D Float buffer to specified path."};
 };
 
 class BufferSaver2DFloat : public BufferSaver2D<BufferSaver2DFloat, float> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "BufferSaver2DFloat"};
     GeneratorParam<std::string> gc_description{"gc_description", "This saves 2D Float buffer to specified path."};
 };
 
 class BufferSaver3DFloat : public BufferSaver3D<BufferSaver3DFloat, float> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "BufferSaver3DFloat"};
     GeneratorParam<std::string> gc_description{"gc_description", "This saves 3D Float buffer to specified path."};
 };
 
 class BufferSaver4DFloat : public BufferSaver4D<BufferSaver4DFloat, float> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "BufferSaver4DFloat"};
     GeneratorParam<std::string> gc_description{"gc_description", "This saves 4D Float buffer to specified path."};
 };
@@ -365,6 +397,7 @@ int32_t RandomBuffer<X, T, D>::instance_id = 0;
 
 template<typename X, typename T>
 class RandomBuffer1D : public RandomBuffer<X, T, 1> {
+public:
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.extent0)] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "min,max,extent0"};
 
@@ -377,6 +410,7 @@ class RandomBuffer1D : public RandomBuffer<X, T, 1> {
 
 template<typename X, typename T>
 class RandomBuffer2D : public RandomBuffer<X, T, 2> {
+public:
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.extent0), parseInt(v.extent1)] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "min,max,extent0,extent1"};
 
@@ -390,6 +424,7 @@ class RandomBuffer2D : public RandomBuffer<X, T, 2> {
 
 template<typename X, typename T>
 class RandomBuffer3D : public RandomBuffer<X, T, 3> {
+public:
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.extent0), parseInt(v.extent1), parseInt(v.extent2)] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "min,max,extent0,extent1,extent2"};
 
@@ -404,6 +439,7 @@ class RandomBuffer3D : public RandomBuffer<X, T, 3> {
 
 template<typename X, typename T>
 class RandomBuffer4D : public RandomBuffer<X, T, 4> {
+public:
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.extent0), parseInt(v.extent1), parseInt(v.extent2), parseInt(v.extent3)] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "min,max,extent0,extent1,extent2,extent3"};
 
@@ -418,61 +454,73 @@ class RandomBuffer4D : public RandomBuffer<X, T, 4> {
 };
 
 class RandomBuffer1DUInt8 : public RandomBuffer1D<RandomBuffer1DUInt8, uint8_t> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "RandomBuffer1DUInt8"};
     GeneratorParam<std::string> gc_description{"gc_description", "This makes 1D UInt8 random buffer."};
 };
 
 class RandomBuffer2DUInt8 : public RandomBuffer2D<RandomBuffer2DUInt8, uint8_t> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "RandomBuffer2DUInt8"};
     GeneratorParam<std::string> gc_description{"gc_description", "This makes 2D UInt8 random buffer."};
 };
 
 class RandomBuffer3DUInt8 : public RandomBuffer3D<RandomBuffer3DUInt8, uint8_t> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "RandomBuffer3DUInt8"};
     GeneratorParam<std::string> gc_description{"gc_description", "This makes 3D UInt8 random buffer."};
 };
 
 class RandomBuffer4DUInt8 : public RandomBuffer4D<RandomBuffer4DUInt8, uint8_t> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "RandomBuffer4DUInt8"};
     GeneratorParam<std::string> gc_description{"gc_description", "This makes 4D UInt8 random buffer."};
 };
 
 class RandomBuffer1DUInt16 : public RandomBuffer1D<RandomBuffer1DUInt16, uint16_t> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "RandomBuffer1DUInt16"};
     GeneratorParam<std::string> gc_description{"gc_description", "This makes 1D UInt16 random buffer."};
 };
 
 class RandomBuffer2DUInt16 : public RandomBuffer2D<RandomBuffer2DUInt16, uint16_t> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "RandomBuffer2DUInt16"};
     GeneratorParam<std::string> gc_description{"gc_description", "This makes 2D UInt16 random buffer."};
 };
 
 class RandomBuffer3DUInt16 : public RandomBuffer3D<RandomBuffer3DUInt16, uint16_t> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "RandomBuffer3DUInt16"};
     GeneratorParam<std::string> gc_description{"gc_description", "This makes 3D UInt16 random buffer."};
 };
 
 class RandomBuffer4DUInt16 : public RandomBuffer4D<RandomBuffer4DUInt16, uint16_t> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "RandomBuffer4DUInt16"};
     GeneratorParam<std::string> gc_description{"gc_description", "This makes 4D UInt16 random buffer."};
 };
 
 class RandomBuffer1DFloat : public RandomBuffer1D<RandomBuffer1DFloat, float> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "RandomBuffer1DFloat"};
     GeneratorParam<std::string> gc_description{"gc_description", "This makes 1D Float random buffer."};
 };
 
 class RandomBuffer2DFloat : public RandomBuffer2D<RandomBuffer2DFloat, float> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "RandomBuffer2DFloat"};
     GeneratorParam<std::string> gc_description{"gc_description", "This makes 2D Float random buffer."};
 };
 
 class RandomBuffer3DFloat : public RandomBuffer3D<RandomBuffer3DFloat, float> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "RandomBuffer3DFloat"};
     GeneratorParam<std::string> gc_description{"gc_description", "This makes 3D Float random buffer."};
 };
 
 class RandomBuffer4DFloat : public RandomBuffer4D<RandomBuffer4DFloat, float> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "RandomBuffer4DFloat"};
     GeneratorParam<std::string> gc_description{"gc_description", "This makes 4D Float random buffer."};
 };
@@ -514,6 +562,7 @@ public:
 
 template<typename X, typename T>
 class ReorderBuffer2D : public ReorderBuffer<X, T, 2> {
+public:
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [v.input[parseInt(v.dim0)], v.input[parseInt(v.dim1)]] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "dim0,dim1"};
 
@@ -527,6 +576,7 @@ class ReorderBuffer2D : public ReorderBuffer<X, T, 2> {
 
 template<typename X, typename T>
 class ReorderBuffer3D : public ReorderBuffer<X, T, 3> {
+public:
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [v.input[parseInt(v.dim0)], v.input[parseInt(v.dim1)], v.input[parseInt(v.dim2)]] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "dim0,dim1,dim2"};
 
@@ -541,6 +591,7 @@ class ReorderBuffer3D : public ReorderBuffer<X, T, 3> {
 
 template<typename X, typename T>
 class ReorderBuffer4D : public ReorderBuffer<X, T, 4> {
+public:
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [v.input[parseInt(v.dim0)], v.input[parseInt(v.dim1)], v.input[parseInt(v.dim2)], v.input[parseInt(v.dim3)]] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "dim0,dim1,dim2,dim3"};
 
@@ -555,46 +606,55 @@ class ReorderBuffer4D : public ReorderBuffer<X, T, 4> {
 };
 
 class ReorderBuffer2DUInt8 : public ReorderBuffer2D<ReorderBuffer2DUInt8, uint8_t> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "ReorderBuffer2DUInt8"};
     GeneratorParam<std::string> gc_description{"gc_description", "This reorders 2D UInt8 buffer."};
 };
 
 class ReorderBuffer3DUInt8 : public ReorderBuffer3D<ReorderBuffer3DUInt8, uint8_t> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "ReorderBuffer3DUInt8"};
     GeneratorParam<std::string> gc_description{"gc_description", "This reorders 3D UInt8 buffer."};
 };
 
 class ReorderBuffer4DUInt8 : public ReorderBuffer4D<ReorderBuffer4DUInt8, uint8_t> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "ReorderBuffer4DUInt8"};
     GeneratorParam<std::string> gc_description{"gc_description", "This reorders 4D UInt8 buffer."};
 };
 
 class ReorderBuffer2DUInt16 : public ReorderBuffer2D<ReorderBuffer2DUInt16, uint16_t> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "ReorderBuffer2DUInt16"};
     GeneratorParam<std::string> gc_description{"gc_description", "This reorders 2D UInt16 buffer."};
 };
 
 class ReorderBuffer3DUInt16 : public ReorderBuffer3D<ReorderBuffer3DUInt16, uint16_t> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "ReorderBuffer3DUInt16"};
     GeneratorParam<std::string> gc_description{"gc_description", "This reorders 3D UInt16 buffer."};
 };
 
 class ReorderBuffer4DUInt16 : public ReorderBuffer4D<ReorderBuffer4DUInt16, uint16_t> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "ReorderBuffer4DUInt16"};
     GeneratorParam<std::string> gc_description{"gc_description", "This reorders 4D UInt16 buffer."};
 };
 
 class ReorderBuffer2DFloat : public ReorderBuffer2D<ReorderBuffer2DFloat, float> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "ReorderBuffer2DFloat"};
     GeneratorParam<std::string> gc_description{"gc_description", "This reorders 2D Float buffer."};
 };
 
 class ReorderBuffer3DFloat : public ReorderBuffer3D<ReorderBuffer3DFloat, float> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "ReorderBuffer3DFloat"};
     GeneratorParam<std::string> gc_description{"gc_description", "This reorders 3D Float buffer."};
 };
 
 class ReorderBuffer4DFloat : public ReorderBuffer4D<ReorderBuffer4DFloat, float> {
+public:
     GeneratorParam<std::string> gc_title{"gc_title", "ReorderBuffer4DFloat"};
     GeneratorParam<std::string> gc_description{"gc_description", "This reorders 4D Float buffer."};
 };
@@ -716,7 +776,7 @@ public:
 template<typename X, typename T, int32_t D>
 class ExtendDimension : public BuildingBlock<X> {
     static_assert(D < 4, "D must be less than 4.");
-    static_assert(std::is_arithmetic<T>::value, "T is not arithmetic.");
+    static_assert(std::is_arithmetic<T>::value, "T must be arithmetic type.");
 
 public:
     GeneratorParam<std::string> gc_description{"gc_description", "Extend buffer dimension."};
@@ -805,7 +865,7 @@ public:
 template<typename X, typename T, int32_t D>
 class ExtractBuffer : public BuildingBlock<X> {
     static_assert(D > 0, "D must be greater than 0.");
-    static_assert(std::is_arithmetic<T>::value, "T is not arithmetic.");
+    static_assert(std::is_arithmetic<T>::value, "T must be arithmetic type.");
 
 public:
     GeneratorParam<std::string> gc_description{"gc_description", "Extract buffer."};
@@ -821,7 +881,7 @@ public:
 
     void generate() {
         std::vector<Halide::Var> dst_vars(D - 1);
-        std::vector<Halide::Expr> src_vars = dst_vars;
+        std::vector<Halide::Expr> src_vars(dst_vars.begin(), dst_vars.end());
         src_vars.insert(src_vars.begin() + dim, index);
 
         output(dst_vars) = input(src_vars);
@@ -836,11 +896,6 @@ public:
     GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer1DUInt8"};
 };
 
-class ExtractBuffer4DUInt8 : public ExtractBuffer<ExtractBuffer4DUInt8, uint8_t, 4> {
-public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer4DUInt8"};
-};
-
 class ExtractBuffer2DUInt8 : public ExtractBuffer<ExtractBuffer2DUInt8, uint8_t, 2> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer2DUInt8"};
@@ -849,6 +904,11 @@ public:
 class ExtractBuffer3DUInt8 : public ExtractBuffer<ExtractBuffer3DUInt8, uint8_t, 3> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer3DUInt8"};
+};
+
+class ExtractBuffer4DUInt8 : public ExtractBuffer<ExtractBuffer4DUInt8, uint8_t, 4> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer4DUInt8"};
 };
 
 class ExtractBuffer1DUInt16 : public ExtractBuffer<ExtractBuffer1DUInt16, uint16_t, 1> {
