@@ -248,8 +248,42 @@ extern "C" ION_EXPORT int ion_bb_dnn_classify_gender(halide_buffer_t *in_img,
     }
 }
 
+extern "C" ION_EXPORT int ion_bb_dnn_json_dict_average_regurator(halide_buffer_t *in,
+                                                                 uint32_t io_md_size,
+                                                                 halide_buffer_t *session_id_buf,
+                                                                 uint32_t period_in_sec,
+                                                                 halide_buffer_t *out) {
+    try {
+
+        if (in->is_bounds_query()) {
+            in->dim[0].min = 0;
+            in->dim[0].extent = io_md_size;
+            return 0;
+        }
+
+        Halide::Runtime::Buffer<uint8_t> in_buf(*in);
+        in_buf.copy_to_host();
+
+        std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
+
+        // auto& r = JSONDictAverageRegurator::get_instance(session_id, period_in_sec);
+        // r.process(in, out);
+        std::memcpy(out->host, in->host, io_md_size);
+
+        return 0;
+
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        return -1;
+    } catch (...) {
+        std::cerr << "Unknown error" << std::endl;
+        return -1;
+    }
+}
+
+
 extern "C" ION_EXPORT int ion_bb_dnn_ifttt_webhook_uploader(halide_buffer_t *in_md,
-                                                            int32_t input_md_size,
+                                                            uint32_t input_md_size,
                                                             halide_buffer_t *session_id_buf,
                                                             halide_buffer_t *ifttt_webhook_url_buf,
                                                             halide_buffer_t *out) {
@@ -267,6 +301,9 @@ extern "C" ION_EXPORT int ion_bb_dnn_ifttt_webhook_uploader(halide_buffer_t *in_
 
         std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
         std::string ifttt_webhook_url(reinterpret_cast<const char *>(ifttt_webhook_url_buf->host));
+
+        // auto& uploader = WebHookUploader::get_instance(session_id, ifttt_webhook_url, upload_interval_in_sec);
+        // uploader.upload();
 
         std::cout << "Upload :"  << in_md->host << std::endl;
 

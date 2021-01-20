@@ -35,6 +35,7 @@ int main(int argc, char *argv[]) {
         auto img = n["output"];
         n = b.add("dnn_tlt_peoplenet_md")(img).set_param(wparam, hparam);
         n = b.add("dnn_classify_gender")(img, n["output"]);
+        n = b.add("dnn_regurator")(n["output"]);
         n = b.add("dnn_ifttt_webhook_uploader")(n["output"]).set_param(Param{"ifttt_webhook_url", "https://maker.ifttt.com/trigger/gender_count/with/key/buf--6AoUjTGu868Pva_Q9"});
 
         PortMap pm;

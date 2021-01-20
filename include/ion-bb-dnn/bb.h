@@ -361,7 +361,15 @@ private:
     Halide::Func input;
 };
 
+} // dnn
+} // bb
+} // ion
+
 ION_REGISTER_BUILDING_BLOCK(ion::bb::dnn::TLTPeopleNetMD, dnn_tlt_peoplenet_md);
+
+namespace ion {
+namespace bb {
+namespace dnn {
 
 class ClassifyGender : public BuildingBlock<ClassifyGender> {
 public:
@@ -443,12 +451,64 @@ private:
     Halide::Func input_md_;
 };
 
-
 } // dnn
 } // bb
 } // ion
 
 ION_REGISTER_BUILDING_BLOCK(ion::bb::dnn::ClassifyGender, dnn_classify_gender);
+
+namespace ion {
+namespace bb {
+namespace dnn {
+
+class JSONDictAverageRegulator : public BuildingBlock<JSONDictAverageRegulator> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "JSONDictAverageRegulator"};
+    GeneratorParam<std::string> gc_description{"gc_description", "Takes JSON key/value dictionary, accumulate value and calculate average, and emit in paticular time period."};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [ parseInt(v.io_md_size) ] }}))"};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,json"};
+    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
+    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
+    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+
+    GeneratorParam<uint32_t> io_md_size{"io_md_size", 16*1024*1024}; // 16MiB
+    GeneratorParam<uint32_t> period_in_sec{"period_in_sec", 30};
+
+    GeneratorInput<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 1};
+    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 1};
+
+    void generate() {
+        using namespace Halide;
+
+        std::string session_id = sole::uuid4().str();
+        Buffer<uint8_t> session_id_buf(session_id.size() + 1);
+        session_id_buf.fill(0);
+        std::memcpy(session_id_buf.data(), session_id.c_str(), session_id.size());
+
+        input_ = Func{static_cast<std::string>(gc_prefix) + "input"};
+        input_(_) = input(_);
+
+        std::vector<ExternFuncArgument> params{ input_, cast<uint32_t>(io_md_size), session_id_buf, cast<uint32_t>(period_in_sec)};
+        Func regurator(static_cast<std::string>(gc_prefix) + "json_dict_average_regurator");
+        regurator.define_extern("ion_bb_dnn_json_dict_average_regurator", params, UInt(8), 1);
+        regurator.compute_root();
+
+        output(_) = regurator(_);
+    }
+
+    void schedule() {
+        input_.compute_root();
+    }
+
+private:
+    Halide::Func input_;
+};
+
+} // dnn
+} // bb
+} // ion
+
+ION_REGISTER_BUILDING_BLOCK(ion::bb::dnn::JSONDictAverageRegulator, dnn_json_dict_average_regulator);
 
 namespace ion {
 namespace bb {
@@ -465,7 +525,6 @@ public:
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
     GeneratorParam<uint32_t> input_md_size{"input_md_size", 16*1024*1024}; // 16MiB
     GeneratorParam<std::string> ifttt_webhook_url{"ifttt_webhook_url", ""};
-    GeneratorParam<uint32_t> upload_interval_in_sec{"upload_interval_in_sec", 30};
     GeneratorInput<Halide::Func> input_md{"input_md", Halide::type_of<uint8_t>(), 1};
     GeneratorOutput<int32_t> output{"output"};
 
