@@ -713,6 +713,184 @@ public:
     GeneratorParam<std::string> gc_title{"gc_title", "Normalize4DUInt16"};
 };
 
+template<typename X, typename T, int32_t D>
+class ExtendDimension : public BuildingBlock<X> {
+    static_assert(D < 4, "D must be less than 4.");
+    static_assert(std::is_arithmetic<T>::value, "T is not arithmetic.");
+
+public:
+    GeneratorParam<std::string> gc_description{"gc_description", "Extend buffer dimension."};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.splice(parseInt(v.new_dim), 0, parseInt(v.extent)) }}))"};
+    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "new_dim,extent"};
+    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+
+    GeneratorParam<int32_t> new_dim{"new_dim", 0, 0, D};
+    GeneratorParam<int32_t> extent{"extent", 1};
+    GeneratorInput<Halide::Func> input{"input", Halide::type_of<T>(), D};
+    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), D + 1};
+
+    void generate() {
+        std::vector<Halide::Var> dst_vars(D + 1);
+        std::vector<Halide::Var> src_vars = dst_vars;
+        src_vars.erase(src_vars.begin() + new_dim);
+
+        output(dst_vars) = input(src_vars);
+    }
+
+    void schedule() {
+    }
+};
+
+class ExtendDimension0DUInt8 : public ExtendDimension<ExtendDimension0DUInt8, uint8_t, 0> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ExtendDimension0DUInt8"};
+};
+
+class ExtendDimension1DUInt8 : public ExtendDimension<ExtendDimension1DUInt8, uint8_t, 1> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ExtendDimension1DUInt8"};
+};
+
+class ExtendDimension2DUInt8 : public ExtendDimension<ExtendDimension2DUInt8, uint8_t, 2> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ExtendDimension2DUInt8"};
+};
+
+class ExtendDimension3DUInt8 : public ExtendDimension<ExtendDimension3DUInt8, uint8_t, 3> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ExtendDimension3DUInt8"};
+};
+
+class ExtendDimension0DUInt16 : public ExtendDimension<ExtendDimension0DUInt16, uint16_t, 0> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ExtendDimension0DUInt16"};
+};
+
+class ExtendDimension1DUInt16 : public ExtendDimension<ExtendDimension1DUInt16, uint16_t, 1> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ExtendDimension1DUInt16"};
+};
+
+class ExtendDimension2DUInt16 : public ExtendDimension<ExtendDimension2DUInt16, uint16_t, 2> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ExtendDimension2DUInt16"};
+};
+
+class ExtendDimension3DUInt16 : public ExtendDimension<ExtendDimension3DUInt16, uint16_t, 3> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ExtendDimension3DUInt16"};
+};
+
+class ExtendDimension0DFloat : public ExtendDimension<ExtendDimension0DFloat, float, 0> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ExtendDimension0DFloat"};
+};
+
+class ExtendDimension1DFloat : public ExtendDimension<ExtendDimension1DFloat, float, 1> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ExtendDimension1DFloat"};
+};
+
+class ExtendDimension2DFloat : public ExtendDimension<ExtendDimension2DFloat, float, 2> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ExtendDimension2DFloat"};
+};
+
+class ExtendDimension3DFloat : public ExtendDimension<ExtendDimension3DFloat, float, 3> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ExtendDimension3DFloat"};
+};
+
+template<typename X, typename T, int32_t D>
+class ExtractBuffer : public BuildingBlock<X> {
+    static_assert(D > 0, "D must be greater than 0.");
+    static_assert(std::is_arithmetic<T>::value, "T is not arithmetic.");
+
+public:
+    GeneratorParam<std::string> gc_description{"gc_description", "Extract buffer."};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.splice(parseInt(v.dim), 1) }}))"};
+    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "target_dim,index"};
+    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+
+    GeneratorParam<int32_t> dim{"dim", 0, 0, D - 1};
+    GeneratorParam<int32_t> index{"index", 0};
+    GeneratorInput<Halide::Func> input{"input", Halide::type_of<T>(), D};
+    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), D - 1};
+
+    void generate() {
+        std::vector<Halide::Var> dst_vars(D - 1);
+        std::vector<Halide::Expr> src_vars = dst_vars;
+        src_vars.insert(src_vars.begin() + dim, index);
+
+        output(dst_vars) = input(src_vars);
+    }
+
+    void schedule() {
+    }
+};
+
+class ExtractBuffer1DUInt8 : public ExtractBuffer<ExtractBuffer1DUInt8, uint8_t, 1> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer1DUInt8"};
+};
+
+class ExtractBuffer4DUInt8 : public ExtractBuffer<ExtractBuffer4DUInt8, uint8_t, 4> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer4DUInt8"};
+};
+
+class ExtractBuffer2DUInt8 : public ExtractBuffer<ExtractBuffer2DUInt8, uint8_t, 2> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer2DUInt8"};
+};
+
+class ExtractBuffer3DUInt8 : public ExtractBuffer<ExtractBuffer3DUInt8, uint8_t, 3> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer3DUInt8"};
+};
+
+class ExtractBuffer1DUInt16 : public ExtractBuffer<ExtractBuffer1DUInt16, uint16_t, 1> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer1DUInt16"};
+};
+
+class ExtractBuffer2DUInt16 : public ExtractBuffer<ExtractBuffer2DUInt16, uint16_t, 2> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer2DUInt16"};
+};
+
+class ExtractBuffer3DUInt16 : public ExtractBuffer<ExtractBuffer3DUInt16, uint16_t, 3> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer3DUInt16"};
+};
+
+class ExtractBuffer4DUInt16 : public ExtractBuffer<ExtractBuffer4DUInt16, uint16_t, 4> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer4DUInt16"};
+};
+
+class ExtractBuffer1DFloat : public ExtractBuffer<ExtractBuffer1DFloat, float, 1> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer1DFloat"};
+};
+
+class ExtractBuffer2DFloat : public ExtractBuffer<ExtractBuffer2DFloat, float, 2> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer2DFloat"};
+};
+
+class ExtractBuffer3DFloat : public ExtractBuffer<ExtractBuffer3DFloat, float, 3> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer3DFloat"};
+};
+
+class ExtractBuffer4DFloat : public ExtractBuffer<ExtractBuffer4DFloat, float, 4> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer4DFloat"};
+};
+
 }  // namespace core
 }  // namespace bb
 }  // namespace ion
@@ -778,5 +956,29 @@ ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Normalize1DUInt16, core_normalize_1d_
 ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Normalize2DUInt16, core_normalize_2d_uint16);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Normalize3DUInt16, core_normalize_3d_uint16);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Normalize4DUInt16, core_normalize_4d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtendDimension0DUInt8, core_extend_dimension_0d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtendDimension1DUInt8, core_extend_dimension_1d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtendDimension2DUInt8, core_extend_dimension_2d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtendDimension3DUInt8, core_extend_dimension_3d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtendDimension0DUInt16, core_extend_dimension_0d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtendDimension1DUInt16, core_extend_dimension_1d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtendDimension2DUInt16, core_extend_dimension_2d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtendDimension3DUInt16, core_extend_dimension_3d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtendDimension0DFloat, core_extend_dimension_0d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtendDimension1DFloat, core_extend_dimension_1d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtendDimension2DFloat, core_extend_dimension_2d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtendDimension3DFloat, core_extend_dimension_3d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtractBuffer1DUInt8, core_extract_buffer_1d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtractBuffer2DUInt8, core_extract_buffer_2d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtractBuffer3DUInt8, core_extract_buffer_3d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtractBuffer4DUInt8, core_extract_buffer_4d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtractBuffer1DUInt16, core_extract_buffer_1d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtractBuffer2DUInt16, core_extract_buffer_2d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtractBuffer3DUInt16, core_extract_buffer_3d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtractBuffer4DUInt16, core_extract_buffer_4d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtractBuffer1DFloat, core_extract_buffer_1d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtractBuffer2DFloat, core_extract_buffer_2d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtractBuffer3DFloat, core_extract_buffer_3d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtractBuffer4DFloat, core_extract_buffer_4d_float);
 
 #endif
