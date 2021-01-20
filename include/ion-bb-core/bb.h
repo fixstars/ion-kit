@@ -952,6 +952,97 @@ public:
 };
 
 template<typename X, typename T, int32_t D>
+class ConcatBuffer : public BuildingBlock<X> {
+    static_assert(D > 0, "D must be greater than 0.");
+    static_assert(std::is_arithmetic<T>::value, "T is not arithmetic.");
+
+public:
+    GeneratorParam<std::string> gc_description{"gc_description", "Concat buffer."};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input0.map((x, i) => i === parseInt(v.dim) ? x + v.input1[i] : Math.min(x, v.input1[i])) }}))"};
+    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
+    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+
+    GeneratorParam<int32_t> input0_extent{"input0_extent", 1};
+    GeneratorParam<int32_t> dim{"dim", D - 1, 0, D - 1};
+    GeneratorInput<Halide::Func> input0{"input0", Halide::type_of<T>(), D};
+    GeneratorInput<Halide::Func> input1{"input1", Halide::type_of<T>(), D};
+    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), D};
+
+    void generate() {
+        std::vector<Halide::Var> dst_vars(D);
+        std::vector<Halide::Expr> input0_args(dst_vars.begin(), dst_vars.end());
+        std::vector<Halide::Expr> input1_args(dst_vars.begin(), dst_vars.end());
+        input1_args[dim] -= input0_extent;
+
+        output(dst_vars) = Halide::select(dst_vars[dim] < input0_extent, input0(input0_args), input1(input1_args));
+    }
+
+    void schedule() {
+    }
+};
+
+class ConcatBuffer1DUInt8 : public ConcatBuffer<ConcatBuffer1DUInt8, uint8_t, 1> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer1DUInt8"};
+};
+
+class ConcatBuffer4DUInt8 : public ConcatBuffer<ConcatBuffer4DUInt8, uint8_t, 4> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer4DUInt8"};
+};
+
+class ConcatBuffer2DUInt8 : public ConcatBuffer<ConcatBuffer2DUInt8, uint8_t, 2> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer2DUInt8"};
+};
+
+class ConcatBuffer3DUInt8 : public ConcatBuffer<ConcatBuffer3DUInt8, uint8_t, 3> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer3DUInt8"};
+};
+
+class ConcatBuffer1DUInt16 : public ConcatBuffer<ConcatBuffer1DUInt16, uint16_t, 1> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer1DUInt16"};
+};
+
+class ConcatBuffer2DUInt16 : public ConcatBuffer<ConcatBuffer2DUInt16, uint16_t, 2> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer2DUInt16"};
+};
+
+class ConcatBuffer3DUInt16 : public ConcatBuffer<ConcatBuffer3DUInt16, uint16_t, 3> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer3DUInt16"};
+};
+
+class ConcatBuffer4DUInt16 : public ConcatBuffer<ConcatBuffer4DUInt16, uint16_t, 4> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer4DUInt16"};
+};
+
+class ConcatBuffer1DFloat : public ConcatBuffer<ConcatBuffer1DFloat, float, 1> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer1DFloat"};
+};
+
+class ConcatBuffer2DFloat : public ConcatBuffer<ConcatBuffer2DFloat, float, 2> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer2DFloat"};
+};
+
+class ConcatBuffer3DFloat : public ConcatBuffer<ConcatBuffer3DFloat, float, 3> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer3DFloat"};
+};
+
+class ConcatBuffer4DFloat : public ConcatBuffer<ConcatBuffer4DFloat, float, 4> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer4DFloat"};
+};
+
+template<typename X, typename T, int32_t D>
 class ConstantBuffer : public BuildingBlock<X> {
     static_assert(std::is_arithmetic<T>::value, "T must be arithmetic type.");
 
@@ -1631,6 +1722,18 @@ ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtractBuffer1DFloat, core_extract_bu
 ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtractBuffer2DFloat, core_extract_buffer_2d_float);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtractBuffer3DFloat, core_extract_buffer_3d_float);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ExtractBuffer4DFloat, core_extract_buffer_4d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ConcatBuffer1DUInt8, core_concat_buffer_1d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ConcatBuffer2DUInt8, core_concat_buffer_2d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ConcatBuffer3DUInt8, core_concat_buffer_3d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ConcatBuffer4DUInt8, core_concat_buffer_4d_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ConcatBuffer1DUInt16, core_concat_buffer_1d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ConcatBuffer2DUInt16, core_concat_buffer_2d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ConcatBuffer3DUInt16, core_concat_buffer_3d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ConcatBuffer4DUInt16, core_concat_buffer_4d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ConcatBuffer1DFloat, core_concat_buffer_1d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ConcatBuffer2DFloat, core_concat_buffer_2d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ConcatBuffer3DFloat, core_concat_buffer_3d_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ConcatBuffer4DFloat, core_concat_buffer_4d_float);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ConstantBuffer0DUInt8, core_constant_buffer_0d_uint8);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ConstantBuffer1DUInt8, core_constant_buffer_1d_uint8);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ConstantBuffer2DUInt8, core_constant_buffer_2d_uint8);
