@@ -3,6 +3,7 @@
 
 #include <stdexcept>
 #include <vector>
+#include <unordered_map>
 
 #include <errno.h>
 
@@ -17,6 +18,7 @@
 #include <HalideBuffer.h>
 
 #include "rt_common.h"
+#include "httplib.h"
 
 namespace {
 
@@ -284,12 +286,32 @@ class V4L2 {
      int efd_;
 };
 
+std::tuple<std::string, std::string> parse_url(const std::string &url) {
+    auto protocol_end_pos = url.find("://");
+    if (protocol_end_pos == std::string::npos) {
+        return std::tuple<std::string, std::string>("", "");
+    }
+    auto host_name_pos = protocol_end_pos + 3;
+    auto path_name_pos = url.find("/", host_name_pos);
+    auto host_name = url.substr(0, path_name_pos);
+    auto path_name = url.substr(path_name_pos);
+    return std::tuple<std::string, std::string>(host_name, path_name);
+}
+
+std::unordered_map<std::string, std::vector<uint8_t>> camera_cache;
+
 }
 
 extern "C"
-int ION_EXPORT ion_bb_genesis_cloud_camera(int32_t width, int32_t height, halide_buffer_t *out) {
+int ION_EXPORT ion_bb_genesis_cloud_camera(halide_buffer_t *session_id_buf,
+                                           int32_t width,
+                                           int32_t height,
+                                           halide_buffer_t *url_buf,
+                                           halide_buffer_t *out) {
     try {
         static V4L2 v4l2(width, height);
+
+        std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
 
         if (out->is_bounds_query()) {
             out->dim[0].min = 0;
@@ -302,12 +324,61 @@ int ION_EXPORT ion_bb_genesis_cloud_camera(int32_t width, int32_t height, halide
             if (v4l2.is_available()) {
                 v4l2.get(obuf);
             } else {
-                // Simulation mode
-                for (int y=0; y<height; ++y) {
-                    for (int x=0; x<2*width; ++x) {
-                        obuf(x, y) = (y * 2 * width + x) % 255;
+                auto it = camera_cache.find(session_id);
+                if (it != camera_cache.end()) {
+                    memcpy(out->host, it->second.data(), it->second.size());
+                    return 0;
+                }
+
+                const char *url = reinterpret_cast<const char *>(url_buf->host);
+
+                std::string host_name;
+                std::string path_name;
+                std::tie(host_name, path_name) = parse_url(url);
+
+                cv::Mat img;
+                bool img_loaded = false;
+                if (host_name.empty() || path_name.empty()) {
+                    // fallback to local file
+                    img = cv::imread(url);
+                    if (!img.empty()) {
+                        img_loaded = true;
+                    }
+                } else {
+                    httplib::Client cli(host_name.c_str());
+                    cli.set_follow_location(true);
+                    auto res = cli.Get(path_name.c_str());
+                    if (res && res->status == 200) {
+                        std::vector<char> data(res->body.size());
+                        std::memcpy(data.data(), res->body.c_str(), res->body.size());
+                        img = cv::imdecode(cv::InputArray(data), cv::IMREAD_COLOR);
+                        img_loaded = true;
                     }
                 }
+
+                if (!img_loaded) {
+                    // Simulation mode
+                    for (int y=0; y<height; ++y) {
+                        for (int x=0; x<2*width; ++x) {
+                            obuf(x, y) = (y * 2 * width + x) % 255;
+                        }
+                    }
+                    return 0;
+                }
+
+                cv::resize(img, img, cv::Size(width, height));
+                cv::cvtColor(img, img, cv::COLOR_BGR2YCrCb);
+                std::vector<uint8_t> yuyv_img(2*width*height);
+                for (int y=0; y<height; ++y) {
+                    for (int x=0; x<width; ++x) {
+                        // Y
+                        yuyv_img[2*width*y+2*x+0] = img.at<cv::Vec3b>(y, x)[0];
+                        // Cb or Cr
+                        yuyv_img[2*width*y+2*x+1] = ((x % 2) == 1) ? img.at<cv::Vec3b>(y, x)[1] : img.at<cv::Vec3b>(y, x)[2];
+                    }
+                }
+
+                camera_cache[session_id] = yuyv_img;
             }
         }
 
