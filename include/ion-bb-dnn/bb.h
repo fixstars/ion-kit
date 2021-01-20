@@ -450,4 +450,59 @@ private:
 
 ION_REGISTER_BUILDING_BLOCK(ion::bb::dnn::ClassifyGender, dnn_classify_gender);
 
+namespace ion {
+namespace bb {
+namespace dnn {
+
+class IFTTTWebHookUploader : public ion::BuildingBlock<IFTTTWebHookUploader> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "IFTTT WebHook Uploader"};
+    GeneratorParam<std::string> gc_description{"gc_description", "This makes POST request against to webhook endpoint on ifttt.com."};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "output,network"};
+    GeneratorParam<std::string> gc_inference{"gc_inference",  R"((function(v){ return { output: [] }}))"};
+    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "ifttt_webhook_url"};
+    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self,assume_compute_root"};
+    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+    GeneratorParam<uint32_t> input_md_size{"input_md_size", 16*1024*1024}; // 16MiB
+    GeneratorParam<std::string> ifttt_webhook_url{"ifttt_webhook_url", ""};
+    GeneratorParam<uint32_t> upload_interval_in_sec{"upload_interval_in_sec", 30};
+    GeneratorInput<Halide::Func> input_md{"input_md", Halide::type_of<uint8_t>(), 1};
+    GeneratorOutput<int32_t> output{"output"};
+
+    void generate() {
+        using namespace Halide;
+
+        std::string session_id = sole::uuid4().str();
+        Buffer<uint8_t> session_id_buf(session_id.size() + 1);
+        session_id_buf.fill(0);
+        std::memcpy(session_id_buf.data(), session_id.c_str(), session_id.size());
+
+        std::string ifttt_webhook_url_str(ifttt_webhook_url);
+        Halide::Buffer<uint8_t> ifttt_webhook_url_buf(ifttt_webhook_url_str.size()+1);
+        ifttt_webhook_url_buf.fill(0);
+        std::memcpy(ifttt_webhook_url_buf.data(), ifttt_webhook_url_str.c_str(), ifttt_webhook_url_str.size());
+
+        input_md_ = Func{static_cast<std::string>(gc_prefix) + "input_md"};
+        input_md_(_) = input_md(_);
+
+        std::vector<ExternFuncArgument> params = {input_md_, static_cast<int>(input_md_size), session_id_buf, ifttt_webhook_url_buf};
+        Func uploader(static_cast<std::string>(gc_prefix)+"ifttt_webhook_uploader");
+        uploader.define_extern("ion_bb_dnn_ifttt_webhook_uploader", params, Int(32), 0);
+        uploader.compute_root();
+        output() = uploader();
+    }
+
+    void schedule() {
+        input_md_.compute_root();
+    }
+
+    Halide::Func input_md_;
+};
+
+} // dnn
+} // bb
+} // ion
+
+ION_REGISTER_BUILDING_BLOCK(ion::bb::dnn::IFTTTWebHookUploader, dnn_ifttt_webhook_uploader);
+
 #endif  // ION_BB_DNN_BB_H

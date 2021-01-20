@@ -247,6 +247,40 @@ extern "C" ION_EXPORT int ion_bb_dnn_classify_gender(halide_buffer_t *in_img,
         return -1;
     }
 }
+
+extern "C" ION_EXPORT int ion_bb_dnn_ifttt_webhook_uploader(halide_buffer_t *in_md,
+                                                            int32_t input_md_size,
+                                                            halide_buffer_t *session_id_buf,
+                                                            halide_buffer_t *ifttt_webhook_url_buf,
+                                                            halide_buffer_t *out) {
+    try {
+
+        if (in_md->is_bounds_query()) {
+            in_md->dim[0].min = 0;
+            in_md->dim[0].extent = input_md_size;
+
+            return 0;
+        }
+
+        Halide::Runtime::Buffer<uint8_t> in_md_buf(*in_md);
+        in_md_buf.copy_to_host();
+
+        std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
+        std::string ifttt_webhook_url(reinterpret_cast<const char *>(ifttt_webhook_url_buf->host));
+
+        std::cout << "Upload :"  << in_md->host << std::endl;
+
+        return 0;
+
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        return -1;
+    } catch (...) {
+        std::cerr << "Unknown error" << std::endl;
+        return -1;
+    }
+}
+
 #undef ION_EXPORT
 
 #endif  // ION_BB_DNN_BB_H

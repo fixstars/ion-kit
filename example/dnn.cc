@@ -35,18 +35,21 @@ int main(int argc, char *argv[]) {
         auto img = n["output"];
         n = b.add("dnn_tlt_peoplenet_md")(img).set_param(wparam, hparam);
         n = b.add("dnn_classify_gender")(img, n["output"]);
-        // n = b.add("demo_ifttt")(n["output"]);
+        n = b.add("dnn_ifttt_webhook_uploader")(n["output"]).set_param(Param{"ifttt_webhook_url", "https://maker.ifttt.com/trigger/gender_count/with/key/buf--6AoUjTGu868Pva_Q9"});
 
         PortMap pm;
         pm.set(wport, width);
         pm.set(hport, height);
-        Halide::Buffer<uint8_t> buf({16*1024*1024});
-        pm.set(n["output"], buf);
+        Halide::Buffer<int32_t> out = Halide::Buffer<int32_t>::make_scalar();
+        pm.set(n["output"], out);
         for (int i=0; i<1000; ++i) {
             b.run(pm);
-            json j = json::parse(reinterpret_cast<const char*>(buf.data()));
-            std::cout << j << std::endl;
         }
+        // for (int i=0; i<1000; ++i) {
+        //     b.run(pm);
+        //     json j = json::parse(reinterpret_cast<const char*>(buf.data()));
+        //     std::cout << j << std::endl;
+        // }
 #else
         n = b.add("dnn_tlt_peoplenet")(n["output"]);
         n = b.add("genesis_cloud_denormalize_u8x3")(n["output"]);
