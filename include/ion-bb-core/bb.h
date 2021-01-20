@@ -517,8 +517,8 @@ class ReorderBuffer2D : public ReorderBuffer<X, T, 2> {
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [v.input[parseInt(v.dim0)], v.input[parseInt(v.dim1)]] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "dim0,dim1"};
 
-    GeneratorParam<int32_t> dim0{"dim0", 0};
-    GeneratorParam<int32_t> dim1{"dim1", 1};
+    GeneratorParam<int32_t> dim0{"dim0", 0, 0, 1};
+    GeneratorParam<int32_t> dim1{"dim1", 1, 0, 1};
 
     std::vector<int32_t> get_order() override {
         return {dim0, dim1};
@@ -530,9 +530,9 @@ class ReorderBuffer3D : public ReorderBuffer<X, T, 3> {
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [v.input[parseInt(v.dim0)], v.input[parseInt(v.dim1)], v.input[parseInt(v.dim2)]] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "dim0,dim1,dim2"};
 
-    GeneratorParam<int32_t> dim0{"dim0", 0};
-    GeneratorParam<int32_t> dim1{"dim1", 1};
-    GeneratorParam<int32_t> dim2{"dim2", 2};
+    GeneratorParam<int32_t> dim0{"dim0", 0, 0, 2};
+    GeneratorParam<int32_t> dim1{"dim1", 1, 0, 2};
+    GeneratorParam<int32_t> dim2{"dim2", 2, 0, 2};
 
     std::vector<int32_t> get_order() override {
         return {dim0, dim1, dim2};
@@ -544,10 +544,10 @@ class ReorderBuffer4D : public ReorderBuffer<X, T, 4> {
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [v.input[parseInt(v.dim0)], v.input[parseInt(v.dim1)], v.input[parseInt(v.dim2)], v.input[parseInt(v.dim3)]] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "dim0,dim1,dim2,dim3"};
 
-    GeneratorParam<int32_t> dim0{"dim0", 0};
-    GeneratorParam<int32_t> dim1{"dim1", 1};
-    GeneratorParam<int32_t> dim2{"dim2", 2};
-    GeneratorParam<int32_t> dim3{"dim3", 3};
+    GeneratorParam<int32_t> dim0{"dim0", 0, 0, 3};
+    GeneratorParam<int32_t> dim1{"dim1", 1, 0, 3};
+    GeneratorParam<int32_t> dim2{"dim2", 2, 0, 3};
+    GeneratorParam<int32_t> dim3{"dim3", 3, 0, 3};
 
     std::vector<int32_t> get_order() override {
         return {dim0, dim1, dim2, dim3};
