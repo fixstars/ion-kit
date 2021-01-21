@@ -121,13 +121,56 @@ void Builder::compile(const std::string& function_name, const CompileOption& opt
     return;
 }
 
-Halide::Realization Builder::run(const std::vector<int32_t>& sizes, const ion::PortMap& pm) {
-    return build(pm).realize(sizes, target_, pm.get_param_map());
-}
+// NOTE: This function is deprecated
+// Halide::Realization Builder::run(const std::vector<int32_t>& sizes, const ion::PortMap& pm) {
+//     return build(pm).realize(sizes, target_, pm.get_param_map());
+// }
 
 void Builder::run(const ion::PortMap& pm) {
     auto p = build(pm, &outputs_);
     return p.realize(Halide::Realization(outputs_), target_, pm.get_param_map());
+}
+
+bool is_dereferenced(const std::vector<Node>& nodes, const std::string node_id, const std::string& func_name) {
+    for (const auto& node : nodes) {
+        if (node.id() != node_id) {
+            continue;
+        }
+
+        for (const auto& port : node.ports()) {
+            if (port.key() == func_name) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    throw std::runtime_error("Unreachable");
+}
+
+std::vector<std::tuple<std::string, Halide::Func>> collect_unbound_outputs(const std::vector<Node>& nodes,
+                                                                           const std::unordered_map<std::string, std::shared_ptr<Internal::BuildingBlockBase>>& bbs) {
+    std::vector<std::tuple<std::string, Halide::Func>> unbounds;
+    for (const auto& kv : bbs) {
+        auto node_id = kv.first;
+        auto bb = kv.second;
+        for (const auto& output : bb->param_info().outputs()) {
+            if (output->is_array()) {
+                throw std::runtime_error("Unreachable");
+                // for (const auto &f : bb->get_array_output(p.key())) {
+                //     const auto key = f.name();
+                //     dereferenced[p.node_id()].emplace_back(key.substr(0, key.find('$')));
+                // }
+            } else {
+                if (!is_dereferenced(nodes, node_id, output->name())) {
+                    unbounds.push_back(std::make_tuple(output_name(node_id, output->name()), bb->get_output(output->name())));
+                }
+            }
+        }
+    }
+
+    return unbounds;
 }
 
 Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buffer<>> *outputs) {
@@ -226,27 +269,57 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
         }
     }
 
-    std::vector<std::string> output_names;
     std::vector<Halide::Func> output_funcs;
-    for (int i=0; i<nodes_.size(); ++i) {
-        auto node_id = nodes_[i].id();
-        auto p = bbs[node_id]->get_pipeline();
-        for (auto f : p.outputs()) {
-            const auto& dv = dereferenced[node_id];
-            std::string key = f.name();
-            key = key.substr(0, key.find('$'));
-            auto it = std::find(dv.begin(), dv.end(), key);
-            if (it == dv.end()) {
-                output_names.push_back(output_name(node_id, key));
-                output_funcs.push_back(f);
-            }
-        }
-    }
 
     if (outputs) {
-        // Push buffer based on funcs
-        for (auto n : output_names) {
-            outputs->push_back(pm.get_output_buffer(n));
+        // This is explicit mode. Make output list based on specified port map.
+        for (auto kv : pm.get_output_buffer()) {
+           auto node_id = std::get<0>(kv.first);
+           auto port_key = std::get<1>(kv.first);
+
+           bool found = false;
+           for (auto info : bbs[node_id]->param_info().outputs()) {
+               if (info->name() == port_key) {
+                   if (info->is_array()) {
+                       auto fs = bbs[node_id]->get_array_output(port_key);
+                       if (fs.size() != kv.second.size()) {
+                           throw std::runtime_error("Invalid size of array : " + node_id + ", " + port_key);
+                       }
+                       for (size_t i=0; i<fs.size(); ++i) {
+                           output_funcs.push_back(fs[i]);
+                           outputs->push_back(kv.second[i]);
+                       }
+                   } else {
+                       auto f = bbs[node_id]->get_output(port_key);
+                       if (1 != kv.second.size()) {
+                           throw std::runtime_error("Invalid size of array : " + node_id + ", " + port_key);
+                       }
+                       output_funcs.push_back(f);
+                       outputs->push_back(kv.second.front());
+                   }
+                   found = true;
+               }
+           }
+           if (!found) {
+               throw std::runtime_error("Invalid output port: " + node_id + ", " + port_key);
+           }
+        }
+    } else {
+        // This is implicit mode. Make output list based on unbound output in the graph.
+        for (int i=0; i<nodes_.size(); ++i) {
+            auto node_id = nodes_[i].id();
+            auto p = bbs[node_id]->get_pipeline();
+            for (auto f : p.outputs()) {
+
+                // It is not dereferenced, then treat as outputs
+                const auto& dv = dereferenced[node_id];
+                std::string key = f.name();
+                key = key.substr(0, key.find('$'));
+                auto it = std::find(dv.begin(), dv.end(), key);
+                if (it == dv.end()) {
+                    output_funcs.push_back(f);
+                }
+            }
         }
     }
 
@@ -264,6 +337,11 @@ std::string Builder::bb_metadata(void) {
     json j(md);
 
     return j.dump();
+}
+
+
+const std::vector<Node>& Builder::get_nodes() const {
+    return nodes_;
 }
 
 } //namespace ion
