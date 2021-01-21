@@ -377,7 +377,7 @@ int ION_EXPORT ion_bb_genesis_cloud_camera(halide_buffer_t *session_id_buf,
                         yuyv_img[2*width*y+2*x+1] = ((x % 2) == 1) ? img.at<cv::Vec3b>(y, x)[1] : img.at<cv::Vec3b>(y, x)[2];
                     }
                 }
-
+                memcpy(out->host, yuyv_img.data(), yuyv_img.size());
                 camera_cache[session_id] = yuyv_img;
             }
         }
