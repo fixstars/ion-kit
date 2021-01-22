@@ -1193,13 +1193,36 @@ public:
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input0 }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+
+    GeneratorParam<bool> enable_clamp{"enable_clamp", false};
     GeneratorInput<Halide::Func> input0{"input0", Halide::type_of<T>(), D};
     GeneratorInput<Halide::Func> input1{"input1", Halide::type_of<T>(), D};
     GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), D};
 
     void generate() {
         using namespace Halide;
-        output(_) = input0(_) + input1(_);
+        Expr a = input0(_);
+        Expr b = input1(_);
+        Expr result = a + b;
+
+        if (enable_clamp) {
+            if (output.type().is_uint()) {
+                result = select(
+                    a > std::numeric_limits<T>::max() - b,
+                    Expr(std::numeric_limits<T>::max()),
+                    result);
+            } else if (output.type().is_int()) {
+                result = select(
+                    b >= 0 && a > std::numeric_limits<T>::max() - b,
+                    Expr(std::numeric_limits<T>::max()),
+                    select(
+                        b < 0 && a < std::numeric_limits<T>::min() - b,
+                        Expr(std::numeric_limits<T>::min()),
+                        result));
+            }
+        }
+
+        output(_) = result;
     }
 };
 
@@ -1288,13 +1311,36 @@ public:
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input0 }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+
+    GeneratorParam<bool> enable_clamp{"enable_clamp", false};
     GeneratorInput<Halide::Func> input0{"input0", Halide::type_of<T>(), D};
     GeneratorInput<Halide::Func> input1{"input1", Halide::type_of<T>(), D};
     GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), D};
 
     void generate() {
         using namespace Halide;
-        output(_) = input0(_) - input1(_);
+        Expr a = input0(_);
+        Expr b = input1(_);
+        Expr result = a - b;
+
+        if (enable_clamp) {
+            if (output.type().is_uint()) {
+                result = select(
+                    a < b,
+                    0,
+                    result);
+            } else if (output.type().is_int()) {
+                result = select(
+                    b < 0 && a > std::numeric_limits<T>::max() + b,
+                    Expr(std::numeric_limits<T>::max()),
+                    select(
+                        b >= 0 && a < std::numeric_limits<T>::min() + b,
+                        Expr(std::numeric_limits<T>::min()),
+                        result));
+            }
+        }
+
+        output(_) = result;
     }
 };
 
@@ -1383,13 +1429,38 @@ public:
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input0 }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+
+    GeneratorParam<bool> enable_clamp{"enable_clamp", false};
     GeneratorInput<Halide::Func> input0{"input0", Halide::type_of<T>(), D};
     GeneratorInput<Halide::Func> input1{"input1", Halide::type_of<T>(), D};
     GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), D};
 
     void generate() {
         using namespace Halide;
-        output(_) = input0(_) * input1(_);
+        Expr a = input0(_);
+        Expr b = input1(_);
+        Expr result = a * b;
+
+        if (enable_clamp) {
+            Expr b_for_div = select(b == 0, 1, b);
+            if (output.type().is_uint()) {
+                result = select(
+                    a > std::numeric_limits<T>::max() / b_for_div,
+                    std::numeric_limits<T>::max(),
+                    result);
+            } else if (output.type().is_int()) {
+                Expr b_for_div = select(b == 0, 1, b);
+                result = select(
+                    b > 0 && a > std::numeric_limits<T>::max() / b_for_div || b < 0 && a < std::numeric_limits<T>::max() / b_for_div,
+                    Expr(std::numeric_limits<T>::max()),
+                    select(
+                        b > 0 && a < std::numeric_limits<T>::min() / b_for_div || b < -1 && a > std::numeric_limits<T>::min() / b_for_div,  // Note: Do not check b = -1 becaulse min / b is overflow.
+                        Expr(std::numeric_limits<T>::min()),
+                        result));
+            }
+        }
+
+        output(_) = result;
     }
 };
 
@@ -1478,13 +1549,28 @@ public:
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input0 }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+
+    GeneratorParam<bool> enable_clamp{"enable_clamp", false};
     GeneratorInput<Halide::Func> input0{"input0", Halide::type_of<T>(), D};
     GeneratorInput<Halide::Func> input1{"input1", Halide::type_of<T>(), D};
     GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), D};
 
     void generate() {
         using namespace Halide;
-        output(_) = input0(_) / input1(_);
+        Expr a = input0(_);
+        Expr b = input1(_);
+        Expr result = a / b;
+
+        if (enable_clamp) {
+            if (output.type().is_int()) {
+                result = select(
+                    a == std::numeric_limits<T>::min() && b == -1,
+                    Expr(std::numeric_limits<T>::max()),
+                    result);
+            }
+        }
+
+        output(_) = result;
     }
 };
 
