@@ -44,8 +44,9 @@
  */
 
 //////////////////////////////////////////////////////////////////////////////////////
-
-#pragma once
+#ifndef SOLE_H
+#define SOLE_H
+// #pragma once
 #include <stdint.h>
 #include <stdio.h>     // for size_t; should be stddef.h instead; however, clang+archlinux fails when compiling it (@Travis-Ci)
 #include <sys/types.h> // for uint32_t; should be stdint.h instead; however, GCC 5 on OSX fails when compiling it (See issue #11)
@@ -899,3 +900,4 @@ int main() {
 
 #endif
 
+#endif // SOLE_H

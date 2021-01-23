@@ -126,9 +126,7 @@ typedef struct DetectionBox {
     float x1, x2, y1, y2;
 } DetectionBox;
 
-using json = nlohmann::json;
-
-void to_json(json& j, const DetectionBox& v) {
+void to_json(nlohmann::json& j, const DetectionBox& v) {
     j["id"] = v.class_id;
     j["c"] = v.confidence;
     j["x1"] = v.x1;
@@ -137,7 +135,7 @@ void to_json(json& j, const DetectionBox& v) {
     j["y2"] = v.y2;
 }
 
-void from_json(const json& j, DetectionBox& v) {
+void from_json(const nlohmann::json& j, DetectionBox& v) {
     v.class_id = j["id"];
     v.confidence = j["c"];
     v.x1 = j["x1"];

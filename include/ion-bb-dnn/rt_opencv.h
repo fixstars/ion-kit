@@ -45,7 +45,6 @@ class Classifier {
                  cv::Mat face(image, cv::Rect(b.x1, b.y1, b.x2-b.x1, b.y2-b.y1));
                  cv::normalize(face, face, 0, 255, cv::NORM_MINMAX, CV_8UC3);
                  cv::cvtColor(face, face, cv::COLOR_RGB2BGR);
-                 cv::imwrite("face.png", face);
 
                  cv::Mat blob = cv::dnn::blobFromImage(face, 1, cv::Size(227, 227), MODEL_MEAN_VALUES, false);
                  net_.setInput(blob);
@@ -58,6 +57,11 @@ class Classifier {
                  int max_index_gender = std::distance(genderPreds.begin(), max_element(genderPreds.begin(), genderPreds.end()));
                  std::string gender = genderList[max_index_gender];
                  result[gender]++;
+                 if (gender == "Female") {
+                     cv::imwrite("female.png", face);
+                 } else {
+                     cv::imwrite("male.png", face);
+                 }
              }
          }
          return result;

@@ -3,10 +3,13 @@
 
 #include <HalideBuffer.h>
 
+#include <ion/json.hpp>
+
 #include "rt_opencv.h"
 #include "rt_tfl.h"
 #include "rt_ort.h"
 #include "rt_trt.h"
+#include "rt_json.h"
 
 #ifdef _WIN32
 #define ION_EXPORT __declspec(dllexport)
@@ -266,9 +269,15 @@ extern "C" ION_EXPORT int ion_bb_dnn_json_dict_average_regurator(halide_buffer_t
 
         std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
 
-        // auto& r = JSONDictAverageRegurator::get_instance(session_id, period_in_sec);
-        // r.process(in, out);
-        std::memcpy(out->host, in->host, io_md_size);
+        auto& r = ion::bb::dnn::json::DictAverageRegurator::get_instance(session_id, period_in_sec);
+        auto output_string = r.process(nlohmann::json::parse(reinterpret_cast<const char*>(in->host))).dump();
+
+        if (output_string.size()+1 >= io_md_size) {
+            throw std::runtime_error("Output buffer size is not sufficient");
+        }
+
+        std::memcpy(out->host, output_string.c_str(), output_string.size());
+        out->host[output_string.size()] = 0;
 
         return 0;
 
@@ -302,10 +311,8 @@ extern "C" ION_EXPORT int ion_bb_dnn_ifttt_webhook_uploader(halide_buffer_t *in_
         std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
         std::string ifttt_webhook_url(reinterpret_cast<const char *>(ifttt_webhook_url_buf->host));
 
-        // auto& uploader = WebHookUploader::get_instance(session_id, ifttt_webhook_url, upload_interval_in_sec);
-        // uploader.upload();
-
-        std::cout << "Upload :"  << in_md->host << std::endl;
+        auto& uploader = ion::bb::dnn::json::WebHookUploader::get_instance(session_id, ifttt_webhook_url);
+        uploader.upload(nlohmann::json::parse(in_md->host));
 
         return 0;
 
