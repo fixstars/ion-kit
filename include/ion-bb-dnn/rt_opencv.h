@@ -57,11 +57,6 @@ class Classifier {
                  int max_index_gender = std::distance(genderPreds.begin(), max_element(genderPreds.begin(), genderPreds.end()));
                  std::string gender = genderList[max_index_gender];
                  result[gender]++;
-                 if (gender == "Female") {
-                     cv::imwrite("female.png", face);
-                 } else {
-                     cv::imwrite("male.png", face);
-                 }
              }
          }
          return result;

@@ -18,8 +18,8 @@ using json = nlohmann::json;
 int main(int argc, char *argv[]) {
     try {
         // TODO: Test with FullHD
-        const int width = 640;
-        const int height = 480;
+        const int width = 1920;
+        const int height = 1080;
 
         Param wparam("width", std::to_string(width));
         Param hparam("height", std::to_string(height));
@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
         //n = b.add("genesis_cloud_image_loader").set_param(Param{"url", "http://ion-archives.s3-us-west-2.amazonaws.com/crosswalk-small.png"});
         n = b.add("genesis_cloud_camera").set_param(wparam, hparam);
         n = b.add("genesis_cloud_normalize_u8x3")(n["output"]);
-#if 1
+#if 0
         auto img = n["output"];
         n = b.add("dnn_tlt_peoplenet")(img);
         n = b.add("genesis_cloud_denormalize_u8x3")(n["output"]);
@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
         Port out_p1 = n["output"];
 
         n = b.add("dnn_tlt_peoplenet_md")(img).set_param(wparam, hparam);
-        n = b.add("dnn_classify_gender")(img, n["output"]);
+        n = b.add("dnn_classify_gender")(img, n["output"]).set_param(wparam, hparam);
         n = b.add("dnn_json_dict_average_regulator")(n["output"]).set_param(Param{"period_in_sec", "3"});
         n = b.add("dnn_ifttt_webhook_uploader")(n["output"]).set_param(Param{"ifttt_webhook_url", "http://maker.ifttt.com/trigger/gender_count/with/key/buf--6AoUjTGu868Pva_Q9"});
         Port out_p2 = n["output"];
@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
 #else
         n = b.add("dnn_tlt_peoplenet")(n["output"]);
         n = b.add("genesis_cloud_denormalize_u8x3")(n["output"]);
-        n = b.add("opencv_display")(n["output"], wport, hport);
+        n = b.add("demo_gui_display")(n["output"]).set_param(wparam, hparam);
 
         PortMap pm;
         pm.set(wport, width);

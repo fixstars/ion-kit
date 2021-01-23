@@ -383,8 +383,8 @@ public:
 
     GeneratorParam<std::string> model_root_url_{"model_base_url", "http://ion-archives.s3-us-west-2.amazonaws.com/models/classify_gender/"};
     GeneratorParam<std::string> cache_root_{"cache_root", "/tmp/"};
-    GeneratorParam<int> input_img_width{"width", 640};
-    GeneratorParam<int> input_img_height{"height", 480};
+    GeneratorParam<int> input_img_width{"width", 0};
+    GeneratorParam<int> input_img_height{"height", 0};
     GeneratorParam<int> input_md_size{"input_md_size", 16*1024*1024}; // 16MiB
     GeneratorParam<int> output_size{"output_size", 16*1024*1024}; // 16MiB
 
@@ -417,9 +417,9 @@ public:
         input_md_(_) = input_md(_);
 
         std::vector<ExternFuncArgument> params{
-            input_img_, static_cast<int>(input_img_width), static_cast<int>(input_img_height),
-            input_md_, static_cast<int>(input_md_size),
-            static_cast<int>(output_size), session_id_buf, model_root_url_buf, cache_path_buf};
+            input_img_, cast<uint32_t>(input_img_width), cast<uint32_t>(input_img_height),
+            input_md_, cast<uint32_t>(input_md_size),
+            cast<uint32_t>(output_size), session_id_buf, model_root_url_buf, cache_path_buf};
         Func inference(static_cast<std::string>(gc_prefix) + "classify_gender");
         inference.define_extern("ion_bb_dnn_classify_gender", params, UInt(8), 1);
         inference.compute_root();

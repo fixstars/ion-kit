@@ -526,9 +526,9 @@ std::vector<DetectionBox> peoplenet_(halide_buffer_t *in,
 
     in_ = in_.reshape(1, internal_width*internal_height).t();
 
-    // cv::Mat test;
-    // cv::normalize(in_.reshape(1, internal_height*3), test, 0, 255.0, cv::NORM_MINMAX, CV_32FC1);
-    // cv::imwrite("test.png", test);
+    cv::Mat test;
+    cv::normalize(in_.reshape(1, internal_height*3), test, 0, 255.0, cv::NORM_MINMAX, CV_32FC1);
+    cv::imwrite("test.png", test);
 
     IExecutionContext *context = session.get_context();
 
@@ -571,6 +571,11 @@ std::vector<DetectionBox> peoplenet_(halide_buffer_t *in,
         b.y1 *= resize_ratio;
         b.x2 *= resize_ratio;
         b.y2 *= resize_ratio;
+
+        b.x1 = std::max(0.0f, std::min(static_cast<float>(width),  b.x1));
+        b.y1 = std::max(0.0f, std::min(static_cast<float>(height), b.y1));
+        b.x2 = std::max(0.0f, std::min(static_cast<float>(width),  b.x2));
+        b.y2 = std::max(0.0f, std::min(static_cast<float>(height), b.y2));
     }
 
     return boxes;
