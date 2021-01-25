@@ -1046,16 +1046,54 @@ template<typename X, typename T, int32_t D>
 class ConstantBuffer : public BuildingBlock<X> {
     static_assert(std::is_arithmetic<T>::value, "T must be arithmetic type.");
 
+    static std::vector<T> parse_string(std::string s) {
+        std::stringstream ss(s);
+        std::vector<T> result;
+        T value;
+
+        while (ss >> value) {
+            result.push_back(value);
+        }
+
+        return result;
+    }
+
 public:
     GeneratorParam<std::string> gc_description{"gc_description", "This makes constant value buffer."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "input"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    GeneratorParam<T> value{"value", 0};
+    // Space separated values
+    GeneratorParam<std::string> values{"values", "0"};
     GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), D};
 
+    virtual std::vector<int32_t> get_extents() = 0;
+
     void generate() {
-        output(Halide::_) = value;
+        std::vector<T> value_list = parse_string(values);
+        if (value_list.empty()) {
+            value_list.push_back(0);
+        }
+
+        if (value_list.size() == 1) {
+            // Use func for inline
+            output(Halide::_) = Halide::Expr(value_list[0]);
+        } else {
+            // Use buffer
+            std::vector<int32_t> extents = get_extents();
+
+            std::vector<Halide::Var> vars(D);
+            Halide::Expr index = 0;
+            for (int i = D - 1; i >= 0; i--) {
+                index = index * extents[i] + vars[i];
+            }
+            index = index % static_cast<int>(value_list.size());
+
+            Halide::Buffer<T> buf(extents);
+            std::copy(value_list.begin(), value_list.end(), buf.data());
+
+            output(Halide::_) = buf(Halide::_);
+        }
     }
 };
 
@@ -1064,6 +1102,10 @@ class ConstantBuffer0D : public ConstantBuffer<X, T, 0> {
 public:
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.extent0)] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
+
+    std::vector<int32_t> get_extents() override {
+        return {};
+    }
 };
 
 template<typename X, typename T>
@@ -1073,6 +1115,10 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "extent0"};
 
     GeneratorParam<int32_t> extent0{"extent0", 0};
+
+    std::vector<int32_t> get_extents() override {
+        return {extent0};
+    }
 };
 
 template<typename X, typename T>
@@ -1083,6 +1129,10 @@ public:
 
     GeneratorParam<int32_t> extent0{"extent0", 0};
     GeneratorParam<int32_t> extent1{"extent1", 0};
+
+    std::vector<int32_t> get_extents() override {
+        return {extent0, extent1};
+    }
 };
 
 template<typename X, typename T>
@@ -1094,6 +1144,10 @@ public:
     GeneratorParam<int32_t> extent0{"extent0", 0};
     GeneratorParam<int32_t> extent1{"extent1", 0};
     GeneratorParam<int32_t> extent2{"extent2", 0};
+
+    std::vector<int32_t> get_extents() override {
+        return {extent0, extent1, extent2};
+    }
 };
 
 template<typename X, typename T>
@@ -1106,6 +1160,10 @@ public:
     GeneratorParam<int32_t> extent1{"extent1", 0};
     GeneratorParam<int32_t> extent2{"extent2", 0};
     GeneratorParam<int32_t> extent3{"extent3", 0};
+
+    std::vector<int32_t> get_extents() override {
+        return {extent0, extent1, extent2, extent3};
+    }
 };
 
 class ConstantBuffer0DUInt8 : public ConstantBuffer0D<ConstantBuffer0DUInt8, uint8_t> {
