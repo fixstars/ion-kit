@@ -303,7 +303,7 @@ public:
 
     void schedule() {
 #ifndef DISABLE_SCHEDULE
-        output.reorder(c, x, y).unroll(c);
+        output.reorder(c, x, y).bound(c, 0, 3).unroll(c);
         sum.update().reorder(c, r.x, r.y, x, y).unroll(c).unroll(r.x).unroll(r.y);
 
         if (get_target().has_gpu_feature()) {
@@ -385,6 +385,8 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
+    //GeneratorParam<BayerMap::Pattern> bayer_pattern { "bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map };
+    GeneratorParam<int32_t> bayer_pattern{"bayer_pattern", 0, 0, 3};
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
     GeneratorInput<float> slope_r{"slope_r"};
@@ -405,7 +407,7 @@ public:
         r2 = ((x - center_x) * (x - center_x) + (y - center_y) * (y - center_y)) / (center_x * center_x + center_y * center_y);
 
         output(x, y) = input(x, y) * select_by_color(
-                                         BayerMap::get_color(bayer_pattern, x, y),
+                                         BayerMap::get_color(static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern)), x, y),
                                          r2 * slope_r + offset_r,
                                          r2 * slope_g + offset_g,
                                          r2 * slope_b + offset_b);
@@ -470,7 +472,7 @@ class ResizeNearest : public BuildingBlock<X> {
     static_assert(D == 2 || D == 3, "D must be 2 or 3.");
 
 public:
-    GeneratorParam<std::string> gc_description{"gc_description", "Resize image by bilinear algorithm."};
+    GeneratorParam<std::string> gc_description{"gc_description", "Resize image by nearest algorithm."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.map((x, i) => i < 2 ? Math.floor(x * parseFloat(v.scale)) : x) }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
@@ -1205,6 +1207,7 @@ public:
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_processing::BayerOffset, image_processing_bayer_offset);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_processing::BayerWhiteBalance, image_processing_bayer_white_balance);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_processing::BayerDemosaicSimple, image_processing_bayer_image_processingsaic_simple);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_processing::BayerDemosaicLinear, image_processing_bayer_image_processingsaic_linear);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_processing::GammaCorrection2D, image_processing_gamma_correction_2d);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_processing::GammaCorrection3D, image_processing_gamma_correction_3d);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_processing::LensShadingCorrectionLinear, image_processing_lens_shading_correction_linear);
