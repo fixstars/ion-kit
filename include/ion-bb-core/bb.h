@@ -1719,6 +1719,104 @@ public:
     GeneratorParam<std::string> gc_title{"gc_title", "Modulo4DUInt16"};
 };
 
+template<typename X, typename SrcType, typename DstType, int32_t D>
+class Cast : public BuildingBlock<X> {
+    static_assert(std::is_arithmetic<SrcType>::value, "SrcType must be arithmetic type.");
+    static_assert(std::is_arithmetic<DstType>::value, "DstType must be arithmetic type.");
+
+public:
+    GeneratorParam<std::string> gc_description{"gc_description", "This casts values."};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
+    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
+    GeneratorInput<Halide::Func> input{"input", Halide::type_of<SrcType>(), D};
+    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<DstType>(), D};
+    void generate() {
+        using namespace Halide;
+        output(_) = saturating_cast<DstType>(input(_));
+    }
+};
+
+class Cast1DUInt8ToFloat : public Cast<Cast1DUInt8ToFloat, uint8_t, float, 1> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast1DUInt8ToFloat"};
+};
+
+class Cast2DUInt8ToFloat : public Cast<Cast2DUInt8ToFloat, uint8_t, float, 2> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast2DUInt8ToFloat"};
+};
+
+class Cast3DUInt8ToFloat : public Cast<Cast3DUInt8ToFloat, uint8_t, float, 3> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast3DUInt8ToFloat"};
+};
+
+class Cast4DUInt8ToFloat : public Cast<Cast4DUInt8ToFloat, uint8_t, float, 4> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast4DUInt8ToFloat"};
+};
+
+class Cast1DUInt16ToFloat : public Cast<Cast1DUInt16ToFloat, uint16_t, float, 1> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast1DUInt16ToFloat"};
+};
+
+class Cast2DUInt16ToFloat : public Cast<Cast2DUInt16ToFloat, uint16_t, float, 2> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast2DUInt16ToFloat"};
+};
+
+class Cast3DUInt16ToFloat : public Cast<Cast3DUInt16ToFloat, uint16_t, float, 3> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast3DUInt16ToFloat"};
+};
+
+class Cast4DUInt16ToFloat : public Cast<Cast4DUInt16ToFloat, uint16_t, float, 4> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast4DUInt16ToFloat"};
+};
+
+class Cast1DFloatToUInt8 : public Cast<Cast1DFloatToUInt8, float, uint8_t, 1> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast1DFloatToUInt8"};
+};
+
+class Cast2DFloatToUInt8 : public Cast<Cast2DFloatToUInt8, float, uint8_t, 2> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast2DFloatToUInt8"};
+};
+
+class Cast3DFloatToUInt8 : public Cast<Cast3DFloatToUInt8, float, uint8_t, 3> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast3DFloatToUInt8"};
+};
+
+class Cast4DFloatToUInt8 : public Cast<Cast4DFloatToUInt8, float, uint8_t, 4> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast4DFloatToUInt8"};
+};
+
+class Cast1DFloatToUInt16 : public Cast<Cast1DFloatToUInt16, float, uint16_t, 1> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast1DFloatToUInt16"};
+};
+
+class Cast2DFloatToUInt16 : public Cast<Cast2DFloatToUInt16, float, uint16_t, 2> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast2DFloatToUInt16"};
+};
+
+class Cast3DFloatToUInt16 : public Cast<Cast3DFloatToUInt16, float, uint16_t, 3> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast3DFloatToUInt16"};
+};
+
+class Cast4DFloatToUInt16 : public Cast<Cast4DFloatToUInt16, float, uint16_t, 4> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast4DFloatToUInt16"};
+};
+
 }  // namespace core
 }  // namespace bb
 }  // namespace ion
@@ -1905,5 +2003,21 @@ ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Modulo1DUInt16, core_modulo_1d_uint16
 ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Modulo2DUInt16, core_modulo_2d_uint16);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Modulo3DUInt16, core_modulo_3d_uint16);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Modulo4DUInt16, core_modulo_4d_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Cast1DUInt8ToFloat, core_cast_1d_uint8_to_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Cast2DUInt8ToFloat, core_cast_2d_uint8_to_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Cast3DUInt8ToFloat, core_cast_3d_uint8_to_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Cast4DUInt8ToFloat, core_cast_4d_uint8_to_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Cast1DUInt16ToFloat, core_cast_1d_uint16_to_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Cast2DUInt16ToFloat, core_cast_2d_uint16_to_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Cast3DUInt16ToFloat, core_cast_3d_uint16_to_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Cast4DUInt16ToFloat, core_cast_4d_uint16_to_float);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Cast1DFloatToUInt8, core_cast_1d_float_to_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Cast2DFloatToUInt8, core_cast_2d_float_to_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Cast3DFloatToUInt8, core_cast_3d_float_to_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Cast4DFloatToUInt8, core_cast_4d_float_to_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Cast1DFloatToUInt16, core_cast_1d_float_to_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Cast2DFloatToUInt16, core_cast_2d_float_to_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Cast3DFloatToUInt16, core_cast_3d_float_to_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Cast4DFloatToUInt16, core_cast_4d_float_to_uint16);
 
 #endif
