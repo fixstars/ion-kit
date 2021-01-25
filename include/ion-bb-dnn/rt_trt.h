@@ -471,6 +471,8 @@ std::vector<DetectionBox> detectnet_v2_post_processing(const float *bboxes, cons
 
     std::vector<bool> is_valid(all_boxes.size(), true);
 
+    std::sort(all_boxes.begin(), all_boxes.end(), [](const DetectionBox& x, const DetectionBox& y){ return x.confidence < y.confidence; });
+
     for (int i = 0; i < all_boxes.size(); i++) {
         if (!is_valid[i]) continue;
         const auto main = all_boxes[i];
@@ -560,7 +562,7 @@ std::vector<DetectionBox> peoplenet_(halide_buffer_t *in,
         throw std::runtime_error("Failed to copy output1 data");
     }
 
-    auto boxes = detectnet_v2_post_processing(output0_host.data(), output1_host.data(), 60, 34, 3, internal_width, internal_height, 0.4);
+    auto boxes = detectnet_v2_post_processing(output0_host.data(), output1_host.data(), 60, 34, 3, internal_width, internal_height, 0.4, 0.1);
 
     for (auto& b : boxes) {
         b.x1 -= left;

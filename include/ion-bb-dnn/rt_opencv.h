@@ -40,8 +40,14 @@ class Classifier {
          const int PeopleNetClassID_Face = 2;
          const cv::Scalar MODEL_MEAN_VALUES = cv::Scalar(78.4263377603, 87.7689143744, 114.895847746);
 
+         result["Male"] = 0;
+         result["Female"] = 0;
+
          for (auto b: boxes) {
              if (b.class_id == PeopleNetClassID_Face) {
+                 if (b.x2-b.x1 < 100 || b.y2-b.y1 < 100) {
+                     continue;
+                 }
                  cv::Mat face(image, cv::Rect(b.x1, b.y1, b.x2-b.x1, b.y2-b.y1));
                  cv::normalize(face, face, 0, 255, cv::NORM_MINMAX, CV_8UC3);
                  cv::cvtColor(face, face, cv::COLOR_RGB2BGR);
