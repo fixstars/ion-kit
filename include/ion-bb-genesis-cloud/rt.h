@@ -73,7 +73,6 @@ int ION_EXPORT ion_bb_genesis_cloud_image_loader(halide_buffer_t *in, halide_buf
                 std::vector<char> data(res->body.size());
                 std::memcpy(data.data(), res->body.c_str(), res->body.size());
                 cv::Mat frame = cv::imdecode(cv::InputArray(data), cv::IMREAD_COLOR);
-                cv::cvtColor(frame, frame, cv::COLOR_BGR2RGB);
                 decoded[url] = frame;
             }
         }

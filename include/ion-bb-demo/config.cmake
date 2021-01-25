@@ -3,7 +3,7 @@ if(HALIDE_ROOT STREQUAL "")
     message(FATAL_ERROR "Set appropriate path to Halide")
 endif()
 
-find_package(OpenCV 3 REQUIRED)
+find_package(OpenCV REQUIRED)
 
 set(INCLUDE_DIRS
     ${HALIDE_ROOT}/include

@@ -1,4 +1,4 @@
-find_package(OpenCV REQUIRED)
+find_package(OpenCV 4 REQUIRED)
 set(INCLUDE_DIRS ${OpenCV_INCLUDE_DIRS})
 set(LINK_DIRS)
 set(RUNTIME_ENVS)

@@ -19,8 +19,8 @@ std::vector<DetectionBox> ssd_post_processing(const float *boxes, const float *c
 
         if (max_conf > conf_thresh) {
             DetectionBox b;
-            b.max_conf = max_conf;
-            b.max_id = max_id;
+            b.confidence = max_conf;
+            b.class_id = max_id;
             b.x1 = boxes[i * 4 + 1];
             b.y1 = boxes[i * 4 + 0];
             b.x2 = boxes[i * 4 + 3];

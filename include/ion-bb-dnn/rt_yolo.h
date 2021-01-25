@@ -32,8 +32,8 @@ std::vector<DetectionBox> yolo_post_processing(const float *boxes, const float *
 
         if (max_conf > conf_thresh) {
             DetectionBox b;
-            b.max_conf = max_conf;
-            b.max_id = max_id;
+            b.confidence = max_conf;
+            b.class_id = max_id;
             b.x1 = boxes[i * 4];
             b.y1 = boxes[i * 4 + 1];
             b.x2 = boxes[i * 4 + 2];

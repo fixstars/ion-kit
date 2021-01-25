@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 
+#include <opencv2/core.hpp>
+
 namespace ion {
 namespace bb {
 namespace dnn {
@@ -119,10 +121,28 @@ private:
 };
 
 typedef struct DetectionBox {
-    float max_conf;
-    int max_id;
+    int class_id;
+    float confidence;
     float x1, x2, y1, y2;
 } DetectionBox;
+
+void to_json(nlohmann::json& j, const DetectionBox& v) {
+    j["id"] = v.class_id;
+    j["c"] = v.confidence;
+    j["x1"] = v.x1;
+    j["x2"] = v.x2;
+    j["y1"] = v.y1;
+    j["y2"] = v.y2;
+}
+
+void from_json(const nlohmann::json& j, DetectionBox& v) {
+    v.class_id = j["id"];
+    v.confidence = j["c"];
+    v.x1 = j["x1"];
+    v.x2 = j["x2"];
+    v.y1 = j["y1"];
+    v.y2 = j["y2"];
+}
 
 float area(const DetectionBox &b) {
     return (b.x2 - b.x1) * (b.y2 - b.y1);
@@ -243,7 +263,7 @@ void coco_render_boxes(cv::Mat &frame, const std::vector<DetectionBox> &boxes, c
     };
 
     for (const auto &b : boxes) {
-        const auto lc = label_color_map.at(b.max_id + id_offset);
+        const auto lc = label_color_map.at(b.class_id + id_offset);
         const auto label = lc.first;
         const auto color = lc.second / 255.0;
         const int x1 = b.x1 * w;
