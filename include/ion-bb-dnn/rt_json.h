@@ -2,11 +2,11 @@
 #define ION_BB_DNN_RT_JSON_H
 
 #include <chrono>
-#include <deque>
 #include <exception>
 #include <sstream>
 #include <thread>
 #include <tuple>
+#include <queue>
 
 #include "json.hpp"
 
