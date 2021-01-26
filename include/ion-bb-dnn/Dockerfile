@@ -44,9 +44,9 @@ RUN mkdir /usr/local/onnxruntime
 # NOTE: This dockerfile is used for Building and Running Preview, then we need to utilize version which is not depends on CUDA ATM.
 # For a performance measurement, installed onnxruntime version will be used.
 RUN if [ "x$TARGETPLATFORM" = "xlinux/amd64" ]; then \
-        curl -L https://ion-archives.s3-us-west-2.amazonaws.com/genesis-runtime/onnxruntime-linux-x64-gcc75-1.6.0.tgz | tar xz -C /usr/local/onnxruntime --strip-components 1 ;\
+        curl -L https://ion-archives.s3-us-west-2.amazonaws.com/genesis-runtime/onnxruntime-linux-x64-gcc75-1.6.0.tar.gz | tar xz -C /usr/local/onnxruntime --strip-components 1 ;\
     elif [ "x$TARGETPLATFORM" = "xlinux/arm64" ]; then \
-        curl -L https://ion-archives.s3-us-west-2.amazonaws.com/genesis-runtime/onnxruntime-linux-arm64-gcc75-1.6.0.tgz  | tar xz -C /usr/local/onnxruntime --strip-components 1 ;\
+        curl -L https://ion-archives.s3-us-west-2.amazonaws.com/genesis-runtime/onnxruntime-linux-arm64-gcc75-1.6.0.tar.gz  | tar xz -C /usr/local/onnxruntime --strip-components 1 ;\
     else \
         echo "Unsupported platform" && exit -1 ;\
     fi
