@@ -1049,10 +1049,21 @@ class ConstantBuffer : public BuildingBlock<X> {
     static std::vector<T> parse_string(std::string s) {
         std::stringstream ss(s);
         std::vector<T> result;
-        T value;
+        using value_t = typename std::conditional<
+            std::is_floating_point<T>::value,
+            double,
+            typename std::conditional<
+                std::is_signed<T>::value,
+                int64_t,
+                uint64_t>::type>::type;
+        value_t value;
 
-        while (ss >> value) {
-            result.push_back(value);
+        while (!ss.eof()) {
+            if ((ss >> value) && value <= static_cast<value_t>(std::numeric_limits<T>::max()) && value >= static_cast<value_t>(std::numeric_limits<T>::lowest())) {
+                result.push_back(static_cast<T>(value));
+            } else {
+                internal_error << "Invalid value";
+            }
         }
 
         return result;
