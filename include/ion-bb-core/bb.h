@@ -1075,24 +1075,24 @@ public:
             value_list.push_back(0);
         }
 
+        std::vector<Halide::Var> vars(D);
         if (value_list.size() == 1) {
             // Use func for inline
-            output(Halide::_) = Halide::Expr(value_list[0]);
+            output(vars) = Halide::Expr(value_list[0]);
         } else {
             // Use buffer
             std::vector<int32_t> extents = get_extents();
 
-            std::vector<Halide::Var> vars(D);
             Halide::Expr index = 0;
             for (int i = D - 1; i >= 0; i--) {
                 index = index * extents[i] + vars[i];
             }
             index = index % static_cast<int>(value_list.size());
 
-            Halide::Buffer<T> buf(extents);
+            Halide::Buffer<T> buf(value_list.size());
             std::copy(value_list.begin(), value_list.end(), buf.data());
 
-            output(Halide::_) = buf(Halide::_);
+            output(vars) = buf(index);
         }
     }
 };
