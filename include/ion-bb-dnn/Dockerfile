@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
         g++ \
         gcc \
         make \
-        libgtk-2.0-0 \
+        libgtk2.0-0 \
         libopenexr22
 
 #
@@ -28,7 +28,7 @@ ENV HALIDE_ROOT=/usr/local/halide
 #
 # OpenCV
 #
-# Deps: libgtk-2.0-0, libopenexr22
+# Deps: libgtk2.0-0, libopenexr22
 RUN if [ "x$TARGETPLATFORM" = "xlinux/amd64" ]; then \
         curl -L https://ion-archives.s3-us-west-2.amazonaws.com/genesis-runtime/OpenCV-4.5.1-x86_64-gcc75.sh -o x.sh && sh x.sh --skip-license --prefix=/usr && rm x.sh;\
     elif [ "x$TARGETPLATFORM" = "xlinux/arm64" ]; then \
