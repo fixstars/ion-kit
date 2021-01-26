@@ -9,6 +9,7 @@
 #include <HalideBuffer.h>
 
 #include "rt_display.h"
+#include "rt_file.h"
 #include "rt_realsense.h"
 #include "rt_v4l2.h"
 

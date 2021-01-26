@@ -4,6 +4,9 @@
 #include <algorithm>
 #include <cstdio>
 #include <string>
+#include <tuple>
+#include <unordered_map>
+#include <vector>
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -115,6 +118,18 @@ private:
 
     Handle handle_;
 };
+
+std::tuple<std::string, std::string> parse_url(const std::string &url) {
+    auto protocol_end_pos = url.find("://");
+    if (protocol_end_pos == std::string::npos) {
+        return std::tuple<std::string, std::string>("", "");
+    }
+    auto host_name_pos = protocol_end_pos + 3;
+    auto path_name_pos = url.find("/", host_name_pos);
+    auto host_name = url.substr(0, path_name_pos);
+    auto path_name = url.substr(path_name_pos);
+    return std::tuple<std::string, std::string>(host_name, path_name);
+}
 
 }  // namespace image_io
 }  // namespace bb
