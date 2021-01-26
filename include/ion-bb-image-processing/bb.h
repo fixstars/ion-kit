@@ -1985,9 +1985,9 @@ public:
 
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_processing::BayerOffset, image_processing_bayer_offset);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_processing::BayerWhiteBalance, image_processing_bayer_white_balance);
-ION_REGISTER_BUILDING_BLOCK(ion::bb::image_processing::BayerDemosaicSimple, image_processing_bayer_image_processingsaic_simple);
-ION_REGISTER_BUILDING_BLOCK(ion::bb::image_processing::BayerDemosaicLinear, image_processing_bayer_image_processingsaic_linear);
-ION_REGISTER_BUILDING_BLOCK(ion::bb::image_processing::BayerDemosaicFilter, image_processing_bayer_image_processingsaic_filter);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_processing::BayerDemosaicSimple, image_processing_bayer_demosaic_simple);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_processing::BayerDemosaicLinear, image_processing_bayer_demosaic_linear);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_processing::BayerDemosaicFilter, image_processing_bayer_demosaic_filter);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_processing::GammaCorrection2D, image_processing_gamma_correction_2d);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_processing::GammaCorrection3D, image_processing_gamma_correction_3d);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_processing::LensShadingCorrectionLinear, image_processing_lens_shading_correction_linear);
