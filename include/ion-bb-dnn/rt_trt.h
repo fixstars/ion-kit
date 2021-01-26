@@ -7,7 +7,7 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 
-#include <ion/json.hpp>
+#include "json.hpp"
 
 #include "rt_util.h"
 #include "picosha2.h"
