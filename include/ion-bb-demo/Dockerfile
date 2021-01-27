@@ -33,7 +33,7 @@ ENV HALIDE_ROOT=/usr/local/halide
 RUN if [ "x$TARGETPLATFORM" = "xlinux/amd64" ]; then \
         curl -L https://ion-archives.s3-us-west-2.amazonaws.com/genesis-runtime/OpenCV-4.5.1-x86_64-gcc75.sh -o x.sh && sh x.sh --skip-license --prefix=/usr && rm x.sh;\
     elif [ "x$TARGETPLATFORM" = "xlinux/arm64" ]; then \
-        curl -L https://ion-archives.s3-us-west-2.amazonaws.com/genesis-runtime/OpenCV-4.5.1-arm64-gcc75.sh -o x.sh && sh x.sh --skip-license --prefix=/usr && rm x.sh;\
+        curl -L https://ion-archives.s3-us-west-2.amazonaws.com/genesis-runtime/OpenCV-4.5.1-aarch64-gcc75.sh -o x.sh && sh x.sh --skip-license --prefix=/usr && rm x.sh;\
     else \
         echo "Unsupported platform" && exit -1 ;\
     fi
