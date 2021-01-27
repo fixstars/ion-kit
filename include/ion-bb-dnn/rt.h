@@ -133,8 +133,9 @@ extern "C" ION_EXPORT int ion_bb_dnn_tlt_peoplenet(halide_buffer_t *in,
             std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
             return trt::peoplenet(in, session_id, model_root_url, cache_root, out);
         } else {
-            std::cerr << "No available runtime" << std::endl;
-            return -1;
+            std::cerr << "No available TensorRT runtime. You will get unexpected outcomes." << std::endl;
+            // NOTE: To make benchmark or report under general (not NVIDIA's) environment, it warns but returns 0.
+            return 0;
         }
 
         return 0;
@@ -181,8 +182,10 @@ extern "C" ION_EXPORT int ion_bb_dnn_tlt_peoplenet_md(halide_buffer_t *in,
             std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
             return trt::peoplenet_md(in, output_size, session_id, model_root_url, cache_root, out);
         } else {
-            std::cerr << "No available runtime" << std::endl;
-            return -1;
+            std::cerr << "No available TensorRT runtime. You will get unexpected outcomes." << std::endl;
+            *reinterpret_cast<const char *>(out->host) = 0;
+            // NOTE: To make benchmark or report under general (not NVIDIA's) environment, it warns but returns 0.
+            return 0;
         }
 
         return 0;
