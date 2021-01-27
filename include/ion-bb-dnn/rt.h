@@ -3,8 +3,7 @@
 
 #include <HalideBuffer.h>
 
-#include <ion/json.hpp>
-
+#include "json.hpp"
 #include "rt_opencv.h"
 #include "rt_tfl.h"
 #include "rt_ort.h"
