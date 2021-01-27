@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y \
         g++ \
         gcc \
         make \
+        zlib1g-dev \
         libgtk2.0-0 \
         libopenexr22
 
