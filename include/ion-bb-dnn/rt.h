@@ -183,7 +183,7 @@ extern "C" ION_EXPORT int ion_bb_dnn_tlt_peoplenet_md(halide_buffer_t *in,
             return trt::peoplenet_md(in, output_size, session_id, model_root_url, cache_root, out);
         } else {
             std::cerr << "No available TensorRT runtime. You will get unexpected outcomes." << std::endl;
-            *reinterpret_cast<const char *>(out->host) = 0;
+            *reinterpret_cast<char *>(out->host) = 0;
             // NOTE: To make benchmark or report under general (not NVIDIA's) environment, it warns but returns 0.
             return 0;
         }
