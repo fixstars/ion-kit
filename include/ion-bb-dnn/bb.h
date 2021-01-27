@@ -521,7 +521,7 @@ public:
     GeneratorParam<std::string> gc_tags{"gc_tags", "output,network"};
     GeneratorParam<std::string> gc_inference{"gc_inference",  R"((function(v){ return { output: [] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "ifttt_webhook_url"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self,assume_compute_root"};
+    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
     GeneratorParam<uint32_t> input_md_size{"input_md_size", 16*1024*1024}; // 16MiB
     GeneratorParam<std::string> ifttt_webhook_url{"ifttt_webhook_url", ""};
