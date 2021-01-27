@@ -40,9 +40,12 @@ int main()
     pm.set(width, size);
     pm.set(height, size);
 
-    Halide::Realization r = b.run({size, size}, pm);
-    Halide::Buffer<int32_t> out0 = r[0];
-    Halide::Buffer<int32_t> out1 = r[1];
+    Halide::Buffer<int32_t> out0(std::vector<int>{size, size});
+    Halide::Buffer<int32_t> out1(std::vector<int>{size, size});
+    pm.set(ln["output"], out0);
+    pm.set(rn["output"], out1);
+
+    b.run(pm);
 
     for (int y=0; y<size/split_n; ++y) {
         for (int x=0; x<size; ++x) {

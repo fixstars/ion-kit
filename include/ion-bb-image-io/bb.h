@@ -86,11 +86,17 @@ public:
     GeneratorParam<int32_t> index{"index", 0};
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
+    GeneratorParam<std::string> url{"url", ""};
     GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 3};
 
     void generate() {
         using namespace Halide;
-        std::vector<ExternFuncArgument> params = {cast<int32_t>(index), cast<int32_t>(width), cast<int32_t>(height)};
+        std::string url_str = url;
+        Halide::Buffer<uint8_t> url_buf(url_str.size() + 1);
+        url_buf.fill(0);
+        std::memcpy(url_buf.data(), url_str.c_str(), url_str.size());
+
+        std::vector<ExternFuncArgument> params = {cast<int32_t>(index), cast<int32_t>(width), cast<int32_t>(height), url_buf};
         Func camera(static_cast<std::string>(gc_prefix) + "camera");
         camera.define_extern("ion_bb_image_io_camera", params, Halide::type_of<uint8_t>(), 2);
         camera.compute_root();
@@ -132,7 +138,9 @@ public:
     void generate() {
         using namespace Halide;
         Func in;
-        in(c, x, y) = input(c, x, y);
+        in(c, x, y) = select(c == 0, input(x, y, 2),
+                             c == 1, input(x, y, 1),
+                             input(x, y, 0));
         in.compute_root();
         if (get_target().has_gpu_feature()) {
             Var xo, yo, xi, yi;

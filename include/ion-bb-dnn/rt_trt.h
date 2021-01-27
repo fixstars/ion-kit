@@ -1,8 +1,16 @@
 #ifndef ION_BB_DNN_RT_TRT_H
 #define ION_BB_DNN_RT_TRT_H
 
+#include <string>
+#include <vector>
+
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
+
+#include <ion/json.hpp>
+
+#include "rt_util.h"
+#include "picosha2.h"
 
 //
 // CUDA
@@ -159,7 +167,14 @@ class SessionManager {
              throw std::runtime_error("Unsupported CUDA device");
          }
 
-         std::ifstream ifs(cache_root + model_name, std::ios::binary);
+         auto model_url = model_root_url + model_name;
+
+         std::vector<unsigned char> hash(picosha2::k_digest_size);
+         picosha2::hash256(model_url.begin(), model_url.end(), hash.begin(), hash.end());
+         auto hash_str = picosha2::bytes_to_hex_string(hash.begin(), hash.end());
+
+         std::ifstream ifs(cache_root + model_name + "." + hash_str, std::ios::binary);
+
          if (ifs.is_open()) {
              auto begin = ifs.tellg();
              ifs.seekg(0, std::ios::end);
@@ -168,7 +183,6 @@ class SessionManager {
              model_.resize(end-begin);
              ifs.read(reinterpret_cast<char*>(model_.data()), model_.size());
          } else {
-             std::string model_url = model_root_url + model_name;
              std::string host_name;
              std::string path_name;
              std::tie(host_name, path_name) = parse_url(model_url);
@@ -186,7 +200,7 @@ class SessionManager {
              model_.resize(res->body.size());
              std::memcpy(model_.data(), res->body.c_str(), res->body.size());
 
-             std::ofstream ofs (cache_root + model_name, std::ios::binary);
+             std::ofstream ofs (cache_root + model_name + "." + hash_str, std::ios::binary);
              ofs.write(reinterpret_cast<const char*>(model_.data()), model_.size());
          }
 
@@ -404,6 +418,224 @@ int object_detection_ssd(halide_buffer_t *in,
 
     return 0;
 }
+
+std::vector<DetectionBox> detectnet_v2_post_processing(const float *bboxes, const float *coverages, const int num_grid_x, const int num_grid_y, const int num_classes, const int width, const int height, const float coverage_thresh = 0.4, const float nms_thresh = 0.4) {
+    std::vector<DetectionBox> all_boxes;
+
+    float bbox_norm = 35.0;
+    int gx = width / num_grid_x;
+    int gy = height / num_grid_y;
+    float cx[num_grid_x];
+    float cy[num_grid_y];
+    for (int i=0;i <num_grid_x; ++i) {
+        cx[i] = static_cast<float>(i * gx + 0.5) / bbox_norm;
+    }
+    for (int i=0;i <num_grid_y; ++i) {
+        cy[i] = static_cast<float>(i * gy + 0.5) / bbox_norm;
+    }
+
+    for (int c=0; c<num_classes; ++c) {
+        for (int y=0; y<num_grid_y; ++y) {
+            for (int x=0; x<num_grid_x; ++x) {
+                int c_offset = num_grid_x * num_grid_y * c;
+                int b_offset = num_grid_x * num_grid_y * c * 4;
+                float coverage = coverages[c_offset + num_grid_x * y + x];
+                if (coverage > coverage_thresh) {
+                    int x1 = (bboxes[b_offset + num_grid_x * num_grid_y * 0 + num_grid_x * y + x] - cx[x]) * (-bbox_norm);
+                    int y1 = (bboxes[b_offset + num_grid_x * num_grid_y * 1 + num_grid_x * y + x] - cy[y]) * (-bbox_norm);
+                    int x2 = (bboxes[b_offset + num_grid_x * num_grid_y * 2 + num_grid_x * y + x] + cx[x]) * (+bbox_norm);
+                    int y2 = (bboxes[b_offset + num_grid_x * num_grid_y * 3 + num_grid_x * y + x] + cy[y]) * (+bbox_norm);
+
+                    x1 = std::min(std::max(x1, 0), width-1);
+                    y1 = std::min(std::max(y1, 0), height-1);
+                    x2 = std::min(std::max(x2, 0), width-1);
+                    y2 = std::min(std::max(y2, 0), height-1);
+
+                    // Prevent underflows
+                    if ((x2 - x1 < 0) || (y2 - y1) < 0) {
+                        continue;
+                    }
+
+                    DetectionBox b;
+                    b.confidence = coverage;
+                    b.class_id = c;
+                    b.x1 = x1;
+                    b.y1 = y1;
+                    b.x2 = x2;
+                    b.y2 = y2;
+                    all_boxes.push_back(b);
+                }
+            }
+        }
+    }
+
+    std::vector<bool> is_valid(all_boxes.size(), true);
+
+    std::sort(all_boxes.begin(), all_boxes.end(), [](const DetectionBox& x, const DetectionBox& y){ return x.confidence < y.confidence; });
+
+    for (int i = 0; i < all_boxes.size(); i++) {
+        if (!is_valid[i]) continue;
+        const auto main = all_boxes[i];
+        for (int j = i + 1; j < all_boxes.size(); j++) {
+            if (!is_valid[j]) continue;
+            const auto other = all_boxes[j];
+            const auto iou = intersection(main, other) / union_(main, other);
+            is_valid[j] = iou <= nms_thresh;
+        }
+    }
+
+    std::vector<DetectionBox> detected_boxes;
+    for (int i = 0; i < all_boxes.size(); i++) {
+        if (is_valid[i]) detected_boxes.push_back(all_boxes[i]);
+    }
+
+    return detected_boxes;
+}
+
+std::vector<DetectionBox> peoplenet_(halide_buffer_t *in,
+                                     const std::string& session_id,
+                                     const std::string& model_root_url,
+                                     const std::string& cache_root) {
+    using namespace nvinfer1;
+
+    const int channel = 3;
+    const int width = in->dim[1].extent;
+    const int height = in->dim[2].extent;
+
+    auto& session = SessionManager::get_instance(session_id, model_root_url, cache_root);
+
+    cv::Mat in_(height, width, CV_32FC3, in->host);
+
+    const int internal_width = 960;
+    const int internal_height = 544;
+
+    const float internal_ratio = static_cast<float>(internal_width) / static_cast<float>(internal_height);
+    const float ratio = static_cast<float>(width) / static_cast<float>(height);
+    if (ratio > internal_ratio) {
+        cv::resize(in_, in_, cv::Size(internal_width, internal_width / ratio));
+    } else {
+        cv::resize(in_, in_, cv::Size(ratio * internal_height, internal_height));
+    }
+
+    const float resize_ratio = static_cast<float>(width) / static_cast<float>(in_.cols);
+
+    int top  = std::max((internal_height - in_.rows) / 2, 0);
+    int bottom = internal_height - in_.rows - top;
+    int left = std::max((internal_width - in_.cols) / 2, 0);
+    int right = internal_width - in_.cols - left;
+
+    cv::copyMakeBorder(in_, in_, top, bottom, left, right, cv::BORDER_CONSTANT, 0);
+
+    in_ = in_.reshape(1, internal_width*internal_height).t();
+
+    cv::Mat test;
+    cv::normalize(in_.reshape(1, internal_height*3), test, 0, 255.0, cv::NORM_MINMAX, CV_32FC1);
+    cv::imwrite("test.png", test);
+
+    IExecutionContext *context = session.get_context();
+
+    auto buffers = session.get_buffers();
+    auto input = buffers.at(0);
+    auto output0 = buffers.at(1);
+    auto output1 = buffers.at(2);
+
+    if (cudaMemcpy(std::get<0>(input), in_.ptr(), std::get<1>(input), cudaMemcpyHostToDevice) != 0) {
+        throw std::runtime_error("Failed to copy input data");
+    }
+
+    std::vector<void*> bindings;
+    for (auto b : buffers) {
+        bindings.push_back(std::get<0>(b));
+    }
+    const int32_t batch_size = 1;
+    if (!context->execute(batch_size, bindings.data())) {
+        throw std::runtime_error("Failed to execute TensorRT infererence");
+    }
+
+    std::vector<float> output0_host(std::get<1>(output0)/sizeof(float));
+    if (cudaMemcpy(output0_host.data(), std::get<0>(output0), std::get<1>(output0), cudaMemcpyDeviceToHost) != 0) {
+        throw std::runtime_error("Failed to copy output0 data");
+    }
+
+    std::vector<float> output1_host(std::get<1>(output1)/sizeof(float));
+    if (cudaMemcpy(output1_host.data(), std::get<0>(output1), std::get<1>(output1), cudaMemcpyDeviceToHost) != 0) {
+        throw std::runtime_error("Failed to copy output1 data");
+    }
+
+    auto boxes = detectnet_v2_post_processing(output0_host.data(), output1_host.data(), 60, 34, 3, internal_width, internal_height, 0.4, 0.1);
+
+    for (auto& b : boxes) {
+        b.x1 -= left;
+        b.y1 -= top;
+        b.x2 -= left;
+        b.y2 -= top;
+        b.x1 *= resize_ratio;
+        b.y1 *= resize_ratio;
+        b.x2 *= resize_ratio;
+        b.y2 *= resize_ratio;
+
+        b.x1 = std::max(0.0f, std::min(static_cast<float>(width),  b.x1));
+        b.y1 = std::max(0.0f, std::min(static_cast<float>(height), b.y1));
+        b.x2 = std::max(0.0f, std::min(static_cast<float>(width),  b.x2));
+        b.y2 = std::max(0.0f, std::min(static_cast<float>(height), b.y2));
+    }
+
+    return boxes;
+}
+
+int peoplenet(halide_buffer_t *in,
+              const std::string& session_id,
+              const std::string& model_root_url,
+              const std::string& cache_root,
+              halide_buffer_t *out) {
+
+    const int width = in->dim[1].extent;
+    const int height = in->dim[2].extent;
+
+    cv::Mat in_(height, width, CV_32FC3, in->host);
+
+    cv::Mat out_(height, width, CV_32FC3, out->host);
+    in_.copyTo(out_);
+
+    auto boxes = peoplenet_(in, session_id, model_root_url, cache_root);
+
+    const char* labels[] = {"Person", "Bag", "Face"};
+
+    for (const auto& b : boxes) {
+        const cv::Point2d p1(b.x1, b.y1);
+        const cv::Point2d p2(b.x2, b.y2);
+        const cv::Scalar color = cv::Scalar(1.0, 0, 0);
+        cv::putText(out_, labels[b.class_id], cv::Point(b.x1, b.y1 - 3), cv::FONT_HERSHEY_COMPLEX, 0.5, color);
+        cv::rectangle(out_, p1, p2, color);
+    }
+
+    return 0;
+}
+
+int peoplenet_md(halide_buffer_t *in,
+                 int32_t output_size,
+                 const std::string& session_id,
+                 const std::string& model_root_url,
+                 const std::string& cache_root,
+                 halide_buffer_t *out) {
+
+    using json = nlohmann::json;
+
+    auto boxes = peoplenet_(in, session_id, model_root_url, cache_root);
+
+    json j = boxes;
+    std::string output_string(j.dump());
+
+    if (output_string.size()+1 >= output_size) {
+        throw std::runtime_error("Output buffer size is not sufficient");
+    }
+
+    std::memcpy(out->host, output_string.c_str(), output_string.size());
+    out->host[output_string.size()] = 0;
+
+    return 0;
+}
+
 
 } // trt
 } // dnn

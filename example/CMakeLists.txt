@@ -28,6 +28,7 @@ ion_jit(v4l2_jit SRCS v4l2.cc)
 ion_jit(realsense_jit SRCS realsense.cc)
 ion_jit(demo_jit SRCS demo.cc)
 ion_jit(imx219_isp_display_jit SRCS imx219_isp_display.cc)
+ion_jit(gender_count SRCS gender_count.cc)
 
 ion_register_test(isp isp_jit RUNTIME_ARGS ${CMAKE_SOURCE_DIR}/data/image/IMX219-3264x2464-RG10.raw 3264 2464 10 0 TARGET_STRING "host-profile")
 ion_register_test(isp_and_sgm isp_and_sgm_jit RUNTIME_ARGS ${CMAKE_SOURCE_DIR}/data/image/OV5647x2-5184x1944-GB10.raw 5184 1944 10 6 TARGET_STRING "host-profile")
