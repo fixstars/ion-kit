@@ -93,6 +93,9 @@ RUN apt-get update && apt-get install -y \
 # OpenCV
 RUN curl -L https://ion-archives.s3-us-west-2.amazonaws.com/genesis-runtime/OpenCV-4.5.1-x86_64-gcc75.sh -o x.sh && sh x.sh --skip-license --prefix=/usr && rm x.sh
 
+# ONNXRuntime
+RUN curl -L https://ion-archives.s3-us-west-2.amazonaws.com/genesis-runtime/onnxruntime-linux-x64-gcc75-1.6.0.tar.gz | tar xz -C /usr --strip-components 1
+
 #
 # 3.2. Build stage for ion-kit
 # docker build --target ion-kit-build -t docker.pkg.github.com/fixstars/ion-kit/ion-kit:latest-build-ubuntu18.04 .
