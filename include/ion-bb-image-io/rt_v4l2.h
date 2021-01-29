@@ -5,6 +5,7 @@
 #include <map>
 #include <memory>
 #include <stdexcept>
+#include <unordered_map>
 #include <vector>
 
 #include <errno.h>
@@ -140,12 +141,11 @@ public:
         uint32_t desired_pixel_format = pixel_format;
 
         struct v4l2_fmtdesc fmtdesc;
-        memset(&fmtdesc,0,sizeof(fmtdesc));
+        memset(&fmtdesc, 0, sizeof(fmtdesc));
         fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
         bool supported = false;
-        while (0 == xioctl(fd_, VIDIOC_ENUM_FMT, &fmtdesc))
-        {
+        while (0 == xioctl(fd_, VIDIOC_ENUM_FMT, &fmtdesc)) {
             if (fmtdesc.pixelformat == desired_pixel_format) {
                 supported = true;
             }
@@ -178,17 +178,7 @@ public:
             return;
         }
 
-        /* 10-bit Bayer is stored as 16-bit so bytes per pixel is 2 */
-
-        // unsigned int min;
-        // min = fmt.fmt.pix.width * 2;
-        // if (fmt.fmt.pix.bytesperline < min) {
-        //     fmt.fmt.pix.bytesperline = min;
-        // }
-        // min = fmt.fmt.pix.bytesperline * fmt.fmt.pix.height;
-        // if (fmt.fmt.pix.sizeimage < min) {
-        //     fmt.fmt.pix.sizeimage = min;
-        // }
+        buffer_size = fmt.fmt.pix.sizeimage;
 
         //
         // Initialize mapped memory
@@ -277,6 +267,10 @@ public:
     void get(Halide::Runtime::Buffer<T> &buf) {
         using namespace std;
 
+        if (buf.size_in_bytes() != buffer_size) {
+            throw runtime_error("Bad buffer size");
+        }
+
         /* queue-in buffer */
         if (-1 == xioctl(fd_, VIDIOC_QBUF, &next_buffer_)) {
             throw runtime_error(format("%s error %d, %s\n", "VIDIOC_QBUF", errno, strerror(errno)));
@@ -321,6 +315,8 @@ private:
 
     int efd_;
 
+    uint32_t buffer_size;
+
     static std::map<Setting, std::shared_ptr<V4L2>> instances_;
 };
 
@@ -334,93 +330,51 @@ namespace ion {
 namespace bb {
 namespace image_io {
 
-std::map<V4L2::Setting, std::vector<uint8_t>> camera_cache;
+std::unordered_map<int32_t, std::vector<uint8_t>> image_cache;
 
 }  // namespace image_io
 }  // namespace bb
 }  // namespace ion
 
-extern "C" int ION_EXPORT ion_bb_image_io_v4l2(int32_t index, int32_t width, int32_t height, uint32_t pixel_format, halide_buffer_t *out) {
+extern "C" ION_EXPORT int ion_bb_image_io_v4l2(
+    int32_t instance_id,
+    // Parameters for V4L2
+    int32_t width, int32_t height,
+    int32_t index, uint32_t pixel_format,
+    bool force_sim_mode,
+    // Parameters for simulation
+    halide_buffer_t *url_buf,
+    float gain_r, float gain_g, float gain_b,
+    float offset,
+    int32_t bit_width, int32_t bit_shift,
+    int32_t bayer_pattern,
+    halide_buffer_t *out) {
     if (out->is_bounds_query()) {
         out->dim[0].min = 0;
         out->dim[0].extent = width;
         out->dim[1].min = 0;
         out->dim[1].extent = height;
-        if (out->dimensions == 3) {
-            out->dim[2].min = 0;
-            out->dim[2].extent = 3;
-        }
         return 0;
     }
 
-    try {
+    if (!force_sim_mode) {
         auto &v4l2(ion::bb::image_io::V4L2::get_instance(index, width, height, pixel_format));
-        Halide::Runtime::Buffer<uint16_t> obuf(*out);
-
         if (v4l2.is_available()) {
+            Halide::Runtime::Buffer<uint16_t> obuf(*out);
             v4l2.get(obuf);
-        } else {
-            return -1;
+            return 0;
         }
-
-        return 0;
-    } catch (const std::exception &e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
-    } catch (...) {
-        std::cerr << "Unknown error" << std::endl;
-        return -1;
-    }
-}
-
-extern "C" ION_EXPORT int ion_bb_image_io_camera_stub(halide_buffer_t *url_buf, int index, int width, int height, float gain_r, float gain_g, float gain_b, float offset, int bit_width, int bit_shift, int bayer_pattern, uint32_t pixel_format, halide_buffer_t *out) {
-    if (out->is_bounds_query()) {
-        out->dim[0].min = 0;
-        out->dim[0].extent = width;
-        out->dim[1].min = 0;
-        out->dim[1].extent = height;
-        return 0;
     }
 
-    ion::bb::image_io::V4L2::Setting setting;
-    setting.index = index;
-    setting.width = width;
-    setting.height = height;
-    setting.pixel_format = pixel_format;
-
-    auto it = ion::bb::image_io::camera_cache.find(setting);
-    if (it != ion::bb::image_io::camera_cache.end()) {
+    auto it = ion::bb::image_io::image_cache.find(instance_id);
+    if (it != ion::bb::image_io::image_cache.end()) {
         memcpy(out->host, it->second.data(), it->second.size());
         return 0;
     }
 
-    const char *url = reinterpret_cast<const char *>(url_buf->host);
+    cv::Mat img = ion::bb::image_io::get_image(reinterpret_cast<const char *>(url_buf->host));
 
-    std::string host_name;
-    std::string path_name;
-    std::tie(host_name, path_name) = ion::bb::image_io::parse_url(url);
-
-    cv::Mat img;
-    bool img_loaded = false;
-    if (host_name.empty() || path_name.empty()) {
-        // fallback to local file
-        img = cv::imread(url);
-        if (!img.empty()) {
-            img_loaded = true;
-        }
-    } else {
-        httplib::Client cli(host_name.c_str());
-        cli.set_follow_location(true);
-        auto res = cli.Get(path_name.c_str());
-        if (res && res->status == 200) {
-            std::vector<char> data(res->body.size());
-            std::memcpy(data.data(), res->body.c_str(), res->body.size());
-            img = cv::imdecode(cv::InputArray(data), cv::IMREAD_COLOR);
-            img_loaded = true;
-        }
-    }
-
-    if (!img_loaded) {
+    if (img.empty()) {
         // Simulation mode
         cv::Mat pat = cv::Mat::zeros(2, 2, CV_16U);
         pat.at<uint16_t>((index / 2) % 2, index % 2) = 65535;
@@ -431,7 +385,7 @@ extern "C" ION_EXPORT int ion_bb_image_io_camera_stub(halide_buffer_t *url_buf, 
         memcpy(data.data(), img.data, img.total() * img.elemSize());
         memcpy(out->host, img.data, img.total() * img.elemSize());
 
-        ion::bb::image_io::camera_cache[setting] = data;
+        ion::bb::image_io::image_cache[instance_id] = data;
 
         return 0;
     }
@@ -484,121 +438,59 @@ extern "C" ION_EXPORT int ion_bb_image_io_camera_stub(halide_buffer_t *url_buf, 
     memcpy(data.data(), bit_shifted_img.data, bit_shifted_img.total() * bit_shifted_img.elemSize());
     memcpy(out->host, bit_shifted_img.data, bit_shifted_img.total() * bit_shifted_img.elemSize());
 
-    ion::bb::image_io::camera_cache[setting] = data;
+    ion::bb::image_io::image_cache[instance_id] = data;
 
     return 0;
 }
 
-extern "C" int ION_EXPORT ion_bb_image_io_v4l2_imx219(halide_buffer_t *url_buf, int32_t index, bool force_sim_mode, halide_buffer_t *out) {
-    bool bounds_query = false;
-    const int width = 3264;
-    const int height = 2464;
-
+extern "C" int ION_EXPORT ion_bb_image_io_camera(int32_t instance_id, int32_t width, int32_t height, int32_t index, halide_buffer_t *url_buf, halide_buffer_t *out) {
     if (out->is_bounds_query()) {
         out->dim[0].min = 0;
-        out->dim[0].extent = width;
+        out->dim[0].extent = 2 * width;  // YUYV
         out->dim[1].min = 0;
         out->dim[1].extent = height;
         return 0;
     }
 
-    int result = -1;
-    if (!force_sim_mode) {
-        result = ion_bb_image_io_v4l2(index, width, height, V4L2_PIX_FMT_SRGGB10, out);
+    auto &v4l2(ion::bb::image_io::V4L2::get_instance(index, width, height, V4L2_PIX_FMT_YUYV));
+    if (v4l2.is_available()) {
+        Halide::Runtime::Buffer<uint16_t> obuf(*out);
+        v4l2.get(obuf);
+        return 0;
     }
-    if (result) {
-        result = ion_bb_image_io_camera_stub(url_buf, index, width, height, 0.4f, 0.5f, 0.3125f, 0.0625f, 10, 6, 0 /*RGGB*/, V4L2_PIX_FMT_SRGGB10, out);
+
+    auto it = ion::bb::image_io::image_cache.find(instance_id);
+    if (it != ion::bb::image_io::image_cache.end()) {
+        memcpy(out->host, it->second.data(), it->second.size());
+        return 0;
     }
 
-    return result;
-}
+    cv::Mat img = ion::bb::image_io::get_image(reinterpret_cast<const char *>(url_buf->host));
 
-extern "C" int ION_EXPORT ion_bb_image_io_camera(int32_t index, int32_t width, int32_t height, halide_buffer_t *url_buf, halide_buffer_t *out) {
-    try {
-        if (out->is_bounds_query()) {
-            out->dim[0].min = 0;
-            out->dim[0].extent = 2 * width;  // YUYV
-            out->dim[1].min = 0;
-            out->dim[1].extent = height;
-        } else {
-            auto &v4l2(ion::bb::image_io::V4L2::get_instance(index, width, height, V4L2_PIX_FMT_YUYV));
-            Halide::Runtime::Buffer<uint8_t> obuf(*out);
-
-            if (v4l2.is_available()) {
-                v4l2.get(obuf);
-            } else {
-                ion::bb::image_io::V4L2::Setting setting;
-                setting.index = index;
-                setting.width = width;
-                setting.height = height;
-                setting.pixel_format = V4L2_PIX_FMT_YUYV;
-
-                auto it = ion::bb::image_io::camera_cache.find(setting);
-                if (it != ion::bb::image_io::camera_cache.end()) {
-                    memcpy(out->host, it->second.data(), it->second.size());
-                    return 0;
-                }
-
-                const char *url = reinterpret_cast<const char *>(url_buf->host);
-
-                std::string host_name;
-                std::string path_name;
-                std::tie(host_name, path_name) = ion::bb::image_io::parse_url(url);
-
-                cv::Mat img;
-                bool img_loaded = false;
-                if (host_name.empty() || path_name.empty()) {
-                    // fallback to local file
-                    img = cv::imread(url);
-                    if (!img.empty()) {
-                        img_loaded = true;
-                    }
-                } else {
-                    httplib::Client cli(host_name.c_str());
-                    cli.set_follow_location(true);
-                    auto res = cli.Get(path_name.c_str());
-                    if (res && res->status == 200) {
-                        std::vector<char> data(res->body.size());
-                        std::memcpy(data.data(), res->body.c_str(), res->body.size());
-                        img = cv::imdecode(cv::InputArray(data), cv::IMREAD_COLOR);
-                        img_loaded = true;
-                    }
-                }
-
-                std::vector<uint8_t> yuyv_img(2 * width * height);
-                if (!img_loaded) {
-                    // Simulation mode
-                    cv::Mat img = cv::Mat::zeros(2 * width, height, CV_8U);
-                    for (int y = 0; y < height; ++y) {
-                        for (int x = 0; x < 2 * width; ++x) {
-                            yuyv_img[2 * width * y + x] = (y * 2 * width + x) % 255;
-                        }
-                    }
-                } else {
-                    cv::resize(img, img, cv::Size(width, height));
-                    cv::cvtColor(img, img, cv::COLOR_BGR2YCrCb);
-                    for (int y = 0; y < height; ++y) {
-                        for (int x = 0; x < width; ++x) {
-                            // Y
-                            yuyv_img[2 * width * y + 2 * x + 0] = img.at<cv::Vec3b>(y, x)[0];
-                            // Cb or Cr
-                            yuyv_img[2 * width * y + 2 * x + 1] = ((x % 2) == 1) ? img.at<cv::Vec3b>(y, x)[1] : img.at<cv::Vec3b>(y, x)[2];
-                        }
-                    }
-                }
-                memcpy(out->host, yuyv_img.data(), yuyv_img.size());
-                ion::bb::image_io::camera_cache[setting] = yuyv_img;
+    std::vector<uint8_t> yuyv_img(2 * width * height);
+    if (img.empty()) {
+        // Simulation mode
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < 2 * width; ++x) {
+                yuyv_img[2 * width * y + x] = (y * 2 * width + x) % 255;
             }
         }
-
-        return 0;
-    } catch (const std::exception &e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
-    } catch (...) {
-        std::cerr << "Unknown" << std::endl;
-        return -1;
+    } else {
+        cv::resize(img, img, cv::Size(width, height));
+        cv::cvtColor(img, img, cv::COLOR_BGR2YCrCb);
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                // Y
+                yuyv_img[2 * width * y + 2 * x + 0] = img.at<cv::Vec3b>(y, x)[0];
+                // Cb or Cr
+                yuyv_img[2 * width * y + 2 * x + 1] = ((x % 2) == 1) ? img.at<cv::Vec3b>(y, x)[1] : img.at<cv::Vec3b>(y, x)[2];
+            }
+        }
     }
+    memcpy(out->host, yuyv_img.data(), yuyv_img.size());
+    ion::bb::image_io::image_cache[instance_id] = yuyv_img;
+
+    return 0;
 }
 
 #endif

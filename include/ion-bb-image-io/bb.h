@@ -8,6 +8,8 @@ namespace ion {
 namespace bb {
 namespace image_io {
 
+int instance_id = 0;
+
 class IMX219 : public ion::BuildingBlock<IMX219> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "IMX219"};
@@ -30,9 +32,19 @@ public:
         url_buf.fill(0);
         std::memcpy(url_buf.data(), url_str.c_str(), url_str.size());
 
-        std::vector<ExternFuncArgument> params = {url_buf, cast<int32_t>(index), cast<bool>(force_sim_mode)};
+        std::vector<ExternFuncArgument> params = {
+            instance_id++,
+            3264, 2464,
+            cast<int32_t>(index), Expr(V4L2_PIX_FMT_SRGGB10),
+            cast<bool>(force_sim_mode),
+            url_buf,
+            0.4f, 0.5f, 0.3125f,
+            0.0625f,
+            10, 6,
+            0 /*RGGB*/
+        };
         Func v4l2_imx219(static_cast<std::string>(gc_prefix) + "v4l2_imx219");
-        v4l2_imx219.define_extern("ion_bb_image_io_v4l2_imx219", params, type_of<uint16_t>(), 2);
+        v4l2_imx219.define_extern("ion_bb_image_io_v4l2", params, type_of<uint16_t>(), 2);
         v4l2_imx219.compute_root();
 
         Var x, y;
@@ -97,7 +109,7 @@ public:
         url_buf.fill(0);
         std::memcpy(url_buf.data(), url_str.c_str(), url_str.size());
 
-        std::vector<ExternFuncArgument> params = {cast<int32_t>(index), cast<int32_t>(width), cast<int32_t>(height), url_buf};
+        std::vector<ExternFuncArgument> params = {instance_id++, cast<int32_t>(width), cast<int32_t>(height), cast<int32_t>(index), url_buf};
         Func camera(static_cast<std::string>(gc_prefix) + "camera");
         camera.define_extern("ion_bb_image_io_camera", params, Halide::type_of<uint8_t>(), 2);
         camera.compute_root();
@@ -129,7 +141,9 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+
     GeneratorParam<int32_t> index{"index", 0};
+    GeneratorParam<std::string> url{"url", ""};
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
     GeneratorParam<int32_t> bit_width{"bit_width", 10};
@@ -183,10 +197,24 @@ public:
             pix_format = V4L2_PIX_FMT_SGBRG12;
             break;
         default:
-            internal_error << "Unknown Luminance method";
+            internal_error << "Unknown V4L2 format";
         }
 
-        std::vector<ExternFuncArgument> params = {cast<int32_t>(index), cast<int32_t>(width), cast<int32_t>(height), Expr(pix_format)};
+        std::string url_str = url;
+        Halide::Buffer<uint8_t> url_buf(url_str.size() + 1);
+        url_buf.fill(0);
+        std::memcpy(url_buf.data(), url_str.c_str(), url_str.size());
+
+        std::vector<ExternFuncArgument> params = {
+            instance_id++,
+            cast<int32_t>(width), cast<int32_t>(height),
+            cast<int32_t>(index), Expr(pix_format),
+            Expr(false),
+            url_buf,
+            1.f, 1.f, 1.f,
+            0.f,
+            cast<int32_t>(bit_width), 16 - bit_width,
+            cast<int32_t>(format)};
         Func v4l2(static_cast<std::string>(gc_prefix) + "v4l2");
         v4l2.define_extern("ion_bb_image_io_v4l2", params, type_of<uint16_t>(), 2);
         v4l2.compute_root();
@@ -206,7 +234,6 @@ public:
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
 
-    GeneratorParam<int32_t> index{"index", 0};
     GeneratorParam<std::string> url{"url", ""};
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
@@ -231,9 +258,18 @@ public:
         url_buf.fill(0);
         std::memcpy(url_buf.data(), url_str.c_str(), url_str.size());
 
-        std::vector<ExternFuncArgument> params = {url_buf, cast<int32_t>(index), cast<int32_t>(width), cast<int32_t>(height), cast<float>(gain_r), cast<float>(gain_g), cast<float>(gain_b), cast<float>(offset), cast<int32_t>(bit_width), cast<int32_t>(bit_shift), cast<int32_t>(format), 0};
+        std::vector<ExternFuncArgument> params = {
+            instance_id++,
+            cast<int32_t>(width), cast<int32_t>(height),
+            0, 0,
+            Expr(true),
+            url_buf,
+            cast<float>(gain_r), cast<float>(gain_g), cast<float>(gain_b),
+            cast<float>(offset),
+            cast<int32_t>(bit_width), cast<int32_t>(bit_shift),
+            cast<int32_t>(format)};
         Func camera(static_cast<std::string>(gc_prefix) + "camera_simulation");
-        camera.define_extern("ion_bb_image_io_camera_stub", params, type_of<uint16_t>(), 2);
+        camera.define_extern("ion_bb_image_io_v4l2", params, type_of<uint16_t>(), 2);
         camera.compute_root();
 
         Var x, y;
