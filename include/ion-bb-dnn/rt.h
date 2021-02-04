@@ -4,11 +4,12 @@
 #include <HalideBuffer.h>
 
 #include "json.hpp"
-#include "rt_opencv.h"
-#include "rt_tfl.h"
-#include "rt_ort.h"
-#include "rt_trt.h"
+#include "rt_dnndk.h"
 #include "rt_json.h"
+#include "rt_opencv.h"
+#include "rt_ort.h"
+#include "rt_tfl.h"
+#include "rt_trt.h"
 
 #ifdef _WIN32
 #define ION_EXPORT __declspec(dllexport)
@@ -26,7 +27,7 @@ extern "C" ION_EXPORT int ion_bb_dnn_generic_object_detection(halide_buffer_t *i
 
         if (in->is_bounds_query()) {
             // Both input and output is (N)HWC
-            for (int i=0; i<in->dimensions; ++i) {
+            for (int i = 0; i < in->dimensions; ++i) {
                 in->dim[i].min = out->dim[i].min;
                 in->dim[i].extent = out->dim[i].extent;
             }
@@ -46,6 +47,8 @@ extern "C" ION_EXPORT int ion_bb_dnn_generic_object_detection(halide_buffer_t *i
         } else if (is_ort_available()) {
             std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
             return object_detection_ort(in, session_id, model_root_url, cache_root, cuda_enable, out);
+        } else if (dnndk::is_dnndk_available()) {
+            return dnndk::object_detection(in, model_root_url, cache_root, out);
         } else {
             std::cerr << "No available runtime" << std::endl;
             return -1;
@@ -53,7 +56,7 @@ extern "C" ION_EXPORT int ion_bb_dnn_generic_object_detection(halide_buffer_t *i
 
         return 0;
 
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
         return -1;
     } catch (...) {
@@ -68,10 +71,9 @@ extern "C" ION_EXPORT int ion_bb_dnn_tlt_object_detection_ssd(halide_buffer_t *i
                                                               halide_buffer_t *cache_root_buf,
                                                               halide_buffer_t *out) {
     try {
-
         if (in->is_bounds_query()) {
             // Both input and output is (N)HWC
-            for (int i=0; i<in->dimensions; ++i) {
+            for (int i = 0; i < in->dimensions; ++i) {
                 in->dim[i].min = out->dim[i].min;
                 in->dim[i].extent = out->dim[i].extent;
             }
@@ -96,7 +98,7 @@ extern "C" ION_EXPORT int ion_bb_dnn_tlt_object_detection_ssd(halide_buffer_t *i
 
         return 0;
 
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
         return -1;
     } catch (...) {
@@ -114,7 +116,7 @@ extern "C" ION_EXPORT int ion_bb_dnn_tlt_peoplenet(halide_buffer_t *in,
 
         if (in->is_bounds_query()) {
             // Both input and output is (N)HWC
-            for (int i=0; i<in->dimensions; ++i) {
+            for (int i = 0; i < in->dimensions; ++i) {
                 in->dim[i].min = out->dim[i].min;
                 in->dim[i].extent = out->dim[i].extent;
             }
@@ -140,7 +142,7 @@ extern "C" ION_EXPORT int ion_bb_dnn_tlt_peoplenet(halide_buffer_t *in,
 
         return 0;
 
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
         return -1;
     } catch (...) {
@@ -190,7 +192,7 @@ extern "C" ION_EXPORT int ion_bb_dnn_tlt_peoplenet_md(halide_buffer_t *in,
 
         return 0;
 
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
         return -1;
     } catch (...) {
@@ -244,7 +246,7 @@ extern "C" ION_EXPORT int ion_bb_dnn_classify_gender(halide_buffer_t *in_img,
 
         return 0;
 
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
         return -1;
     } catch (...) {
@@ -271,10 +273,10 @@ extern "C" ION_EXPORT int ion_bb_dnn_json_dict_average_regurator(halide_buffer_t
 
         std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
 
-        auto& r = ion::bb::dnn::json::DictAverageRegurator::get_instance(session_id, period_in_sec);
-        auto output_string = r.process(nlohmann::json::parse(reinterpret_cast<const char*>(in->host))).dump();
+        auto &r = ion::bb::dnn::json::DictAverageRegurator::get_instance(session_id, period_in_sec);
+        auto output_string = r.process(nlohmann::json::parse(reinterpret_cast<const char *>(in->host))).dump();
 
-        if (output_string.size()+1 >= io_md_size) {
+        if (output_string.size() + 1 >= io_md_size) {
             throw std::runtime_error("Output buffer size is not sufficient");
         }
 
@@ -283,7 +285,7 @@ extern "C" ION_EXPORT int ion_bb_dnn_json_dict_average_regurator(halide_buffer_t
 
         return 0;
 
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
         return -1;
     } catch (...) {
@@ -291,7 +293,6 @@ extern "C" ION_EXPORT int ion_bb_dnn_json_dict_average_regurator(halide_buffer_t
         return -1;
     }
 }
-
 
 extern "C" ION_EXPORT int ion_bb_dnn_ifttt_webhook_uploader(halide_buffer_t *in_md,
                                                             uint32_t input_md_size,
@@ -313,12 +314,12 @@ extern "C" ION_EXPORT int ion_bb_dnn_ifttt_webhook_uploader(halide_buffer_t *in_
         std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
         std::string ifttt_webhook_url(reinterpret_cast<const char *>(ifttt_webhook_url_buf->host));
 
-        auto& uploader = ion::bb::dnn::json::WebHookUploader::get_instance(session_id, ifttt_webhook_url);
+        auto &uploader = ion::bb::dnn::json::WebHookUploader::get_instance(session_id, ifttt_webhook_url);
         uploader.upload(nlohmann::json::parse(in_md->host));
 
         return 0;
 
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
         return -1;
     } catch (...) {
