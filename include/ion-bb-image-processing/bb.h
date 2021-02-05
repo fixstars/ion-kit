@@ -932,7 +932,6 @@ class Convolution : public BuildingBlock<X> {
     static_assert(D == 2 || D == 3, "D must be 2 or 3.");
 
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "Convolution"};
     GeneratorParam<std::string> gc_description{"gc_description", "Image convolution."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
