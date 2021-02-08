@@ -118,8 +118,8 @@ if (UNIX)
 else()
     install(FILES ${CMAKE_BINARY_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>/ion-core.dll DESTINATION bin)
     install(FILES ${CMAKE_BINARY_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>/ion-core.lib DESTINATION lib)
-    
-    # These lines is for backward compatibility. 
+
+    # These lines is for backward compatibility.
     # TODO: Deprecate old name of dll/lib.
     install(FILES ${CMAKE_BINARY_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>/ion-core.dll DESTINATION bin RENAME ion.dll)
     install(FILES ${CMAKE_BINARY_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>/ion-core.lib DESTINATION lib RENAME ion.lib)
@@ -152,7 +152,7 @@ endif()
 # Packaging
 #
 if (UNIX)
-    set(CPACK_GENERATOR "DEB")
+    set(CPACK_GENERATOR "TGZ" "DEB")
     set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
     set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Fixstars Corporation Inc.")
     configure_file(${CMAKE_SOURCE_DIR}/ion-kit.pc.in ${CMAKE_BINARY_DIR}/ion-kit.pc @ONLY)
