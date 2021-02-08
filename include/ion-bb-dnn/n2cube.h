@@ -89,8 +89,9 @@ dpuGetTensorChannel_t dpuGetTensorChannel;
 dpuRunSoftmax_t dpuRunSoftmax;
 
 bool dnndk_init() {
-    static ion::bb::dnn::DynamicModule dm("dnndk");
+    static ion::bb::dnn::DynamicModule dm("n2cube");
     if (!dm.is_available()) {
+        std::cerr << "Can't load n2cube" << std::endl;
         return false;
     }
 

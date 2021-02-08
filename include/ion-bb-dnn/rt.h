@@ -6,7 +6,7 @@
 #include "json.hpp"
 #include "rt_dnndk.h"
 #include "rt_json.h"
-#include "rt_opencv.h"
+// #include "rt_opencv.h"
 #include "rt_ort.h"
 #include "rt_tfl.h"
 #include "rt_trt.h"
@@ -201,59 +201,59 @@ extern "C" ION_EXPORT int ion_bb_dnn_tlt_peoplenet_md(halide_buffer_t *in,
     }
 }
 
-extern "C" ION_EXPORT int ion_bb_dnn_classify_gender(halide_buffer_t *in_img,
-                                                     uint32_t input_img_width,
-                                                     uint32_t input_img_height,
-                                                     halide_buffer_t *in_md,
-                                                     uint32_t input_md_size,
-                                                     uint32_t output_size,
-                                                     halide_buffer_t *session_id_buf,
-                                                     halide_buffer_t *model_root_url_buf,
-                                                     halide_buffer_t *cache_root_buf,
-                                                     halide_buffer_t *out) {
-    try {
+/* extern "C" ION_EXPORT int ion_bb_dnn_classify_gender(halide_buffer_t *in_img, */
+/*                                                      uint32_t input_img_width, */
+/*                                                      uint32_t input_img_height, */
+/*                                                      halide_buffer_t *in_md, */
+/*                                                      uint32_t input_md_size, */
+/*                                                      uint32_t output_size, */
+/*                                                      halide_buffer_t *session_id_buf, */
+/*                                                      halide_buffer_t *model_root_url_buf, */
+/*                                                      halide_buffer_t *cache_root_buf, */
+/*                                                      halide_buffer_t *out) { */
+/*     try { */
 
-        if (in_img->is_bounds_query() || in_md->is_bounds_query()) {
-            if (in_img->is_bounds_query()) {
-                // Input is (N)HWC
-                in_img->dim[0].min = 0;
-                in_img->dim[0].extent = 3;
-                in_img->dim[1].min = 0;
-                in_img->dim[1].extent = input_img_width;
-                in_img->dim[2].min = 0;
-                in_img->dim[2].extent = input_img_height;
-            }
+/*         if (in_img->is_bounds_query() || in_md->is_bounds_query()) { */
+/*             if (in_img->is_bounds_query()) { */
+/*                 // Input is (N)HWC */
+/*                 in_img->dim[0].min = 0; */
+/*                 in_img->dim[0].extent = 3; */
+/*                 in_img->dim[1].min = 0; */
+/*                 in_img->dim[1].extent = input_img_width; */
+/*                 in_img->dim[2].min = 0; */
+/*                 in_img->dim[2].extent = input_img_height; */
+/*             } */
 
-            if (in_md->is_bounds_query()) {
-                in_md->dim[0].min = 0;
-                in_md->dim[0].extent = input_md_size;
-            }
+/*             if (in_md->is_bounds_query()) { */
+/*                 in_md->dim[0].min = 0; */
+/*                 in_md->dim[0].extent = input_md_size; */
+/*             } */
 
-            return 0;
-        }
+/*             return 0; */
+/*         } */
 
-        Halide::Runtime::Buffer<float> in_img_buf(*in_img);
-        in_img_buf.copy_to_host();
+/*         Halide::Runtime::Buffer<float> in_img_buf(*in_img); */
+/*         in_img_buf.copy_to_host(); */
 
-        Halide::Runtime::Buffer<uint8_t> in_md_buf(*in_md);
-        in_md_buf.copy_to_host();
+/*         Halide::Runtime::Buffer<uint8_t> in_md_buf(*in_md); */
+/*         in_md_buf.copy_to_host(); */
 
-        std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
-        std::string model_root_url(reinterpret_cast<const char *>(model_root_url_buf->host));
-        std::string cache_root(reinterpret_cast<const char *>(cache_root_buf->host));
+/*         std::string session_id(reinterpret_cast<const char *>(session_id_buf->host)); */
+/*         std::string model_root_url(reinterpret_cast<const char *>(model_root_url_buf->host)); */
+/*         std::string cache_root(reinterpret_cast<const char *>(cache_root_buf->host)); */
 
-        ion::bb::dnn::opencv::classify_gender(in_img, in_md, output_size, session_id, model_root_url, cache_root, out);
+/*         ion::bb::dnn::opencv::classify_gender(in_img, in_md, output_size, session_id, model_root_url, cache_root, out); */
 
-        return 0;
+/*         return 0; */
 
-    } catch (const std::exception &e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
-    } catch (...) {
-        std::cerr << "Unknown error" << std::endl;
-        return -1;
-    }
-}
+/*     } catch (const std::exception& e) { */
+/*         std::cerr << e.what() << std::endl; */
+/*         return -1; */
+/*     } catch (...) { */
+/*         std::cerr << "Unknown error" << std::endl; */
+/*         return -1; */
+/*     } */
+/* } */
 
 extern "C" ION_EXPORT int ion_bb_dnn_json_dict_average_regurator(halide_buffer_t *in,
                                                                  uint32_t io_md_size,

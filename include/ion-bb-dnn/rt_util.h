@@ -149,6 +149,15 @@ void from_json(const nlohmann::json &j, DetectionBox &v) {
     v.y2 = j["y2"];
 }
 
+std::vector<float> sigmoid(const std::vector<float> &input) {
+    std::vector<float> sigmoid_tensor(input.size());
+    for (auto i = decltype(input.size())(0); i < input.size(); ++i) {
+        sigmoid_tensor[i] = 1.f / (1.f + std::exp(-input[i]));
+    }
+
+    return sigmoid_tensor;
+}
+
 float area(const DetectionBox &b) {
     return (b.x2 - b.x1) * (b.y2 - b.y1);
 }
