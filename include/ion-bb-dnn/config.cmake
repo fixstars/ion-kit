@@ -4,7 +4,7 @@ if(HALIDE_ROOT STREQUAL "")
 endif()
 
 # OpenCV
-find_package(OpenCV 4 REQUIRED)
+find_package(OpenCV 3 REQUIRED)
 if (UNIX)
     add_compile_options(-Wno-format-security)
 endif()
