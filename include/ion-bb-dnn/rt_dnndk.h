@@ -199,7 +199,9 @@ private:
 
     ~SessionManager() {
         // TODO: error handling
-        dpuClose();
+        if (dpuClose) {
+            dpuClose();
+        }
     }
 
     bool is_available_dnndk_;
