@@ -3,9 +3,9 @@ exec_prefix=${prefix}
 includedir=${prefix}/include
 libdir=${exec_prefix}/lib
 
-Name: ion-core
+Name: ion-kit
 Description: The library to build and compile pipelines
-Version: 0.0.1
+Version: @ION_KIT_VERSION@
 
 Requires:
 Cflags: -I${includedir}

@@ -13,10 +13,6 @@ set(LINK_DIRS
     ${HALIDE_ROOT}/bin
     ${OpenCV_DIR}/lib)
 
-set(RUNTIME_ENVS
-    LD_LIBRARY_PATH ${HALIDE_ROOT}/bin
-    LD_LIBRARY_PATH ${OpenCV_DIR}/lib)
-
 if (UNIX)
     set(LIBRARIES
         rt

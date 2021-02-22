@@ -38,7 +38,7 @@ edgetpu_verbosity_t       edgetpu_verbosity;
 edgetpu_version_t         edgetpu_version;
 
 bool edgetpu_init() {
-    static ion::bb::dnn::DynamicModule dm("libedgetpu.so.1", true);
+    static ion::bb::dnn::DynamicModule dm("libedgetpu.so.1", true, true);
     if (!dm.is_available()) {
         return false;
     }

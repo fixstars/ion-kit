@@ -4,6 +4,7 @@
 #include <numeric>
 
 #include "ion/ion.h"
+#include "sole.hpp"
 
 namespace ion {
 namespace bb {
@@ -20,11 +21,23 @@ public:
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
+    GeneratorParam<std::string> url{"url", ""};
     GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 3};
 
     void generate() {
         using namespace Halide;
-        std::vector<ExternFuncArgument> params = {cast<int32_t>(width), cast<int32_t>(height)};
+
+        std::string session_id = sole::uuid4().str();
+        Buffer<uint8_t> session_id_buf(session_id.size() + 1);
+        session_id_buf.fill(0);
+        std::memcpy(session_id_buf.data(), session_id.c_str(), session_id.size());
+
+        std::string url_str = url;
+        Halide::Buffer<uint8_t> url_buf(url_str.size() + 1);
+        url_buf.fill(0);
+        std::memcpy(url_buf.data(), url_str.c_str(), url_str.size());
+
+        std::vector<ExternFuncArgument> params = {session_id_buf, cast<int32_t>(width), cast<int32_t>(height), url_buf};
         Func camera(static_cast<std::string>(gc_prefix) + "camera");
         camera.define_extern("ion_bb_genesis_cloud_camera", params, Halide::type_of<uint8_t>(), 2);
         camera.compute_root();
@@ -163,7 +176,10 @@ public:
         std::memcpy(path_buf.data(), path_str.c_str(), path_str.size());
 
         Func input_(static_cast<std::string>(gc_prefix)+"input");
-        input_(_) = input(_);
+        Var c, x, y;
+        input_(c, x, y) = select(c == 0, input(2, x, y),
+                                 c == 1, input(1, x, y),
+                                         input(0, x, y));
         input_.compute_root();
 
         std::vector<ExternFuncArgument> params = {input_, static_cast<int32_t>(width), static_cast<int32_t>(height), path_buf};

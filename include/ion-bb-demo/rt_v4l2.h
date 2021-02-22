@@ -102,6 +102,26 @@ public:
             return;
         }
 
+        uint32_t desired_pixel_format = pixel_format;
+
+        struct v4l2_fmtdesc fmtdesc;
+        memset(&fmtdesc,0,sizeof(fmtdesc));
+        fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+
+        bool supported = false;
+        while (0 == xioctl(fd_, VIDIOC_ENUM_FMT, &fmtdesc))
+        {
+            if (fmtdesc.pixelformat == desired_pixel_format) {
+                supported = true;
+            }
+            fmtdesc.index++;
+        }
+        if (!supported) {
+            std::cerr << format("%s does not support desired pixel format", dev_name) << std::endl;
+            device_is_available_ = false;
+            return;
+        }
+
         struct v4l2_format fmt {
             .type = V4L2_BUF_TYPE_VIDEO_CAPTURE,
             .fmt = {
