@@ -125,16 +125,22 @@ void Builder::compile(const std::string& function_name, const CompileOption& opt
     output_prefix += "/" + function_name;
 
     std::set<Output> outputs;
+
+#ifdef HALIDE_FOR_FPGA
     if (target_.has_fpga_feature()) {
         outputs.insert(Output::hls_package);
     } else {
+#endif
         outputs.insert(Output::c_header);
         outputs.insert(Output::static_library);
+#ifdef HALIDE_FOR_FPGA
     }
+#endif
 
     const auto output_files = compute_output_files(target_, output_prefix, outputs);
     m.compile(output_files);
 
+#ifdef HALIDE_FOR_FPGA
 #ifdef __linux__
     if (target_.has_fpga_feature()) {
         std::string hls_dir = output_files.at(Output::hls_package);
@@ -147,6 +153,7 @@ void Builder::compile(const std::string& function_name, const CompileOption& opt
         internal_assert(ret == 0) << "Building hls package is failed.\n";
         chdir("..");
     }
+#endif
 #endif
 
     return;

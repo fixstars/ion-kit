@@ -45,6 +45,13 @@ file(GENERATE OUTPUT ${CMAKE_BINARY_DIR}/VERSION CONTENT "${GIT_REV}")
 include(IonUtil)
 
 #
+# Enable FPGA feature
+#
+if (ION_ENABLE_HALIDE_FPGA_BACKEND)
+    add_compile_definitions(HALIDE_FOR_FPGA)
+endif()
+
+#
 # Build main library
 #
 file(GLOB ION_SRC src/*)
