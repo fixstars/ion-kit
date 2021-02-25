@@ -42,7 +42,14 @@ jobs:
 
     - name: Install dependencies
       shell: bash
-      run: sudo apt-get update && sudo apt-get install -y ninja-build libopencv-dev uuid-dev zlib1g-dev && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
+      run: sudo apt-get update && sudo apt-get install -y ninja-build uuid-dev zlib1g-dev && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
+    
+    - name: Install OpenCV 4
+      shell: bash
+      run: |
+        curl -L https://ion-archives.s3-us-west-2.amazonaws.com/genesis-runtime/OpenCV-4.5.1-x86_64-gcc75.sh -o $HOME/opencv_installer.sh
+        chmod 755 $HOME/opencv_installer.sh
+        sudo $HOME/opencv_installer.sh --prefix=/usr/ --skip-license
 
     - name: Download Halide package
       shell: bash
