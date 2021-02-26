@@ -43,6 +43,7 @@ RUN cmake -G Ninja \
         -D CMAKE_BUILD_TYPE=Release \
         -D CMAKE_INSTALL_PREFIX=ion-kit-install \
         -D Halide_DIR=/usr/local/halide/lib/cmake/Halide \
+        -D HALIDE_ROOT=/usr/local/halide \
         -D ION_BUILD_ALL_BB=OFF \
         -D ION_BUILD_DOC=ON \
         -D ION_BUILD_TEST=ON \
@@ -109,6 +110,7 @@ RUN cmake -G Ninja \
         -D CMAKE_BUILD_TYPE=Release \
         -D CMAKE_INSTALL_PREFIX=ion-kit-install \
         -D Halide_DIR=/usr/local/halide/lib/cmake/Halide \
+        -D HALIDE_ROOT=/usr/local/halide \
         -D ION_BUILD_ALL_BB=ON \
         -D ION_BUILD_DOC=ON \
         -D ION_BUILD_TEST=ON \
