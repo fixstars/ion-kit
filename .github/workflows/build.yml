@@ -85,4 +85,5 @@ jobs:
       shell: bash
       # Execute tests defined by the CMake configuration.
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-      run: LD_LIBRARY_PATH=$ONNXRUNTIME_DIR/lib ctest --verbose -v -C $BUILD_TYPE
+      run: |
+        LD_LIBRARY_PATH=$HOME/onnxruntime-linux-x64-1.5.2/lib ctest --verbose -v -C $BUILD_TYPE
