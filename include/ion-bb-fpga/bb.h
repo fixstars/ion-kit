@@ -100,32 +100,6 @@ int32_t bit_width(uint64_t n) {
     return bits;
 }
 
-// support uint32_t only
-Halide::Expr fixed_div(Halide::Expr dividend, uint32_t divisor, int32_t dividend_bits = 0) {
-    internal_assert(divisor != 0);
-    if (dividend_bits == 0) {
-        dividend_bits = dividend.type().bits();
-    }
-    internal_assert(dividend.type().is_uint());
-    internal_assert(dividend_bits <= 32);
-    int32_t divisor_bits = bit_width(divisor);
-    int32_t r_bits = dividend_bits + divisor_bits - 1;
-    uint32_t f = (1ULL << r_bits) / divisor;
-    uint32_t f_mod = (1ULL << r_bits) % divisor;
-    Halide::Expr dividend_64 = Halide::cast(Halide::UInt(64), dividend);
-
-    Halide::Expr result;
-    if (f_mod == 0) {
-        result = dividend >> Halide::Expr(divisor_bits - 1);
-    } else if (f_mod < divisor / 2) {
-        result = ((dividend_64 + Halide::Expr(1U)) * Halide::Expr(f)) >> Halide::Expr(r_bits);
-    } else {
-        result = (dividend_64 * Halide::Expr(f + 1)) >> Halide::Expr(r_bits);
-    }
-
-    return Halide::cast(Halide::UInt(dividend_bits), result);
-}
-
 class BayerOffset : public BuildingBlock<BayerOffset> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "BayerOffset(FPGA)"};
@@ -145,7 +119,7 @@ public:
 
     void generate() {
         BayerMap::Pattern bayer_pattern = BayerMap::Pattern::RGGB;
-        Halide::Expr offset = Halide::mux(BayerMap::get_color(bayer_pattern, x, y), {offset_r, offset_g, offset_b});
+        Halide::Expr offset = Halide::mux(BayerMap::get_color(bayer_pattern, x, y), {Halide::Expr(offset_r), Halide::Expr(offset_g), Halide::Expr(offset_b)});
         output(x, y) = Halide::select(input(x, y) >= offset, input(x, y) - offset, 0);
     }
 
@@ -335,10 +309,10 @@ public:
                 lut1_list.push_back(lut1);
             }
             Halide::Expr is_odd_index = ((input(c, x, y) >> (input_bits - lut_index_bits)) & 1) == 1;
-            Halide::Expr lut1_index = input(c, x, y) >> (input_bits - lut_index_bits + 1);
+            Halide::Expr lut1_index = (input(c, x, y) >> (input_bits - lut_index_bits + 1)) & ((1 << (lut_index_bits - 1)) - 1);
             Halide::Expr lut0_index = Halide::select(is_odd_index, lut1_index + 1, lut1_index);
             Halide::Expr lut0_value = Halide::cast(UInt(lut_bits),
-                                                   Halide::select(lut0_index == lut_size, max_value,
+                                                   Halide::select(lut0_index == lut_size / 2, max_value,
                                                                   Halide::mux(c, {lut0_list[0](lut0_index),
                                                                                   lut0_list[1](lut0_index),
                                                                                   lut0_list[2](lut0_index)})));
@@ -349,8 +323,8 @@ public:
             Halide::Expr next_value = Halide::select(is_odd_index, lut0_value, lut1_value);
             Halide::Expr diff = next_value - base_value;
             Halide::Expr coef = input(c, x, y) & ((1 << (input_bits - lut_index_bits)) - 1);
-            Halide::Expr mul = (diff * coef) >> (lut_bits + input_bits - lut_index_bits - output_bits);
-            output(c, x, y) = (Halide::cast(UInt(output_bits), base_value) << (output_bits - lut_bits)) + mul;
+            Halide::Expr mul = (Halide::cast(UInt(lut_bits + input_bits - lut_index_bits), diff) * coef) >> (lut_bits + input_bits - lut_index_bits - output_bits);
+            output(c, x, y) = Halide::cast(UInt(16), (Halide::cast(UInt(output_bits), base_value) << (output_bits - lut_bits)) + mul);
         }
     }
 
@@ -409,7 +383,6 @@ public:
 
         int32_t dividend_bits = std::max(bit_width(center_x) * 2, bit_width(center_y) * 2) + 1 + 16;  // max 47bit
 
-        // Halide::Expr r2 = Halide::cast(UInt(16), fixed_div(Halide::cast(UInt(dividend_bits), (x - center_x) * (x - center_x) + (y - center_y) * (y - center_y)) << 16, r2_max));  // 16bit
         Halide::Expr r2 = Halide::cast(UInt(16), (Halide::cast(UInt(dividend_bits), (x - center_x) * (x - center_x) + (y - center_y) * (y - center_y)) << 16) / Halide::Expr(r2_max));  // 16bit
 
         Halide::Expr color = BayerMap::get_color(bayer_pattern, x, y);
@@ -420,7 +393,7 @@ public:
         Halide::Expr mul = Halide::cast(UInt(32), input(x, y)) * coef_clamp;
         Halide::Expr out = (mul >> 12) + ((mul >> 11) & 1);  // round
         uint16_t max_value = (1 << input_bits) - 1;
-        output(x, y) = Halide::select(out > max_value, Halide::Expr(max_value), Halide::cast(UInt(16), out));
+        output(x, y) = Halide::select(out > max_value, max_value, Halide::cast(UInt(16), out));
     }
 
     void schedule() {
@@ -563,17 +536,7 @@ public:
     GeneratorOutput<Halide::Func> output{"output", Halide::UInt(16), 2};
 
     void generate() {
-        //output(x, y) = input(x / 2 * 2 * downscale_factor + x % 2, y / 2 * 2 * downscale_factor + y % 2);
-        output(x, y) = Halide::select(
-            y % 2 == 0,
-            Halide::select(
-                x % 2 == 0,
-                input(x / 2 * 2 * downscale_factor, y / 2 * 2 * downscale_factor),
-                input(x / 2 * 2 * downscale_factor + 1, y / 2 * 2 * downscale_factor)),
-            Halide::select(
-                x % 2 == 0,
-                input(x / 2 * 2 * downscale_factor, y / 2 * 2 * downscale_factor + 1),
-                input(x / 2 * 2 * downscale_factor + 1, y / 2 * 2 * downscale_factor + 1)));
+        output(x, y) = input(x / 2 * 2 * downscale_factor + x % 2, y / 2 * 2 * downscale_factor + y % 2);
     }
 
     void schedule() {
