@@ -702,6 +702,102 @@ public:
     }
 };
 
+class SimpleISP : public BuildingBlock<SimpleISP> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Simple ISP(FPGA)"};
+    GeneratorParam<std::string> gc_description{"gc_description", "Make RGB image from RAW image."};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [3].concat(v.input.map(x => Math.floor(x / parseInt(v.downscale_factor) / 2))) }}))"};
+    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
+
+    //GeneratorParam<BayerMap::Pattern> bayer_pattern { "bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map };
+    GeneratorParam<int32_t> bayer_pattern{"bayer_pattern", 0, 0, 3};
+    // Max 16bit
+    GeneratorParam<int32_t> width{"width", 0, 0, 65535};
+    GeneratorParam<int32_t> height{"height", 0, 0, 65535};
+    GeneratorParam<int32_t> downscale_downscale_factor{"downscale_downscale_factor", 1};
+    GeneratorParam<int32_t> normalize_input_bits{"normalize_input_bits", 10, 1, 16};
+    GeneratorParam<int32_t> normalize_input_shift{"normalize_input_shift", 6, 0, 15};
+    GeneratorParam<uint16_t> offset_offset_r{"offset_offset_r", 0};
+    GeneratorParam<uint16_t> offset_offset_g{"offset_offset_g", 0};
+    GeneratorParam<uint16_t> offset_offset_b{"offset_offset_b", 0};
+    // 12bit fractional
+    GeneratorParam<uint16_t> shading_correction_slope_r{"shading_correction_slope_r", 0};
+    GeneratorParam<uint16_t> shading_correction_slope_g{"shading_correction_slope_g", 0};
+    GeneratorParam<uint16_t> shading_correction_slope_b{"shading_correction_slope_b", 0};
+    GeneratorParam<uint16_t> shading_correction_offset_r{"shading_correction_offset_r", 0};
+    GeneratorParam<uint16_t> shading_correction_offset_g{"shading_correction_offset_g", 0};
+    GeneratorParam<uint16_t> shading_correction_offset_b{"shading_correction_offset_b", 0};
+    GeneratorParam<uint16_t> white_balance_gain_r{"white_balance_gain_r", 4096};
+    GeneratorParam<uint16_t> white_balance_gain_g{"white_balance_gain_g", 4096};
+    GeneratorParam<uint16_t> white_balance_gain_b{"white_balance_gain_b", 4096};
+    GeneratorParam<double> gamma_gamma{"gamma_gamma", 1 / 2.2};
+    GeneratorInput<Halide::Func> input{"input", Halide::UInt(16), 2};
+    GeneratorOutput<Halide::Func> output{"output", Halide::UInt(8), 3};
+
+    void generate() {
+        int32_t internal_bits = normalize_input_bits;
+        BayerMap::Pattern bayer_pattern = static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern));
+        int32_t downscale_factor = downscale_downscale_factor;
+        int32_t input_width = width;
+        int32_t input_height = height;
+        int32_t downscale_width = input_width / downscale_factor;
+        int32_t downscale_height = input_height / downscale_factor;
+
+        downscale = bayer_downscale(input, downscale_factor);
+        normalize = normalize_raw_image(downscale, normalize_input_bits, normalize_input_shift, internal_bits);
+        offset = bayer_offset(normalize, bayer_pattern, offset_offset_r, offset_offset_g, offset_offset_b);
+        shading_correction = lens_shading_correction_linear(offset, bayer_pattern, downscale_width, downscale_height, internal_bits,
+                                                            shading_correction_slope_r, shading_correction_slope_g, shading_correction_slope_b,
+                                                            shading_correction_offset_r, shading_correction_offset_g, shading_correction_offset_b);
+        white_balance = bayer_white_balance(shading_correction, bayer_pattern, internal_bits, white_balance_gain_r, white_balance_gain_g, white_balance_gain_b);
+        demosaic = bayer_demosaic_simple(white_balance, bayer_pattern);
+        gamma = gamma_correction_3d(input, internal_bits, 8, 8, 8, gamma_gamma);
+
+        output = gamma;
+    }
+
+    void schedule() {
+        Halide::var x = output.args()[1];
+        Halide::var y = output.args()[2];
+
+        if (get_target().has_fpga_feature()) {
+            std::vector<Func> ip_in, ip_out;
+            std::tie(ip_in, ip_out) = output.accelerate({input}, {}, Var::outermost());
+
+            downscale.compute_at(output, Halide::Var::outermost());
+            normalize.compute_at(output, Halide::Var::outermost());
+            offset.compute_at(output, Halide::Var::outermost());
+            shading_correction.compute_at(output, Halide::Var::outermost());
+            white_balance.compute_at(output, Halide::Var::outermost());
+            demosaic.compute_at(output, Halide::Var::outermost());
+
+            // workaround for hls backend
+            ip_in[0].bound(ip_in[0].args()[0], 0, width).bound(ip_in[0].args()[1], 0, height);
+
+            demosaic.bound(demosaic.args()[0], 0, 3).unroll(demosaic.args()[0]).hls_burst(3);
+            ip_out[0].bound(ip_out[0].args()[0], 0, 3).unroll(ip_out[0].args()[0]).hls_burst(3);
+        } else if (get_target().has_gpu_feature()) {
+            Halide::Var xo, yo, xi, yi;
+            output.gpu_tile(x, y, xo, yo, xi, yi, 32, 16);
+        } else {
+            output.vectorize(x, natural_vector_size(Halide::Float(32))).parallel(y, 16);
+        }
+
+        output.compute_root();
+    }
+
+private:
+    Halide::Func downscale;
+    Halide::Func normalize;
+    Halide::Func offset;
+    Halide::Func shading_correction;
+    Halide::Func white_balance;
+    Halide::Func demosaic;
+    Halide::Func gamma;
+};
+
 }  // namespace fpga
 }  // namespace bb
 }  // namespace ion
@@ -715,5 +811,6 @@ ION_REGISTER_BUILDING_BLOCK(ion::bb::fpga::CalcLuminance, fpga_calc_luminance);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::fpga::ResizeBilinear3D, fpga_resize_bilinear_3d);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::fpga::BayerDownscaleUInt16, fpga_bayer_downscale_uint16);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::fpga::NormalizeRawImage, fpga_normalize_raw_image);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::fpga::SimpleISP, fpga_simple_isp);
 
 #endif
