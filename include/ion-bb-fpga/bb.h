@@ -100,6 +100,16 @@ int32_t bit_width(uint64_t n) {
     return bits;
 }
 
+Halide::Func bayer_offset(Halide::Func input, BayerMap::Pattern bayer_pattern, Halide::Expr offset_r, Halide::Expr offset_g, Halide::Expr offset_b) {
+    Halide::Func output{"bayer_offset"};
+    Halide::Var x{"x"}, y{"y"};
+
+    Halide::Expr offset = Halide::mux(BayerMap::get_color(bayer_pattern, x, y), {offset_r, offset_g, offset_b});
+    output(x, y) = Halide::select(input(x, y) >= offset, input(x, y) - offset, 0);
+
+    return output;
+}
+
 class BayerOffset : public BuildingBlock<BayerOffset> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "BayerOffset(FPGA)"};
@@ -120,12 +130,14 @@ public:
     GeneratorOutput<Halide::Func> output{"output", Halide::UInt(16), 2};
 
     void generate() {
-        Halide::Expr offset = Halide::mux(BayerMap::get_color(static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern)), x, y), {Halide::Expr(offset_r), Halide::Expr(offset_g), Halide::Expr(offset_b)});
-        output(x, y) = Halide::select(input(x, y) >= offset, input(x, y) - offset, 0);
+        output = bayer_offset(input, static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern)), offset_r, offset_g, offset_b);
     }
 
     void schedule() {
 #ifndef DISABLE_SCHEDULE
+        Halide::var x = output.args()[0];
+        Halide::var y = output.args()[1];
+
         output.bound(x, 0, width).bound(y, 0, height);
         if (get_target().has_fpga_feature()) {
             output.accelerate({input}, {}, Var::outermost());
@@ -140,10 +152,20 @@ public:
         output.compute_root();
 #endif
     }
-
-private:
-    Halide::Var x, y;
 };
+
+Halide::Func bayer_white_balance(Halide::Func input, BayerMap::Pattern bayer_pattern, int32_t input_bits, Halide::Expr gain_r, Halide::Expr gain_g, Halide::Expr gain_b) {
+    Halide::Func output{"bayer_white_balance"};
+    Halide::Var x{"x"}, y{"y"};
+
+    Halide::Expr gain = Halide::mux(BayerMap::get_color(bayer_pattern, x, y), {gain_r, gain_g, gain_b});
+    Halide::Expr mul = Halide::cast(UInt(32), input(x, y)) * gain;
+    Halide::Expr out = (mul >> 12) + ((mul >> 11) & 1);  // round
+    uint16_t max_value = (1 << input_bits) - 1;
+    output(x, y) = Halide::select(out > max_value, max_value, Halide::cast(UInt(16), out));
+
+    return output;
+}
 
 class BayerWhiteBalance : public BuildingBlock<BayerWhiteBalance> {
 public:
@@ -167,15 +189,14 @@ public:
     GeneratorOutput<Halide::Func> output{"output", Halide::UInt(16), 2};
 
     void generate() {
-        Halide::Expr gain = Halide::mux(BayerMap::get_color(static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern)), x, y), {gain_r, gain_g, gain_b});
-        Halide::Expr mul = Halide::cast(UInt(32), input(x, y)) * gain;
-        Halide::Expr out = (mul >> 12) + ((mul >> 11) & 1);  // round
-        uint16_t max_value = (1 << input_bits) - 1;
-        output(x, y) = Halide::select(out > max_value, max_value, Halide::cast(UInt(16), out));
+        output = bayer_white_balance(input, static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern)), input_bits, gain_r, gain_g, gain_b);
     }
 
     void schedule() {
 #ifndef DISABLE_SCHEDULE
+        Halide::var x = output.args()[0];
+        Halide::var y = output.args()[1];
+
         output.bound(x, 0, width).bound(y, 0, height);
         if (get_target().has_fpga_feature()) {
             output.accelerate({input}, {}, Var::outermost());
@@ -190,10 +211,43 @@ public:
         output.compute_root();
 #endif
     }
-
-private:
-    Halide::Var x, y;
 };
+
+Halide::Func bayer_demosaic_simple(Halide::Func input, BayerMap::Pattern bayer_pattern) {
+    Halide::Func output{"bayer_demosaic_simple"};
+    Halide::Var x{"x"}, y{"y"}, c{"c"};
+
+    switch (bayer_pattern) {
+    case BayerMap::Pattern::RGGB:
+        output(c, x, y) = Halide::mux(
+            c, {input(x * 2, y * 2),
+                Halide::cast(UInt(16), (Halide::cast(UInt(17), input(x * 2 + 1, y * 2)) + input(x * 2, y * 2 + 1)) >> 1),
+                input(x * 2 + 1, y * 2 + 1)});
+        break;
+    case BayerMap::Pattern::BGGR:
+        output(c, x, y) = Halide::mux(
+            c, {input(x * 2 + 1, y * 2 + 1),
+                Halide::cast(UInt(16), (Halide::cast(UInt(17), input(x * 2 + 1, y * 2)) + input(x * 2, y * 2 + 1)) >> 1),
+                input(x * 2, y * 2)});
+        break;
+    case BayerMap::Pattern::GRBG:
+        output(c, x, y) = Halide::mux(
+            c, {input(x * 2 + 1, y * 2),
+                Halide::cast(UInt(16), (Halide::cast(UInt(17), input(x * 2, y * 2)) + input(x * 2 + 1, y * 2 + 1)) >> 1),
+                input(x * 2 + 1, y * 2)});
+        break;
+    case BayerMap::Pattern::GBRG:
+        output(c, x, y) = Halide::mux(
+            c, {input(x * 2, y * 2 + 1),
+                Halide::cast(UInt(16), (Halide::cast(UInt(17), input(x * 2, y * 2)) + input(x * 2 + 1, y * 2 + 1)) >> 1),
+                input(x * 2 + 1, y * 2)});
+        break;
+    default:
+        internal_error << "Unknown BayerMap pattern";
+    }
+
+    return output;
+}
 
 class BayerDemosaicSimple : public BuildingBlock<BayerDemosaicSimple> {
 public:
@@ -212,38 +266,15 @@ public:
     GeneratorOutput<Halide::Func> output{"output", Halide::UInt(16), 3};
 
     void generate() {
-        switch (static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern))) {
-        case BayerMap::Pattern::RGGB:
-            output(c, x, y) = Halide::mux(
-                c, {input(x * 2, y * 2),
-                    Halide::cast(UInt(16), (Halide::cast(UInt(17), input(x * 2 + 1, y * 2)) + input(x * 2, y * 2 + 1)) >> 1),
-                    input(x * 2 + 1, y * 2 + 1)});
-            break;
-        case BayerMap::Pattern::BGGR:
-            output(c, x, y) = Halide::mux(
-                c, {input(x * 2 + 1, y * 2 + 1),
-                    Halide::cast(UInt(16), (Halide::cast(UInt(17), input(x * 2 + 1, y * 2)) + input(x * 2, y * 2 + 1)) >> 1),
-                    input(x * 2, y * 2)});
-            break;
-        case BayerMap::Pattern::GRBG:
-            output(c, x, y) = Halide::mux(
-                c, {input(x * 2 + 1, y * 2),
-                    Halide::cast(UInt(16), (Halide::cast(UInt(17), input(x * 2, y * 2)) + input(x * 2 + 1, y * 2 + 1)) >> 1),
-                    input(x * 2 + 1, y * 2)});
-            break;
-        case BayerMap::Pattern::GBRG:
-            output(c, x, y) = Halide::mux(
-                c, {input(x * 2, y * 2 + 1),
-                    Halide::cast(UInt(16), (Halide::cast(UInt(17), input(x * 2, y * 2)) + input(x * 2 + 1, y * 2 + 1)) >> 1),
-                    input(x * 2 + 1, y * 2)});
-            break;
-        default:
-            internal_error << "Unknown BayerMap pattern";
-        }
+        output = bayer_demosaic_simple(input, static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern)));
     }
 
     void schedule() {
 #ifndef DISABLE_SCHEDULE
+        Halide::var c = output.args()[0];
+        Halide::var x = output.args()[1];
+        Halide::var y = output.args()[2];
+
         output.bound(x, 0, width / 2).bound(y, 0, height / 2).bound(c, 0, 3);
         if (get_target().has_fpga_feature()) {
             std::vector<Func> ip_in, ip_out;
@@ -259,10 +290,60 @@ public:
         output.compute_root();
 #endif
     }
-
-private:
-    Halide::Var x{"x"}, y{"y"}, c{"c"};
 };
+
+Halide::Func gamma_correction_3d(Halide::Func input, int32_t input_bits, int32_t output_bits, int32_t lut_bits, int32_t lut_index_bits, double gamma) {
+    Halide::Func output{"gamma_correction_3d"};
+    Halide::Var x{"x"}, y{"y"}, c{"c"};
+
+    int32_t lut_size = 1 << lut_index_bits;
+    int32_t max_value = (1 << output_bits) - 1;
+    if (input_bits == lut_index_bits) {
+        std::vector<Halide::Buffer<uint16_t>> lut_list;
+        for (int32_t i = 0; i < 3; i++) {
+            Halide::Buffer<uint16_t> lut(lut_size);
+            for (int32_t j = 0; j < lut_size; j++) {
+                lut(j) = static_cast<uint16_t>(pow(j / static_cast<double>(lut_size - 1), gamma) * max_value + 0.5);
+            }
+            lut_list.push_back(lut);
+        }
+        output(c, x, y) = Halide::mux(c, {lut_list[0](input(c, x, y)),
+                                          lut_list[1](input(c, x, y)),
+                                          lut_list[2](input(c, x, y))});
+    } else {
+        std::vector<Halide::Buffer<uint16_t>> lut0_list;
+        std::vector<Halide::Buffer<uint16_t>> lut1_list;
+        for (int32_t i = 0; i < 3; i++) {
+            Halide::Buffer<uint16_t> lut0(lut_size / 2);
+            Halide::Buffer<uint16_t> lut1(lut_size / 2);
+            for (int32_t j = 0; j < lut_size / 2; j++) {
+                lut0(j) = static_cast<uint16_t>(pow((j * 2) / static_cast<double>(lut_size), gamma) * max_value + 0.5);
+                lut1(j) = static_cast<uint16_t>(pow((j * 2 + 1) / static_cast<double>(lut_size), gamma) * max_value + 0.5);
+            }
+            lut0_list.push_back(lut0);
+            lut1_list.push_back(lut1);
+        }
+        Halide::Expr is_odd_index = ((input(c, x, y) >> (input_bits - lut_index_bits)) & 1) == 1;
+        Halide::Expr lut1_index = (input(c, x, y) >> (input_bits - lut_index_bits + 1)) & ((1 << (lut_index_bits - 1)) - 1);
+        Halide::Expr lut0_index = Halide::select(is_odd_index, lut1_index + 1, lut1_index);
+        Halide::Expr lut0_value = Halide::cast(UInt(lut_bits),
+                                                Halide::select(lut0_index == lut_size / 2, max_value,
+                                                                Halide::mux(c, {lut0_list[0](lut0_index),
+                                                                                lut0_list[1](lut0_index),
+                                                                                lut0_list[2](lut0_index)})));
+        Halide::Expr lut1_value = Halide::cast(UInt(lut_bits), Halide::mux(c, {lut1_list[0](lut1_index),
+                                                                               lut1_list[1](lut1_index),
+                                                                               lut1_list[2](lut1_index)}));
+        Halide::Expr base_value = Halide::select(is_odd_index, lut1_value, lut0_value);
+        Halide::Expr next_value = Halide::select(is_odd_index, lut0_value, lut1_value);
+        Halide::Expr diff = next_value - base_value;
+        Halide::Expr coef = input(c, x, y) & ((1 << (input_bits - lut_index_bits)) - 1);
+        Halide::Expr mul = (Halide::cast(UInt(lut_bits + input_bits - lut_index_bits), diff) * coef) >> (lut_bits + input_bits - lut_index_bits - output_bits);
+        output(c, x, y) = Halide::cast(UInt(16), (Halide::cast(UInt(output_bits), base_value) << (output_bits - lut_bits)) + mul);
+    }
+
+    return output;
+}
 
 class GammaCorrection3D : public BuildingBlock<GammaCorrection3D> {
 public:
@@ -284,55 +365,15 @@ public:
     GeneratorOutput<Halide::Func> output{"output", Halide::UInt(16), 3};
 
     void generate() {
-        int32_t lut_size = 1 << lut_index_bits;
-        int32_t max_value = (1 << output_bits) - 1;
-        if (input_bits == lut_index_bits) {
-            std::vector<Halide::Buffer<uint16_t>> lut_list;
-            for (int32_t i = 0; i < 3; i++) {
-                Halide::Buffer<uint16_t> lut(lut_size);
-                for (int32_t j = 0; j < lut_size; j++) {
-                    lut(j) = static_cast<uint16_t>(pow(j / static_cast<double>(lut_size - 1), static_cast<double>(gamma)) * max_value + 0.5);
-                }
-                lut_list.push_back(lut);
-            }
-            output(c, x, y) = Halide::mux(c, {lut_list[0](input(c, x, y)),
-                                              lut_list[1](input(c, x, y)),
-                                              lut_list[2](input(c, x, y))});
-        } else {
-            std::vector<Halide::Buffer<uint16_t>> lut0_list;
-            std::vector<Halide::Buffer<uint16_t>> lut1_list;
-            for (int32_t i = 0; i < 3; i++) {
-                Halide::Buffer<uint16_t> lut0(lut_size / 2);
-                Halide::Buffer<uint16_t> lut1(lut_size / 2);
-                for (int32_t j = 0; j < lut_size / 2; j++) {
-                    lut0(j) = static_cast<uint16_t>(pow((j * 2) / static_cast<double>(lut_size), static_cast<double>(gamma)) * max_value + 0.5);
-                    lut1(j) = static_cast<uint16_t>(pow((j * 2 + 1) / static_cast<double>(lut_size), static_cast<double>(gamma)) * max_value + 0.5);
-                }
-                lut0_list.push_back(lut0);
-                lut1_list.push_back(lut1);
-            }
-            Halide::Expr is_odd_index = ((input(c, x, y) >> (input_bits - lut_index_bits)) & 1) == 1;
-            Halide::Expr lut1_index = (input(c, x, y) >> (input_bits - lut_index_bits + 1)) & ((1 << (lut_index_bits - 1)) - 1);
-            Halide::Expr lut0_index = Halide::select(is_odd_index, lut1_index + 1, lut1_index);
-            Halide::Expr lut0_value = Halide::cast(UInt(lut_bits),
-                                                   Halide::select(lut0_index == lut_size / 2, max_value,
-                                                                  Halide::mux(c, {lut0_list[0](lut0_index),
-                                                                                  lut0_list[1](lut0_index),
-                                                                                  lut0_list[2](lut0_index)})));
-            Halide::Expr lut1_value = Halide::cast(UInt(lut_bits), Halide::mux(c, {lut1_list[0](lut1_index),
-                                                                                   lut1_list[1](lut1_index),
-                                                                                   lut1_list[2](lut1_index)}));
-            Halide::Expr base_value = Halide::select(is_odd_index, lut1_value, lut0_value);
-            Halide::Expr next_value = Halide::select(is_odd_index, lut0_value, lut1_value);
-            Halide::Expr diff = next_value - base_value;
-            Halide::Expr coef = input(c, x, y) & ((1 << (input_bits - lut_index_bits)) - 1);
-            Halide::Expr mul = (Halide::cast(UInt(lut_bits + input_bits - lut_index_bits), diff) * coef) >> (lut_bits + input_bits - lut_index_bits - output_bits);
-            output(c, x, y) = Halide::cast(UInt(16), (Halide::cast(UInt(output_bits), base_value) << (output_bits - lut_bits)) + mul);
-        }
+        output = gamma_correction_3d(input, input_bits, output_bits, lut_bits, lut_index_bits, gamma);
     }
 
     void schedule() {
 #ifndef DISABLE_SCHEDULE
+        Halide::var c = output.args()[0];
+        Halide::var x = output.args()[1];
+        Halide::var y = output.args()[2];
+
         output.bound(x, 0, width).bound(y, 0, height).bound(c, 0, 3);
         if (get_target().has_fpga_feature()) {
             std::vector<Func> ip_in, ip_out;
@@ -349,10 +390,34 @@ public:
         output.compute_root();
 #endif
     }
-
-private:
-    Halide::Var x{"x"}, y{"y"}, c{"c"};
 };
+
+Halide::Func lens_shading_correction_linear(Halide::Func input, BayerMap::Pattern bayer_pattern, int32_t width, int32_t height, int32_t input_bits,
+                                            Halide::Expr slope_r, Halide::Expr slope_g, Halide::Expr slope_b,
+                                            Halide::Expr offset_r, Halide::Expr offset_g, Halide::Expr offset_b) {
+    Halide::Func output{"lens_shading_correction_linear"};
+    Halide::Var x{"x"}, y{"y"};
+
+    int32_t center_x = width / 2;                                 // max 15bit
+    int32_t center_y = height / 2;                                // max 15bit
+    uint32_t r2_max = center_x * center_x + center_y * center_y;  // max 31bit
+
+    int32_t dividend_bits = std::max(bit_width(center_x) * 2, bit_width(center_y) * 2) + 1 + 16;  // max 47bit
+
+    Halide::Expr r2 = Halide::cast(UInt(16), (Halide::cast(UInt(dividend_bits), (x - center_x) * (x - center_x) + (y - center_y) * (y - center_y)) << 16) / Halide::Expr(r2_max));  // 16bit
+
+    Halide::Expr color = BayerMap::get_color(bayer_pattern, x, y);
+    Halide::Expr coef_mul = (Halide::cast(UInt(32), r2) * Halide::mux(color, {slope_r, slope_g, slope_b})) >> 16;  // 16bit
+    Halide::Expr coef = Halide::cast(UInt(17), coef_mul) + Halide::mux(color, {offset_r, offset_g, offset_b});     // 17bit
+    Halide::Expr coef_clamp = Halide::select(coef >= 65536, 65535, Halide::cast(UInt(16), coef));                  // 16bit
+
+    Halide::Expr mul = Halide::cast(UInt(32), input(x, y)) * coef_clamp;
+    Halide::Expr out = (mul >> 12) + ((mul >> 11) & 1);  // round
+    uint16_t max_value = (1 << input_bits) - 1;
+    output(x, y) = Halide::select(out > max_value, max_value, Halide::cast(UInt(16), out));
+
+    return output;
+}
 
 class LensShadingCorrectionLinear : public BuildingBlock<LensShadingCorrectionLinear> {
 public:
@@ -380,27 +445,15 @@ public:
     GeneratorOutput<Halide::Func> output{"output", Halide::UInt(16), 2};
 
     void generate() {
-        int32_t center_x = width / 2;                                 // max 15bit
-        int32_t center_y = height / 2;                                // max 15bit
-        uint32_t r2_max = center_x * center_x + center_y * center_y;  // max 31bit
-
-        int32_t dividend_bits = std::max(bit_width(center_x) * 2, bit_width(center_y) * 2) + 1 + 16;  // max 47bit
-
-        Halide::Expr r2 = Halide::cast(UInt(16), (Halide::cast(UInt(dividend_bits), (x - center_x) * (x - center_x) + (y - center_y) * (y - center_y)) << 16) / Halide::Expr(r2_max));  // 16bit
-
-        Halide::Expr color = BayerMap::get_color(static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern)), x, y);
-        Halide::Expr coef_mul = (Halide::cast(UInt(32), r2) * Halide::mux(color, {slope_r, slope_g, slope_b})) >> 16;  // 16bit
-        Halide::Expr coef = Halide::cast(UInt(17), coef_mul) + Halide::mux(color, {offset_r, offset_g, offset_b});     // 17bit
-        Halide::Expr coef_clamp = Halide::select(coef >= 65536, 65535, Halide::cast(UInt(16), coef));                  // 16bit
-
-        Halide::Expr mul = Halide::cast(UInt(32), input(x, y)) * coef_clamp;
-        Halide::Expr out = (mul >> 12) + ((mul >> 11) & 1);  // round
-        uint16_t max_value = (1 << input_bits) - 1;
-        output(x, y) = Halide::select(out > max_value, max_value, Halide::cast(UInt(16), out));
+        output = lens_shading_correction_linear(input, static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern)), width, height, input_bits,
+                                                slope_r, slope_g, slope_b, offset_r, offset_g, offset_b);
     }
 
     void schedule() {
 #ifndef DISABLE_SCHEDULE
+        Halide::var x = output.args()[0];
+        Halide::var y = output.args()[1];
+
         if (get_target().has_fpga_feature()) {
             output.bound(x, 0, width).bound(y, 0, height);
             output.accelerate({input}, {}, Var::outermost());
@@ -416,10 +469,16 @@ public:
         output.compute_root();
 #endif
     }
-
-private:
-    Halide::Var x, y;
 };
+
+Halide::Func calc_luminance(Halide::Func input, Luminance::Method luminance_method) {
+    Halide::Func output{"calc_luminance"};
+    Halide::Var x{"x"}, y{"y"};
+
+    output(x, y) = Luminance::calc(luminance_method, input(0, x, y), input(1, x, y), input(2, x, y));
+
+    return output;
+}
 
 class CalcLuminance : public BuildingBlock<CalcLuminance> {
 public:
@@ -438,11 +497,14 @@ public:
     GeneratorOutput<Halide::Func> output{"output", Halide::UInt(16), 2};
 
     void generate() {
-        output(x, y) = Luminance::calc(static_cast<Luminance::Method>(static_cast<int32_t>(luminance_method)), input(0, x, y), input(1, x, y), input(2, x, y));
+        output = calc_luminance(input, static_cast<Luminance::Method>(static_cast<int32_t>(luminance_method)));
     }
 
     void schedule() {
 #ifndef DISABLE_SCHEDULE
+        Halide::var x = output.args()[0];
+        Halide::var y = output.args()[1];
+
         if (get_target().has_fpga_feature()) {
             output.bound(x, 0, width).bound(y, 0, height);
             std::vector<Func> ip_in, ip_out;
@@ -458,11 +520,35 @@ public:
         output.compute_root();
 #endif
     }
-
-private:
-    Halide::Var x, y;
 };
 
+Halide::Func resize_bilinear_3d(Halide::Func input, int32_t width, int32_t height, float scale) {
+    Halide::Func output{"resize_bilinear_3d"};
+    Halide::Var x{"x"}, y{"y"}, c{"c"};
+
+    // 12bit, fractional 8bit
+    int16_t scale12 = static_cast<int16_t>(256 * static_cast<float>(scale) + 0.5f);
+
+    Halide::Func input_wrapper = Halide::BoundaryConditions::repeat_edge(input, {{}, {0, width}, {0, height}});
+
+    Halide::Expr map_x = ((Halide::cast(Int(33), x) << 16) + (1 << 15)) / Halide::Expr(scale12) - (1 << 8);
+    Halide::Expr map_y = ((Halide::cast(Int(33), y) << 16) + (1 << 15)) / Halide::Expr(scale12) - (1 << 8);
+
+    Halide::Expr x0 = Halide::cast(Int(18), map_x >> 8);
+    Halide::Expr y0 = Halide::cast(Int(18), map_y >> 8);
+    Halide::Expr x1 = x0 + 1;
+    Halide::Expr y1 = y0 + 1;
+    Halide::Expr x_coef = Halide::cast(UInt(8), Halide::select(map_x < 0, 255 - (map_x & 255), map_x & 255));
+    Halide::Expr y_coef = Halide::cast(UInt(8), Halide::select(map_y < 0, 255 - (map_y & 255), map_y & 255));
+
+    Halide::Expr out0 = (Halide::cast(UInt(24), input_wrapper(c, x0, y0)) * (Halide::cast(UInt(9), 256) - x_coef) + Halide::cast(UInt(24), input_wrapper(c, x1, y0)) * x_coef) >> 8;
+    Halide::Expr out1 = (Halide::cast(UInt(24), input_wrapper(c, x0, y1)) * (Halide::cast(UInt(9), 256) - x_coef) + Halide::cast(UInt(24), input_wrapper(c, x1, y1)) * x_coef) >> 8;
+    output(c, x, y) = Halide::cast(UInt(16), (out0 * (Halide::cast(UInt(9), 256) - y_coef) + out1 * y_coef) >> 8);
+
+    return output;
+}
+
+// NOTE: Generates a huge circuit depending on scale value.
 class ResizeBilinear3D : public BuildingBlock<ResizeBilinear3D> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "ResizeBilinear3D(FPGA)"};
@@ -481,28 +567,15 @@ public:
     GeneratorOutput<Halide::Func> output{"output", Halide::UInt(16), 3};
 
     void generate() {
-        // 12bit, fractional 8bit
-        int16_t scale12 = static_cast<int16_t>(256 * static_cast<float>(scale) + 0.5f);
-
-        Halide::Func input_wrapper = Halide::BoundaryConditions::repeat_edge(input, {{}, {0, width}, {0, height}});
-
-        Halide::Expr map_x = ((Halide::cast(Int(33), x) << 16) + (1 << 15)) / Halide::Expr(scale12) - (1 << 8);
-        Halide::Expr map_y = ((Halide::cast(Int(33), y) << 16) + (1 << 15)) / Halide::Expr(scale12) - (1 << 8);
-
-        Halide::Expr x0 = Halide::cast(Int(18), map_x >> 8);
-        Halide::Expr y0 = Halide::cast(Int(18), map_y >> 8);
-        Halide::Expr x1 = x0 + 1;
-        Halide::Expr y1 = y0 + 1;
-        Halide::Expr x_coef = Halide::cast(UInt(8), Halide::select(map_x < 0, 255 - (map_x & 255), map_x & 255));
-        Halide::Expr y_coef = Halide::cast(UInt(8), Halide::select(map_y < 0, 255 - (map_y & 255), map_y & 255));
-
-        Halide::Expr out0 = (Halide::cast(UInt(24), input_wrapper(c, x0, y0)) * (Halide::cast(UInt(9), 256) - x_coef) + Halide::cast(UInt(24), input_wrapper(c, x1, y0)) * x_coef) >> 8;
-        Halide::Expr out1 = (Halide::cast(UInt(24), input_wrapper(c, x0, y1)) * (Halide::cast(UInt(9), 256) - x_coef) + Halide::cast(UInt(24), input_wrapper(c, x1, y1)) * x_coef) >> 8;
-        output(c, x, y) = Halide::cast(UInt(16), (out0 * (Halide::cast(UInt(9), 256) - y_coef) + out1 * y_coef) >> 8);
+        output = resize_bilinear_3d(input, width, height, scale);
     }
 
     void schedule() {
 #ifndef DISABLE_SCHEDULE
+        Halide::var c = output.args()[0];
+        Halide::var x = output.args()[1];
+        Halide::var y = output.args()[2];
+
         output.bound(x, 0, static_cast<int32_t>(static_cast<int32_t>(width) * scale)).bound(y, 0, static_cast<int32_t>(static_cast<int32_t>(height) * scale)).bound(c, 0, 3);
         if (get_target().has_fpga_feature()) {
             std::vector<Func> ip_in, ip_out;
@@ -519,10 +592,16 @@ public:
         output.compute_root();
 #endif
     }
-
-private:
-    Halide::Var x{"x"}, y{"y"}, c{"c"};
 };
+
+Halide::Func bayer_downscale(Halide::Func input, int32_t downscale_factor) {
+    Halide::Func output{"bayer_downscale"};
+    Halide::Var x{"x"}, y{"y"};
+
+    output(x, y) = input(x / 2 * 2 * downscale_factor + x % 2, y / 2 * 2 * downscale_factor + y % 2);
+
+    return output;
+}
 
 class BayerDownscaleUInt16 : public BuildingBlock<BayerDownscaleUInt16> {
 public:
@@ -540,11 +619,14 @@ public:
     GeneratorOutput<Halide::Func> output{"output", Halide::UInt(16), 2};
 
     void generate() {
-        output(x, y) = input(x / 2 * 2 * downscale_factor + x % 2, y / 2 * 2 * downscale_factor + y % 2);
+        output = bayer_downscale(input, downscale_factor);
     }
 
     void schedule() {
 #ifndef DISABLE_SCHEDULE
+        Halide::var x = output.args()[0];
+        Halide::var y = output.args()[1];
+
         if (get_target().has_fpga_feature()) {
             output.bound(x, 0, width / downscale_factor).bound(y, 0, height / downscale_factor);
             output.accelerate({input}, {}, Var::outermost());
@@ -558,10 +640,26 @@ public:
         output.compute_root();
 #endif
     }
-
-private:
-    Halide::Var x, y;
 };
+
+Halide::Func normalize_raw_image(Halide::Func input, int32_t input_bits, int32_t input_shift, int32_t output_bits) {
+    Halide::Func output{"normalize_raw_image"};
+    Halide::Var x{"x"}, y{"y"};
+
+    Halide::Expr in = (input(x, y) >> input_shift) & ((1 << input_bits) - 1);
+    Halide::Expr out = 0;
+    for (int32_t bits = 0; bits < output_bits; bits += input_bits) {
+        int32_t shift = output_bits - bits - input_bits;
+        if (shift < 0) {
+            out += in >> -shift;
+        } else {
+            out += in << shift;
+        }
+    }
+    output(x, y) = Halide::cast(UInt(16), out);
+
+    return output;
+}
 
 class NormalizeRawImage : public BuildingBlock<NormalizeRawImage> {
 public:
@@ -581,21 +679,14 @@ public:
     GeneratorOutput<Halide::Func> output{"output", Halide::UInt(16), 2};
 
     void generate() {
-        Halide::Expr in = (input(x, y) >> static_cast<int32_t>(input_shift)) & ((1 << input_bits) - 1);
-        Halide::Expr out = 0;
-        for (int bits = 0; bits < output_bits; bits += input_bits) {
-            int32_t shift = output_bits - bits - input_bits;
-            if (shift < 0) {
-                out += in >> -shift;
-            } else {
-                out += in << shift;
-            }
-        }
-        output(x, y) = Halide::cast(UInt(16), out);
+        output = normalize_raw_image(input, input_bits, input_shift, output_bits);
     }
 
     void schedule() {
 #ifndef DISABLE_SCHEDULE
+        Halide::var x = output.args()[0];
+        Halide::var y = output.args()[1];
+
         if (get_target().has_fpga_feature()) {
             output.bound(x, 0, width).bound(y, 0, height);
             output.accelerate({input}, {}, Var::outermost());
@@ -609,9 +700,6 @@ public:
         output.compute_root();
 #endif
     }
-
-private:
-    Halide::Var x, y;
 };
 
 }  // namespace fpga
