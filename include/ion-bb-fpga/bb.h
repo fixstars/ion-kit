@@ -554,7 +554,7 @@ public:
     GeneratorParam<std::string> gc_title{"gc_title", "ResizeBilinear3D(FPGA)"};
     GeneratorParam<std::string> gc_description{"gc_description", "Resize image by bilinear algorithm."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.slice(0, -1).map(x => Math.floor(x * parseFloat(v.scale))).concat(v.input.slice(-1)) }}))"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.map((x, i) => i == 0 ? x : Math.floor(x * parseFloat(v.scale))) }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
