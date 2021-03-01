@@ -109,6 +109,8 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
+    //GeneratorParam<BayerMap::Pattern> bayer_pattern { "bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map };
+    GeneratorParam<int32_t> bayer_pattern{"bayer_pattern", 0, 0, 3};
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
     GeneratorInput<uint16_t> offset_r{"offset_r"};
@@ -118,8 +120,7 @@ public:
     GeneratorOutput<Halide::Func> output{"output", Halide::UInt(16), 2};
 
     void generate() {
-        BayerMap::Pattern bayer_pattern = BayerMap::Pattern::RGGB;
-        Halide::Expr offset = Halide::mux(BayerMap::get_color(bayer_pattern, x, y), {Halide::Expr(offset_r), Halide::Expr(offset_g), Halide::Expr(offset_b)});
+        Halide::Expr offset = Halide::mux(BayerMap::get_color(static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern)), x, y), {Halide::Expr(offset_r), Halide::Expr(offset_g), Halide::Expr(offset_b)});
         output(x, y) = Halide::select(input(x, y) >= offset, input(x, y) - offset, 0);
     }
 
@@ -153,6 +154,8 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
+    //GeneratorParam<BayerMap::Pattern> bayer_pattern { "bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map };
+    GeneratorParam<int32_t> bayer_pattern{"bayer_pattern", 0, 0, 3};
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
     GeneratorParam<int32_t> input_bits{"input_bits", 16, 1, 16};
@@ -164,8 +167,7 @@ public:
     GeneratorOutput<Halide::Func> output{"output", Halide::UInt(16), 2};
 
     void generate() {
-        BayerMap::Pattern bayer_pattern = BayerMap::Pattern::RGGB;
-        Halide::Expr gain = Halide::mux(BayerMap::get_color(bayer_pattern, x, y), {gain_r, gain_g, gain_b});
+        Halide::Expr gain = Halide::mux(BayerMap::get_color(static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern)), x, y), {gain_r, gain_g, gain_b});
         Halide::Expr mul = Halide::cast(UInt(32), input(x, y)) * gain;
         Halide::Expr out = (mul >> 12) + ((mul >> 11) & 1);  // round
         uint16_t max_value = (1 << input_bits) - 1;
@@ -202,14 +204,15 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
+    //GeneratorParam<BayerMap::Pattern> bayer_pattern { "bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map };
+    GeneratorParam<int32_t> bayer_pattern{"bayer_pattern", 0, 0, 3};
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
     GeneratorInput<Halide::Func> input{"input", Halide::UInt(16), 2};
     GeneratorOutput<Halide::Func> output{"output", Halide::UInt(16), 3};
 
     void generate() {
-        BayerMap::Pattern bayer_pattern = BayerMap::Pattern::RGGB;
-        switch (bayer_pattern) {
+        switch (static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern))) {
         case BayerMap::Pattern::RGGB:
             output(c, x, y) = Halide::mux(
                 c, {input(x * 2, y * 2),
@@ -360,6 +363,8 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
+    //GeneratorParam<BayerMap::Pattern> bayer_pattern { "bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map };
+    GeneratorParam<int32_t> bayer_pattern{"bayer_pattern", 0, 0, 3};
     // Max 16bit
     GeneratorParam<int32_t> width{"width", 0, 0, 65535};
     GeneratorParam<int32_t> height{"height", 0, 0, 65535};
@@ -375,8 +380,6 @@ public:
     GeneratorOutput<Halide::Func> output{"output", Halide::UInt(16), 2};
 
     void generate() {
-        BayerMap::Pattern bayer_pattern = BayerMap::Pattern::RGGB;
-
         int32_t center_x = width / 2;                                 // max 15bit
         int32_t center_y = height / 2;                                // max 15bit
         uint32_t r2_max = center_x * center_x + center_y * center_y;  // max 31bit
@@ -385,7 +388,7 @@ public:
 
         Halide::Expr r2 = Halide::cast(UInt(16), (Halide::cast(UInt(dividend_bits), (x - center_x) * (x - center_x) + (y - center_y) * (y - center_y)) << 16) / Halide::Expr(r2_max));  // 16bit
 
-        Halide::Expr color = BayerMap::get_color(bayer_pattern, x, y);
+        Halide::Expr color = BayerMap::get_color(static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern)), x, y);
         Halide::Expr coef_mul = (Halide::cast(UInt(32), r2) * Halide::mux(color, {slope_r, slope_g, slope_b})) >> 16;  // 16bit
         Halide::Expr coef = Halide::cast(UInt(17), coef_mul) + Halide::mux(color, {offset_r, offset_g, offset_b});     // 17bit
         Halide::Expr coef_clamp = Halide::select(coef >= 65536, 65535, Halide::cast(UInt(16), coef));                  // 16bit
@@ -427,14 +430,15 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
+    //GeneratorParam<Luminance::Method> luminance_method { "luminance_method", Luminance::Method::SimpleY, Luminance::enum_map };
+    GeneratorParam<int32_t> luminance_method{"luminance_method", 2, 0, 2};
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
     GeneratorInput<Halide::Func> input{"input", Halide::UInt(16), 3};
     GeneratorOutput<Halide::Func> output{"output", Halide::UInt(16), 2};
 
     void generate() {
-        Luminance::Method luminance_method = Luminance::Method::SimpleY;
-        output(x, y) = Luminance::calc(luminance_method, input(0, x, y), input(1, x, y), input(2, x, y));
+        output(x, y) = Luminance::calc(static_cast<Luminance::Method>(static_cast<int32_t>(luminance_method)), input(0, x, y), input(1, x, y), input(2, x, y));
     }
 
     void schedule() {
