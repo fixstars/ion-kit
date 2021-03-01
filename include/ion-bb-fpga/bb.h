@@ -100,8 +100,8 @@ int32_t bit_width(uint64_t n) {
     return bits;
 }
 
-Halide::Func bayer_offset(Halide::Func input, BayerMap::Pattern bayer_pattern, Halide::Expr offset_r, Halide::Expr offset_g, Halide::Expr offset_b) {
-    Halide::Func output{"bayer_offset"};
+Halide::Func bayer_offset(Halide::Func input, BayerMap::Pattern bayer_pattern, Halide::Expr offset_r, Halide::Expr offset_g, Halide::Expr offset_b, std::string name = "bayer_offset") {
+    Halide::Func output{name};
     Halide::Var x{"x"}, y{"y"};
 
     Halide::Expr offset = Halide::mux(BayerMap::get_color(bayer_pattern, x, y), {offset_r, offset_g, offset_b});
@@ -154,8 +154,8 @@ public:
     }
 };
 
-Halide::Func bayer_white_balance(Halide::Func input, BayerMap::Pattern bayer_pattern, int32_t input_bits, Halide::Expr gain_r, Halide::Expr gain_g, Halide::Expr gain_b) {
-    Halide::Func output{"bayer_white_balance"};
+Halide::Func bayer_white_balance(Halide::Func input, BayerMap::Pattern bayer_pattern, int32_t input_bits, Halide::Expr gain_r, Halide::Expr gain_g, Halide::Expr gain_b, std::string name = "bayer_white_balance") {
+    Halide::Func output{name};
     Halide::Var x{"x"}, y{"y"};
 
     Halide::Expr gain = Halide::mux(BayerMap::get_color(bayer_pattern, x, y), {gain_r, gain_g, gain_b});
@@ -213,8 +213,8 @@ public:
     }
 };
 
-Halide::Func bayer_demosaic_simple(Halide::Func input, BayerMap::Pattern bayer_pattern) {
-    Halide::Func output{"bayer_demosaic_simple"};
+Halide::Func bayer_demosaic_simple(Halide::Func input, BayerMap::Pattern bayer_pattern, std::string name = "bayer_demosaic_simple") {
+    Halide::Func output{name};
     Halide::Var x{"x"}, y{"y"}, c{"c"};
 
     switch (bayer_pattern) {
@@ -292,8 +292,8 @@ public:
     }
 };
 
-Halide::Func gamma_correction_3d(Halide::Func input, int32_t input_bits, int32_t output_bits, int32_t lut_bits, int32_t lut_index_bits, double gamma) {
-    Halide::Func output{"gamma_correction_3d"};
+Halide::Func gamma_correction_3d(Halide::Func input, int32_t input_bits, int32_t output_bits, int32_t lut_bits, int32_t lut_index_bits, double gamma, std::string name = "gamma_correction_3d") {
+    Halide::Func output{name};
     Halide::Var x{"x"}, y{"y"}, c{"c"};
 
     int32_t lut_size = 1 << lut_index_bits;
@@ -394,8 +394,8 @@ public:
 
 Halide::Func lens_shading_correction_linear(Halide::Func input, BayerMap::Pattern bayer_pattern, int32_t width, int32_t height, int32_t input_bits,
                                             Halide::Expr slope_r, Halide::Expr slope_g, Halide::Expr slope_b,
-                                            Halide::Expr offset_r, Halide::Expr offset_g, Halide::Expr offset_b) {
-    Halide::Func output{"lens_shading_correction_linear"};
+                                            Halide::Expr offset_r, Halide::Expr offset_g, Halide::Expr offset_b, std::string name = "lens_shading_correction_linear") {
+    Halide::Func output{name};
     Halide::Var x{"x"}, y{"y"};
 
     int32_t center_x = width / 2;                                 // max 15bit
@@ -471,8 +471,8 @@ public:
     }
 };
 
-Halide::Func calc_luminance(Halide::Func input, Luminance::Method luminance_method) {
-    Halide::Func output{"calc_luminance"};
+Halide::Func calc_luminance(Halide::Func input, Luminance::Method luminance_method, std::string name = "calc_luminance") {
+    Halide::Func output{name};
     Halide::Var x{"x"}, y{"y"};
 
     output(x, y) = Luminance::calc(luminance_method, input(0, x, y), input(1, x, y), input(2, x, y));
@@ -522,8 +522,8 @@ public:
     }
 };
 
-Halide::Func resize_bilinear_3d(Halide::Func input, int32_t width, int32_t height, float scale) {
-    Halide::Func output{"resize_bilinear_3d"};
+Halide::Func resize_bilinear_3d(Halide::Func input, int32_t width, int32_t height, float scale, std::string name = "resize_bilinear_3d") {
+    Halide::Func output{name};
     Halide::Var x{"x"}, y{"y"}, c{"c"};
 
     // 12bit, fractional 8bit
@@ -594,8 +594,8 @@ public:
     }
 };
 
-Halide::Func bayer_downscale(Halide::Func input, int32_t downscale_factor) {
-    Halide::Func output{"bayer_downscale"};
+Halide::Func bayer_downscale(Halide::Func input, int32_t downscale_factor, std::string name = "bayer_downscale") {
+    Halide::Func output{name};
     Halide::Var x{"x"}, y{"y"};
 
     output(x, y) = input(x / 2 * 2 * downscale_factor + x % 2, y / 2 * 2 * downscale_factor + y % 2);
@@ -642,8 +642,8 @@ public:
     }
 };
 
-Halide::Func normalize_raw_image(Halide::Func input, int32_t input_bits, int32_t input_shift, int32_t output_bits) {
-    Halide::Func output{"normalize_raw_image"};
+Halide::Func normalize_raw_image(Halide::Func input, int32_t input_bits, int32_t input_shift, int32_t output_bits, std::string name = "normalize_raw_image") {
+    Halide::Func output{name};
     Halide::Var x{"x"}, y{"y"};
 
     Halide::Expr in = (input(x, y) >> input_shift) & ((1 << input_bits) - 1);
@@ -710,6 +710,7 @@ public:
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [3].concat(v.input.map(x => Math.floor(x / parseInt(v.downscale_factor) / 2))) }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
+    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
 
     //GeneratorParam<BayerMap::Pattern> bayer_pattern { "bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map };
     GeneratorParam<int32_t> bayer_pattern{"bayer_pattern", 0, 0, 3};
@@ -753,7 +754,7 @@ public:
                                                             shading_correction_offset_r, shading_correction_offset_g, shading_correction_offset_b);
         white_balance = bayer_white_balance(shading_correction, bayer_pattern, internal_bits, white_balance_gain_r, white_balance_gain_g, white_balance_gain_b);
         demosaic = bayer_demosaic_simple(white_balance, bayer_pattern);
-        gamma = gamma_correction_3d(input, internal_bits, 8, 8, 8, gamma_gamma);
+        gamma = gamma_correction_3d(input, internal_bits, 8, 8, 8, gamma_gamma, static_cast<std::string>(gc_prefix) + "simple_isp");
 
         output = gamma;
     }
