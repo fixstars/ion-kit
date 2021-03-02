@@ -149,6 +149,7 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+    GeneratorParam<std::string> gc_required_features{"gc_required_features", "cuda"};
 
     GeneratorParam<std::string> model_root_url_{"model_base_url", "http://ion-archives.s3-us-west-2.amazonaws.com/models/tlt_object_detection_ssd_resnet18/"};
     GeneratorParam<std::string> cache_root_{"cache_root", "/tmp/"};
@@ -225,6 +226,7 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+    GeneratorParam<std::string> gc_required_features{"gc_required_features", "cuda"};
 
     GeneratorParam<std::string> model_root_url_{"model_base_url", "http://ion-archives.s3-us-west-2.amazonaws.com/models/tlt_peoplenet_detectnet_v2_resnet18/"};
     GeneratorParam<std::string> cache_root_{"cache_root", "/tmp/"};
@@ -301,6 +303,7 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+    GeneratorParam<std::string> gc_required_features{"gc_required_features", "cuda"};
 
     GeneratorParam<std::string> model_root_url_{"model_base_url", "http://ion-archives.s3-us-west-2.amazonaws.com/models/tlt_peoplenet_detectnet_v2_resnet18/"};
     GeneratorParam<std::string> cache_root_{"cache_root", "/tmp/"};
