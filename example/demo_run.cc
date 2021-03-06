@@ -1,11 +1,12 @@
-#include <ion/ion.h>
-
 #include "demo.h"
 
 #include "ion-bb-demo/rt.h"
 #include "ion-bb-dnn/rt.h"
 #include "ion-bb-opencv/rt.h"
 #include <HalideBuffer.h>
+
+#include <iostream>
+#include <vector>
 
 using namespace ion;
 

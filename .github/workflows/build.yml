@@ -42,11 +42,18 @@ jobs:
 
     - name: Install dependencies
       shell: bash
-      run: sudo apt-get update && sudo apt-get install -y ninja-build libopencv-dev uuid-dev zlib1g-dev && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
+      run: sudo apt-get update && sudo apt-get install -y ninja-build uuid-dev zlib1g-dev && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
+    
+    - name: Install OpenCV 4
+      shell: bash
+      run: |
+        curl -L https://ion-archives.s3-us-west-2.amazonaws.com/genesis-runtime/OpenCV-4.5.1-x86_64-gcc75.sh -o $HOME/opencv_installer.sh
+        chmod 755 $HOME/opencv_installer.sh
+        sudo $HOME/opencv_installer.sh --prefix=/usr/ --skip-license
 
     - name: Download Halide package
       shell: bash
-      run: curl -L https://github.com/halide/Halide/releases/download/v8.0.0/halide-linux-64-gcc53-800-65c26cba6a3eca2d08a0bccf113ca28746012cc3.tgz | tar zx -C $HOME
+      run: curl -L https://github.com/halide/Halide/releases/download/v10.0.0/Halide-10.0.0-x86-64-linux-db901f7f7084025abc3cbb9d17b0f2d3f1745900.tar.gz | tar zx -C $HOME
 
     - name: Download onnxruntime package
       shell: bash
@@ -65,7 +72,7 @@ jobs:
       # Note the current convention is to use the -S and -B options here to specify source
       # and build directories, but this is only available with CMake 3.13 and higher.
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-      run: cmake $GITHUB_WORKSPACE -GNinja -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DHALIDE_ROOT=$HOME/halide -DONNXRUNTIME_ROOT=$HOME/onnxruntime-linux-x64-1.5.2 -DWITH_CUDA=OFF
+      run: cmake $GITHUB_WORKSPACE -GNinja -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DHalide_DIR=$HOME/Halide-10.0.0-x86-64-linux/lib/cmake/Halide -DHALIDE_ROOT=$HOME/Halide-10.0.0-x86-64-linux/ -DWITH_CUDA=OFF
 
     - name: Build
       working-directory: ${{runner.workspace}}/ion-kit/build
@@ -78,4 +85,5 @@ jobs:
       shell: bash
       # Execute tests defined by the CMake configuration.
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-      run: ctest --verbose -v -C $BUILD_TYPE
+      run: |
+        LD_LIBRARY_PATH=$HOME/onnxruntime-linux-x64-1.5.2/lib ctest --verbose -v -C $BUILD_TYPE

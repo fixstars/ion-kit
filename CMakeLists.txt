@@ -2,28 +2,33 @@ project(ion-kit LANGUAGES C CXX)
 
 cmake_minimum_required(VERSION 3.6)
 
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON) # This is required to export symbols on windows platform
-
-set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
-
 #
 # Options
 #
-set(HALIDE_ROOT "" CACHE PATH "Path to Halide")
 option(ION_BUILD_ALL_BB "Enable to build all building blocks" ON)
 set(ION_BBS_TO_BUILD "" CACHE STRING "A List of building blocks to build (This overrides ION_BUILD_ALL_BB)")
 option(ION_BUILD_DOC "Build documents." OFF)
 option(ION_BUILD_TEST "Enable to build tests" ON)
 option(ION_BUILD_EXAMPLE "Enable to build examples" ON)
-option(ION_BUNDLE_HALIDE "Enable to bundle halide binary into package" OFF)
+option(ION_BUNDLE_HALIDE "Enable to bundle Halide binary into package" OFF)
+#TODO: Enable define HALIDE_FOR_FPGA into compile option if it is ON
+option(ION_ENABLE_HALIDE_FPGA_BACKEND "Enable to Halide FPGA backend" OFF)
 option(WITH_CUDA "Enable CUDA with buliding examples." ON)
+
+#
+# CMake common settings
+#
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON) # This is required to export symbols on windows platform
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+
 
 #
 # Dependent libraries
 #
-find_package(Halide REQUIRED)
+find_package(Halide REQUIRED COMPONENTS shared)
 if (WITH_CUDA)
     find_package(CUDA REQUIRED)
 endif()
@@ -40,15 +45,22 @@ file(GENERATE OUTPUT ${CMAKE_BINARY_DIR}/VERSION CONTENT "${GIT_REV}")
 include(IonUtil)
 
 #
+# Enable FPGA feature
+#
+if (ION_ENABLE_HALIDE_FPGA_BACKEND)
+    add_compile_definitions(HALIDE_FOR_FPGA)
+endif()
+
+#
 # Build main library
 #
 file(GLOB ION_SRC src/*)
 add_library(ion-core SHARED ${ION_SRC})
-target_include_directories(ion-core PUBLIC "${PROJECT_SOURCE_DIR}/include;${HALIDE_INCLUDE_DIR}")
+target_include_directories(ion-core PUBLIC ${PROJECT_SOURCE_DIR}/include)
 if (UNIX)
-  target_link_libraries(ion-core Halide::Halide dl pthread z)
+  target_link_libraries(ion-core PUBLIC Halide::Halide Halide::Runtime dl pthread z)
 else()
-  target_link_libraries(ion-core Halide::Halide)
+  target_link_libraries(ion-core PUBLIC Halide::Halide Halide::Runtime)
 endif()
 
 #
@@ -138,14 +150,8 @@ install(FILES
 
 # Halide
 if (ION_BUNDLE_HALIDE)
-    install(DIRECTORY ${HALIDE_INCLUDE_DIR} DESTINATION .)
-    #TODO: Handle for Windows
-    if (UNIX)
-        install(FILES ${HALIDE_LIBRARY} DESTINATION lib)
-    else()
-        install(FILES ${HALIDE_ROOT}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>/Halide.dll DESTINATION bin)
-        install(FILES ${HALIDE_ROOT}/lib/Halide.lib DESTINATION lib)
-    endif()
+    set(Halide_INSTALL_DIR ${Halide_DIR}/../../../)
+    install(DIRECTORY ${Halide_INSTALL_DIR}/ DESTINATION .)
 endif()
 
 #

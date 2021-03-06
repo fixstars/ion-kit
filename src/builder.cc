@@ -1,6 +1,11 @@
 #include <fstream>
 
+#ifdef __linux__
+#include <unistd.h>
+#endif
+
 #include "ion/builder.h"
+#include "ion/generator.h"
 #include "ion/json.hpp"
 #include "ion/util.h"
 
@@ -11,6 +16,18 @@
 namespace ion {
 
 namespace {
+
+std::map<Halide::Output, std::string> compute_output_files(const Halide::Target &target,
+                                                           const std::string &base_path,
+                                                           const std::set<Halide::Output> &outputs) {
+    std::map<Halide::Output, const Halide::Internal::OutputInfo> output_info = Halide::Internal::get_output_info(target);
+
+    std::map<Halide::Output, std::string> output_files;
+    for (auto o : outputs) {
+        output_files[o] = base_path + output_info.at(o).extension;
+    }
+    return output_files;
+}
 
 bool is_ready(const std::vector<Node>& sorted, const Node& n) {
     bool ready = true;
@@ -104,20 +121,41 @@ void Builder::compile(const std::string& function_name, const CompileOption& opt
     Module m = p.compile_to_module(p.infer_arguments(), function_name, target_);
 
     // Tailor prefix
-    auto output_prefix = option.output_directory.empty() ? "." : option.output_directory;
+    auto output_prefix = option.output_directory.empty() ? "." : option.output_directory + "/";
     output_prefix += "/" + function_name;
 
-    // Generate header
-    Outputs output_files = Outputs().c_header(output_prefix + ".h");
+    std::set<Output> outputs;
 
-    // Generate library
-    if (target_.os == Target::Windows && !target_.has_feature(Target::MinGW)) {
-        output_files = output_files.static_library(output_prefix + ".lib");
+#ifdef HALIDE_FOR_FPGA
+    if (target_.has_fpga_feature()) {
+        outputs.insert(Output::hls_package);
     } else {
-        output_files = output_files.static_library(output_prefix + ".a");
+#endif
+        outputs.insert(Output::c_header);
+        outputs.insert(Output::static_library);
+#ifdef HALIDE_FOR_FPGA
     }
+#endif
 
+    const auto output_files = compute_output_files(target_, output_prefix, outputs);
     m.compile(output_files);
+
+#ifdef HALIDE_FOR_FPGA
+#ifdef __linux__
+    if (target_.has_fpga_feature()) {
+        std::string hls_dir = output_files.at(Output::hls_package);
+        chdir(hls_dir.c_str());
+        int ret = std::getenv("ION_CSIM") ? system("make -f Makefile.csim.static") : system("make -f Makefile.ultra96v2");
+        std::string lib_name = std::getenv("ION_CSIM") ? function_name + "_sim.a" : function_name + ".a";
+        internal_assert(ret == 0) << "Building hls package is failed.\n";
+        std::string cmd = "mv " + lib_name + " ../" + function_name + ".a && mv " + function_name + ".h ../";
+        ret = system(cmd.c_str());
+        internal_assert(ret == 0) << "Building hls package is failed.\n";
+        chdir("..");
+    }
+#endif
+#endif
+
     return;
 }
 

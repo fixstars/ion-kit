@@ -1,6 +1,6 @@
 set(HALIDE_ROOT $ENV{HALIDE_ROOT} CACHE PATH "Path to Halide")
 if(HALIDE_ROOT STREQUAL "")
-    message(FATAL_ERROR "Set appropriate path to Halide")
+    message(FATAL_ERROR "Set HALIDE_ROOT")
 endif()
 
 # OpenCV
