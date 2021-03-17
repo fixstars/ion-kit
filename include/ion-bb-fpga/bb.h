@@ -707,7 +707,7 @@ public:
     GeneratorParam<std::string> gc_title{"gc_title", "Simple ISP(FPGA)"};
     GeneratorParam<std::string> gc_description{"gc_description", "Make RGB image from RAW image."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [3].concat(v.input.map(x => Math.floor(x / parseInt(v.downscale_factor) / 2))) }}))"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [3].concat(v.input.map(x => Math.floor(x / 2))) }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
@@ -717,7 +717,6 @@ public:
     // Max 16bit
     GeneratorParam<int32_t> width{"width", 0, 0, 65535};
     GeneratorParam<int32_t> height{"height", 0, 0, 65535};
-    GeneratorParam<int32_t> downscale_downscale_factor{"downscale_downscale_factor", 1};
     GeneratorParam<int32_t> normalize_input_bits{"normalize_input_bits", 10, 1, 16};
     GeneratorParam<int32_t> normalize_input_shift{"normalize_input_shift", 6, 0, 15};
     GeneratorParam<uint16_t> offset_offset_r{"offset_offset_r", 0};
@@ -740,16 +739,12 @@ public:
     void generate() {
         int32_t internal_bits = normalize_input_bits;
         BayerMap::Pattern bayer_pattern = static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern));
-        int32_t downscale_factor = downscale_downscale_factor;
         int32_t input_width = width;
         int32_t input_height = height;
-        int32_t downscale_width = input_width / downscale_factor;
-        int32_t downscale_height = input_height / downscale_factor;
 
-        downscale = bayer_downscale(input, downscale_factor);
-        normalize = normalize_raw_image(downscale, normalize_input_bits, normalize_input_shift, internal_bits);
+        normalize = normalize_raw_image(input, normalize_input_bits, normalize_input_shift, internal_bits);
         offset = bayer_offset(normalize, bayer_pattern, offset_offset_r, offset_offset_g, offset_offset_b);
-        shading_correction = lens_shading_correction_linear(offset, bayer_pattern, downscale_width, downscale_height, internal_bits,
+        shading_correction = lens_shading_correction_linear(offset, bayer_pattern, input_width, input_height, internal_bits,
                                                             shading_correction_slope_r, shading_correction_slope_g, shading_correction_slope_b,
                                                             shading_correction_offset_r, shading_correction_offset_g, shading_correction_offset_b);
         white_balance = bayer_white_balance(shading_correction, bayer_pattern, internal_bits, white_balance_gain_r, white_balance_gain_g, white_balance_gain_b);
@@ -767,15 +762,11 @@ public:
             std::vector<Func> ip_in, ip_out;
             std::tie(ip_in, ip_out) = output.accelerate({input}, {}, Var::outermost());
 
-            downscale.compute_at(output, Halide::Var::outermost());
             normalize.compute_at(output, Halide::Var::outermost());
             offset.compute_at(output, Halide::Var::outermost());
             shading_correction.compute_at(output, Halide::Var::outermost());
             white_balance.compute_at(output, Halide::Var::outermost());
             demosaic.compute_at(output, Halide::Var::outermost());
-
-            // workaround for hls backend
-            ip_in[0].bound(ip_in[0].args()[0], 0, width).bound(ip_in[0].args()[1], 0, height);
 
             demosaic.bound(demosaic.args()[0], 0, 3).unroll(demosaic.args()[0]).hls_burst(3);
             ip_out[0].bound(ip_out[0].args()[0], 0, 3).unroll(ip_out[0].args()[0]).hls_burst(3);
@@ -790,7 +781,6 @@ public:
     }
 
 private:
-    Halide::Func downscale;
     Halide::Func normalize;
     Halide::Func offset;
     Halide::Func shading_correction;
