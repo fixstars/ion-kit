@@ -42,10 +42,12 @@ class DynamicModule {
 
      ~DynamicModule() {
          if (handle_ != nullptr) {
+             // NOTE: DSO which is loaded by with_bb_module should not be unloaded even if Builder is destructed.
+             // Loading more than twice does not have any side effects.
 #ifdef _WIN32
-             FreeLibrary(handle_);
+//             FreeLibrary(handle_);
 #else
-             dlclose(handle_);
+//             dlclose(handle_);
 #endif
          }
      }

@@ -1,6 +1,6 @@
 set(HALIDE_ROOT $ENV{HALIDE_ROOT} CACHE PATH "Path to Halide")
 if(HALIDE_ROOT STREQUAL "")
-    message(FATAL_ERROR "Set appropriate path to Halide")
+    message(FATAL_ERROR "Set HALIDE_ROOT")
 endif()
 
 find_package(OpenCV REQUIRED)
@@ -12,10 +12,6 @@ set(INCLUDE_DIRS
 set(LINK_DIRS
     ${HALIDE_ROOT}/bin
     ${OpenCV_DIR}/lib)
-
-set(RUNTIME_ENVS
-    LD_LIBRARY_PATH ${HALIDE_ROOT}/bin
-    LD_LIBRARY_PATH ${OpenCV_DIR}/lib)
 
 if (UNIX)
     set(LIBRARIES

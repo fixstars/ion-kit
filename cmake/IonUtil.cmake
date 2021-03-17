@@ -22,15 +22,15 @@ function(ion_compile NAME)
             PUBLIC -fno-rtti  # For Halide::Generator
             PUBLIC -rdynamic) # For JIT compiling
     endif()
-    target_include_directories(${NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include;${ION_BB_INCLUDE_DIRS};${HALIDE_INCLUDE_DIR}")
-    target_link_libraries(${NAME} ion-core Halide::Halide ${ION_BB_LIBRARIES} ${PLATFORM_LIBRARIES})
+    target_include_directories(${NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include;${ION_BB_INCLUDE_DIRS}")
+    target_link_libraries(${NAME} PRIVATE ion-core ${ION_BB_LIBRARIES} ${PLATFORM_LIBRARIES})
     set_target_properties(${NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY compile PIPELINE_NAME ${IEC_PIPELINE_NAME})
 endfunction()
 
 function(ion_run NAME COMPILE_NAME)
     set(options)
     set(oneValueArgs TARGET_STRING)
-    set(multiValueArgs SRCS RUNTIME_ENVS COMPILE_ARGS RUNTIME_ARGS)
+    set(multiValueArgs SRCS COMPILE_ARGS RUNTIME_ARGS)
     cmake_parse_arguments(IER "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if(NOT IER_TARGET_STRING)
@@ -40,7 +40,7 @@ function(ion_run NAME COMPILE_NAME)
     get_target_property(PIPELINE_NAME ${COMPILE_NAME} PIPELINE_NAME)
 
     # Run compile
-    set(OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/compile/${IER_TARGET_STRING})
+    set(OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/compile/${NAME})
     set(HEADER ${OUTPUT_PATH}/${PIPELINE_NAME}.h)
     set(STATIC_LIB ${OUTPUT_PATH}/${PIPELINE_NAME}${CMAKE_STATIC_LIBRARY_SUFFIX})
     add_custom_command(OUTPUT ${OUTPUT_PATH}
@@ -66,22 +66,21 @@ function(ion_run NAME COMPILE_NAME)
 
     # Build run
     add_executable(${NAME} ${IER_SRCS} ${HEADER})
-    target_include_directories(${NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include;${ION_BB_INCLUDE_DIRS};${HALIDE_INCLUDE_DIR};${OUTPUT_PATH}")
-    target_link_libraries(${NAME} ${STATIC_LIB} ${ION_BB_LIBRARIES} Halide::Halide ${PLATFORM_LIBRARIES})
+    target_include_directories(${NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include;${ION_BB_INCLUDE_DIRS};${OUTPUT_PATH}")
+    target_link_libraries(${NAME} PRIVATE ${STATIC_LIB} Halide::Runtime ${ION_BB_LIBRARIES} ${PLATFORM_LIBRARIES})
 
     add_test(NAME ${NAME} COMMAND $<TARGET_FILE:${NAME}> ${IER_RUNTIME_ARGS})
-    set_tests_properties(${NAME} PROPERTIES ENVIRONMENT "${IER_RUNTIME_ENVS}")
 endfunction()
 
 # For multiple target, don't use this function.
 function(ion_compile_and_run NAME)
     set(options)
     set(oneValueArgs TARGET_STRING)
-    set(multiValueArgs COMPILE_SRCS RUN_SRCS RUNTIME_ENVS RUNTIME_ARGS)
+    set(multiValueArgs COMPILE_SRCS RUN_SRCS RUNTIME_ARGS)
     cmake_parse_arguments(IECR "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     ion_compile(${NAME}_compile SRCS ${IECR_COMPILE_SRCS} PIPELINE_NAME ${NAME})
-    ion_run(${NAME} ${NAME}_compile SRCS ${IECR_RUN_SRCS} RUNTIME_ENVS ${IECR_RUNTIME_ENVS} RUNTIME_ARGS ${IECR_RUNTIME_ARGS} TARGET_STRING ${IECR_TARGET_STRING})
+    ion_run(${NAME} ${NAME}_compile SRCS ${IECR_RUN_SRCS} RUNTIME_ARGS ${IECR_RUNTIME_ARGS} TARGET_STRING ${IECR_TARGET_STRING})
 endfunction()
 
 function(ion_jit NAME)
@@ -94,15 +93,15 @@ function(ion_jit NAME)
         # For JIT compiling
         target_compile_options(${NAME} PUBLIC -rdynamic)
     endif()
-    target_include_directories(${NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include;${ION_BB_INCLUDE_DIRS};${HALIDE_INCLUDE_DIR}")
-    target_link_libraries(${NAME} ion-core Halide::Halide ${ION_BB_LIBRARIES} ${PLATFORM_LIBRARIES})
+    target_include_directories(${NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include;${ION_BB_INCLUDE_DIRS}")
+    target_link_libraries(${NAME} PRIVATE ion-core ${ION_BB_LIBRARIES} ${PLATFORM_LIBRARIES})
     set_target_properties(${NAME} PROPERTIES ENABLE_EXPORTS ON)
 endfunction()
 
 function(ion_register_test TEST_NAME EXEC_NAME)
     set(options)
     set(oneValueArgs TARGET_STRING)
-    set(multiValueArgs RUNTIME_ENVS RUNTIME_ARGS)
+    set(multiValueArgs RUNTIME_ARGS)
     cmake_parse_arguments(IERT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if (IERT_TARGET_STRING)

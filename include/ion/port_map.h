@@ -1,11 +1,36 @@
 #ifndef ION_PORT_MAP_H
 #define ION_PORT_MAP_H
 
+#include <functional>
 #include <string>
+#include <tuple>
 
 #include <Halide.h>
 
 #include "ion/util.h"
+
+namespace std
+{
+
+template<>
+struct hash<tuple<string, string>>
+{
+    std::size_t operator()(const tuple<string, string>& k) const noexcept
+    {
+        return std::hash<std::string>{}(std::get<0>(k)) ^ std::hash<std::string>{}(std::get<1>(k));
+    }
+};
+
+template<>
+struct equal_to<tuple<string, string>>
+{
+    bool operator()(const tuple<string, string>& v0, const tuple<string, string>& v1) const
+    {
+        return (std::get<0>(v0) == std::get<0>(v1) && std::get<1>(v0) == std::get<1>(v1));
+    }
+};
+
+} // std
 
 namespace ion {
 
@@ -13,24 +38,6 @@ namespace ion {
  * PortMap is used to assign actual value to the port input.
  */
 class PortMap {
-
-    using key_t = std::tuple<std::string, std::string>;
-
-    struct key_hash : public std::unary_function<key_t, std::size_t>
-    {
-        std::size_t operator()(const key_t& k) const
-        {
-            return std::hash<std::string>{}(std::get<0>(k)) ^ std::hash<std::string>{}(std::get<1>(k));
-        }
-    };
-
-    struct key_equal : public std::binary_function<key_t, key_t, bool>
-    {
-        bool operator()(const key_t& v0, const key_t& v1) const
-        {
-            return (std::get<0>(v0) == std::get<0>(v1) && std::get<1>(v0) == std::get<1>(v1));
-        }
-    };
 
 public:
 
@@ -142,7 +149,7 @@ public:
         return param_func_.at(k);
     }
 
-    std::unordered_map<key_t, std::vector<Halide::Buffer<>>, key_hash, key_equal> get_output_buffer() const {
+    std::unordered_map<std::tuple<std::string, std::string>, std::vector<Halide::Buffer<>>> get_output_buffer() const {
         return output_buffer_;
     }
 
@@ -154,7 +161,7 @@ public:
 
     std::unordered_map<std::string, Halide::Expr> param_expr_;
     std::unordered_map<std::string, Halide::Func> param_func_;
-    std::unordered_map<key_t, std::vector<Halide::Buffer<>>, key_hash, key_equal> output_buffer_;
+    std::unordered_map<std::tuple<std::string, std::string>, std::vector<Halide::Buffer<>>> output_buffer_;
     Halide::ParamMap param_map_;
 };
 

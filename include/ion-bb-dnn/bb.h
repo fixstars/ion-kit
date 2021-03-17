@@ -6,8 +6,8 @@
 #define UUID_STR_LEN 36
 #endif
 
-#include <ion/ion.h>
 #include "sole.hpp"
+#include <ion/ion.h>
 
 namespace ion {
 namespace bb {
@@ -127,9 +127,9 @@ public:
     GeneratorParam<std::string> gc_title{"gc_title", "Object Detection (Array)"};
 };
 
-} // dnn
-} // bb
-} // ion
+}  // namespace dnn
+}  // namespace bb
+}  // namespace ion
 
 ION_REGISTER_BUILDING_BLOCK(ion::bb::dnn::ReorderCHW2HWC<uint8_t>, dnn_reorder_chw2hwc);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::dnn::ReorderHWC2CHW<uint8_t>, dnn_reorder_hwc2chw);
@@ -149,6 +149,7 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+    GeneratorParam<std::string> gc_required_features{"gc_required_features", "cuda"};
 
     GeneratorParam<std::string> model_root_url_{"model_base_url", "http://ion-archives.s3-us-west-2.amazonaws.com/models/tlt_object_detection_ssd_resnet18/"};
     GeneratorParam<std::string> cache_root_{"cache_root", "/tmp/"};
@@ -206,9 +207,9 @@ private:
     Halide::Func input;
 };
 
-} // dnn
-} // bb
-} // ion
+}  // namespace dnn
+}  // namespace bb
+}  // namespace ion
 
 ION_REGISTER_BUILDING_BLOCK(ion::bb::dnn::TLTObjectDetectionSSD, dnn_tlt_object_detection_ssd);
 
@@ -225,6 +226,7 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+    GeneratorParam<std::string> gc_required_features{"gc_required_features", "cuda"};
 
     GeneratorParam<std::string> model_root_url_{"model_base_url", "http://ion-archives.s3-us-west-2.amazonaws.com/models/tlt_peoplenet_detectnet_v2_resnet18/"};
     GeneratorParam<std::string> cache_root_{"cache_root", "/tmp/"};
@@ -282,9 +284,9 @@ private:
     Halide::Func input;
 };
 
-} // dnn
-} // bb
-} // ion
+}  // namespace dnn
+}  // namespace bb
+}  // namespace ion
 
 ION_REGISTER_BUILDING_BLOCK(ion::bb::dnn::TLTPeopleNet, dnn_tlt_peoplenet);
 
@@ -301,12 +303,13 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+    GeneratorParam<std::string> gc_required_features{"gc_required_features", "cuda"};
 
     GeneratorParam<std::string> model_root_url_{"model_base_url", "http://ion-archives.s3-us-west-2.amazonaws.com/models/tlt_peoplenet_detectnet_v2_resnet18/"};
     GeneratorParam<std::string> cache_root_{"cache_root", "/tmp/"};
     GeneratorParam<int> input_width{"width", 640};
     GeneratorParam<int> input_height{"height", 480};
-    GeneratorParam<int> output_size{"output_size", 16*1024*1024}; // 16MiB
+    GeneratorParam<int> output_size{"output_size", 16 * 1024 * 1024};  // 16MiB
 
     GeneratorInput<Halide::Func> input_{"input", Halide::type_of<float>(), 3};
     GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 1};
@@ -361,9 +364,9 @@ private:
     Halide::Func input;
 };
 
-} // dnn
-} // bb
-} // ion
+}  // namespace dnn
+}  // namespace bb
+}  // namespace ion
 
 ION_REGISTER_BUILDING_BLOCK(ion::bb::dnn::TLTPeopleNetMD, dnn_tlt_peoplenet_md);
 
@@ -385,8 +388,8 @@ public:
     GeneratorParam<std::string> cache_root_{"cache_root", "/tmp/"};
     GeneratorParam<int> input_img_width{"width", 0};
     GeneratorParam<int> input_img_height{"height", 0};
-    GeneratorParam<int> input_md_size{"input_md_size", 16*1024*1024}; // 16MiB
-    GeneratorParam<int> output_size{"output_size", 16*1024*1024}; // 16MiB
+    GeneratorParam<int> input_md_size{"input_md_size", 16 * 1024 * 1024};  // 16MiB
+    GeneratorParam<int> output_size{"output_size", 16 * 1024 * 1024};      // 16MiB
 
     GeneratorInput<Halide::Func> input_img{"image", Halide::type_of<float>(), 3};
     GeneratorInput<Halide::Func> input_md{"metadata", Halide::type_of<uint8_t>(), 1};
@@ -451,9 +454,9 @@ private:
     Halide::Func input_md_;
 };
 
-} // dnn
-} // bb
-} // ion
+}  // namespace dnn
+}  // namespace bb
+}  // namespace ion
 
 ION_REGISTER_BUILDING_BLOCK(ion::bb::dnn::ClassifyGender, dnn_classify_gender);
 
@@ -471,7 +474,7 @@ public:
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
 
-    GeneratorParam<uint32_t> io_md_size{"io_md_size", 16*1024*1024}; // 16MiB
+    GeneratorParam<uint32_t> io_md_size{"io_md_size", 16 * 1024 * 1024};  // 16MiB
     GeneratorParam<uint32_t> period_in_sec{"period_in_sec", 30};
 
     GeneratorInput<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 1};
@@ -488,7 +491,7 @@ public:
         input_ = Func{static_cast<std::string>(gc_prefix) + "input"};
         input_(_) = input(_);
 
-        std::vector<ExternFuncArgument> params{ input_, cast<uint32_t>(io_md_size), session_id_buf, cast<uint32_t>(period_in_sec)};
+        std::vector<ExternFuncArgument> params{input_, cast<uint32_t>(io_md_size), session_id_buf, cast<uint32_t>(period_in_sec)};
         Func regurator(static_cast<std::string>(gc_prefix) + "json_dict_average_regurator");
         regurator.define_extern("ion_bb_dnn_json_dict_average_regurator", params, UInt(8), 1);
         regurator.compute_root();
@@ -504,9 +507,9 @@ private:
     Halide::Func input_;
 };
 
-} // dnn
-} // bb
-} // ion
+}  // namespace dnn
+}  // namespace bb
+}  // namespace ion
 
 ION_REGISTER_BUILDING_BLOCK(ion::bb::dnn::JSONDictAverageRegulator, dnn_json_dict_average_regulator);
 
@@ -519,11 +522,11 @@ public:
     GeneratorParam<std::string> gc_title{"gc_title", "IFTTT WebHook Uploader"};
     GeneratorParam<std::string> gc_description{"gc_description", "This makes POST request against to webhook endpoint on ifttt.com."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "output,network"};
-    GeneratorParam<std::string> gc_inference{"gc_inference",  R"((function(v){ return { output: [] }}))"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "ifttt_webhook_url"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self,assume_compute_root"};
+    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
-    GeneratorParam<uint32_t> input_md_size{"input_md_size", 16*1024*1024}; // 16MiB
+    GeneratorParam<uint32_t> input_md_size{"input_md_size", 16 * 1024 * 1024};  // 16MiB
     GeneratorParam<std::string> ifttt_webhook_url{"ifttt_webhook_url", ""};
     GeneratorInput<Halide::Func> input_md{"input_md", Halide::type_of<uint8_t>(), 1};
     GeneratorOutput<int32_t> output{"output"};
@@ -537,7 +540,7 @@ public:
         std::memcpy(session_id_buf.data(), session_id.c_str(), session_id.size());
 
         std::string ifttt_webhook_url_str(ifttt_webhook_url);
-        Halide::Buffer<uint8_t> ifttt_webhook_url_buf(ifttt_webhook_url_str.size()+1);
+        Halide::Buffer<uint8_t> ifttt_webhook_url_buf(ifttt_webhook_url_str.size() + 1);
         ifttt_webhook_url_buf.fill(0);
         std::memcpy(ifttt_webhook_url_buf.data(), ifttt_webhook_url_str.c_str(), ifttt_webhook_url_str.size());
 
@@ -545,7 +548,7 @@ public:
         input_md_(_) = input_md(_);
 
         std::vector<ExternFuncArgument> params = {input_md_, static_cast<int>(input_md_size), session_id_buf, ifttt_webhook_url_buf};
-        Func uploader(static_cast<std::string>(gc_prefix)+"ifttt_webhook_uploader");
+        Func uploader(static_cast<std::string>(gc_prefix) + "ifttt_webhook_uploader");
         uploader.define_extern("ion_bb_dnn_ifttt_webhook_uploader", params, Int(32), 0);
         uploader.compute_root();
         output() = uploader();
@@ -558,9 +561,9 @@ public:
     Halide::Func input_md_;
 };
 
-} // dnn
-} // bb
-} // ion
+}  // namespace dnn
+}  // namespace bb
+}  // namespace ion
 
 ION_REGISTER_BUILDING_BLOCK(ion::bb::dnn::IFTTTWebHookUploader, dnn_ifttt_webhook_uploader);
 
