@@ -43,6 +43,7 @@ RUN cmake -G Ninja \
         -D CMAKE_BUILD_TYPE=Release \
         -D CMAKE_INSTALL_PREFIX=ion-kit-install \
         -D Halide_DIR=/usr/local/halide/lib/cmake/Halide \
+        -D HALIDE_ROOT=/usr/local/halide \
         -D ION_BUILD_ALL_BB=OFF \
         -D ION_BUILD_DOC=ON \
         -D ION_BUILD_TEST=ON \
@@ -83,14 +84,16 @@ COPY --from=ion-core-build /ion-kit/build/ion-core.deb /opt/
 FROM ion-core-builder AS ion-kit-builder
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
-        libopencv-dev \
-        uuid-dev \
+        libgtk2.0-0 \
+        libopenexr22 \
         && apt-get clean \
         && rm -rf /var/lib/apt/lists/*
 
-RUN curl -L https://github.com/microsoft/onnxruntime/releases/download/v1.5.2/onnxruntime-linux-x64-1.5.2.tgz | tar zx -C /usr/local/
-ENV ONNXRUNTIME_ROOT=/usr/local/onnxruntime-linux-x64-1.5.2
+# OpenCV
+RUN curl -L https://ion-archives.s3-us-west-2.amazonaws.com/genesis-runtime/OpenCV-4.5.1-x86_64-gcc75.sh -o x.sh && sh x.sh --skip-license --prefix=/usr && rm x.sh
 
+# ONNXRuntime
+RUN curl -L https://ion-archives.s3-us-west-2.amazonaws.com/genesis-runtime/onnxruntime-linux-x64-gcc75-1.6.0.tar.gz | tar xz -C /usr --strip-components 1
 
 #
 # 3.2. Build stage for ion-kit
@@ -107,6 +110,7 @@ RUN cmake -G Ninja \
         -D CMAKE_BUILD_TYPE=Release \
         -D CMAKE_INSTALL_PREFIX=ion-kit-install \
         -D Halide_DIR=/usr/local/halide/lib/cmake/Halide \
+        -D HALIDE_ROOT=/usr/local/halide \
         -D ION_BUILD_ALL_BB=ON \
         -D ION_BUILD_DOC=ON \
         -D ION_BUILD_TEST=ON \

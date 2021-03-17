@@ -1,11 +1,11 @@
-#include <ion/ion.h>
-
 #include "sgm.h"
 
 #include "ion-bb-genesis-cloud/rt.h"
 #include <HalideBuffer.h>
 
-using namespace ion;
+#include <iostream>
+
+// using namespace ion;
 
 int main() {
     try {

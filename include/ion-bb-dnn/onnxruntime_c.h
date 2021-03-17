@@ -1072,6 +1072,7 @@ class ONNXRuntime {
 public:
     using OrtGetApiBase_t = const OrtApiBase *(*)ORT_API_CALL(void) NO_EXCEPTION;
     using OrtSessionOptionsAppendExecutionProvider_Tensorrt_t = OrtStatus *(*)(OrtSessionOptions *options, int device_id);
+    using OrtSessionOptionsAppendExecutionProvider_CUDA_t = OrtStatus *(*)(OrtSessionOptions *options, int device_id);
 
     ONNXRuntime()
         : dm_{"onnxruntime"}, api_(nullptr)
@@ -1085,6 +1086,11 @@ public:
 
     const OrtApi *get_api() const {
         return const_cast<const OrtApi *>(api_);
+    }
+
+    void enable_cuda_provider(OrtSessionOptions *session_options, int device_id) {
+        OrtSessionOptionsAppendExecutionProvider_CUDA_t activate_cuda_provider = dm_.get_symbol<OrtSessionOptionsAppendExecutionProvider_CUDA_t>("OrtSessionOptionsAppendExecutionProvider_CUDA");
+        check_status(activate_cuda_provider(session_options, device_id));
     }
 
     void enable_tensorrt_provider(OrtSessionOptions *session_options, int device_id) {

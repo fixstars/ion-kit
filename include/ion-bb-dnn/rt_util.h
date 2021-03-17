@@ -1,12 +1,14 @@
 #ifndef ION_BB_DNN_UTIL_H
 #define ION_BB_DNN_UTIL_H
 
-#include <dlfcn.h>
 #include <algorithm>
+#include <dlfcn.h>
 #include <map>
 #include <stdexcept>
 #include <string>
 #include <vector>
+
+#include <opencv2/core.hpp>
 
 namespace ion {
 namespace bb {
@@ -25,7 +27,7 @@ std::tuple<std::string, std::string> parse_url(const std::string &url) {
 }
 
 template<typename... Rest>
-std::string format(const char *fmt, const Rest &... rest) {
+std::string format(const char *fmt, const Rest &...rest) {
     int length = snprintf(NULL, 0, fmt, rest...) + 1;  // Explicit place for null termination
     std::vector<char> buf(length, 0);
     snprintf(&buf[0], length, fmt, rest...);
@@ -41,7 +43,11 @@ public:
     using Handle = void *;
 #endif
 
-    DynamicModule(const std::string &module_name, bool with_extension = false) {
+    DynamicModule()
+        : DynamicModule("") {
+    }
+
+    DynamicModule(const std::string &module_name, bool rtld_global = false, bool with_extension = false) {
         if (module_name == "") {
             handle_ = nullptr;
             return;
@@ -55,7 +61,8 @@ public:
         }
 #else
         auto file_name = with_extension ? module_name : "lib" + module_name + ".so";
-        handle_ = dlopen(file_name.c_str(), RTLD_NOW);
+        const int flag = RTLD_NOW | (rtld_global ? RTLD_GLOBAL : 0);
+        handle_ = dlopen(file_name.c_str(), flag);
         if (handle_ == nullptr) {
             return;
         }
@@ -65,9 +72,10 @@ public:
     ~DynamicModule() {
         if (handle_ != nullptr) {
 #ifdef _WIN32
-            FreeLibrary(handle_);
+            // NOTE: Do not closing DLL explicitly
+            // to avoid SEGV at the ORT threadpoool.
 #else
-            dlclose(handle_);
+            // dlclose(handle_);
 #endif
         }
     }
@@ -118,10 +126,37 @@ private:
 };
 
 typedef struct DetectionBox {
-    float max_conf;
-    int max_id;
+    int class_id;
+    float confidence;
     float x1, x2, y1, y2;
 } DetectionBox;
+
+void to_json(nlohmann::json &j, const DetectionBox &v) {
+    j["id"] = v.class_id;
+    j["c"] = v.confidence;
+    j["x1"] = v.x1;
+    j["x2"] = v.x2;
+    j["y1"] = v.y1;
+    j["y2"] = v.y2;
+}
+
+void from_json(const nlohmann::json &j, DetectionBox &v) {
+    v.class_id = j["id"];
+    v.confidence = j["c"];
+    v.x1 = j["x1"];
+    v.x2 = j["x2"];
+    v.y1 = j["y1"];
+    v.y2 = j["y2"];
+}
+
+std::vector<float> sigmoid(const std::vector<float> &input) {
+    std::vector<float> sigmoid_tensor(input.size());
+    for (auto i = decltype(input.size())(0); i < input.size(); ++i) {
+        sigmoid_tensor[i] = 1.f / (1.f + std::exp(-input[i]));
+    }
+
+    return sigmoid_tensor;
+}
 
 float area(const DetectionBox &b) {
     return (b.x2 - b.x1) * (b.y2 - b.y1);
@@ -148,16 +183,16 @@ float union_(const DetectionBox &a, const DetectionBox &b) {
 void coco_render_boxes(cv::Mat &frame, const std::vector<DetectionBox> &boxes, const int w, const int h, int id_offset = 0) {
 
     static const std::map<int, std::pair<const char *, cv::Scalar>> label_color_map = {
-        { 0, {"background", cv::Scalar(255, 255, 255)}},
-        { 1, {"person", cv::Scalar(111, 221, 142)}},
-        { 2, {"bicycle", cv::Scalar(199, 151, 121)}},
-        { 3, {"car", cv::Scalar(145, 233, 34)}},
-        { 4, {"motorbike", cv::Scalar(110, 131, 63)}},
-        { 5, {"aeroplane", cv::Scalar(251, 141, 195)}},
-        { 6, {"bus", cv::Scalar(136, 137, 194)}},
-        { 7, {"train", cv::Scalar(114, 27, 34)}},
-        { 8, {"truck", cv::Scalar(172, 221, 65)}},
-        { 9, {"boat", cv::Scalar(7, 30, 178)}},
+        {0, {"background", cv::Scalar(255, 255, 255)}},
+        {1, {"person", cv::Scalar(111, 221, 142)}},
+        {2, {"bicycle", cv::Scalar(199, 151, 121)}},
+        {3, {"car", cv::Scalar(145, 233, 34)}},
+        {4, {"motorbike", cv::Scalar(110, 131, 63)}},
+        {5, {"aeroplane", cv::Scalar(251, 141, 195)}},
+        {6, {"bus", cv::Scalar(136, 137, 194)}},
+        {7, {"train", cv::Scalar(114, 27, 34)}},
+        {8, {"truck", cv::Scalar(172, 221, 65)}},
+        {9, {"boat", cv::Scalar(7, 30, 178)}},
         {10, {"traffic light", cv::Scalar(31, 28, 230)}},
         {11, {"fire hydrant", cv::Scalar(67, 214, 26)}},
         {12, {"12", cv::Scalar(255, 255, 255)}},
@@ -242,7 +277,7 @@ void coco_render_boxes(cv::Mat &frame, const std::vector<DetectionBox> &boxes, c
     };
 
     for (const auto &b : boxes) {
-        const auto lc = label_color_map.at(b.max_id + id_offset);
+        const auto lc = label_color_map.at(b.class_id + id_offset);
         const auto label = lc.first;
         const auto color = lc.second / 255.0;
         const int x1 = b.x1 * w;

@@ -2,6 +2,7 @@
 #define TEST_RT_H
 
 #include <iostream>
+#include <HalideBuffer.h>
 
 #ifdef _WIN32
 #define DLLEXPORT __declspec(dllexport)

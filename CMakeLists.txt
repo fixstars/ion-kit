@@ -45,6 +45,13 @@ file(GENERATE OUTPUT ${CMAKE_BINARY_DIR}/VERSION CONTENT "${GIT_REV}")
 include(IonUtil)
 
 #
+# Enable FPGA feature
+#
+if (ION_ENABLE_HALIDE_FPGA_BACKEND)
+    add_compile_definitions(HALIDE_FOR_FPGA)
+endif()
+
+#
 # Build main library
 #
 file(GLOB ION_SRC src/*)
@@ -55,8 +62,6 @@ if (UNIX)
 else()
   target_link_libraries(ion-core PUBLIC Halide::Halide Halide::Runtime)
 endif()
-
-configure_file(${CMAKE_SOURCE_DIR}/ion-core.pc.in ${CMAKE_BINARY_DIR}/ion-core.pc @ONLY)
 
 #
 # ion-bb
@@ -118,7 +123,6 @@ endif()
 #
 # Install
 #
-install(FILES ${CMAKE_BINARY_DIR}/ion-core.pc DESTINATION lib/pkgconfig/)
 install(FILES cmake/ion-bb-config.cmake DESTINATION share/cmake/)
 
 if (UNIX)
@@ -126,6 +130,11 @@ if (UNIX)
 else()
     install(FILES ${CMAKE_BINARY_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>/ion-core.dll DESTINATION bin)
     install(FILES ${CMAKE_BINARY_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>/ion-core.lib DESTINATION lib)
+
+    # These lines is for backward compatibility.
+    # TODO: Deprecate old name of dll/lib.
+    install(FILES ${CMAKE_BINARY_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>/ion-core.dll DESTINATION bin RENAME ion.dll)
+    install(FILES ${CMAKE_BINARY_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>/ion-core.lib DESTINATION lib RENAME ion.lib)
 endif()
 
 install(DIRECTORY include DESTINATION .)
@@ -134,6 +143,9 @@ install(FILES
     DESTINATION .)
 install(FILES
     ${CMAKE_SOURCE_DIR}/LICENSE
+    DESTINATION license)
+install(FILES
+    ${CMAKE_SOURCE_DIR}/thirdparty_notice.txt
     DESTINATION license)
 
 # Halide
@@ -146,15 +158,19 @@ endif()
 # Packaging
 #
 if (UNIX)
-    set(CPACK_GENERATOR "DEB")
+    set(CPACK_GENERATOR "TGZ" "DEB")
     set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
-    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Fixstars Solutions Inc.")
-    execute_process(COMMAND git describe --tags
-        OUTPUT_VARIABLE GIT_DESCRIBE_RESULT
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-    message(STATUS "Version: ${GIT_DESCRIBE_RESULT}")
-    string(STRIP "${GIT_DESCRIBE_RESULT}" ION_CORE_VERSION_S)
-    string(REPLACE "v" "" ION_CORE_VERSION ${ION_CORE_VERSION_S})
-    set(CPACK_PACKAGE_VERSION ${ION_CORE_VERSION})
-    include(CPack)
-endif()
+    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Fixstars Corporation Inc.")
+    configure_file(${CMAKE_SOURCE_DIR}/ion-kit.pc.in ${CMAKE_BINARY_DIR}/ion-kit.pc @ONLY)
+    install(FILES ${CMAKE_BINARY_DIR}/ion-kit.pc DESTINATION lib/pkgconfig/)
+else ()
+    set(CPACK_GENERATOR "ZIP")
+endif ()
+execute_process(COMMAND git describe --tags
+    OUTPUT_VARIABLE GIT_DESCRIBE_RESULT
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+message(STATUS "Version: ${GIT_DESCRIBE_RESULT}")
+string(STRIP "${GIT_DESCRIBE_RESULT}" ION_KIT_VERSION_S)
+string(REPLACE "v" "" ION_KIT_VERSION ${ION_KIT_VERSION_S})
+set(CPACK_PACKAGE_VERSION ${ION_KIT_VERSION})
+include(CPack)

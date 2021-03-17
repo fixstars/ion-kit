@@ -9,7 +9,7 @@ on:
   pull_request:
 
 env:
-  IMAGE_ID_PREFIX: docker.pkg.github.com/${{ github.repository_owner }}
+  IMAGE_ID_PREFIX: docker.pkg.github.com/${{ github.repository_owner }}/ion-kit
 
 jobs:
   test-ion-core:
@@ -62,29 +62,33 @@ jobs:
           echo IMAGE_ID=$IMAGE_ID
           echo VERSION=$VERSION
 
+          # Update environtment variable
+          echo "IMAGE_ID=${IMAGE_ID}" >> $GITHUB_ENV
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+
       - name: Log into GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login https://docker.pkg.github.com -u ${{ github.actor }} --password-stdin
 
 
       - name: Build image for build stage
-        run: docker build --target ion-core-build -t $IMAGE_ID:$VERSION-build-ubuntu18.04 .
+        run: docker build --target ion-core-build -t $IMAGE_ID-build:$VERSION .
 
       - name: Push image for build stage
-        run: docker push $IMAGE_ID:$VERSION-build-ubuntu18.04
+        run: docker push $IMAGE_ID-build:$VERSION
 
 
       - name: Build image for runtime stage
-        run: docker build --target ion-core-runtime -t $IMAGE_ID:$VERSION-runtime-ubuntu18.04 .
+        run: docker build --target ion-core-runtime -t $IMAGE_ID-runtime:$VERSION .
 
       - name: Push image for runtime stage
-        run: docker push $IMAGE_ID:$VERSION-runtime-ubuntu18.04
+        run: docker push $IMAGE_ID-runtime:$VERSION
 
 
       - name: Build image for release stage
-        run: docker build --target ion-core-release -t $IMAGE_ID:$VERSION-release-ubuntu18.04 .
+        run: docker build --target ion-core-release -t $IMAGE_ID-release:$VERSION .
 
       - name: Push image for relase stage
-        run: docker push $IMAGE_ID:$VERSION-relase-ubuntu18.04
+        run: docker push $IMAGE_ID-release:$VERSION
 
   test-ion-kit:
     runs-on: ubuntu-latest
@@ -152,26 +156,30 @@ jobs:
           echo IMAGE_ID=$IMAGE_ID
           echo VERSION=$VERSION
 
+          # Update environtment variable
+          echo "IMAGE_ID=${IMAGE_ID}" >> $GITHUB_ENV
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+
       - name: Log into GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login https://docker.pkg.github.com -u ${{ github.actor }} --password-stdin
 
 
       - name: Build image for build stage
-        run: docker build --target ion-kit-build -t $IMAGE_ID:$VERSION-build-ubuntu18.04 .
+        run: docker build --target ion-kit-build -t $IMAGE_ID-build:$VERSION .
 
       - name: Push image for build stage
-        run: docker push $IMAGE_ID:$VERSION-build-ubuntu18.04
+        run: docker push $IMAGE_ID-build:$VERSION
 
 
       - name: Build image for runtime stage
-        run: docker build --target ion-kit-runtime -t $IMAGE_ID:$VERSION-runtime-ubuntu18.04 .
+        run: docker build --target ion-kit-runtime -t $IMAGE_ID-runtime:$VERSION .
 
       - name: Push image for runtime stage
-        run: docker push $IMAGE_ID:$VERSION-runtime-ubuntu18.04
+        run: docker push $IMAGE_ID-runtime:$VERSION
 
 
       - name: Build image for release stage
-        run: docker build --target ion-kit-release -t $IMAGE_ID:$VERSION-release-ubuntu18.04 .
+        run: docker build --target ion-kit-release -t $IMAGE_ID-release:$VERSION .
 
       - name: Push image for relase stage
-        run: docker push $IMAGE_ID:$VERSION-relase-ubuntu18.04
+        run: docker push $IMAGE_ID-release:$VERSION
