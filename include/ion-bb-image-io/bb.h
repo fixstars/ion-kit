@@ -128,7 +128,7 @@ public:
         Expr g = saturating_cast<uint8_t>(yv - cast<float>(0.344f) * (uv - f128) - (cast<float>(0.714f) * (vv - f128)));
         Expr b = saturating_cast<uint8_t>(yv + cast<float>(1.773f) * (uv - f128));
 
-        output(x, y, c) = select(c == 0, r, c == 1, g, b);
+        output(x, y, c) = mux(c, {r, g, b});
     }
 };
 
@@ -296,9 +296,10 @@ public:
     void generate() {
         using namespace Halide;
         Func in;
-        in(c, x, y) = select(c == 0, input(x, y, 2),
-                             c == 1, input(x, y, 1),
-                             input(x, y, 0));
+        in(c, x, y) = mux(c,
+                          {input(x, y, 2),
+                           input(x, y, 1),
+                           input(x, y, 0)});
         in.compute_root();
         if (get_target().has_gpu_feature()) {
             Var xo, yo, xi, yi;
@@ -377,9 +378,10 @@ public:
         image_loader.define_extern("ion_bb_image_io_image_loader", params, Halide::type_of<uint8_t>(), 3);
         image_loader.compute_root();
         Var c, x, y;
-        output(x, y, c) = select(c == 0, image_loader(2, x, y),
-                                 c == 1, image_loader(1, x, y),
-                                 image_loader(0, x, y));
+        output(x, y, c) = mux(c,
+                              {image_loader(2, x, y),
+                               image_loader(1, x, y),
+                               image_loader(0, x, y)});
     }
 };
 
@@ -408,9 +410,10 @@ public:
 
         Func input_(static_cast<std::string>(gc_prefix) + "input");
         Var c, x, y;
-        input_(c, x, y) = select(c == 0, input(x, y, 2),
-                                 c == 1, input(x, y, 1),
-                                 input(x, y, 0));
+        input_(c, x, y) = mux(c,
+                              {input(x, y, 2),
+                               input(x, y, 1),
+                               input(x, y, 0)});
         input_.compute_root();
 
         std::vector<ExternFuncArgument> params = {input_, static_cast<int32_t>(width), static_cast<int32_t>(height), path_buf};

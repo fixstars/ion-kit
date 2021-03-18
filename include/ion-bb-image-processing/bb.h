@@ -135,7 +135,7 @@ public:
     static Halide::Func calc(Method method, Halide::Func f, Halide::Expr width, Halide::Expr height) {
         internal_assert(f.dimensions() >= 2) << "Bad func for BoundaryConditions";
 
-        std::vector<std::pair<Halide::Expr, Halide::Expr>> region(f.dimensions(), {Halide::Expr(), Halide::Expr()});
+        Halide::Region region(f.dimensions(), {Halide::Expr(), Halide::Expr()});
         region[0] = {0, width};
         region[1] = {0, height};
 
@@ -177,16 +177,6 @@ Halide::Expr lut_interpolation_float(Halide::Func lut, Halide::Expr value, int32
     return lut(index0) + coef * diff;
 }
 
-Halide::Expr select_by_color(Halide::Expr color, Halide::Expr r_value, Halide::Expr g_value, Halide::Expr b_value) {
-    return Halide::select(
-        color == 0,
-        r_value,
-        Halide::select(
-            color == 1,
-            g_value,
-            b_value));
-}
-
 class BayerOffset : public BuildingBlock<BayerOffset> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "BayerOffset"};
@@ -205,7 +195,7 @@ public:
     GeneratorOutput<Halide::Func> output{"output", Halide::Float(32), 2};
 
     void generate() {
-        output(x, y) = Halide::clamp(input(x, y) - select_by_color(BayerMap::get_color(static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern)), x, y), offset_r, offset_g, offset_b), 0.f, 1.f);
+        output(x, y) = Halide::clamp(input(x, y) - Halide::mux(BayerMap::get_color(static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern)), x, y), {offset_r, offset_g, offset_b}), 0.f, 1.f);
     }
 
     void schedule() {
@@ -246,7 +236,7 @@ public:
     GeneratorOutput<Halide::Func> output{"output", Halide::Float(32), 2};
 
     void generate() {
-        output(x, y) = Halide::clamp(input(x, y) * select_by_color(BayerMap::get_color(static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern)), x, y), gain_r, gain_g, gain_b), 0.f, 1.f);
+        output(x, y) = Halide::clamp(input(x, y) * Halide::mux(BayerMap::get_color(static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern)), x, y), {gain_r, gain_g, gain_b}), 0.f, 1.f);
     }
 
     void schedule() {
@@ -289,32 +279,32 @@ public:
         Func input_wrapper = Halide::BoundaryConditions::constant_exterior(input, 0, {{0, width}, {0, height}});
         switch (static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern))) {
         case BayerMap::Pattern::RGGB:
-            output(x, y, c) = select_by_color(
+            output(x, y, c) = Halide::mux(
                 c,
-                input_wrapper(x * 2, y * 2),
-                (input_wrapper(x * 2 + 1, y * 2) + input_wrapper(x * 2, y * 2 + 1)) / 2,
-                input_wrapper(x * 2 + 1, y * 2 + 1));
+                {input_wrapper(x * 2, y * 2),
+                 (input_wrapper(x * 2 + 1, y * 2) + input_wrapper(x * 2, y * 2 + 1)) / 2,
+                 input_wrapper(x * 2 + 1, y * 2 + 1)});
             break;
         case BayerMap::Pattern::BGGR:
-            output(x, y, c) = select_by_color(
+            output(x, y, c) = Halide::mux(
                 c,
-                input_wrapper(x * 2 + 1, y * 2 + 1),
-                (input_wrapper(x * 2 + 1, y * 2) + input_wrapper(x * 2, y * 2 + 1)) / 2,
-                input_wrapper(x * 2, y * 2));
+                {input_wrapper(x * 2 + 1, y * 2 + 1),
+                 (input_wrapper(x * 2 + 1, y * 2) + input_wrapper(x * 2, y * 2 + 1)) / 2,
+                 input_wrapper(x * 2, y * 2)});
             break;
         case BayerMap::Pattern::GRBG:
-            output(x, y, c) = select_by_color(
+            output(x, y, c) = Halide::mux(
                 c,
-                input_wrapper(x * 2 + 1, y * 2),
-                (input_wrapper(x * 2, y * 2) + input_wrapper(x * 2 + 1, y * 2 + 1)) / 2,
-                input_wrapper(x * 2 + 1, y * 2));
+                {input_wrapper(x * 2 + 1, y * 2),
+                 (input_wrapper(x * 2, y * 2) + input_wrapper(x * 2 + 1, y * 2 + 1)) / 2,
+                 input_wrapper(x * 2 + 1, y * 2)});
             break;
         case BayerMap::Pattern::GBRG:
-            output(x, y, c) = select_by_color(
+            output(x, y, c) = Halide::mux(
                 c,
-                input_wrapper(x * 2, y * 2 + 1),
-                (input_wrapper(x * 2, y * 2) + input_wrapper(x * 2 + 1, y * 2 + 1)) / 2,
-                input_wrapper(x * 2 + 1, y * 2));
+                {input_wrapper(x * 2, y * 2 + 1),
+                 (input_wrapper(x * 2, y * 2) + input_wrapper(x * 2 + 1, y * 2 + 1)) / 2,
+                 input_wrapper(x * 2 + 1, y * 2)});
             break;
         default:
             internal_error << "Unknown BayerMap pattern";
@@ -484,11 +474,12 @@ public:
         f_c2h(x, y) = f_c2h_shifted(x, y) * Halide::select(c2h_cond, -1, 1);
         f_c2(x, y) = f_c2v(x, y) + f_c2h(x, y);
 
-        output(x, y, c) = Halide::clamp(select_by_color(c,
-                                                        f_l(x, y) + f_c1(x, y) + f_c2(x, y),
-                                                        f_l(x, y) - f_c1(x, y),
-                                                        f_l(x, y) + f_c1(x, y) - f_c2(x, y)),
-                                        0.f, 1.f);
+        output(x, y, c) = Halide::clamp(
+            Halide::mux(c,
+                        {f_l(x, y) + f_c1(x, y) + f_c2(x, y),
+                         f_l(x, y) - f_c1(x, y),
+                         f_l(x, y) + f_c1(x, y) - f_c2(x, y)}),
+            0.f, 1.f);
     }
 
     void schedule() {
@@ -620,11 +611,11 @@ public:
         center_y = height / Halide::cast<float>(2.f);
         r2 = ((x - center_x) * (x - center_x) + (y - center_y) * (y - center_y)) / (center_x * center_x + center_y * center_y);
 
-        output(x, y) = input(x, y) * select_by_color(
+        output(x, y) = input(x, y) * Halide::mux(
                                          BayerMap::get_color(static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern)), x, y),
-                                         r2 * slope_r + offset_r,
-                                         r2 * slope_g + offset_g,
-                                         r2 * slope_b + offset_b);
+                                         {r2 * slope_r + offset_r,
+                                          r2 * slope_g + offset_g,
+                                          r2 * slope_b + offset_b});
     }
 
     void schedule() {
@@ -672,11 +663,11 @@ public:
         center_y = height / Halide::cast<float>(2.f);
         r2 = ((x - center_x) * (x - center_x) + (y - center_y) * (y - center_y)) / (center_x * center_x + center_y * center_y);
 
-        output(x, y) = input(x, y) * select_by_color(
+        output(x, y) = input(x, y) * Halide::mux(
                                          BayerMap::get_color(static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern)), x, y),
-                                         lut_interpolation_float(lut_r, input(x, y), 256),
-                                         lut_interpolation_float(lut_g, input(x, y), 256),
-                                         lut_interpolation_float(lut_b, input(x, y), 256));
+                                         {lut_interpolation_float(lut_r, input(x, y), 256),
+                                          lut_interpolation_float(lut_g, input(x, y), 256),
+                                          lut_interpolation_float(lut_b, input(x, y), 256)});
     }
 
     void schedule() {
@@ -1531,12 +1522,7 @@ public:
             mux_input.push_back(input(args));
         }
 
-        // output(vars) = Halide::mux(vars[color_dim], mux_input);
-        Halide::Expr result = mux_input.back();
-        for (int i = (int)mux_input.size() - 2; i >= 0; i--) {
-            result = select(vars[color_dim] == i, mux_input[i], result);
-        }
-        output(vars) = result;
+        output(vars) = Halide::mux(vars[color_dim], mux_input);
     }
 
     void schedule() {
@@ -1581,8 +1567,7 @@ public:
         Halide::Func input0_wrapper;
         Halide::Func input1_wrapper;
 
-        //Halide::Region region(D, {Halide::Expr(), Halide::Expr()});
-        std::vector<std::pair<Halide::Expr, Halide::Expr>> region(D, {Halide::Expr(), Halide::Expr()});
+        Halide::Region region(D, {Halide::Expr(), Halide::Expr()});
 
         region[x_dim] = {0, input0_width};
         region[y_dim] = {0, input0_height};
@@ -1655,8 +1640,7 @@ public:
         Halide::Func input0_wrapper;
         Halide::Func input1_wrapper;
 
-        //Halide::Region region(D, {Halide::Expr(), Halide::Expr()});
-        std::vector<std::pair<Halide::Expr, Halide::Expr>> region(D, {Halide::Expr(), Halide::Expr()});
+        Halide::Region region(D, {Halide::Expr(), Halide::Expr()});
 
         region[x_dim] = {0, input0_width};
         region[y_dim] = {0, input0_height};
@@ -1727,8 +1711,7 @@ public:
         Halide::Func input0_wrapper;
         Halide::Func input1_wrapper;
 
-        //Halide::Region region(D, {Halide::Expr(), Halide::Expr()});
-        std::vector<std::pair<Halide::Expr, Halide::Expr>> region(D, {Halide::Expr(), Halide::Expr()});
+        Halide::Region region(D, {Halide::Expr(), Halide::Expr()});
 
         region[x_dim] = {0, input0_width};
         region[y_dim] = {0, input0_height};
@@ -1800,8 +1783,7 @@ public:
     void generate() {
         Halide::Func input_wrapper;
 
-        //Halide::Region region(D, {Halide::Expr(), Halide::Expr()});
-        std::vector<std::pair<Halide::Expr, Halide::Expr>> region(D, {Halide::Expr(), Halide::Expr()});
+        Halide::Region region(D, {Halide::Expr(), Halide::Expr()});
 
         region[x_dim] = {0, input_width};
         region[y_dim] = {0, input_height};
