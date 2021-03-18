@@ -738,27 +738,35 @@ public:
 
     void generate() {
         int32_t internal_bits = normalize_input_bits;
-        BayerMap::Pattern bayer_pattern = static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern));
+        BayerMap::Pattern pattern = static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern));
         int32_t input_width = width;
         int32_t input_height = height;
 
         normalize = normalize_raw_image(input, normalize_input_bits, normalize_input_shift, internal_bits);
-        offset = bayer_offset(normalize, bayer_pattern, offset_offset_r, offset_offset_g, offset_offset_b);
-        shading_correction = lens_shading_correction_linear(offset, bayer_pattern, input_width, input_height, internal_bits,
+        offset = bayer_offset(normalize, pattern, offset_offset_r, offset_offset_g, offset_offset_b);
+        shading_correction = lens_shading_correction_linear(offset, pattern, input_width, input_height, internal_bits,
                                                             shading_correction_slope_r, shading_correction_slope_g, shading_correction_slope_b,
                                                             shading_correction_offset_r, shading_correction_offset_g, shading_correction_offset_b);
-        white_balance = bayer_white_balance(shading_correction, bayer_pattern, internal_bits, white_balance_gain_r, white_balance_gain_g, white_balance_gain_b);
-        demosaic = bayer_demosaic_simple(white_balance, bayer_pattern);
-        gamma = gamma_correction_3d(input, internal_bits, 8, 8, 8, gamma_gamma, static_cast<std::string>(gc_prefix) + "simple_isp");
+        white_balance = bayer_white_balance(shading_correction, pattern, internal_bits, white_balance_gain_r, white_balance_gain_g, white_balance_gain_b);
+        demosaic = bayer_demosaic_simple(white_balance, pattern);
+        gamma = gamma_correction_3d(demosaic, internal_bits, 8, 8, 8, gamma_gamma);
 
-        output = gamma;
+        final_cast = Halide::Func{static_cast<std::string>(gc_prefix) + "simple_isp"};
+        final_cast(Halide::_) = Halide::cast(UInt(8), gamma(Halide::_));
+
+        output = final_cast;
     }
 
     void schedule() {
+        Halide::Var c = output.args()[0];
         Halide::Var x = output.args()[1];
         Halide::Var y = output.args()[2];
 
         if (get_target().has_fpga_feature()) {
+            int32_t input_width = width;
+            int32_t input_height = height;
+            output.bound(c, 0, 3).bound(x, 0, input_width / 2).bound(y, 0, input_height / 2);
+
             std::vector<Func> ip_in, ip_out;
             std::tie(ip_in, ip_out) = output.accelerate({input}, {}, Var::outermost());
 
@@ -767,8 +775,10 @@ public:
             shading_correction.compute_at(output, Halide::Var::outermost());
             white_balance.compute_at(output, Halide::Var::outermost());
             demosaic.compute_at(output, Halide::Var::outermost());
+            gamma.compute_at(output, Halide::Var::outermost());
 
             demosaic.bound(demosaic.args()[0], 0, 3).unroll(demosaic.args()[0]).hls_burst(3);
+            gamma.bound(gamma.args()[0], 0, 3).unroll(gamma.args()[0]).hls_burst(3);
             ip_out[0].bound(ip_out[0].args()[0], 0, 3).unroll(ip_out[0].args()[0]).hls_burst(3);
         } else if (get_target().has_gpu_feature()) {
             Halide::Var xo, yo, xi, yi;
@@ -787,6 +797,7 @@ private:
     Halide::Func white_balance;
     Halide::Func demosaic;
     Halide::Func gamma;
+    Halide::Func final_cast;
 };
 
 }  // namespace fpga
