@@ -1284,10 +1284,9 @@ public:
                 result = select(
                     b >= 0 && a > std::numeric_limits<T>::max() - b,
                     Expr(std::numeric_limits<T>::max()),
-                    select(
-                        b < 0 && a < std::numeric_limits<T>::min() - b,
-                        Expr(std::numeric_limits<T>::min()),
-                        result));
+                    b < 0 && a < std::numeric_limits<T>::min() - b,
+                    Expr(std::numeric_limits<T>::min()),
+                    result);
             }
         }
 
@@ -1402,10 +1401,9 @@ public:
                 result = select(
                     b < 0 && a > std::numeric_limits<T>::max() + b,
                     Expr(std::numeric_limits<T>::max()),
-                    select(
-                        b >= 0 && a < std::numeric_limits<T>::min() + b,
-                        Expr(std::numeric_limits<T>::min()),
-                        result));
+                    b >= 0 && a < std::numeric_limits<T>::min() + b,
+                    Expr(std::numeric_limits<T>::min()),
+                    result);
             }
         }
 
@@ -1520,12 +1518,11 @@ public:
             } else if (output.type().is_int()) {
                 Expr b_for_div = select(b == 0, 1, b);
                 result = select(
-                    b > 0 && a > std::numeric_limits<T>::max() / b_for_div || b < 0 && a < std::numeric_limits<T>::max() / b_for_div,
+                    (b > 0 && a > std::numeric_limits<T>::max() / b_for_div || b < 0 && a < std::numeric_limits<T>::max() / b_for_div),
                     Expr(std::numeric_limits<T>::max()),
-                    select(
-                        b > 0 && a < std::numeric_limits<T>::min() / b_for_div || b < -1 && a > std::numeric_limits<T>::min() / b_for_div,  // Note: Do not check b = -1 becaulse min / b is overflow.
-                        Expr(std::numeric_limits<T>::min()),
-                        result));
+                    (b > 0 && a < std::numeric_limits<T>::min() / b_for_div || b < -1 && a > std::numeric_limits<T>::min() / b_for_div),  // Note: Do not check b = -1 becaulse min / b is overflow.
+                    Expr(std::numeric_limits<T>::min()),
+                    result);
             }
         }
 
