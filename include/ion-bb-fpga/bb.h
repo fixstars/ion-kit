@@ -712,6 +712,7 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+    GeneratorParam<std::string> gc_required_features{"gc_required_features", "vivado_hls"};
 
     //GeneratorParam<BayerMap::Pattern> bayer_pattern { "bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map };
     GeneratorParam<int32_t> bayer_pattern{"bayer_pattern", 0, 0, 3};
