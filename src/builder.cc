@@ -148,7 +148,7 @@ void Builder::compile(const std::string& function_name, const CompileOption& opt
         int ret = std::getenv("ION_CSIM") ? system("make -f Makefile.csim.static") : system("make -f Makefile.ultra96v2");
         std::string lib_name = std::getenv("ION_CSIM") ? function_name + "_sim.a" : function_name + ".a";
         internal_assert(ret == 0) << "Building hls package is failed.\n";
-        std::string cmd = "mv " + lib_name + " ../" + function_name + ".a && mv " + function_name + ".h ../";
+        std::string cmd = "cp " + lib_name + " ../" + function_name + ".a && cp " + function_name + ".h ../";
         ret = system(cmd.c_str());
         internal_assert(ret == 0) << "Building hls package is failed.\n";
         chdir("..");
