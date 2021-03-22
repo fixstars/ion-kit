@@ -550,10 +550,10 @@ public:
             }
         }
 
-        std::vector<Halide::Var> dst_vars(D);
-        std::vector<Halide::Var> src_vars;
+        std::vector<Halide::Var> src_vars(D);
+        std::vector<Halide::Var> dst_vars;
         for (auto o : order) {
-            src_vars.push_back(dst_vars[o]);
+            dst_vars.push_back(src_vars[o]);
         }
 
         output(dst_vars) = input(src_vars);
