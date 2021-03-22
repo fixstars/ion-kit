@@ -324,13 +324,14 @@ Halide::Func gamma_correction_3d(Halide::Func input, int32_t input_bits, int32_t
             lut1_list.push_back(lut1);
         }
         Halide::Expr is_odd_index = ((input(c, x, y) >> (input_bits - lut_index_bits)) & 1) == 1;
-        Halide::Expr lut1_index = (input(c, x, y) >> (input_bits - lut_index_bits + 1)) & ((1 << (lut_index_bits - 1)) - 1);
+        Halide::Expr lut1_index = (input(c, x, y) >> (input_bits - lut_index_bits + 1)) & (lut_size / 2 - 1);
         Halide::Expr lut0_index = Halide::select(is_odd_index, lut1_index + 1, lut1_index);
+        Halide::Expr lut0_index_limited = Halide::min(lut0_index, lut_size / 2 - 1);
         Halide::Expr lut0_value = Halide::cast(Halide::UInt(lut_bits),
                                                Halide::select(lut0_index == lut_size / 2, max_value,
-                                                              Halide::mux(c, {lut0_list[0](lut0_index),
-                                                                              lut0_list[1](lut0_index),
-                                                                              lut0_list[2](lut0_index)})));
+                                                              Halide::mux(c, {lut0_list[0](lut0_index_limited),
+                                                                              lut0_list[1](lut0_index_limited),
+                                                                              lut0_list[2](lut0_index_limited)})));
         Halide::Expr lut1_value = Halide::cast(Halide::UInt(lut_bits), Halide::mux(c, {lut1_list[0](lut1_index),
                                                                                        lut1_list[1](lut1_index),
                                                                                        lut1_list[2](lut1_index)}));
