@@ -1111,7 +1111,7 @@ public:
 template<typename X, typename T>
 class ConstantBuffer0D : public ConstantBuffer<X, T, 0> {
 public:
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.extent0)] }}))"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
 
     std::vector<int32_t> get_extents() override {
