@@ -9,6 +9,8 @@
 
 #include "rt_common.h"
 
+#include "httplib.h"
+
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 
