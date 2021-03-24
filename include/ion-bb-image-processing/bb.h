@@ -1207,7 +1207,7 @@ class ResizeNearest2D : public ResizeNearest<ResizeNearest2D, 2> {
     GeneratorParam<std::string> gc_title{"gc_title", "ResizeBilinear2D"};
 };
 
-class ResizeNearest3D : public ResizeNearest<ResizeNearest2D, 3> {
+class ResizeNearest3D : public ResizeNearest<ResizeNearest3D, 3> {
     GeneratorParam<std::string> gc_title{"gc_title", "ResizeBilinear3D"};
 };
 
