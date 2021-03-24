@@ -10,8 +10,8 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include "ion-bb-demo/bb.h"
-#include "ion-bb-demo/rt.h"
+#include "ion-bb-image-io/bb.h"
+#include "ion-bb-image-io/rt.h"
 
 #include "util.h"
 
@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
     Builder b;
     b.set_target(Halide::Target{get_target_from_cmdline(argc, argv)});
 
-    Node n = b.add("demo_d435");
+    Node n = b.add("image_io_d435");
 
     PortMap pm;
     Halide::Buffer<uint8_t> obuf_l(1280, 720);
