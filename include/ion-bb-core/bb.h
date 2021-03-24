@@ -1883,6 +1883,38 @@ public:
     GeneratorParam<std::string> gc_title{"gc_title", "Cast4DFloatToUInt16"};
 };
 
+template<typename X, typename T>
+class ScalarToFunc : public BuildingBlock<X> {
+    static_assert(std::is_arithmetic<T>::value, "T must be arithmetic type.");
+
+public:
+    GeneratorParam<std::string> gc_description{"gc_description", "This converts scalar value to 0D func."};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [] }}))"};
+    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
+    GeneratorInput<T> input{"input"};
+    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), 0};
+
+    void generate() {
+        output() = input;
+    }
+};
+
+class ScalarToFuncUInt8 : public ScalarToFunc<ScalarToFuncUInt8, uint8_t> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ScalarToFuncUInt8"};
+};
+
+class ScalarToFuncUInt16 : public ScalarToFunc<ScalarToFuncUInt16, uint16_t> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ScalarToFuncUInt16"};
+};
+
+class ScalarToFuncFloat : public ScalarToFunc<ScalarToFuncFloat, float> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "ScalarToFuncFloat"};
+};
+
 }  // namespace core
 }  // namespace bb
 }  // namespace ion
@@ -2085,5 +2117,8 @@ ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Cast1DFloatToUInt16, core_cast_1d_flo
 ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Cast2DFloatToUInt16, core_cast_2d_float_to_uint16);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Cast3DFloatToUInt16, core_cast_3d_float_to_uint16);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::core::Cast4DFloatToUInt16, core_cast_4d_float_to_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ScalarToFuncUInt8, core_scalar_to_func_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ScalarToFuncUInt16, core_scalar_to_func_uint16);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::core::ScalarToFuncFloat, core_scalar_to_func_float);
 
 #endif
