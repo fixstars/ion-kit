@@ -1,5 +1,5 @@
-#ifndef ION_BB_GENESIS_CLOUD_BB_SGM_H
-#define ION_BB_GENESIS_CLOUD_BB_SGM_H
+#ifndef ION_BB_SGM_BB_H
+#define ION_BB_SGM_BB_H
 
 #include <climits>
 #include <ion/ion.h>
@@ -228,7 +228,7 @@ Halide::Func semi_global_matching(Halide::Func in_l, Halide::Func in_r, int32_t 
 
 namespace ion {
 namespace bb {
-namespace genesis_cloud {
+namespace sgm {
 
 class Census : public ion::BuildingBlock<Census> {
 public:
@@ -818,16 +818,16 @@ public:
         return clamped;
     }
 };
-}  // namespace genesis_cloud
+
+}  // namespace sgm
 }  // namespace bb
 }  // namespace ion
 
-ION_REGISTER_BUILDING_BLOCK(ion::bb::genesis_cloud::Census, genesis_cloud_census);
-ION_REGISTER_BUILDING_BLOCK(ion::bb::genesis_cloud::MatchingCost, genesis_cloud_matching_cost);
-ION_REGISTER_BUILDING_BLOCK(ion::bb::genesis_cloud::ScanCost, genesis_cloud_scan_cost);
-ION_REGISTER_BUILDING_BLOCK(ion::bb::genesis_cloud::AddCost4, genesis_cloud_add_cost4);
-ION_REGISTER_BUILDING_BLOCK(ion::bb::genesis_cloud::Disparity, genesis_cloud_disparity);
-ION_REGISTER_BUILDING_BLOCK(ion::bb::genesis_cloud::SGM, genesis_cloud_sgm);
-// ION_REGISTER_BUILDING_BLOCK(ion::bb::genesis_cloud::SGM2, genesis_cloud_sgm);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::sgm::Census, sgm_census);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::sgm::MatchingCost, sgm_matching_cost);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::sgm::ScanCost, sgm_scan_cost);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::sgm::AddCost4, sgm_add_cost4);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::sgm::Disparity, sgm_disparity);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::sgm::SGM, sgm_sgm);
 
-#endif  // ION_BB_GENESIS_CLOUD_BB_SGM_H
+#endif

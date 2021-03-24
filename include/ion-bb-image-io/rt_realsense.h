@@ -1,5 +1,5 @@
-#ifndef ION_BB_DEMO_RT_REALSENSE_H
-#define ION_BB_DEMO_RT_REALSENSE_H
+#ifndef ION_BB_IMAGE_IO_RT_REALSENSE_H
+#define ION_BB_IMAGE_IO_RT_REALSENSE_H
 
 #include <cstring>
 #include <iostream>
@@ -10,7 +10,8 @@
 
 namespace ion {
 namespace bb {
-namespace demo {
+namespace image_io {
+
 class RealSense {
     // NOTE: Copied from librealsense2/rt_sensor.h
     typedef enum rs2_stream {
@@ -260,16 +261,16 @@ private:
     rs2_frame_t *frameset_;
 };
 
-}  // namespace demo
+}  // namespace image_io
 }  // namespace bb
 }  // namespace ion
 
-extern "C" int ION_EXPORT ion_bb_demo_realsense_d435_infrared(halide_buffer_t *in, halide_buffer_t *out_l, halide_buffer_t *out_r) {
+extern "C" int ION_EXPORT ion_bb_image_io_realsense_d435_infrared(halide_buffer_t *in, halide_buffer_t *out_l, halide_buffer_t *out_r) {
     try {
         const int width = 1280;
         const int height = 720;
 
-        auto &realsense(ion::bb::demo::RealSense::get_instance(width, height));
+        auto &realsense(ion::bb::image_io::RealSense::get_instance(width, height));
 
         if (out_l->is_bounds_query() || out_r->is_bounds_query()) {
             if (out_l->is_bounds_query()) {
@@ -312,12 +313,12 @@ extern "C" int ION_EXPORT ion_bb_demo_realsense_d435_infrared(halide_buffer_t *i
     }
 }
 
-extern "C" int ION_EXPORT ion_bb_demo_realsense_d435_depth(halide_buffer_t *in, halide_buffer_t *out_d) {
+extern "C" int ION_EXPORT ion_bb_image_io_realsense_d435_depth(halide_buffer_t *in, halide_buffer_t *out_d) {
     try {
         const int width = 1280;
         const int height = 720;
 
-        auto &realsense(ion::bb::demo::RealSense::get_instance(width, height));
+        auto &realsense(ion::bb::image_io::RealSense::get_instance(width, height));
 
         if (out_d->is_bounds_query()) {
             if (out_d->is_bounds_query()) {
@@ -350,12 +351,12 @@ extern "C" int ION_EXPORT ion_bb_demo_realsense_d435_depth(halide_buffer_t *in, 
     }
 }
 
-extern "C" int ION_EXPORT ion_bb_demo_realsense_d435_frameset(halide_buffer_t *out) {
+extern "C" int ION_EXPORT ion_bb_image_io_realsense_d435_frameset(halide_buffer_t *out) {
     try {
         const int width = 1280;
         const int height = 720;
 
-        auto &realsense(ion::bb::demo::RealSense::get_instance(width, height));
+        auto &realsense(ion::bb::image_io::RealSense::get_instance(width, height));
 
         if (out->is_bounds_query()) {
             // out->dim[0].min = 0;
