@@ -148,7 +148,7 @@ void Builder::compile(const std::string& function_name, const CompileOption& opt
         int ret = std::getenv("ION_CSIM") ? system("make -f Makefile.csim.static") : system("make -f Makefile.ultra96v2");
         std::string lib_name = std::getenv("ION_CSIM") ? function_name + "_sim.a" : function_name + ".a";
         internal_assert(ret == 0) << "Building hls package is failed.\n";
-        std::string cmd = "mv " + lib_name + " ../" + function_name + ".a && mv " + function_name + ".h ../";
+        std::string cmd = "cp " + lib_name + " ../" + function_name + ".a && cp " + function_name + ".h ../";
         ret = system(cmd.c_str());
         internal_assert(ret == 0) << "Building hls package is failed.\n";
         chdir("..");
@@ -311,24 +311,6 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
         bb->apply(args);
     }
 
-    // Traverse bbs and bundling all outputs
-    std::unordered_map<std::string, std::vector<std::string>> dereferenced;
-    for (size_t i=0; i<nodes_.size(); ++i) {
-        auto n = nodes_[i];
-        for (size_t j=0; j<n.ports().size(); ++j) {
-            auto p = n.ports()[j];
-
-            if (!p.node_id().empty() && bbs[n.id()]->param_info().inputs().at(j)->is_array()) {
-                for (const auto &f : bbs[p.node_id()]->get_array_output(p.key())) {
-                    const auto key = f.name();
-                    dereferenced[p.node_id()].emplace_back(key.substr(0, key.find('$')));
-                }
-            } else {
-                dereferenced[p.node_id()].push_back(p.key());
-            }
-        }
-    }
-
     std::vector<Halide::Func> output_funcs;
 
     if (outputs) {
@@ -366,6 +348,21 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
         }
     } else {
         // This is implicit mode. Make output list based on unbound output in the graph.
+
+        // Traverse bbs and bundling all outputs
+        std::unordered_map<std::string, std::vector<std::string>> dereferenced;
+        for (size_t i = 0; i < nodes_.size(); ++i) {
+            auto n = nodes_[i];
+            for (size_t j = 0; j < n.ports().size(); ++j) {
+                auto p = n.ports()[j];
+
+                if (!p.node_id().empty()) {
+                    for (const auto &f : bbs[p.node_id()]->get_array_output(p.key())) {
+                        dereferenced[p.node_id()].emplace_back(f.name());
+                    }
+                }
+            }
+        }
         for (int i=0; i<nodes_.size(); ++i) {
             auto node_id = nodes_[i].id();
             auto p = bbs[node_id]->get_pipeline();
@@ -373,9 +370,7 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
 
                 // It is not dereferenced, then treat as outputs
                 const auto& dv = dereferenced[node_id];
-                std::string key = f.name();
-                key = key.substr(0, key.find('$'));
-                auto it = std::find(dv.begin(), dv.end(), key);
+                auto it = std::find(dv.begin(), dv.end(), f.name());
                 if (it == dv.end()) {
                     output_funcs.push_back(f);
                 }
