@@ -10,8 +10,8 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include "ion-bb-demo/bb.h"
-#include "ion-bb-demo/rt.h"
+#include "ion-bb-image-io/bb.h"
+#include "ion-bb-image-io/rt.h"
 
 #include "util.h"
 
@@ -65,12 +65,12 @@ int main(int argc, char *argv[]) {
     Builder b;
     b.set_target(Halide::Target{get_target_from_cmdline(argc, argv)});
 
-    auto n0 = b.add("demo_imx219").set_param(Param{"index", "0"});
-    auto n1 = b.add("demo_imx219").set_param(Param{"index", "1"});
-    auto n2 = b.add("demo_imx219").set_param(Param{"index", "2"});
-    auto n3 = b.add("demo_imx219").set_param(Param{"index", "3"});
-    auto n4 = b.add("demo_imx219").set_param(Param{"index", "4"});
-    auto n5 = b.add("demo_imx219").set_param(Param{"index", "5"});
+    auto n0 = b.add("image_io_imx219").set_param(Param{"index", "0"});
+    auto n1 = b.add("image_io_imx219").set_param(Param{"index", "1"});
+    auto n2 = b.add("image_io_imx219").set_param(Param{"index", "2"});
+    auto n3 = b.add("image_io_imx219").set_param(Param{"index", "3"});
+    auto n4 = b.add("image_io_imx219").set_param(Param{"index", "4"});
+    auto n5 = b.add("image_io_imx219").set_param(Param{"index", "5"});
 
     PortMap pm;
     Halide::Buffer<uint16_t> obuf0(3264, 2464), obuf1(3264, 2464), obuf2(3264, 2464), obuf3(3264, 2464), obuf4(3264, 2464), obuf5(3264, 2464);

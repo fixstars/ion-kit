@@ -1,7 +1,8 @@
-#ifndef ION_BB_DEMO_RT_V4L2_H
-#define ION_BB_DEMO_RT_V4L2_H
+#ifndef ION_BB_IMAGE_IO_RT_V4L2_H
+#define ION_BB_IMAGE_IO_RT_V4L2_H
 
 #include <cstdlib>
+#include <map>
 #include <memory>
 #include <stdexcept>
 #include <unordered_map>
@@ -27,7 +28,7 @@
 
 namespace ion {
 namespace bb {
-namespace demo {
+namespace image_io {
 
 int xioctl(int fd, int request, void *arg) {
     int r;
@@ -45,11 +46,46 @@ class V4L2 {
     };
 
 public:
-    static V4L2 &get_instance(uint32_t index, int32_t width, int32_t height, uint32_t pixel_format) {
-        if (instances_.count(index) == 0) {
-            instances_[index] = std::make_shared<V4L2>(index, width, height, pixel_format);
+    struct Setting {
+        uint32_t index;
+        int32_t width;
+        int32_t height;
+        uint32_t pixel_format;
+
+        bool operator<(const Setting &s) const {
+            if (index < s.index) {
+                return true;
+            } else if (index > s.index) {
+                return false;
+            }
+            if (width < s.width) {
+                return true;
+            } else if (width > s.width) {
+                return false;
+            }
+            if (height < s.height) {
+                return true;
+            } else if (height > s.height) {
+                return false;
+            }
+            if (pixel_format < s.pixel_format) {
+                return true;
+            } else {
+                return false;
+            }
         }
-        return *instances_[index];
+    };
+
+    static V4L2 &get_instance(uint32_t index, int32_t width, int32_t height, uint32_t pixel_format) {
+        Setting setting;
+        setting.index = index;
+        setting.width = width;
+        setting.height = height;
+        setting.pixel_format = pixel_format;
+        if (instances_.count(setting) == 0) {
+            instances_[setting] = std::make_shared<V4L2>(index, width, height, pixel_format);
+        }
+        return *instances_[setting];
     }
 
     V4L2(uint32_t index, int32_t width, int32_t height, uint32_t pixel_format)
@@ -105,12 +141,11 @@ public:
         uint32_t desired_pixel_format = pixel_format;
 
         struct v4l2_fmtdesc fmtdesc;
-        memset(&fmtdesc,0,sizeof(fmtdesc));
+        memset(&fmtdesc, 0, sizeof(fmtdesc));
         fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
         bool supported = false;
-        while (0 == xioctl(fd_, VIDIOC_ENUM_FMT, &fmtdesc))
-        {
+        while (0 == xioctl(fd_, VIDIOC_ENUM_FMT, &fmtdesc)) {
             if (fmtdesc.pixelformat == desired_pixel_format) {
                 supported = true;
             }
@@ -137,18 +172,13 @@ public:
             device_is_available_ = false;
             return;
         }
-
-        /* 10-bit Bayer is stored as 16-bit so bytes per pixel is 2 */
-
-        unsigned int min;
-        min = fmt.fmt.pix.width * 2;
-        if (fmt.fmt.pix.bytesperline < min) {
-            fmt.fmt.pix.bytesperline = min;
+        if (width != fmt.fmt.pix.width || height != fmt.fmt.pix.height) {
+            std::cerr << format("%s does not support desired resolution", dev_name) << std::endl;
+            device_is_available_ = false;
+            return;
         }
-        min = fmt.fmt.pix.bytesperline * fmt.fmt.pix.height;
-        if (fmt.fmt.pix.sizeimage < min) {
-            fmt.fmt.pix.sizeimage = min;
-        }
+
+        buffer_size = fmt.fmt.pix.sizeimage;
 
         //
         // Initialize mapped memory
@@ -233,8 +263,13 @@ public:
         }
     }
 
-    void get(Halide::Runtime::Buffer<uint16_t> &buf) {
+    template<typename T>
+    void get(Halide::Runtime::Buffer<T> &buf) {
         using namespace std;
+
+        if (buf.size_in_bytes() != buffer_size) {
+            throw runtime_error("Bad buffer size");
+        }
 
         /* queue-in buffer */
         if (-1 == xioctl(fd_, VIDIOC_QBUF, &next_buffer_)) {
@@ -280,101 +315,77 @@ private:
 
     int efd_;
 
-    static std::unordered_map<uint32_t, std::shared_ptr<V4L2>> instances_;
+    uint32_t buffer_size;
+
+    static std::map<Setting, std::shared_ptr<V4L2>> instances_;
 };
 
-std::unordered_map<uint32_t, std::shared_ptr<V4L2>> V4L2::instances_;
+std::map<V4L2::Setting, std::shared_ptr<V4L2>> V4L2::instances_;
 
-}  // namespace demo
+}  // namespace image_io
 }  // namespace bb
 }  // namespace ion
 
 namespace ion {
 namespace bb {
-namespace demo {
+namespace image_io {
 
-std::tuple<std::string, std::string> parse_url(const std::string &url) {
-    auto protocol_end_pos = url.find("://");
-    if (protocol_end_pos == std::string::npos) {
-        return std::tuple<std::string, std::string>("", "");
-    }
-    auto host_name_pos = protocol_end_pos + 3;
-    auto path_name_pos = url.find("/", host_name_pos);
-    auto host_name = url.substr(0, path_name_pos);
-    auto path_name = url.substr(path_name_pos);
-    return std::tuple<std::string, std::string>(host_name, path_name);
-}
+std::unordered_map<int32_t, std::vector<uint8_t>> image_cache;
 
-std::unordered_map<int32_t, cv::Mat> camera_stub_cache;
-
-}  // namespace demo
+}  // namespace image_io
 }  // namespace bb
 }  // namespace ion
 
-extern "C" int ION_EXPORT ion_bb_demo_v4l2(int32_t index, int32_t width, int32_t height, uint32_t pixel_format, halide_buffer_t *out) {
-    try {
-        auto &v4l2(ion::bb::demo::V4L2::get_instance(index, width, height, pixel_format));
-        Halide::Runtime::Buffer<uint16_t> obuf(*out);
+extern "C" ION_EXPORT int ion_bb_image_io_v4l2(
+    int32_t instance_id,
+    // Parameters for V4L2
+    int32_t width, int32_t height,
+    int32_t index, uint32_t pixel_format,
+    bool force_sim_mode,
+    // Parameters for simulation
+    halide_buffer_t *url_buf,
+    float gain_r, float gain_g, float gain_b,
+    float offset,
+    int32_t bit_width, int32_t bit_shift,
+    int32_t bayer_pattern,
+    halide_buffer_t *out) {
+    if (out->is_bounds_query()) {
+        out->dim[0].min = 0;
+        out->dim[0].extent = width;
+        out->dim[1].min = 0;
+        out->dim[1].extent = height;
+        return 0;
+    }
 
+    if (!force_sim_mode) {
+        auto &v4l2(ion::bb::image_io::V4L2::get_instance(index, width, height, pixel_format));
         if (v4l2.is_available()) {
+            Halide::Runtime::Buffer<uint16_t> obuf(*out);
             v4l2.get(obuf);
-        } else {
-            return -1;
+            return 0;
         }
-
-        return 0;
-    } catch (const std::exception &e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
-    } catch (...) {
-        std::cerr << "Unknown" << std::endl;
-        return -1;
     }
-}
 
-extern "C" ION_EXPORT int ion_bb_demo_camera_stub(halide_buffer_t *url_buf, int index, int width, int height, float gain_r, float gain_g, float gain_b, float offset, int bit_width, int bit_shift, int bayer_pattern, halide_buffer_t *out) {
-    auto it = ion::bb::demo::camera_stub_cache.find(index);
-    if (it != ion::bb::demo::camera_stub_cache.end()) {
-        memcpy(out->host, it->second.data, it->second.total() * it->second.elemSize());
+    auto it = ion::bb::image_io::image_cache.find(instance_id);
+    if (it != ion::bb::image_io::image_cache.end()) {
+        memcpy(out->host, it->second.data(), it->second.size());
         return 0;
     }
 
-    const char *url = reinterpret_cast<const char *>(url_buf->host);
+    cv::Mat img = ion::bb::image_io::get_image(reinterpret_cast<const char *>(url_buf->host));
 
-    std::string host_name;
-    std::string path_name;
-    std::tie(host_name, path_name) = ion::bb::demo::parse_url(url);
-
-    cv::Mat img;
-    bool img_loaded = false;
-    if (host_name.empty() || path_name.empty()) {
-        // fallback to local file
-        img = cv::imread(url);
-        if (!img.empty()) {
-            img_loaded = true;
-        }
-    } else {
-        httplib::Client cli(host_name.c_str());
-        cli.set_follow_location(true);
-        auto res = cli.Get(path_name.c_str());
-        if (res && res->status == 200) {
-            std::vector<char> data(res->body.size());
-            std::memcpy(data.data(), res->body.c_str(), res->body.size());
-            img = cv::imdecode(cv::InputArray(data), cv::IMREAD_COLOR);
-            img_loaded = true;
-        }
-    }
-
-    if (!img_loaded) {
+    if (img.empty()) {
         // Simulation mode
         cv::Mat pat = cv::Mat::zeros(2, 2, CV_16U);
         pat.at<uint16_t>((index / 2) % 2, index % 2) = 65535;
 
         img = cv::repeat(pat, height / 2, width / 2);
 
+        std::vector<uint8_t> data(img.total() * img.elemSize());
+        memcpy(data.data(), img.data, img.total() * img.elemSize());
         memcpy(out->host, img.data, img.total() * img.elemSize());
 
-        ion::bb::demo::camera_stub_cache[index] = img;
+        ion::bb::image_io::image_cache[instance_id] = data;
 
         return 0;
     }
@@ -423,41 +434,63 @@ extern "C" ION_EXPORT int ion_bb_demo_camera_stub(halide_buffer_t *url_buf, int 
     cv::Mat bit_shifted_img;
     bit_shifted_img = denormalized_img * (1 << bit_shift) + denormalized_img / (1 << (bit_width - bit_shift));
 
+    std::vector<uint8_t> data(bit_shifted_img.total() * bit_shifted_img.elemSize());
+    memcpy(data.data(), bit_shifted_img.data, bit_shifted_img.total() * bit_shifted_img.elemSize());
     memcpy(out->host, bit_shifted_img.data, bit_shifted_img.total() * bit_shifted_img.elemSize());
 
-    ion::bb::demo::camera_stub_cache[index] = bit_shifted_img;
+    ion::bb::image_io::image_cache[instance_id] = data;
 
     return 0;
 }
 
-extern "C" int ION_EXPORT ion_bb_demo_v4l2_imx219(halide_buffer_t *url_buf, int32_t index, bool force_sim_mode, halide_buffer_t *out) {
-    bool bounds_query = false;
-    const int width = 3264;
-    const int height = 2464;
-
-    if (url_buf->is_bounds_query()) {
-        bounds_query = true;
-    }
+extern "C" int ION_EXPORT ion_bb_image_io_camera(int32_t instance_id, int32_t width, int32_t height, int32_t index, halide_buffer_t *url_buf, halide_buffer_t *out) {
     if (out->is_bounds_query()) {
         out->dim[0].min = 0;
-        out->dim[0].extent = width;
+        out->dim[0].extent = 2 * width;  // YUYV
         out->dim[1].min = 0;
         out->dim[1].extent = height;
-        bounds_query = true;
-    }
-    if (bounds_query) {
         return 0;
     }
 
-    int result = -1;
-    if (!force_sim_mode) {
-        result = ion_bb_demo_v4l2(index, width, height, V4L2_PIX_FMT_SRGGB10, out);
-    }
-    if (result) {
-        result = ion_bb_demo_camera_stub(url_buf, index, width, height, 0.4f, 0.5f, 0.3125f, 0.0625f, 10, 6, 0 /*RGGB*/, out);
+    auto &v4l2(ion::bb::image_io::V4L2::get_instance(index, width, height, V4L2_PIX_FMT_YUYV));
+    if (v4l2.is_available()) {
+        Halide::Runtime::Buffer<uint16_t> obuf(*out);
+        v4l2.get(obuf);
+        return 0;
     }
 
-    return result;
+    auto it = ion::bb::image_io::image_cache.find(instance_id);
+    if (it != ion::bb::image_io::image_cache.end()) {
+        memcpy(out->host, it->second.data(), it->second.size());
+        return 0;
+    }
+
+    cv::Mat img = ion::bb::image_io::get_image(reinterpret_cast<const char *>(url_buf->host));
+
+    std::vector<uint8_t> yuyv_img(2 * width * height);
+    if (img.empty()) {
+        // Simulation mode
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < 2 * width; ++x) {
+                yuyv_img[2 * width * y + x] = (y * 2 * width + x) % 255;
+            }
+        }
+    } else {
+        cv::resize(img, img, cv::Size(width, height));
+        cv::cvtColor(img, img, cv::COLOR_BGR2YCrCb);
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                // Y
+                yuyv_img[2 * width * y + 2 * x + 0] = img.at<cv::Vec3b>(y, x)[0];
+                // Cb or Cr
+                yuyv_img[2 * width * y + 2 * x + 1] = ((x % 2) == 1) ? img.at<cv::Vec3b>(y, x)[1] : img.at<cv::Vec3b>(y, x)[2];
+            }
+        }
+    }
+    memcpy(out->host, yuyv_img.data(), yuyv_img.size());
+    ion::bb::image_io::image_cache[instance_id] = yuyv_img;
+
+    return 0;
 }
 
 #endif

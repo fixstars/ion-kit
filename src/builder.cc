@@ -279,10 +279,32 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
             } else {
                 if (in->is_array()) {
                     auto f_array = bbs[p.node_id()]->get_array_output(p.key());
-                    args.push_back(bb->build_input(j, f_array));
+                    if (in->kind() == Internal::IOKind::Scalar) {
+                        std::vector<Halide::Expr> exprs;
+                        for (auto &f : f_array) {
+                            if (f.dimensions() != 0) {
+                                throw std::runtime_error("Invalid port connection : " + in->name());
+                            }
+                            exprs.push_back(f());
+                        }
+                        args.push_back(bb->build_input(j, exprs));
+                    } else if (in->kind() == Internal::IOKind::Function) {
+                        args.push_back(bb->build_input(j, f_array));
+                    } else {
+                        throw std::runtime_error("fixme");
+                    }
                 } else {
                     Halide::Func f = bbs[p.node_id()]->get_output(p.key());
-                    args.push_back(bb->build_input(j, f));
+                    if (in->kind() == Internal::IOKind::Scalar) {
+                        if (f.dimensions() != 0) {
+                            throw std::runtime_error("Invalid port connection : " + in->name());
+                        }
+                        args.push_back(bb->build_input(j, f()));
+                    } else if (in->kind() == Internal::IOKind::Function) {
+                        args.push_back(bb->build_input(j, f));
+                    } else {
+                        throw std::runtime_error("fixme");
+                    }
                 }
             }
         }
