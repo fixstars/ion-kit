@@ -472,6 +472,7 @@ protected:
     // All GeneratorParams are settable from string.
     virtual void set_from_string(const std::string &value_string) = 0;
 
+public:
     virtual std::string call_to_string(const std::string &v) const = 0;
     virtual std::string get_c_type() const = 0;
 
@@ -479,7 +480,6 @@ protected:
         return "";
     }
 
-public:
     virtual std::string get_default_value() const = 0;
 
     virtual bool is_synthetic_param() const {

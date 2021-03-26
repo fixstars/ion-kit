@@ -30,9 +30,11 @@ struct ParamMD {
 
     std::string name;
     std::string default_value;
+    std::string c_type;
+    std::string type_decls;
 
     ParamMD() {}
-    ParamMD(const std::string& n, const std::string& dv);
+    ParamMD(const std::string& n, const std::string& dv, const std::string& ct, const std::string& td);
 };
 
 struct Metadata {
