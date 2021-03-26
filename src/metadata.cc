@@ -56,9 +56,17 @@ void to_json(json& j, const ParamMD& v) {
     if (v.c_type == "float" || v.c_type == "double") {
         j["default_value"] = std::stod(v.default_value);
     } else if (v.c_type.find("uint") == 0) {
-        j["default_value"] = std::stoull(v.default_value);
+        if (v.c_type.find("uint8_t") == 0) {
+            j["default_value"] = *reinterpret_cast<const uint8_t*>(v.default_value.c_str());
+        } else {
+            j["default_value"] = std::stoull(v.default_value);
+        }
     } else if (v.c_type.find("int") == 0) {
-        j["default_value"] = std::stoll(v.default_value);
+        if (v.c_type.find("uint8_t") == 0) {
+            j["default_value"] = *reinterpret_cast<const int8_t*>(v.default_value.c_str());
+        } else {
+            j["default_value"] = std::stoll(v.default_value);
+        }
     } else if (v.c_type == "bool") {
         j["default_value"] = v.default_value == "true" ? true : false;
     } else {
