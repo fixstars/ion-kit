@@ -9,12 +9,7 @@ ARG TARGETPLATFORM
 #
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
-        build-essential \
-        cmake \
         curl \
-        g++ \
-        gcc \
-        make \
         zlib1g-dev \
         libgtk2.0-0 \
         libopenexr22
@@ -22,12 +17,9 @@ RUN apt-get update && apt-get install -y \
 #
 # Halide
 #
-RUN mkdir -p /usr/local/halide/include
-RUN cd /usr/local/halide/include \
+RUN cd /usr/include \
         && curl -fsSL -O https://ion-archives.s3-us-west-2.amazonaws.com/Halide-Headers-7bf2c2d7f/HalideRuntime.h  \
                       -O https://ion-archives.s3-us-west-2.amazonaws.com/Halide-Headers-7bf2c2d7f/HalideBuffer.h
-ENV HALIDE_ROOT=/usr/local/halide
-
 #
 # OpenCV
 #

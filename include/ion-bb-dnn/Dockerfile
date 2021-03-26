@@ -9,12 +9,7 @@ ARG TARGETPLATFORM
 #
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
-        build-essential \
-        cmake \
         curl \
-        g++ \
-        gcc \
-        make \
         zlib1g-dev \
         libgtk2.0-0 \
         libopenexr22
@@ -22,11 +17,9 @@ RUN apt-get update && apt-get install -y \
 #
 # Halide
 #
-RUN mkdir -p /usr/local/halide/include
-RUN cd /usr/local/halide/include \
+RUN cd /usr/include \
         && curl -fsSL -O https://ion-archives.s3-us-west-2.amazonaws.com/Halide-Headers-7bf2c2d7f/HalideRuntime.h  \
                       -O https://ion-archives.s3-us-west-2.amazonaws.com/Halide-Headers-7bf2c2d7f/HalideBuffer.h
-ENV HALIDE_ROOT=/usr/local/halide
 
 #
 # OpenCV
@@ -43,15 +36,12 @@ RUN if [ "x$TARGETPLATFORM" = "xlinux/amd64" ]; then \
 #
 # ONNXRuntime
 #
-RUN mkdir /usr/local/onnxruntime
 # NOTE: This dockerfile is used for Building and Running Preview, then we need to utilize version which is not depends on CUDA ATM.
 # For a performance measurement, installed onnxruntime version will be used.
 RUN if [ "x$TARGETPLATFORM" = "xlinux/amd64" ]; then \
-        curl -L https://ion-archives.s3-us-west-2.amazonaws.com/genesis-runtime/onnxruntime-linux-x64-gcc75-1.6.0.tar.gz | tar xz -C /usr/local/onnxruntime --strip-components 1 ;\
+        curl -L https://ion-archives.s3-us-west-2.amazonaws.com/genesis-runtime/onnxruntime-linux-x64-gcc75-1.6.0.tar.gz | tar xz -C /usr --strip-components 1 ;\
     elif [ "x$TARGETPLATFORM" = "xlinux/arm64" ]; then \
-        curl -L https://ion-archives.s3-us-west-2.amazonaws.com/genesis-runtime/onnxruntime-linux-arm64-gcc75-1.6.0.tar.gz  | tar xz -C /usr/local/onnxruntime --strip-components 1 ;\
+        curl -L https://ion-archives.s3-us-west-2.amazonaws.com/genesis-runtime/onnxruntime-linux-arm64-gcc75-1.6.0.tar.gz  | tar xz -C /usr --strip-components 1 ;\
     else \
         echo "Unsupported platform" && exit -1 ;\
     fi
-ENV ONNXRUNTIME_ROOT=/usr/local/onnxruntime
-ENV LD_LIBRARY_PATH=/usr/local/onnxruntime/lib
