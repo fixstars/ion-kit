@@ -7,6 +7,7 @@
 
 #include <Halide.h>
 
+#include "def.h"
 #include "block.h"
 #include "json.hpp"
 #include "node.h"
@@ -79,8 +80,8 @@ public:
      * @return Execution result of the pipeline.
      * See https://halide-lang.org/docs/class_halide_1_1_realization.html for more details.
      */
-    // NOTE: This function is deprecated
-    // Halide::Realization run(const std::vector<int32_t>& sizes, const ion::PortMap& ports);
+    ION_ATTRIBUTE_DEPRECATED("Call run() only with ports instead")
+    Halide::Realization run(const std::vector<int32_t>& sizes, const ion::PortMap& ports);
 
     /**
      * Compile and execute the pipeline.

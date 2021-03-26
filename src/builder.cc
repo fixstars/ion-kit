@@ -121,10 +121,9 @@ void Builder::compile(const std::string& function_name, const CompileOption& opt
     return;
 }
 
-// NOTE: This function is deprecated
-// Halide::Realization Builder::run(const std::vector<int32_t>& sizes, const ion::PortMap& pm) {
-//     return build(pm).realize(sizes, target_, pm.get_param_map());
-// }
+Halide::Realization Builder::run(const std::vector<int32_t>& sizes, const ion::PortMap& pm) {
+    return build(pm).realize(sizes, target_, pm.get_param_map());
+}
 
 void Builder::run(const ion::PortMap& pm) {
     auto p = build(pm, &outputs_);
