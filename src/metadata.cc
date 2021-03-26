@@ -50,16 +50,38 @@ ParamMD::ParamMD(const std::string& n, const std::string& dv, const std::string&
 
 void to_json(json& j, const ParamMD& v) {
     j["name"] = v.name;
-    j["default_value"] = v.default_value;
     j["c_type"] = v.c_type;
     j["type_decls"] = v.c_type;
+
+    if (v.c_type == "float" || v.c_type == "double") {
+        j["default_value"] = std::stod(v.default_value);
+    } else if (v.c_type.find("uint") == 0) {
+        j["default_value"] = std::stoull(v.default_value);
+    } else if (v.c_type.find("int") == 0) {
+        j["default_value"] = std::stoll(v.default_value);
+    } else if (v.c_type == "bool") {
+        j["default_value"] = v.default_value == "true" ? true : false;
+    } else {
+        j["default_value"] = v.default_value;
+    }
 }
 
 void from_json(const json& j, ParamMD& v) {
     v.name = j["name"].get<std::string>();
-    v.default_value = j["default_value"].get<std::string>();
     v.c_type = j["c_type"];
     v.type_decls = j["type_decls"];
+
+    if (v.c_type == "float" || v.c_type == "double") {
+        v.default_value = std::to_string(j["default_value"].get<double>());
+    } else if (v.c_type.find("uint") == 0) {
+        v.default_value = std::to_string(j["default_value"].get<long long>());
+    } else if (v.c_type.find("int") == 0) {
+        v.default_value = std::to_string(j["default_value"].get<unsigned long long>());
+    } else if (v.c_type == "bool") {
+        v.default_value = j["default_value"].get<bool>() ? "true" : "false";
+    } else {
+        v.default_value = j["default_value"].get<std::string>();
+    }
 }
 
 Metadata::Metadata(const std::string& n)
@@ -82,7 +104,9 @@ Metadata::Metadata(const std::string& n)
     }
     for (auto info : bb->param_info().generator_params()) {
         auto dv = info->is_synthetic_param() ? "" : unquote(info->get_default_value());
-        params.push_back(ParamMD(info->name, dv, info->get_c_type(), info->get_type_decls()));
+        auto ctv = info->is_synthetic_param() ? "" : info->get_c_type();
+        auto tdv = info->is_synthetic_param() ? "" : info->get_type_decls();
+        params.push_back(ParamMD(info->name, dv, ctv, tdv));
     }
 }
 
