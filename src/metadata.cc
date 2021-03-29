@@ -53,22 +53,10 @@ void to_json(json& j, const ParamMD& v) {
     j["c_type"] = v.c_type;
     j["type_decls"] = v.c_type;
 
-    if (v.c_type == "float" || v.c_type == "double") {
-        j["default_value"] = std::stod(v.default_value);
-    } else if (v.c_type.find("uint") == 0) {
-        if (v.c_type.find("uint8_t") == 0) {
-            j["default_value"] = *reinterpret_cast<const uint8_t*>(v.default_value.c_str());
-        } else {
-            j["default_value"] = std::stoull(v.default_value);
-        }
-    } else if (v.c_type.find("int") == 0) {
-        if (v.c_type.find("uint8_t") == 0) {
-            j["default_value"] = *reinterpret_cast<const int8_t*>(v.default_value.c_str());
-        } else {
-            j["default_value"] = std::stoll(v.default_value);
-        }
-    } else if (v.c_type == "bool") {
-        j["default_value"] = v.default_value == "true" ? true : false;
+    if (v.c_type.find("uint8_t") == 0) {
+        j["default_value"] = std::to_string(*reinterpret_cast<const int8_t*>(v.default_value.c_str()));
+    } else if (v.c_type.find("uint8_t") == 0) {
+        j["default_value"] = std::to_string(*reinterpret_cast<const uint8_t*>(v.default_value.c_str()));
     } else {
         j["default_value"] = v.default_value;
     }
@@ -79,14 +67,14 @@ void from_json(const json& j, ParamMD& v) {
     v.c_type = j["c_type"];
     v.type_decls = j["type_decls"];
 
-    if (v.c_type == "float" || v.c_type == "double") {
-        v.default_value = std::to_string(j["default_value"].get<double>());
-    } else if (v.c_type.find("uint") == 0) {
-        v.default_value = std::to_string(j["default_value"].get<long long>());
-    } else if (v.c_type.find("int") == 0) {
-        v.default_value = std::to_string(j["default_value"].get<unsigned long long>());
-    } else if (v.c_type == "bool") {
-        v.default_value = j["default_value"].get<bool>() ? "true" : "false";
+    if (v.c_type.find("uint8_t") == 0) {
+        std::ostringstream ss;
+        ss << static_cast<uint8_t>(std::stoi(j["default_value"].get<std::string>()));
+        v.default_value = ss.str();
+    } else if (v.c_type.find("uint8_t") == 0) {
+        std::ostringstream ss;
+        ss << static_cast<uint8_t>(std::stoi(j["default_value"].get<std::string>()));
+        v.default_value = ss.str();
     } else {
         v.default_value = j["default_value"].get<std::string>();
     }
