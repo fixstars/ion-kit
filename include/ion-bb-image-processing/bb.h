@@ -639,7 +639,7 @@ private:
 
 class LensShadingCorrectionLUT : public BuildingBlock<LensShadingCorrectionLUT> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "LensShadingCorrectionLinear"};
+    GeneratorParam<std::string> gc_title{"gc_title", "LensShadingCorrectionLUT"};
     GeneratorParam<std::string> gc_description{"gc_description", "Correct lens shading."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
@@ -1204,11 +1204,11 @@ public:
 };
 
 class ResizeNearest2D : public ResizeNearest<ResizeNearest2D, 2> {
-    GeneratorParam<std::string> gc_title{"gc_title", "ResizeBilinear2D"};
+    GeneratorParam<std::string> gc_title{"gc_title", "ResizeNearest2D"};
 };
 
 class ResizeNearest3D : public ResizeNearest<ResizeNearest3D, 3> {
-    GeneratorParam<std::string> gc_title{"gc_title", "ResizeBilinear3D"};
+    GeneratorParam<std::string> gc_title{"gc_title", "ResizeNearest3D"};
 };
 
 template<typename X, int32_t D>
