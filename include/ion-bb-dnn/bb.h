@@ -129,7 +129,7 @@ public:
 
 class ObjectDetectionArray : public ObjectDetectionBase<ObjectDetectionArray, 4> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "Object Detection (Array)"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "Object Detection (Array)"};
 };
 
 }  // namespace dnn

@@ -893,62 +893,62 @@ public:
 
 class ExtractBuffer1DUInt8 : public ExtractBuffer<ExtractBuffer1DUInt8, uint8_t, 1> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer1DUInt8"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer1DUInt8"};
 };
 
 class ExtractBuffer2DUInt8 : public ExtractBuffer<ExtractBuffer2DUInt8, uint8_t, 2> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer2DUInt8"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer2DUInt8"};
 };
 
 class ExtractBuffer3DUInt8 : public ExtractBuffer<ExtractBuffer3DUInt8, uint8_t, 3> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer3DUInt8"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer3DUInt8"};
 };
 
 class ExtractBuffer4DUInt8 : public ExtractBuffer<ExtractBuffer4DUInt8, uint8_t, 4> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer4DUInt8"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer4DUInt8"};
 };
 
 class ExtractBuffer1DUInt16 : public ExtractBuffer<ExtractBuffer1DUInt16, uint16_t, 1> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer1DUInt16"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer1DUInt16"};
 };
 
 class ExtractBuffer2DUInt16 : public ExtractBuffer<ExtractBuffer2DUInt16, uint16_t, 2> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer2DUInt16"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer2DUInt16"};
 };
 
 class ExtractBuffer3DUInt16 : public ExtractBuffer<ExtractBuffer3DUInt16, uint16_t, 3> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer3DUInt16"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer3DUInt16"};
 };
 
 class ExtractBuffer4DUInt16 : public ExtractBuffer<ExtractBuffer4DUInt16, uint16_t, 4> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer4DUInt16"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer4DUInt16"};
 };
 
 class ExtractBuffer1DFloat : public ExtractBuffer<ExtractBuffer1DFloat, float, 1> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer1DFloat"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer1DFloat"};
 };
 
 class ExtractBuffer2DFloat : public ExtractBuffer<ExtractBuffer2DFloat, float, 2> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer2DFloat"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer2DFloat"};
 };
 
 class ExtractBuffer3DFloat : public ExtractBuffer<ExtractBuffer3DFloat, float, 3> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer3DFloat"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer3DFloat"};
 };
 
 class ExtractBuffer4DFloat : public ExtractBuffer<ExtractBuffer4DFloat, float, 4> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer4DFloat"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "ExtractBuffer4DFloat"};
 };
 
 template<typename X, typename T, int32_t D>
@@ -984,62 +984,62 @@ public:
 
 class ConcatBuffer1DUInt8 : public ConcatBuffer<ConcatBuffer1DUInt8, uint8_t, 1> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer1DUInt8"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer1DUInt8"};
 };
 
 class ConcatBuffer4DUInt8 : public ConcatBuffer<ConcatBuffer4DUInt8, uint8_t, 4> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer4DUInt8"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer4DUInt8"};
 };
 
 class ConcatBuffer2DUInt8 : public ConcatBuffer<ConcatBuffer2DUInt8, uint8_t, 2> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer2DUInt8"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer2DUInt8"};
 };
 
 class ConcatBuffer3DUInt8 : public ConcatBuffer<ConcatBuffer3DUInt8, uint8_t, 3> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer3DUInt8"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer3DUInt8"};
 };
 
 class ConcatBuffer1DUInt16 : public ConcatBuffer<ConcatBuffer1DUInt16, uint16_t, 1> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer1DUInt16"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer1DUInt16"};
 };
 
 class ConcatBuffer2DUInt16 : public ConcatBuffer<ConcatBuffer2DUInt16, uint16_t, 2> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer2DUInt16"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer2DUInt16"};
 };
 
 class ConcatBuffer3DUInt16 : public ConcatBuffer<ConcatBuffer3DUInt16, uint16_t, 3> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer3DUInt16"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer3DUInt16"};
 };
 
 class ConcatBuffer4DUInt16 : public ConcatBuffer<ConcatBuffer4DUInt16, uint16_t, 4> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer4DUInt16"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer4DUInt16"};
 };
 
 class ConcatBuffer1DFloat : public ConcatBuffer<ConcatBuffer1DFloat, float, 1> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer1DFloat"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer1DFloat"};
 };
 
 class ConcatBuffer2DFloat : public ConcatBuffer<ConcatBuffer2DFloat, float, 2> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer2DFloat"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer2DFloat"};
 };
 
 class ConcatBuffer3DFloat : public ConcatBuffer<ConcatBuffer3DFloat, float, 3> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer3DFloat"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer3DFloat"};
 };
 
 class ConcatBuffer4DFloat : public ConcatBuffer<ConcatBuffer4DFloat, float, 4> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer4DFloat"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "ConcatBuffer4DFloat"};
 };
 
 template<typename X, typename T, int32_t D>
