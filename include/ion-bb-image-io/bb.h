@@ -295,7 +295,9 @@ public:
 
     void generate() {
         using namespace Halide;
-        Func in;
+
+        Func in(static_cast<std::string>(gc_prefix) + "input");
+        Var x, y, c;
         in(c, x, y) = mux(c,
                           {input(x, y, 2),
                            input(x, y, 1),
@@ -307,18 +309,13 @@ public:
         } else {
             in.parallel(y);
         }
+
         std::vector<ExternFuncArgument> params = {in, static_cast<int>(width), static_cast<int>(height), static_cast<int>(idx)};
         Func display(static_cast<std::string>(gc_prefix) + "display");
         display.define_extern("ion_bb_image_io_gui_display", params, Int(32), 0);
         display.compute_root();
         output() = display();
     }
-
-    void schedule() {
-    }
-
-private:
-    Halide::Var c, x, y;
 };
 
 class FBDisplay : public ion::BuildingBlock<FBDisplay> {
@@ -339,12 +336,21 @@ public:
     void generate() {
         using namespace Halide;
 
-        Func input_(static_cast<std::string>(gc_prefix) + "input");
-        input_(_) = input(_);
-        input_.compute_root();
+        Func in(static_cast<std::string>(gc_prefix) + "input");
+        Var x, y, c;
+        in(c, x, y) = mux(c,
+                          {input(x, y, 2),
+                           input(x, y, 1),
+                           input(x, y, 0)});
+        in.compute_root();
+        if (get_target().has_gpu_feature()) {
+            Var xo, yo, xi, yi;
+            in.gpu_tile(x, y, xo, yo, xi, yi, 16, 16);
+        } else {
+            in.parallel(y);
+        }
 
-        std::vector<ExternFuncArgument> params = {cast<int32_t>(width), cast<int32_t>(height), input_};
-
+        std::vector<ExternFuncArgument> params = {cast<int32_t>(width), cast<int32_t>(height), in};
         Func display(static_cast<std::string>(gc_prefix) + "display");
         display.define_extern("ion_bb_image_io_fb_display", params, Halide::type_of<int32_t>(), 0);
         display.compute_root();
@@ -408,15 +414,21 @@ public:
         path_buf.fill(0);
         std::memcpy(path_buf.data(), path_str.c_str(), path_str.size());
 
-        Func input_(static_cast<std::string>(gc_prefix) + "input");
-        Var c, x, y;
-        input_(c, x, y) = mux(c,
-                              {input(x, y, 2),
-                               input(x, y, 1),
-                               input(x, y, 0)});
-        input_.compute_root();
+        Func in(static_cast<std::string>(gc_prefix) + "input");
+        Var x, y, c;
+        in(c, x, y) = mux(c,
+                          {input(x, y, 2),
+                           input(x, y, 1),
+                           input(x, y, 0)});
+        in.compute_root();
+        if (get_target().has_gpu_feature()) {
+            Var xo, yo, xi, yi;
+            in.gpu_tile(x, y, xo, yo, xi, yi, 16, 16);
+        } else {
+            in.parallel(y);
+        }
 
-        std::vector<ExternFuncArgument> params = {input_, static_cast<int32_t>(width), static_cast<int32_t>(height), path_buf};
+        std::vector<ExternFuncArgument> params = {in, static_cast<int32_t>(width), static_cast<int32_t>(height), path_buf};
         Func image_saver(static_cast<std::string>(gc_prefix) + "image_saver");
         image_saver.define_extern("ion_bb_image_io_image_saver", params, Int(32), 0);
         image_saver.compute_root();
