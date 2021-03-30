@@ -639,7 +639,7 @@ private:
 
 class LensShadingCorrectionLUT : public BuildingBlock<LensShadingCorrectionLUT> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "LensShadingCorrectionLUT"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "LensShadingCorrectionLUT"};
     GeneratorParam<std::string> gc_description{"gc_description", "Correct lens shading."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
@@ -1066,11 +1066,11 @@ public:
 };
 
 class LensDistortionCorrectionLUT2D : public LensDistortionCorrectionLUT<LensDistortionCorrectionLUT2D, 2> {
-    GeneratorParam<std::string> gc_title{"gc_title", "LensDistortionCorrectionLUT2D"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "LensDistortionCorrectionLUT2D"};
 };
 
 class LensDistortionCorrectionLUT3D : public LensDistortionCorrectionLUT<LensDistortionCorrectionLUT3D, 3> {
-    GeneratorParam<std::string> gc_title{"gc_title", "LensDistortionCorrectionLUT3D"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "LensDistortionCorrectionLUT3D"};
 };
 
 template<typename X, int32_t D>
