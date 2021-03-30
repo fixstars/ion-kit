@@ -233,7 +233,7 @@ namespace sgm {
 class Census : public ion::BuildingBlock<Census> {
 public:
     // TODO: Write suitable description
-    GeneratorParam<std::string> gc_title{"gc_title", "Census Transform"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "Census Transform"};
     GeneratorParam<std::string> gc_description{"gc_description", "Census transform."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "image,stereo"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }; }))"};
@@ -265,7 +265,7 @@ public:
 class MatchingCost : public ion::BuildingBlock<MatchingCost> {
 public:
     // TODO: Write suitable description
-    GeneratorParam<std::string> gc_title{"gc_title", "Matching cost"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "Matching cost"};
     GeneratorParam<std::string> gc_description{"gc_description", "Matching cost."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "image,stereo"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.disp), parseInt(v.width), parseINt(v.height)]}; }))"};
@@ -300,7 +300,7 @@ public:
 class ScanCost : public ion::BuildingBlock<ScanCost> {
 public:
     // TODO: Write suitable description
-    GeneratorParam<std::string> gc_title{"gc_title", "Scan cost"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "Scan cost"};
     GeneratorParam<std::string> gc_description{"gc_description", "Scan cost."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "image,stereo"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }; }))"};
@@ -333,7 +333,7 @@ public:
 class AddCost4 : public ion::BuildingBlock<AddCost4> {
 public:
     // TODO: Write suitable description
-    GeneratorParam<std::string> gc_title{"gc_title", "Add cost"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "Add cost"};
     GeneratorParam<std::string> gc_description{"gc_description", "Add cost."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "image,stereo"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input0 }; }))"};
@@ -371,7 +371,7 @@ public:
 class Disparity : public ion::BuildingBlock<Disparity> {
 public:
     // TODO: Write suitable description
-    GeneratorParam<std::string> gc_title{"gc_title", "Disparity"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "Disparity"};
     GeneratorParam<std::string> gc_description{"gc_description", "Disparity."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "image,stereo"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.width), parseInt(v.height)]}; }))"};
