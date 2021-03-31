@@ -209,7 +209,7 @@ private:
     }
 
     bool dpu_load() {
-        int ret = system("sudo python3 -c \"from dpu_pynq import DpuOverlay; overlay = DpuOverlay(\"dpu.bit\")\"");
+        int ret = system("sudo python3 -c \"from pynq_dpu import DpuOverlay; overlay = DpuOverlay(\"dpu.bit\")\"");
         return ret == 0;
     }
 

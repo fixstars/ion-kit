@@ -535,9 +535,9 @@ std::vector<DetectionBox> peoplenet_(halide_buffer_t *in,
 
     in_ = in_.reshape(1, internal_width * internal_height).t();
 
-    cv::Mat test;
-    cv::normalize(in_.reshape(1, internal_height * 3), test, 0, 255.0, cv::NORM_MINMAX, CV_32FC1);
-    cv::imwrite("test.png", test);
+    // cv::Mat test;
+    // cv::normalize(in_.reshape(1, internal_height * 3), test, 0, 255.0, cv::NORM_MINMAX, CV_32FC1);
+    // cv::imwrite("test.png", test);
 
     IExecutionContext *context = session.get_context();
 
