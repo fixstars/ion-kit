@@ -758,6 +758,7 @@ public:
     GeneratorParam<uint16_t> white_balance_gain_g{"white_balance_gain_g", 4096};
     GeneratorParam<uint16_t> white_balance_gain_b{"white_balance_gain_b", 4096};
     GeneratorParam<double> gamma_gamma{"gamma_gamma", 1 / 2.2};
+    GeneratorParam<int32_t> unroll_level{"unroll_level", 3, 0, 3};
     GeneratorInput<Halide::Func> input{"input", Halide::UInt(16), 2};
     GeneratorOutput<Halide::Func> output{"output", Halide::UInt(8), 3};
 
@@ -768,7 +769,7 @@ public:
         int32_t input_height = height;
         int32_t output_width = input_width / 2;
         int32_t output_height = input_height / 2;
-        int32_t gamma_unroll = get_target().has_fpga_feature() ? 12 : 1;
+        int32_t gamma_unroll = get_target().has_fpga_feature() && unroll_level != 0 ? (1 << (unroll_level - 1)) * 3 : 1;
 
         normalize = normalize_raw_image(input, normalize_input_bits, normalize_input_shift, internal_bits);
         offset = bayer_offset(normalize, pattern, offset_offset_r, offset_offset_g, offset_offset_b);
@@ -801,13 +802,18 @@ public:
             demosaic.compute_at(output, Halide::Var::outermost());
             gamma.compute_at(output, Halide::Var::outermost());
 
-            ip_in[0].unroll(ip_in[0].args()[0], 8).hls_burst(8);
-            normalize.unroll(normalize.args()[0], 8).hls_burst(8);
-            offset.unroll(offset.args()[0], 8).hls_burst(8);
-            white_balance.unroll(white_balance.args()[0], 8).hls_burst(8);
-            demosaic.bound(demosaic.args()[0], 0, 3).unroll(demosaic.args()[0]).unroll(demosaic.args()[1], 4).hls_burst(12);
-            gamma.bound(gamma.args()[0], 0, 3).unroll(gamma.args()[0]).unroll(gamma.args()[1], 4).hls_burst(12);
-            ip_out[0].bound(ip_out[0].args()[0], 0, 3).unroll(ip_out[0].args()[0]).unroll(ip_out[0].args()[1], 4).hls_burst(12);
+            int32_t input_burst = 1 << unroll_level;
+            int32_t dim0_unroll = unroll_level == 0 ? 1 : 3;
+            int32_t dim1_unroll = unroll_level == 0 ? 1 : (1 << (unroll_level - 1));
+            int32_t output_burst = dim0_unroll * dim1_unroll;
+
+            ip_in[0].unroll(ip_in[0].args()[0], input_burst).hls_burst(input_burst);
+            normalize.unroll(normalize.args()[0], input_burst).hls_burst(input_burst);
+            offset.unroll(offset.args()[0], input_burst).hls_burst(input_burst);
+            white_balance.unroll(white_balance.args()[0], input_burst).hls_burst(input_burst);
+            demosaic.bound(demosaic.args()[0], 0, 3).unroll(demosaic.args()[0], dim0_unroll).unroll(demosaic.args()[1], dim1_unroll).hls_burst(output_burst);
+            gamma.bound(gamma.args()[0], 0, 3).unroll(gamma.args()[0], dim0_unroll).unroll(gamma.args()[1], dim1_unroll).hls_burst(output_burst);
+            ip_out[0].bound(ip_out[0].args()[0], 0, 3).unroll(ip_out[0].args()[0], dim0_unroll).unroll(ip_out[0].args()[1], dim1_unroll).hls_burst(output_burst);
         } else if (get_target().has_gpu_feature()) {
             Halide::Var xo, yo, xi, yi;
             output.gpu_tile(x, y, xo, yo, xi, yi, 32, 16);
@@ -853,6 +859,7 @@ public:
     GeneratorParam<uint16_t> white_balance_gain_g{"white_balance_gain_g", 4096};
     GeneratorParam<uint16_t> white_balance_gain_b{"white_balance_gain_b", 4096};
     GeneratorParam<double> gamma_gamma{"gamma_gamma", 1 / 2.2};
+    GeneratorParam<int32_t> unroll_level{"unroll_level", 3, 0, 3};
     GeneratorInput<Halide::Func> input{"input", Halide::UInt(16), 2};
     GeneratorOutput<Halide::Func> output{"output", Halide::UInt(8), 3};
 
@@ -863,7 +870,7 @@ public:
         int32_t input_height = height;
         int32_t output_width = input_width / 2;
         int32_t output_height = input_height / 2;
-        int32_t gamma_unroll = get_target().has_fpga_feature() ? 12 : 1;
+        int32_t gamma_unroll = get_target().has_fpga_feature() && unroll_level != 0 ? (1 << (unroll_level - 1)) * 3 : 1;
         std::vector<int16_t> unsharp_mask_kernel = {-455, -455, -455,
                                                     -455, 7736, -455,
                                                     -455, -455, -455};
@@ -901,14 +908,19 @@ public:
             unsharp_mask.compute_at(output, Halide::Var::outermost());
             gamma.compute_at(output, Halide::Var::outermost());
 
-            ip_in[0].unroll(ip_in[0].args()[0], 8).hls_burst(8);
-            normalize.unroll(normalize.args()[0], 8).hls_burst(8);
-            offset.unroll(offset.args()[0], 8).hls_burst(8);
-            white_balance.unroll(white_balance.args()[0], 8).hls_burst(8);
-            demosaic.bound(demosaic.args()[0], 0, 3).unroll(demosaic.args()[0]).unroll(demosaic.args()[1], 4).hls_burst(12);
-            unsharp_mask.bound(unsharp_mask.args()[0], 0, 3).unroll(unsharp_mask.args()[0]).unroll(unsharp_mask.args()[1], 4).hls_burst(12);
-            gamma.bound(gamma.args()[0], 0, 3).unroll(gamma.args()[0]).unroll(gamma.args()[1], 4).hls_burst(12);
-            ip_out[0].bound(ip_out[0].args()[0], 0, 3).unroll(ip_out[0].args()[0]).unroll(ip_out[0].args()[1], 4).hls_burst(12);
+            int32_t input_burst = 1 << unroll_level;
+            int32_t dim0_unroll = unroll_level == 0 ? 1 : 3;
+            int32_t dim1_unroll = unroll_level == 0 ? 1 : (1 << (unroll_level - 1));
+            int32_t output_burst = dim0_unroll * dim1_unroll;
+
+            ip_in[0].unroll(ip_in[0].args()[0], input_burst).hls_burst(input_burst);
+            normalize.unroll(normalize.args()[0], input_burst).hls_burst(input_burst);
+            offset.unroll(offset.args()[0], input_burst).hls_burst(input_burst);
+            white_balance.unroll(white_balance.args()[0], input_burst).hls_burst(input_burst);
+            demosaic.bound(demosaic.args()[0], 0, 3).unroll(demosaic.args()[0], dim0_unroll).unroll(demosaic.args()[1], dim1_unroll).hls_burst(output_burst);
+            unsharp_mask.bound(unsharp_mask.args()[0], 0, 3).unroll(unsharp_mask.args()[0], dim0_unroll).unroll(unsharp_mask.args()[1], dim1_unroll).hls_burst(output_burst);
+            gamma.bound(gamma.args()[0], 0, 3).unroll(gamma.args()[0], dim0_unroll).unroll(gamma.args()[1], dim1_unroll).hls_burst(output_burst);
+            ip_out[0].bound(ip_out[0].args()[0], 0, 3).unroll(ip_out[0].args()[0], dim0_unroll).unroll(ip_out[0].args()[1], dim1_unroll).hls_burst(output_burst);
         } else if (get_target().has_gpu_feature()) {
             Halide::Var d_xo, d_yo, d_xi, d_yi;
             Halide::Var xo, yo, xi, yi;
