@@ -20,6 +20,11 @@ if(WITH_CUDA)
     ion_run(demo_gpu demo_compile SRCS demo_run.cc TARGET_STRING "host-cuda-cuda_capability_50-profile")
 endif()
 
+if(ION_ENABLE_HALIDE_FPGA_BACKEND)
+    ion_compile(fpga_isp_compile SRCS fpga_isp_compile.cc PIPELINE_NAME fpga_isp)
+    ion_run(fpga_isp_cpu fpga_isp_compile SRCS fpga_isp_run.cc TARGET_STRING "host-profile")
+endif()
+
 # JIT
 ion_jit(isp_jit SRCS isp.cc)
 ion_jit(isp_and_sgm_jit SRCS isp_and_sgm.cc)
