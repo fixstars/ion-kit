@@ -292,49 +292,47 @@ public:
     }
 };
 
-Halide::Func gamma_correction_3d(Halide::Func input, int32_t input_bits, int32_t output_bits, int32_t lut_bits, int32_t lut_index_bits, double gamma, std::string name = "gamma_correction_3d") {
+Halide::Func gamma_correction_3d(Halide::Func input, int32_t input_bits, int32_t output_bits, int32_t lut_bits, int32_t lut_index_bits, double gamma, int32_t width, int32_t unroll_num, std::string name = "gamma_correction_3d") {
     Halide::Func output{name};
     Halide::Var x{"x"}, y{"y"}, c{"c"};
+
+    Halide::Expr lut_sel = (c + x * 3 + y * width * 3) % unroll_num;
 
     int32_t lut_size = 1 << lut_index_bits;
     int32_t max_value = (1 << output_bits) - 1;
     if (input_bits == lut_index_bits) {
-        std::vector<Halide::Buffer<uint16_t>> lut_list;
-        for (int32_t i = 0; i < 3; i++) {
+        std::vector<Halide::Expr> lut_expr_list;
+        for (int32_t i = 0; i < unroll_num; i++) {
             Halide::Buffer<uint16_t> lut(lut_size);
             for (int32_t j = 0; j < lut_size; j++) {
                 lut(j) = static_cast<uint16_t>(pow(j / static_cast<double>(lut_size - 1), gamma) * max_value + 0.5);
             }
-            lut_list.push_back(lut);
+            lut_expr_list.push_back(lut(input(c, x, y)));
         }
-        output(c, x, y) = Halide::mux(c, {lut_list[0](input(c, x, y)),
-                                          lut_list[1](input(c, x, y)),
-                                          lut_list[2](input(c, x, y))});
+        output(c, x, y) = unroll_num == 1 ? lut_expr_list[0] : Halide::mux(lut_sel, lut_expr_list);
     } else {
-        std::vector<Halide::Buffer<uint16_t>> lut0_list;
-        std::vector<Halide::Buffer<uint16_t>> lut1_list;
-        for (int32_t i = 0; i < 3; i++) {
+        Halide::Expr is_odd_index = ((input(c, x, y) >> (input_bits - lut_index_bits)) & 1) == 1;
+        Halide::Expr lut1_index = (input(c, x, y) >> (input_bits - lut_index_bits + 1)) & (lut_size / 2 - 1);
+        Halide::Expr lut0_index = Halide::select(is_odd_index, lut1_index + 1, lut1_index);
+        Halide::Expr lut0_index_limited = Halide::min(lut0_index, lut_size / 2 - 1);
+
+        std::vector<Halide::Expr> lut0_expr_list;
+        std::vector<Halide::Expr> lut1_expr_list;
+        for (int32_t i = 0; i < unroll_num; i++) {
             Halide::Buffer<uint16_t> lut0(lut_size / 2);
             Halide::Buffer<uint16_t> lut1(lut_size / 2);
             for (int32_t j = 0; j < lut_size / 2; j++) {
                 lut0(j) = static_cast<uint16_t>(pow((j * 2) / static_cast<double>(lut_size), gamma) * max_value + 0.5);
                 lut1(j) = static_cast<uint16_t>(pow((j * 2 + 1) / static_cast<double>(lut_size), gamma) * max_value + 0.5);
             }
-            lut0_list.push_back(lut0);
-            lut1_list.push_back(lut1);
+            lut0_expr_list.push_back(lut0(lut0_index_limited));
+            lut1_expr_list.push_back(lut1(lut1_index));
         }
-        Halide::Expr is_odd_index = ((input(c, x, y) >> (input_bits - lut_index_bits)) & 1) == 1;
-        Halide::Expr lut1_index = (input(c, x, y) >> (input_bits - lut_index_bits + 1)) & (lut_size / 2 - 1);
-        Halide::Expr lut0_index = Halide::select(is_odd_index, lut1_index + 1, lut1_index);
-        Halide::Expr lut0_index_limited = Halide::min(lut0_index, lut_size / 2 - 1);
+
         Halide::Expr lut0_value = Halide::cast(Halide::UInt(lut_bits),
                                                Halide::select(lut0_index == lut_size / 2, max_value,
-                                                              Halide::mux(c, {lut0_list[0](lut0_index_limited),
-                                                                              lut0_list[1](lut0_index_limited),
-                                                                              lut0_list[2](lut0_index_limited)})));
-        Halide::Expr lut1_value = Halide::cast(Halide::UInt(lut_bits), Halide::mux(c, {lut1_list[0](lut1_index),
-                                                                                       lut1_list[1](lut1_index),
-                                                                                       lut1_list[2](lut1_index)}));
+                                                              unroll_num == 1 ? lut0_expr_list[0] : Halide::mux(lut_sel, lut0_expr_list)));
+        Halide::Expr lut1_value = Halide::cast(Halide::UInt(lut_bits), unroll_num == 1 ? lut1_expr_list[0] : Halide::mux(lut_sel, lut1_expr_list));
         Halide::Expr base_value = Halide::select(is_odd_index, lut1_value, lut0_value);
         Halide::Expr next_value = Halide::select(is_odd_index, lut0_value, lut1_value);
         Halide::Expr diff = next_value - base_value;
@@ -366,7 +364,8 @@ public:
     GeneratorOutput<Halide::Func> output{"output", Halide::UInt(16), 3};
 
     void generate() {
-        output = gamma_correction_3d(input, input_bits, output_bits, lut_bits, lut_index_bits, gamma);
+        int32_t gamma_unroll = get_target().has_fpga_feature() ? 3 : 1;
+        output = gamma_correction_3d(input, input_bits, output_bits, lut_bits, lut_index_bits, gamma, width, gamma_unroll);
     }
 
     void schedule() {
@@ -725,12 +724,6 @@ public:
     GeneratorParam<uint16_t> offset_offset_g{"offset_offset_g", 0};
     GeneratorParam<uint16_t> offset_offset_b{"offset_offset_b", 0};
     // 12bit fractional
-    GeneratorParam<uint16_t> shading_correction_slope_r{"shading_correction_slope_r", 0};
-    GeneratorParam<uint16_t> shading_correction_slope_g{"shading_correction_slope_g", 0};
-    GeneratorParam<uint16_t> shading_correction_slope_b{"shading_correction_slope_b", 0};
-    GeneratorParam<uint16_t> shading_correction_offset_r{"shading_correction_offset_r", 4096};
-    GeneratorParam<uint16_t> shading_correction_offset_g{"shading_correction_offset_g", 4096};
-    GeneratorParam<uint16_t> shading_correction_offset_b{"shading_correction_offset_b", 4096};
     GeneratorParam<uint16_t> white_balance_gain_r{"white_balance_gain_r", 4096};
     GeneratorParam<uint16_t> white_balance_gain_g{"white_balance_gain_g", 4096};
     GeneratorParam<uint16_t> white_balance_gain_b{"white_balance_gain_b", 4096};
@@ -743,15 +736,15 @@ public:
         BayerMap::Pattern pattern = static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern));
         int32_t input_width = width;
         int32_t input_height = height;
+        int32_t output_width = input_width / 2;
+        int32_t output_height = input_height / 2;
+        int32_t gamma_unroll = get_target().has_fpga_feature() ? 12 : 1;
 
         normalize = normalize_raw_image(input, normalize_input_bits, normalize_input_shift, internal_bits);
         offset = bayer_offset(normalize, pattern, offset_offset_r, offset_offset_g, offset_offset_b);
-        shading_correction = lens_shading_correction_linear(offset, pattern, input_width, input_height, internal_bits,
-                                                            shading_correction_slope_r, shading_correction_slope_g, shading_correction_slope_b,
-                                                            shading_correction_offset_r, shading_correction_offset_g, shading_correction_offset_b);
-        white_balance = bayer_white_balance(shading_correction, pattern, internal_bits, white_balance_gain_r, white_balance_gain_g, white_balance_gain_b);
+        white_balance = bayer_white_balance(offset, pattern, internal_bits, white_balance_gain_r, white_balance_gain_g, white_balance_gain_b);
         demosaic = bayer_demosaic_simple(white_balance, pattern);
-        gamma = gamma_correction_3d(demosaic, internal_bits, 8, 8, 8, gamma_gamma);
+        gamma = gamma_correction_3d(demosaic, internal_bits, 8, 8, 8, gamma_gamma, output_width, gamma_unroll);
 
         final_cast = Halide::Func{static_cast<std::string>(gc_prefix) + "simple_isp"};
         final_cast(Halide::_) = Halide::cast(UInt(8), gamma(Halide::_));
@@ -774,14 +767,17 @@ public:
 
             normalize.compute_at(output, Halide::Var::outermost());
             offset.compute_at(output, Halide::Var::outermost());
-            shading_correction.compute_at(output, Halide::Var::outermost());
             white_balance.compute_at(output, Halide::Var::outermost());
             demosaic.compute_at(output, Halide::Var::outermost());
             gamma.compute_at(output, Halide::Var::outermost());
 
-            demosaic.bound(demosaic.args()[0], 0, 3).unroll(demosaic.args()[0]).hls_burst(3);
-            gamma.bound(gamma.args()[0], 0, 3).unroll(gamma.args()[0]).hls_burst(3);
-            ip_out[0].bound(ip_out[0].args()[0], 0, 3).unroll(ip_out[0].args()[0]).hls_burst(3);
+            ip_in[0].unroll(ip_in[0].args()[0], 8).hls_burst(8);
+            normalize.unroll(normalize.args()[0], 8).hls_burst(8);
+            offset.unroll(offset.args()[0], 8).hls_burst(8);
+            white_balance.unroll(white_balance.args()[0], 8).hls_burst(8);
+            demosaic.bound(demosaic.args()[0], 0, 3).unroll(demosaic.args()[0]).unroll(demosaic.args()[1], 4).hls_burst(12);
+            gamma.bound(gamma.args()[0], 0, 3).unroll(gamma.args()[0]).unroll(gamma.args()[1], 4).hls_burst(12);
+            ip_out[0].bound(ip_out[0].args()[0], 0, 3).unroll(ip_out[0].args()[0]).unroll(ip_out[0].args()[1], 4).hls_burst(12);
         } else if (get_target().has_gpu_feature()) {
             Halide::Var xo, yo, xi, yi;
             output.gpu_tile(x, y, xo, yo, xi, yi, 32, 16);
@@ -795,7 +791,6 @@ public:
 private:
     Halide::Func normalize;
     Halide::Func offset;
-    Halide::Func shading_correction;
     Halide::Func white_balance;
     Halide::Func demosaic;
     Halide::Func gamma;
