@@ -1,7 +1,6 @@
 #ifndef ION_BB_FPGA_BB_H
 #define ION_BB_FPGA_BB_H
 
-#define HALIDE_FOR_FPGA
 #include <ion/ion.h>
 
 namespace ion {

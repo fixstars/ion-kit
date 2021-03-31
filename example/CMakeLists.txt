@@ -8,11 +8,13 @@ ion_compile(producerx3_compile SRCS producerx3_compile.cc PIPELINE_NAME producer
 ion_compile(sgm_compile SRCS sgm_compile.cc PIPELINE_NAME sgm)
 ion_compile(dnn_compile SRCS dnn_compile.cc PIPELINE_NAME dnn)
 ion_compile(demo_compile SRCS demo_compile.cc PIPELINE_NAME demo)
+ion_compile(fpga_isp_compile SRCS fpga_isp_compile.cc PIPELINE_NAME fpga_isp)
 
 ion_run(producerx3 producerx3_compile SRCS producerx3_run.cc TARGET_STRING "host-profile")
 ion_run(sgm sgm_compile SRCS sgm_run.cc TARGET_STRING "host-profile")
 ion_run(dnn dnn_compile SRCS dnn_run.cc TARGET_STRING "host-profile")
 ion_run(demo demo_compile SRCS demo_run.cc TARGET_STRING "host-profile")
+ion_run(fpga_isp_cpu fpga_isp_compile SRCS fpga_isp_run.cc TARGET_STRING "host-timestamp_profile")
 if(WITH_CUDA)
     ion_run(producerx3_gpu producerx3_compile SRCS producerx3_run.cc TARGET_STRING "host-cuda-cuda_capability_50-profile")
     ion_run(sgm_gpu sgm_compile SRCS sgm_run.cc TARGET_STRING "host-cuda-cuda_capability_50-profile")
