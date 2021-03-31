@@ -702,6 +702,36 @@ public:
     }
 };
 
+Halide::Func convolution_3d(Halide::Func input, std::vector<int16_t> kernel, int32_t width, int32_t height, int32_t window_size, int input_bits, std::string name = "convolution_3d") {
+    Halide::Func output{name};
+    Halide::Var x{"x"}, y{"y"}, c{"c"};
+
+    Halide::Func wrapper = Halide::BoundaryConditions::repeat_edge(input, {{}, {0, width}, {0, height}});
+
+    int32_t n = window_size * 2 + 1;
+    int32_t n2 = n * n;
+    int32_t clogn = 0;
+    for (uint32_t i = n2 - 1; i; i >>= 1)
+        clogn++;
+    int32_t sum_bit = 33 + clogn;  // 33 = 16(input bit) + 1(input sign bit) + 16(kernel bit)
+
+    Halide::RDom r;
+    Halide::Expr sum;
+    sum = Halide::cast(Halide::Int(sum_bit), 0);
+    for (int ry = 0; ry < n; ry++) {
+        for (int rx = 0; rx < n; rx++) {
+            sum += Halide::cast(Halide::Int(sum_bit), Halide::Expr(kernel[rx + ry * n])) * wrapper(c, x + (rx - window_size), y + (ry - window_size));
+        }
+    }
+    Halide::Expr out = (sum >> 12) + ((sum >> 11) & 1);  // round
+    uint16_t max_value = (1 << input_bits) - 1;
+    output(c, x, y) = Halide::select(out > max_value, max_value,
+                                     out < 0, 0,
+                                     Halide::cast(Halide::UInt(16), out));
+
+    return output;
+}
+
 class SimpleISP : public BuildingBlock<SimpleISP> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "Simple ISP(FPGA)"};
@@ -797,6 +827,114 @@ private:
     Halide::Func final_cast;
 };
 
+class SimpleISPWithUnsharpMask : public BuildingBlock<SimpleISPWithUnsharpMask> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Simple ISP with unsharp mask(FPGA)"};
+    GeneratorParam<std::string> gc_description{"gc_description", "Make RGB image from RAW image."};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [3].concat(v.input.map(x => Math.floor(x / 2))) }}))"};
+    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
+    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+    GeneratorParam<std::string> gc_required_features{"gc_required_features", "vivado_hls"};
+
+    //GeneratorParam<BayerMap::Pattern> bayer_pattern { "bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map };
+    GeneratorParam<int32_t> bayer_pattern{"bayer_pattern", 0, 0, 3};
+    // Max 16bit
+    GeneratorParam<int32_t> width{"width", 0, 0, 65535};
+    GeneratorParam<int32_t> height{"height", 0, 0, 65535};
+    GeneratorParam<int32_t> normalize_input_bits{"normalize_input_bits", 10, 1, 16};
+    GeneratorParam<int32_t> normalize_input_shift{"normalize_input_shift", 6, 0, 15};
+    GeneratorParam<uint16_t> offset_offset_r{"offset_offset_r", 0};
+    GeneratorParam<uint16_t> offset_offset_g{"offset_offset_g", 0};
+    GeneratorParam<uint16_t> offset_offset_b{"offset_offset_b", 0};
+    // 12bit fractional
+    GeneratorParam<uint16_t> white_balance_gain_r{"white_balance_gain_r", 4096};
+    GeneratorParam<uint16_t> white_balance_gain_g{"white_balance_gain_g", 4096};
+    GeneratorParam<uint16_t> white_balance_gain_b{"white_balance_gain_b", 4096};
+    GeneratorParam<double> gamma_gamma{"gamma_gamma", 1 / 2.2};
+    GeneratorInput<Halide::Func> input{"input", Halide::UInt(16), 2};
+    GeneratorOutput<Halide::Func> output{"output", Halide::UInt(8), 3};
+
+    void generate() {
+        int32_t internal_bits = normalize_input_bits;
+        BayerMap::Pattern pattern = static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern));
+        int32_t input_width = width;
+        int32_t input_height = height;
+        int32_t output_width = input_width / 2;
+        int32_t output_height = input_height / 2;
+        int32_t gamma_unroll = get_target().has_fpga_feature() ? 12 : 1;
+        std::vector<int16_t> unsharp_mask_kernel = {-455, -455, -455,
+                                                    -455, 7736, -455,
+                                                    -455, -455, -455};
+
+        normalize = normalize_raw_image(input, normalize_input_bits, normalize_input_shift, internal_bits);
+        offset = bayer_offset(normalize, pattern, offset_offset_r, offset_offset_g, offset_offset_b);
+        white_balance = bayer_white_balance(offset, pattern, internal_bits, white_balance_gain_r, white_balance_gain_g, white_balance_gain_b);
+        demosaic = bayer_demosaic_simple(white_balance, pattern, static_cast<std::string>(gc_prefix) + "bayer_demosaic_simple");
+        unsharp_mask = convolution_3d(demosaic, unsharp_mask_kernel, output_width, output_height, 1, internal_bits);
+        gamma = gamma_correction_3d(unsharp_mask, internal_bits, 8, 8, 8, gamma_gamma, output_width, gamma_unroll);
+
+        final_cast = Halide::Func{static_cast<std::string>(gc_prefix) + "simple_isp"};
+        final_cast(Halide::_) = Halide::cast(UInt(8), gamma(Halide::_));
+
+        output = final_cast;
+    }
+
+    void schedule() {
+        Halide::Var c = output.args()[0];
+        Halide::Var x = output.args()[1];
+        Halide::Var y = output.args()[2];
+
+        if (get_target().has_fpga_feature()) {
+            int32_t input_width = width;
+            int32_t input_height = height;
+            output.bound(c, 0, 3).bound(x, 0, input_width / 2).bound(y, 0, input_height / 2);
+
+            std::vector<Func> ip_in, ip_out;
+            std::tie(ip_in, ip_out) = output.accelerate({input}, {}, Var::outermost());
+
+            normalize.compute_at(output, Halide::Var::outermost());
+            offset.compute_at(output, Halide::Var::outermost());
+            white_balance.compute_at(output, Halide::Var::outermost());
+            demosaic.compute_at(output, Halide::Var::outermost());
+            unsharp_mask.compute_at(output, Halide::Var::outermost());
+            gamma.compute_at(output, Halide::Var::outermost());
+
+            ip_in[0].unroll(ip_in[0].args()[0], 8).hls_burst(8);
+            normalize.unroll(normalize.args()[0], 8).hls_burst(8);
+            offset.unroll(offset.args()[0], 8).hls_burst(8);
+            white_balance.unroll(white_balance.args()[0], 8).hls_burst(8);
+            demosaic.bound(demosaic.args()[0], 0, 3).unroll(demosaic.args()[0]).unroll(demosaic.args()[1], 4).hls_burst(12);
+            unsharp_mask.bound(unsharp_mask.args()[0], 0, 3).unroll(unsharp_mask.args()[0]).unroll(unsharp_mask.args()[1], 4).hls_burst(12);
+            gamma.bound(gamma.args()[0], 0, 3).unroll(gamma.args()[0]).unroll(gamma.args()[1], 4).hls_burst(12);
+            ip_out[0].bound(ip_out[0].args()[0], 0, 3).unroll(ip_out[0].args()[0]).unroll(ip_out[0].args()[1], 4).hls_burst(12);
+        } else if (get_target().has_gpu_feature()) {
+            Halide::Var d_xo, d_yo, d_xi, d_yi;
+            Halide::Var xo, yo, xi, yi;
+            demosaic.gpu_tile(demosaic.args()[1], demosaic.args()[2], d_xo, d_yo, d_xi, d_yi, 32, 16);
+            demosaic.compute_root();
+            output.gpu_tile(x, y, xo, yo, xi, yi, 32, 16);
+        } else {
+            demosaic.vectorize(demosaic.args()[1], natural_vector_size(Halide::Float(32))).parallel(demosaic.args()[2], 16);
+            demosaic.compute_root();
+            output.vectorize(x, natural_vector_size(Halide::Float(32))).parallel(y, 16);
+        }
+
+        output.compute_root();
+    }
+
+private:
+    Halide::Func normalize;
+    Halide::Func offset;
+    Halide::Func shading_correction;
+    Halide::Func white_balance;
+    Halide::Func demosaic;
+    Halide::Func unsharp_mask;
+    Halide::Func gamma;
+    Halide::Func final_cast;
+};
+
 }  // namespace fpga
 }  // namespace bb
 }  // namespace ion
@@ -811,5 +949,6 @@ ION_REGISTER_BUILDING_BLOCK(ion::bb::fpga::ResizeBilinear3D, fpga_resize_bilinea
 ION_REGISTER_BUILDING_BLOCK(ion::bb::fpga::BayerDownscaleUInt16, fpga_bayer_downscale_uint16);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::fpga::NormalizeRawImage, fpga_normalize_raw_image);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::fpga::SimpleISP, fpga_simple_isp);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::fpga::SimpleISPWithUnsharpMask, fpga_simple_isp_with_unsharp_mask);
 
 #endif
