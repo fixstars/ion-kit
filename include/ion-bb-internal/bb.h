@@ -35,16 +35,26 @@ public:
                     f.split(i, block, thread, 64);
                     f.gpu_blocks(block).gpu_threads(thread);
                 } else {
-                    Var x = f.args()[f.args().size()-2];
-                    Var y = f.args()[f.args().size()-1];
+                    Var x = f.args()[0];
+                    Var y = f.args()[1];
+                    for (int i=2; i<f.args().size(); ++i) {
+                        f.fuse(y, f.args()[i], y);
+                    }
                     Var xo, yo, xi, yi;
                     f.gpu_tile(x, y, xo, yo, xi, yi, 16, 16);
                 }
             } else {
                 if (f.args().size() == 0) {
                     // NOP
+                } else if (f.args().size() == 1) {
+                    f.parallel(f.args()[0]);
                 } else {
-                    f.parallel(f.args()[f.args().size()-1]);
+                    Var x = f.args()[0];
+                    Var y = f.args()[1];
+                    for (int i=2; i<f.args().size(); ++i) {
+                        f.fuse(y, f.args()[i], y);
+                    }
+                    f.parallel(y);
                 }
             }
         } else {
