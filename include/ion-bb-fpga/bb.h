@@ -728,9 +728,9 @@ public:
     GeneratorParam<uint16_t> shading_correction_slope_r{"shading_correction_slope_r", 0};
     GeneratorParam<uint16_t> shading_correction_slope_g{"shading_correction_slope_g", 0};
     GeneratorParam<uint16_t> shading_correction_slope_b{"shading_correction_slope_b", 0};
-    GeneratorParam<uint16_t> shading_correction_offset_r{"shading_correction_offset_r", 0};
-    GeneratorParam<uint16_t> shading_correction_offset_g{"shading_correction_offset_g", 0};
-    GeneratorParam<uint16_t> shading_correction_offset_b{"shading_correction_offset_b", 0};
+    GeneratorParam<uint16_t> shading_correction_offset_r{"shading_correction_offset_r", 4096};
+    GeneratorParam<uint16_t> shading_correction_offset_g{"shading_correction_offset_g", 4096};
+    GeneratorParam<uint16_t> shading_correction_offset_b{"shading_correction_offset_b", 4096};
     GeneratorParam<uint16_t> white_balance_gain_r{"white_balance_gain_r", 4096};
     GeneratorParam<uint16_t> white_balance_gain_g{"white_balance_gain_g", 4096};
     GeneratorParam<uint16_t> white_balance_gain_b{"white_balance_gain_b", 4096};
