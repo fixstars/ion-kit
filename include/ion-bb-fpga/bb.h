@@ -912,14 +912,30 @@ public:
             int32_t dim1_unroll = unroll_level == 0 ? 1 : (1 << (unroll_level - 1));
             int32_t output_burst = dim0_unroll * dim1_unroll;
 
-            ip_in[0].unroll(ip_in[0].args()[0], input_burst).hls_burst(input_burst);
-            normalize.unroll(normalize.args()[0], input_burst).hls_burst(input_burst);
-            offset.unroll(offset.args()[0], input_burst).hls_burst(input_burst);
-            white_balance.unroll(white_balance.args()[0], input_burst).hls_burst(input_burst);
-            demosaic.bound(demosaic.args()[0], 0, 3).unroll(demosaic.args()[0], dim0_unroll).unroll(demosaic.args()[1], dim1_unroll).hls_burst(output_burst);
-            unsharp_mask.bound(unsharp_mask.args()[0], 0, 3).unroll(unsharp_mask.args()[0], dim0_unroll).unroll(unsharp_mask.args()[1], dim1_unroll).hls_burst(output_burst);
-            gamma.bound(gamma.args()[0], 0, 3).unroll(gamma.args()[0], dim0_unroll).unroll(gamma.args()[1], dim1_unroll).hls_burst(output_burst);
-            ip_out[0].bound(ip_out[0].args()[0], 0, 3).unroll(ip_out[0].args()[0], dim0_unroll).unroll(ip_out[0].args()[1], dim1_unroll).hls_burst(output_burst);
+            if (input_burst > 1) {
+                ip_in[0].unroll(ip_in[0].args()[0], input_burst).hls_burst(input_burst);
+                normalize.unroll(normalize.args()[0], input_burst).hls_burst(input_burst);
+                offset.unroll(offset.args()[0], input_burst).hls_burst(input_burst);
+                white_balance.unroll(white_balance.args()[0], input_burst).hls_burst(input_burst);
+            }
+            if (dim0_unroll > 1) {
+                demosaic.bound(demosaic.args()[0], 0, 3).unroll(demosaic.args()[0], dim0_unroll);
+                unsharp_mask.bound(unsharp_mask.args()[0], 0, 3).unroll(unsharp_mask.args()[0], dim0_unroll);
+                gamma.bound(gamma.args()[0], 0, 3).unroll(gamma.args()[0], dim0_unroll);
+                ip_out[0].bound(ip_out[0].args()[0], 0, 3).unroll(ip_out[0].args()[0], dim0_unroll);
+            }
+            if (dim1_unroll > 1) {
+                demosaic.unroll(demosaic.args()[1], dim1_unroll);
+                unsharp_mask.unroll(unsharp_mask.args()[1], dim1_unroll);
+                gamma.unroll(gamma.args()[1], dim1_unroll);
+                ip_out[0].unroll(ip_out[0].args()[1], dim1_unroll);
+            }
+            if (output_burst > 1) {
+                demosaic.hls_burst(output_burst);
+                unsharp_mask.hls_burst(output_burst);
+                gamma.hls_burst(output_burst);
+                ip_out[0].hls_burst(output_burst);
+            }
         } else if (get_target().has_gpu_feature()) {
             Halide::Var d_xo, d_yo, d_xi, d_yi;
             Halide::Var xo, yo, xi, yi;
