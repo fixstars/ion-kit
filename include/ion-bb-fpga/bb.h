@@ -111,7 +111,7 @@ Halide::Func bayer_offset(Halide::Func input, BayerMap::Pattern bayer_pattern, H
 
 class BayerOffset : public BuildingBlock<BayerOffset> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "BayerOffset(FPGA)"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "BayerOffset(FPGA)"};
     GeneratorParam<std::string> gc_description{"gc_description", "Offset values of bayer image."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
@@ -168,7 +168,7 @@ Halide::Func bayer_white_balance(Halide::Func input, BayerMap::Pattern bayer_pat
 
 class BayerWhiteBalance : public BuildingBlock<BayerWhiteBalance> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "BayerWhiteBalance(FPGA)"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "BayerWhiteBalance(FPGA)"};
     GeneratorParam<std::string> gc_description{"gc_description", "Gain values of bayer image."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
@@ -250,7 +250,7 @@ Halide::Func bayer_demosaic_simple(Halide::Func input, BayerMap::Pattern bayer_p
 
 class BayerDemosaicSimple : public BuildingBlock<BayerDemosaicSimple> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "BayerDemosaicSimple(FPGA)"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "BayerDemosaicSimple(FPGA)"};
     GeneratorParam<std::string> gc_description{"gc_description", "Demosaic bayer image by simple algorithm."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.map(x => x / 2).concat([3]) }}))"};
@@ -345,7 +345,7 @@ Halide::Func gamma_correction_3d(Halide::Func input, int32_t input_bits, int32_t
 
 class GammaCorrection3D : public BuildingBlock<GammaCorrection3D> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "GammaCorrection3D(FPGA)"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "GammaCorrection3D(FPGA)"};
     GeneratorParam<std::string> gc_description{"gc_description", "Gamma correction."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
@@ -420,7 +420,7 @@ Halide::Func lens_shading_correction_linear(Halide::Func input, BayerMap::Patter
 
 class LensShadingCorrectionLinear : public BuildingBlock<LensShadingCorrectionLinear> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "LensShadingCorrectionLinear(FPGA)"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "LensShadingCorrectionLinear(FPGA)"};
     GeneratorParam<std::string> gc_description{"gc_description", "Correct lens shading."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
@@ -481,7 +481,7 @@ Halide::Func calc_luminance(Halide::Func input, Luminance::Method luminance_meth
 
 class CalcLuminance : public BuildingBlock<CalcLuminance> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "CalcLuminance(FPGA)"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "CalcLuminance(FPGA)"};
     GeneratorParam<std::string> gc_description{"gc_description", "Calc luminance of image."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.slice(0, -1) }}))"};
@@ -550,7 +550,7 @@ Halide::Func resize_bilinear_3d(Halide::Func input, int32_t width, int32_t heigh
 // NOTE: Generates a huge circuit depending on scale value.
 class ResizeBilinear3D : public BuildingBlock<ResizeBilinear3D> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ResizeBilinear3D(FPGA)"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "ResizeBilinear3D(FPGA)"};
     GeneratorParam<std::string> gc_description{"gc_description", "Resize image by bilinear algorithm."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.map((x, i) => i == 0 ? x : Math.floor(x * parseFloat(v.scale))) }}))"};
@@ -604,7 +604,7 @@ Halide::Func bayer_downscale(Halide::Func input, int32_t downscale_factor, std::
 
 class BayerDownscaleUInt16 : public BuildingBlock<BayerDownscaleUInt16> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "BayerDownscaleUInt16(FPGA)"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "BayerDownscaleUInt16(FPGA)"};
     GeneratorParam<std::string> gc_description{"gc_description", "Downscale bayer image."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.map(x => Math.floor(x / parseInt(v.downscale_factor))) }}))"};
@@ -662,7 +662,7 @@ Halide::Func normalize_raw_image(Halide::Func input, int32_t input_bits, int32_t
 
 class NormalizeRawImage : public BuildingBlock<NormalizeRawImage> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "Normalize RAW(FPGA)"};
+    // GeneratorParam<std::string> gc_title{"gc_title", "Normalize RAW(FPGA)"};
     GeneratorParam<std::string> gc_description{"gc_description", "Normalize raw image."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
