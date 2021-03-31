@@ -454,7 +454,7 @@ extern "C" int ION_EXPORT ion_bb_image_io_camera(int32_t instance_id, int32_t wi
 
     auto &v4l2(ion::bb::image_io::V4L2::get_instance(index, width, height, V4L2_PIX_FMT_YUYV));
     if (v4l2.is_available()) {
-        Halide::Runtime::Buffer<uint16_t> obuf(*out);
+        Halide::Runtime::Buffer<uint8_t> obuf(*out);
         v4l2.get(obuf);
         return 0;
     }
