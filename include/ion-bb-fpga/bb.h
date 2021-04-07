@@ -962,6 +962,50 @@ private:
     Halide::Func final_cast;
 };
 
+template<typename X, typename T, int32_t D>
+class Normalize3DCHW : public BuildingBlock<X> {
+    static_assert(std::is_arithmetic<T>::value, "T must be arithmetic type.");
+
+public:
+    GeneratorParam<std::string> gc_description{"gc_description", "This normalize values into range [0..1.0]."};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
+    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
+    GeneratorInput<Halide::Func> input{"input", Halide::type_of<T>(), D};
+    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<float>(), D};
+
+    GeneratorParam<int32_t> width{"width", 0};
+    GeneratorParam<int32_t> height{"height", 0};
+
+    Halide::Func input_f;
+
+    Halide::Var c, x, y;
+
+    void generate() {
+        using namespace Halide;
+        input_f(_) = input(_);
+        input_f.compute_root();
+        output(_) = cast<float>(input_f(_)) / (std::numeric_limits<T>::max)();
+    }
+
+    void schedule() {
+        // CHW
+        output.bound(output.args()[0], 0, width).bound(output.args()[1], 0, height).bound(output.args()[2], 0, 3);
+        output.compute_root();
+        output.accelerate({input_f}, {}, Halide::Var::outermost());
+    }
+};
+
+class Normalize3DCHWUInt8 : public Normalize3DCHW<Normalize3DCHWUInt8, uint8_t, 3> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Normalize2DUInt8"};
+};
+
+class Normalize3DCHWUInt16 : public Normalize3DCHW<Normalize3DCHWUInt16, uint16_t, 3> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Normalize2DUInt16"};
+};
+
 }  // namespace fpga
 }  // namespace bb
 }  // namespace ion
@@ -977,5 +1021,8 @@ ION_REGISTER_BUILDING_BLOCK(ion::bb::fpga::BayerDownscaleUInt16, fpga_bayer_down
 ION_REGISTER_BUILDING_BLOCK(ion::bb::fpga::NormalizeRawImage, fpga_normalize_raw_image);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::fpga::SimpleISP, fpga_simple_isp);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::fpga::SimpleISPWithUnsharpMask, fpga_simple_isp_with_unsharp_mask);
+
+ION_REGISTER_BUILDING_BLOCK(ion::bb::fpga::Normalize3DCHWUInt8, fpga_normalize_3d_chw_uint8);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::fpga::Normalize3DCHWUInt16, fpga_normalize_3d_chw_uint16);
 
 #endif
