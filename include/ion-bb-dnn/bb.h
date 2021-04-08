@@ -86,7 +86,7 @@ public:
         const bool cuda_enable = this->get_target().has_feature(Target::Feature::CUDA);
         bool dnndk_enable = true;
 #ifdef HALIDE_FOR_FPGA
-        dnndk_enable = (this->get_target().has_fpga_feature());
+        dnndk_enable = (this->get_target().has_feature(Target::Feature::DPU));
 #endif
 
         input = Func{static_cast<std::string>(gc_prefix) + "in"};
