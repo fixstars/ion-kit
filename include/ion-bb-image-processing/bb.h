@@ -1943,7 +1943,7 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "target_color"};
 
     GeneratorParam<float> adjustment_value{"adjustment_value", 1.0f};
-    GeneratorParam<int32_t> target_color{"target_channel", 0};
+    GeneratorParam<int32_t> target_color{"target_color", 0};
     GeneratorInput<Halide::Func> input{"input", Halide::type_of<float>(), 3};
     GeneratorOutput<Halide::Func> output{"output", Halide::type_of<float>(), 3};
 
