@@ -770,7 +770,10 @@ public:
         int32_t output_height = input_height / 2;
         int32_t gamma_unroll = get_target().has_fpga_feature() && unroll_level != 0 ? (1 << (unroll_level - 1)) * 3 : 1;
 
-        normalize = normalize_raw_image(input, normalize_input_bits, normalize_input_shift, internal_bits);
+        in = Halide::Func{static_cast<std::string>(gc_prefix) + "input"};
+        in(Halide::_) = input(Halide::_);
+
+        normalize = normalize_raw_image(in, normalize_input_bits, normalize_input_shift, internal_bits);
         offset = bayer_offset(normalize, pattern, offset_offset_r, offset_offset_g, offset_offset_b);
         white_balance = bayer_white_balance(offset, pattern, internal_bits, white_balance_gain_r, white_balance_gain_g, white_balance_gain_b);
         demosaic = bayer_demosaic_simple(white_balance, pattern);
@@ -788,12 +791,15 @@ public:
         Halide::Var y = output.args()[2];
 
         if (get_target().has_fpga_feature()) {
+            in.compute_root();
+            in.parallel(in.args()[1]);
+
             int32_t input_width = width;
             int32_t input_height = height;
             output.bound(c, 0, 3).bound(x, 0, input_width / 2).bound(y, 0, input_height / 2);
 
             std::vector<Func> ip_in, ip_out;
-            std::tie(ip_in, ip_out) = output.accelerate({input}, {}, Var::outermost());
+            std::tie(ip_in, ip_out) = output.accelerate({in}, {}, Var::outermost());
 
             normalize.compute_at(output, Halide::Var::outermost());
             offset.compute_at(output, Halide::Var::outermost());
@@ -824,6 +830,7 @@ public:
     }
 
 private:
+    Halide::Func in;
     Halide::Func normalize;
     Halide::Func offset;
     Halide::Func white_balance;
@@ -874,7 +881,10 @@ public:
                                                     -455, 7736, -455,
                                                     -455, -455, -455};
 
-        normalize = normalize_raw_image(input, normalize_input_bits, normalize_input_shift, internal_bits);
+        in = Halide::Func{static_cast<std::string>(gc_prefix) + "input"};
+        in(Halide::_) = input(Halide::_);
+
+        normalize = normalize_raw_image(in, normalize_input_bits, normalize_input_shift, internal_bits);
         offset = bayer_offset(normalize, pattern, offset_offset_r, offset_offset_g, offset_offset_b);
         white_balance = bayer_white_balance(offset, pattern, internal_bits, white_balance_gain_r, white_balance_gain_g, white_balance_gain_b);
         demosaic = bayer_demosaic_simple(white_balance, pattern, static_cast<std::string>(gc_prefix) + "bayer_demosaic_simple");
@@ -893,12 +903,15 @@ public:
         Halide::Var y = output.args()[2];
 
         if (get_target().has_fpga_feature()) {
+            in.compute_root();
+            in.parallel(in.args()[1]);
+
             int32_t input_width = width;
             int32_t input_height = height;
             output.bound(c, 0, 3).bound(x, 0, input_width / 2).bound(y, 0, input_height / 2);
 
             std::vector<Func> ip_in, ip_out;
-            std::tie(ip_in, ip_out) = output.accelerate({input}, {}, Var::outermost());
+            std::tie(ip_in, ip_out) = output.accelerate({in}, {}, Var::outermost());
 
             normalize.compute_at(output, Halide::Var::outermost());
             offset.compute_at(output, Halide::Var::outermost());
@@ -952,6 +965,7 @@ public:
     }
 
 private:
+    Halide::Func in;
     Halide::Func normalize;
     Halide::Func offset;
     Halide::Func shading_correction;
