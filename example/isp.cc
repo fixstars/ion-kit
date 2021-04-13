@@ -132,7 +132,7 @@ int main(int argc, char *argv[]) {
     pm.set(cx, buffer.width() * 0.5f);
     pm.set(cy, buffer.height() * 0.6f);
 
-    Param bayer_pattern{"bayer_pattern", "0"};  // RGGB
+    Param bayer_pattern{"bayer_pattern", "RGGB"};
 
     Node offset, shading_correction, white_balance, demosaic, luminance, filtered_luminance, luminance_filter, noise_reduction;
     Node color_matrix, color_conversion, gamma_correction, distortion_lut, distortion_correction, resize;
@@ -172,7 +172,7 @@ int main(int argc, char *argv[]) {
                        white_balance["output"]);
     luminance = b.add("image_processing_calc_luminance")
                     .set_param(
-                        Param{"luminance_method", "1"})(  // Average
+                        Param{"luminance_method", "Average"})(
                         demosaic["output"]);
     luminance_filter = b.add("core_constant_buffer_2d_float")
                            .set_param(
@@ -181,7 +181,7 @@ int main(int argc, char *argv[]) {
                                Param{"extent1", "5"});
     filtered_luminance = b.add("image_processing_convolution_2d")
                              .set_param(
-                                 Param{"boundary_conditions_method", "3"},  // MirrorInterior
+                                 Param{"boundary_conditions_method", "MirrorInterior"},
                                  Param{"window_size", "2"},
                                  Param{"width", std::to_string(width)},
                                  Param{"height", std::to_string(height)})(
@@ -189,7 +189,7 @@ int main(int argc, char *argv[]) {
                                  luminance["output"]);
     noise_reduction = b.add("image_processing_bilateral_filter_3d")
                           .set_param(
-                              Param{"color_difference_method", "1"},  // Average
+                              Param{"color_difference_method", "Average"},
                               Param{"window_size", "2"},
                               Param{"width", std::to_string(width)},
                               Param{"height", std::to_string(height)})(
