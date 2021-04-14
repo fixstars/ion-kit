@@ -781,7 +781,7 @@ class ExtendDimension : public BuildingBlock<X> {
 public:
     GeneratorParam<std::string> gc_description{"gc_description", "Extend buffer dimension."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "processing"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.splice(parseInt(v.new_dim), 0, parseInt(v.extent)) }}))"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ v.input.splice(parseInt(v.new_dim), 0, parseInt(v.extent)); return { output: v.input }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "new_dim,extent"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
@@ -870,7 +870,7 @@ class ExtractBuffer : public BuildingBlock<X> {
 public:
     GeneratorParam<std::string> gc_description{"gc_description", "Extract buffer."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "processing"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.splice(parseInt(v.dim), 1) }}))"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ v.input.splice(parseInt(v.dim), 1); return { output: v.input }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "target_dim,index"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 

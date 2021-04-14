@@ -253,7 +253,7 @@ public:
     // GeneratorParam<std::string> gc_title{"gc_title", "BayerDemosaicSimple(FPGA)"};
     GeneratorParam<std::string> gc_description{"gc_description", "Demosaic bayer image by simple algorithm."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.map(x => x / 2).concat([3]) }}))"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [3].concat(v.input.map(x => x / 2)) }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
@@ -484,7 +484,7 @@ public:
     // GeneratorParam<std::string> gc_title{"gc_title", "CalcLuminance(FPGA)"};
     GeneratorParam<std::string> gc_description{"gc_description", "Calc luminance of image."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.slice(0, -1) }}))"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.slice(1) }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
