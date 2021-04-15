@@ -23,6 +23,9 @@ endif()
 if(ION_ENABLE_HALIDE_FPGA_BACKEND)
     ion_compile(fpga_isp_compile SRCS fpga_isp_compile.cc PIPELINE_NAME fpga_isp)
     ion_run(fpga_isp_cpu fpga_isp_compile SRCS fpga_isp_run.cc TARGET_STRING "host-profile")
+
+    ion_compile(dnn_fpga_compile SRCS dnn_fpga_compile.cc PIPELINE_NAME dnn_fpga)
+    ion_run(dnn_fpga dnn_fpga_compile SRCS dnn_fpga_run.cc TARGET_STRING "arm-64-linux-vivado_hls-dpu")
 endif()
 
 # JIT

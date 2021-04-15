@@ -190,10 +190,6 @@ private:
         }
         is_available_dnndk_ = true;
 
-        if (!dpu_load()) {
-            return;
-        }
-
         // TODO: error handling
         if (dpuOpen() != 0) {
             return;
@@ -206,11 +202,6 @@ private:
         if (dpuClose) {
             dpuClose();
         }
-    }
-
-    bool dpu_load() {
-        int ret = system("sudo python3 -c \"from pynq_dpu import DpuOverlay; overlay = DpuOverlay(\"dpu.bit\")\"");
-        return ret == 0;
     }
 
     bool is_available_dnndk_;
