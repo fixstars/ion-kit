@@ -1450,7 +1450,7 @@ class FitImageToCenter : public BuildingBlock<X> {
 public:
     GeneratorParam<std::string> gc_description{"gc_description", "Fit image to center."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.output_width), parseInt(v.output_height), v.input[2]] }}))"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.output_width), parseInt(v.output_height)].concat(v.input.slice(2)) }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "input_width,input_height,output_width,output_height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
