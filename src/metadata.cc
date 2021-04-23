@@ -51,7 +51,7 @@ ParamMD::ParamMD(const std::string& n, const std::string& dv, const std::string&
 void to_json(json& j, const ParamMD& v) {
     j["name"] = v.name;
     j["c_type"] = v.c_type;
-    j["type_decls"] = v.c_type;
+    j["type_decls"] = v.type_decls;
 
     if (v.c_type.find("uint8_t") == 0) {
         j["default_value"] = std::to_string(*reinterpret_cast<const int8_t*>(v.default_value.c_str()));
