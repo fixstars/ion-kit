@@ -202,4 +202,53 @@ private:
 };
 ION_REGISTER_BUILDING_BLOCK(ArrayInput, test_array_input);
 
+class ExternIncI32x2 : public ion::BuildingBlock<ExternIncI32x2> {
+public:
+    Halide::GeneratorParam<int32_t> v{"v", 0};
+    Halide::GeneratorParam<int32_t> width{"width", 0};
+    Halide::GeneratorParam<int32_t> height{"height", 0};
+    Halide::GeneratorInput<Halide::Func> input{"input", Halide::type_of<int32_t>(), 2};
+    Halide::GeneratorOutput<Halide::Func> output{"output", Halide::type_of<int32_t>(), 2};
+
+    void generate() {
+        using namespace Halide;
+        Var x, y;
+        Func in;
+
+        in(x, y) = input(x, y);
+        in.compute_root();
+        if (get_target().has_gpu_feature()) {
+            Var xo, yo, xi, yi;
+            in.gpu_tile(x, y, xo, yo, xi, yi, 16, 16);
+        } else {
+            in.parallel(y);
+        }
+
+        std::vector<ExternFuncArgument> params{in, cast<int32_t>(width), cast<int32_t>(height), cast<int32_t>(v), get_target().has_gpu_feature()};
+        Func inc;
+        inc.define_extern("inc", params, Int(32), 2);
+        inc.compute_root();
+        output(x, y) = inc(x, y);
+    }
+};
+ION_REGISTER_BUILDING_BLOCK(ExternIncI32x2, test_extern_inc_i32x2);
+
+class Sync : public ion::BuildingBlock<Sync> {
+public:
+    Halide::GeneratorInput<Halide::Func> input{"input", Halide::type_of<int32_t>(), 2};
+    Halide::GeneratorOutput<Halide::Func> output{"output", Halide::type_of<int32_t>(), 2};
+
+    void generate() {
+        output(Halide::_) = input(Halide::_);
+        output.compute_root();
+    }
+
+    void schedule() {
+    }
+
+private:
+    Halide::Var x, y;
+};
+ION_REGISTER_BUILDING_BLOCK(Sync, test_sync);
+
 #endif
