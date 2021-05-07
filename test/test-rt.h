@@ -2,6 +2,7 @@
 #define TEST_RT_H
 
 #include <iostream>
+#include <cstdio>
 #include <HalideBuffer.h>
 
 #include <dlfcn.h>
@@ -161,7 +162,9 @@ int branch(halide_buffer_t *in, int32_t input_width, int32_t input_height, halid
 using call_inc_kernel_t = void (*)(int32_t *in, int32_t width, int32_t height, int32_t v, int32_t *out);
 
 extern "C" DLLEXPORT
-int inc(halide_buffer_t *in, int32_t width, int32_t height, int32_t v, bool enable_cuda, halide_buffer_t *out) {
+int inc(halide_buffer_t *in, int32_t width, int32_t height, int32_t v, bool use_gpu, halide_buffer_t *out) {
+    using namespace Halide;
+
     if (in->is_bounds_query() || out->is_bounds_query()) {
         if (out->is_bounds_query()) {
             out->dim[0].min = 0;
@@ -177,17 +180,36 @@ int inc(halide_buffer_t *in, int32_t width, int32_t height, int32_t v, bool enab
         }
     } else {
 
-        std::cout << "host : " << "0x" << std::hex << in->host << ", " << "0x" << std::hex << out->host << std::endl;
-        std::cout << "device : " << "0x" << std::hex << in->device << ", " << "0x" << std::hex << out->device << std::endl;
+        printf("in->host(0x%lx), in->device(0x%lx), out->host(0x%lx), out->device(0x%lx)\n", reinterpret_cast<uint64_t>(in->host), in->device, reinterpret_cast<uint64_t>(out->host), out->device);
 
-        if (enable_cuda) {
+        Runtime::Buffer<int32_t> ibuf(*in);
+        Runtime::Buffer<int32_t> obuf(*out);
+
+        if (use_gpu) {
+            auto device_api = get_device_interface_for_device_api(DeviceAPI::CUDA, get_host_target().with_feature(Target::CUDA));
+
+            if (!ibuf.has_device_allocation()) {
+                ibuf.device_malloc(device_api);
+                ibuf.copy_to_device(device_api);
+            }
+
+            bool copy_to_host = false;
+            if (!obuf.has_device_allocation()) {
+                obuf.device_malloc(device_api);
+                copy_to_host = true;
+            }
+
             static DynamicModule dm("gpu-extern-lib");
             call_inc_kernel_t call_inc_kernel = dm.get_symbol<call_inc_kernel_t>("call_inc_kernel");
-            call_inc_kernel(reinterpret_cast<int32_t*>(in->device), width, height, v,
-                            reinterpret_cast<int32_t*>(out->device));
+            call_inc_kernel(reinterpret_cast<int32_t*>(ibuf.raw_buffer()->device), width, height, v,
+                            reinterpret_cast<int32_t*>(obuf.raw_buffer()->device));
+
+            if (copy_to_host) {
+                obuf.set_host_dirty(false);
+                obuf.set_device_dirty();
+                obuf.copy_to_host();
+            }
         } else {
-            Halide::Runtime::Buffer<int32_t> ibuf(*in);
-            Halide::Runtime::Buffer<int32_t> obuf(*out);
             for (int y=0; y<height; ++y) {
                 for (int x=0; x<width; ++x) {
                     obuf(x, y) = ibuf(x, y) + v;

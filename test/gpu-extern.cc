@@ -12,15 +12,16 @@ int main()
 
         Param wp{"width", std::to_string(size)};
         Param hp{"height", std::to_string(size)};
+        Param vp{"v", std::to_string(1)};
 
         Builder b;
-        b.set_target(Halide::get_host_target().with_feature(Halide::Target::CUDA));
+        b.set_target(Halide::get_host_target()); // CPU
+        //b.set_target(Halide::get_host_target().with_feature(Halide::Target::CUDA)); // GPU
 
         Node n;
         Port ip{"input", Halide::type_of<int32_t>(), 2};
-        n = b.add("test_extern_inc_i32x2")(ip).set_param(wp, hp);
-        n = b.add("test_extern_inc_i32x2")(n["output"]).set_param(wp, hp);
-        n = b.add("test_sync")(n["output"]);
+        n = b.add("test_extern_inc_i32x2")(ip).set_param(wp, hp, vp);
+        n = b.add("test_extern_inc_i32x2")(n["output"]).set_param(wp, hp, vp);
 
         PortMap pm;
 
@@ -49,6 +50,8 @@ int main()
                 }
             }
         }
+
+        std::cout << "OK" << std::endl;
 
     } catch (const std::range_error& e) {
         std::cout << e.what() << std::endl;
