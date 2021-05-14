@@ -56,8 +56,6 @@ add_dependencies(port-binding ion-bb-test)
 ion_jit(gpu-extern SRCS gpu-extern.cc)
 add_dependencies(gpu-extern ion-bb-test)
 
-ion_jit(direct-extern SRCS direct-extern.cc)
-
 # Export test
 ion_jit(export SRCS export.cc)
 
