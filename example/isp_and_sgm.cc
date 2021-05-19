@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
         Port cx_l{"cx_l", Halide::type_of<float>()};
         Port cy_l{"cy_l", Halide::type_of<float>()};
         Port output_scale_l{"output_scale_l", Halide::type_of<float>()};
-        Param bayer_pattern_l{"bayer_pattern", "2"};  // GRBG
+        Param bayer_pattern_l{"bayer_pattern", "GRBG"};
 
         Port offset_r_r{"offset_r_r", Halide::type_of<float>()};
         Port offset_g_r{"offset_g_r", Halide::type_of<float>()};
@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
         Port cx_r{"cx_r", Halide::type_of<float>()};
         Port cy_r{"cy_r", Halide::type_of<float>()};
         Port output_scale_r{"output_scale_r", Halide::type_of<float>()};
-        Param bayer_pattern_r{"bayer_pattern", "2"};  // GRBG
+        Param bayer_pattern_r{"bayer_pattern", "GRBG"};
 
         float resize_scale_l = 0.2f;
         float resize_scale_r = 0.2f;
@@ -222,7 +222,7 @@ int main(int argc, char *argv[]) {
                              white_balance_l["output"]);
         luminance_l = b.add("image_processing_calc_luminance")
                           .set_param(
-                              Param{"luminance_method", "1"})(  // Average
+                              Param{"luminance_method", "Average"})(
                               demosaic_l["output"]);
         luminance_filter_l = b.add("core_constant_buffer_2d_float")
                                  .set_param(
@@ -231,7 +231,7 @@ int main(int argc, char *argv[]) {
                                      Param{"extent1", "5"});
         filtered_luminance_l = b.add("image_processing_convolution_2d")
                                    .set_param(
-                                       Param{"boundary_conditions_method", "3"},  // MirrorInterior
+                                       Param{"boundary_conditions_method", "MirrorInterior"},
                                        Param{"window_size", "2"},
                                        Param{"width", std::to_string(buffer_width)},
                                        Param{"height", std::to_string(buffer_height)})(
@@ -239,7 +239,7 @@ int main(int argc, char *argv[]) {
                                        luminance_l["output"]);
         noise_reduction_l = b.add("image_processing_bilateral_filter_3d")
                                 .set_param(
-                                    Param{"color_difference_method", "1"},  // Average
+                                    Param{"color_difference_method", "Average"},
                                     Param{"window_size", "2"},
                                     Param{"width", std::to_string(buffer_width)},
                                     Param{"height", std::to_string(buffer_height)})(
@@ -280,7 +280,7 @@ int main(int argc, char *argv[]) {
                            distortion_correction_l["output"]);
         final_luminance_l = b.add("image_processing_calc_luminance")
                                 .set_param(
-                                    Param{"luminance_method", "3"})(  // Y
+                                    Param{"luminance_method", "Y"})(
                                     resize_l["output"]);
         gamma_correction_l = b.add("image_processing_gamma_correction_2d")(
             gamma_l,
@@ -331,7 +331,7 @@ int main(int argc, char *argv[]) {
                              white_balance_r["output"]);
         luminance_r = b.add("image_processing_calc_luminance")
                           .set_param(
-                              Param{"luminance_method", "1"})(  // Average
+                              Param{"luminance_method", "Average"})(
                               demosaic_r["output"]);
         luminance_filter_r = b.add("core_constant_buffer_2d_float")
                                  .set_param(
@@ -340,7 +340,7 @@ int main(int argc, char *argv[]) {
                                      Param{"extent1", "5"});
         filtered_luminance_r = b.add("image_processing_convolution_2d")
                                    .set_param(
-                                       Param{"boundary_conditions_method", "3"},  // MirrorInterior
+                                       Param{"boundary_conditions_method", "MirrorInterior"},
                                        Param{"window_size", "2"},
                                        Param{"width", std::to_string(buffer_width)},
                                        Param{"height", std::to_string(buffer_height)})(
@@ -348,7 +348,7 @@ int main(int argc, char *argv[]) {
                                        luminance_r["output"]);
         noise_reduction_r = b.add("image_processing_bilateral_filter_3d")
                                 .set_param(
-                                    Param{"color_difference_method", "1"},  // Average
+                                    Param{"color_difference_method", "Average"},
                                     Param{"window_size", "2"},
                                     Param{"width", std::to_string(buffer_width)},
                                     Param{"height", std::to_string(buffer_height)})(
@@ -389,7 +389,7 @@ int main(int argc, char *argv[]) {
                            distortion_correction_r["output"]);
         final_luminance_r = b.add("image_processing_calc_luminance")
                                 .set_param(
-                                    Param{"luminance_method", "3"})(  // Y
+                                    Param{"luminance_method", "Y"})(
                                     resize_r["output"]);
         gamma_correction_r = b.add("image_processing_gamma_correction_2d")(
             gamma_r,

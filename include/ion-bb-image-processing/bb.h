@@ -186,8 +186,7 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    //GeneratorParam<BayerMap::Pattern> bayer_pattern { "bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map };
-    GeneratorParam<int32_t> bayer_pattern{"bayer_pattern", 0, 0, 3};
+    GeneratorParam<BayerMap::Pattern> bayer_pattern{"bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map};
     GeneratorInput<float> offset_r{"offset_r"};
     GeneratorInput<float> offset_g{"offset_g"};
     GeneratorInput<float> offset_b{"offset_b"};
@@ -195,7 +194,7 @@ public:
     GeneratorOutput<Halide::Func> output{"output", Halide::Float(32), 2};
 
     void generate() {
-        output(x, y) = Halide::clamp(input(x, y) - Halide::mux(BayerMap::get_color(static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern)), x, y), {offset_r, offset_g, offset_b}), 0.f, 1.f);
+        output(x, y) = Halide::clamp(input(x, y) - Halide::mux(BayerMap::get_color(bayer_pattern, x, y), {offset_r, offset_g, offset_b}), 0.f, 1.f);
     }
 
     void schedule() {
@@ -227,8 +226,7 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    //GeneratorParam<BayerMap::Pattern> bayer_pattern { "bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map };
-    GeneratorParam<int32_t> bayer_pattern{"bayer_pattern", 0, 0, 3};
+    GeneratorParam<BayerMap::Pattern> bayer_pattern{"bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map};
     GeneratorInput<float> gain_r{"gain_r"};
     GeneratorInput<float> gain_g{"gain_g"};
     GeneratorInput<float> gain_b{"gain_b"};
@@ -236,7 +234,7 @@ public:
     GeneratorOutput<Halide::Func> output{"output", Halide::Float(32), 2};
 
     void generate() {
-        output(x, y) = Halide::clamp(input(x, y) * Halide::mux(BayerMap::get_color(static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern)), x, y), {gain_r, gain_g, gain_b}), 0.f, 1.f);
+        output(x, y) = Halide::clamp(input(x, y) * Halide::mux(BayerMap::get_color(bayer_pattern, x, y), {gain_r, gain_g, gain_b}), 0.f, 1.f);
     }
 
     void schedule() {
@@ -268,8 +266,7 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    //GeneratorParam<BayerMap::Pattern> bayer_pattern { "bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map };
-    GeneratorParam<int32_t> bayer_pattern{"bayer_pattern", 0, 0, 3};
+    GeneratorParam<BayerMap::Pattern> bayer_pattern{"bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map};
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
     GeneratorInput<Halide::Func> input{"input", Halide::Float(32), 2};
@@ -277,7 +274,7 @@ public:
 
     void generate() {
         Func input_wrapper = Halide::BoundaryConditions::constant_exterior(input, 0, {{0, width}, {0, height}});
-        switch (static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern))) {
+        switch (bayer_pattern) {
         case BayerMap::Pattern::RGGB:
             output(x, y, c) = Halide::mux(
                 c,
@@ -339,15 +336,14 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    //GeneratorParam<BayerMap::Pattern> bayer_pattern { "bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map };
-    GeneratorParam<int32_t> bayer_pattern{"bayer_pattern", 0, 0, 3};
+    GeneratorParam<BayerMap::Pattern> bayer_pattern{"bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map};
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
     GeneratorInput<Halide::Func> input{"input", Halide::Float(32), 2};
     GeneratorOutput<Halide::Func> output{"output", Halide::Float(32), 3};
 
     void generate() {
-        split(x, y, c) = Halide::select(c == BayerMap::get_color(static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern)), x, y), input(x, y), 0);
+        split(x, y, c) = Halide::select(c == BayerMap::get_color(bayer_pattern, x, y), input(x, y), 0);
         split_mirror = Halide::BoundaryConditions::mirror_interior(split, {{0, width}, {0, height}});
 
         Halide::Buffer<float> rb_coef(3, 3);
@@ -413,8 +409,7 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    //GeneratorParam<BayerMap::Pattern> bayer_pattern { "bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map };
-    GeneratorParam<int32_t> bayer_pattern{"bayer_pattern", 0, 0, 3};
+    GeneratorParam<BayerMap::Pattern> bayer_pattern{"bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map};
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
     GeneratorInput<Halide::Func> input{"input", Halide::Float(32), 2};
@@ -449,21 +444,20 @@ public:
 
         Halide::Expr c1_cond, c2v_cond, c2h_cond;
 
-        BayerMap::Pattern pattern = static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern));
-        if (pattern == BayerMap::Pattern::RGGB ||
-            pattern == BayerMap::Pattern::BGGR) {
+        if (bayer_pattern == BayerMap::Pattern::RGGB ||
+            bayer_pattern == BayerMap::Pattern::BGGR) {
             c1_cond = x % 2 != y % 2;
         } else {
             c1_cond = x % 2 == y % 2;
         }
-        if (pattern == BayerMap::Pattern::RGGB ||
-            pattern == BayerMap::Pattern::GRBG) {
+        if (bayer_pattern == BayerMap::Pattern::RGGB ||
+            bayer_pattern == BayerMap::Pattern::GRBG) {
             c2v_cond = y % 2 == 1;
         } else {
             c2v_cond = y % 2 == 0;
         }
-        if (pattern == BayerMap::Pattern::RGGB ||
-            pattern == BayerMap::Pattern::GBRG) {
+        if (bayer_pattern == BayerMap::Pattern::RGGB ||
+            bayer_pattern == BayerMap::Pattern::GBRG) {
             c2h_cond = x % 2 == 1;
         } else {
             c2h_cond = x % 2 == 0;
@@ -590,8 +584,7 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    //GeneratorParam<BayerMap::Pattern> bayer_pattern { "bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map };
-    GeneratorParam<int32_t> bayer_pattern{"bayer_pattern", 0, 0, 3};
+    GeneratorParam<BayerMap::Pattern> bayer_pattern{"bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map};
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
     GeneratorInput<float> slope_r{"slope_r"};
@@ -612,7 +605,7 @@ public:
         r2 = ((x - center_x) * (x - center_x) + (y - center_y) * (y - center_y)) / (center_x * center_x + center_y * center_y);
 
         output(x, y) = input(x, y) * Halide::mux(
-                                         BayerMap::get_color(static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern)), x, y),
+                                         BayerMap::get_color(bayer_pattern, x, y),
                                          {r2 * slope_r + offset_r,
                                           r2 * slope_g + offset_g,
                                           r2 * slope_b + offset_b});
@@ -646,8 +639,7 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    //GeneratorParam<BayerMap::Pattern> bayer_pattern { "bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map };
-    GeneratorParam<int32_t> bayer_pattern{"bayer_pattern", 0, 0, 3};
+    GeneratorParam<BayerMap::Pattern> bayer_pattern{"bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map};
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
     GeneratorInput<Halide::Func> lut_r{"lut_r", Halide::Float(32), 1};
@@ -664,7 +656,7 @@ public:
         r2 = ((x - center_x) * (x - center_x) + (y - center_y) * (y - center_y)) / (center_x * center_x + center_y * center_y);
 
         output(x, y) = input(x, y) * Halide::mux(
-                                         BayerMap::get_color(static_cast<BayerMap::Pattern>(static_cast<int32_t>(bayer_pattern)), x, y),
+                                         BayerMap::get_color(bayer_pattern, x, y),
                                          {lut_interpolation_float(lut_r, input(x, y), 256),
                                           lut_interpolation_float(lut_g, input(x, y), 256),
                                           lut_interpolation_float(lut_b, input(x, y), 256)});
@@ -739,13 +731,12 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    //GeneratorParam<Luminance::Method> luminance_method { "luminance_method", Luminance::Method::Average, Luminance::enum_map };
-    GeneratorParam<int32_t> luminance_method{"luminance_method", 3, 0, 3};
+    GeneratorParam<Luminance::Method> luminance_method{"luminance_method", Luminance::Method::Average, Luminance::enum_map};
     GeneratorInput<Halide::Func> input{"input", Halide::Float(32), 3};
     GeneratorOutput<Halide::Func> output{"output", Halide::Float(32), 2};
 
     void generate() {
-        output(x, y) = Luminance::calc(static_cast<Luminance::Method>(static_cast<int32_t>(luminance_method)), input(x, y, 0), input(x, y, 1), input(x, y, 2));
+        output(x, y) = Luminance::calc(luminance_method, input(x, y, 0), input(x, y, 1), input(x, y, 2));
     }
 
     void schedule() {
@@ -844,8 +835,7 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    // GeneratorParam<ColorDifference::Method> color_difference_method { "color_difference_method", ColorDifference::Method::Average, ColorDifference::enum_map };
-    GeneratorParam<int32_t> color_difference_method{"color_difference_method", 0, 0, 1};
+    GeneratorParam<ColorDifference::Method> color_difference_method{"color_difference_method", ColorDifference::Method::Average, ColorDifference::enum_map};
     GeneratorParam<int32_t> window_size{"window_size", 2};  // window_size=2 -> 5x5 window
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
@@ -862,7 +852,7 @@ public:
         r = {-window_size, window_size * 2 + 1, -window_size, window_size * 2 + 1, "r"};
 
         color_diff = ColorDifference::calc(
-            static_cast<ColorDifference::Method>(static_cast<int32_t>(color_difference_method)),
+            color_difference_method,
             input_mirror(x, y, 0),
             input_mirror(x, y, 1),
             input_mirror(x, y, 2),
@@ -929,8 +919,7 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    // GeneratorParam<BoundaryConditions::Method> boundary_conditions_method { "boundary_conditions_method", BoundaryConditions::Method::Zero, BoundaryConditions::enum_map };
-    GeneratorParam<int32_t> boundary_conditions_method{"boundary_conditions_method", 0, 0, 4};
+    GeneratorParam<BoundaryConditions::Method> boundary_conditions_method{"boundary_conditions_method", BoundaryConditions::Method::Zero, BoundaryConditions::enum_map};
     GeneratorParam<int32_t> window_size{"window_size", 2};  // window_size=2 -> 5x5 window
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
@@ -942,7 +931,7 @@ public:
         Halide::Var x;
         Halide::Var y;
 
-        Halide::Func input_wrapper = BoundaryConditions::calc(static_cast<BoundaryConditions::Method>(static_cast<int32_t>(boundary_conditions_method)), input, width, height);
+        Halide::Func input_wrapper = BoundaryConditions::calc(boundary_conditions_method, input, width, height);
 
         r = {-window_size, window_size * 2 + 1, -window_size, window_size * 2 + 1, "r"};
         sum(x, y, Halide::_) += input(x + r.x, y + r.y, Halide::_) * kernel(r.x + window_size, r.y + window_size, Halide::_);
