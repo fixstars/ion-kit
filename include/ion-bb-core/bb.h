@@ -1803,84 +1803,124 @@ public:
     }
 };
 
+class Cast1DUInt8ToUInt16 : public Cast<Cast1DUInt8ToUInt16, uint8_t, uint16_t, 1> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast1DUInt8ToUInt16"};
+};
+
+class Cast2DUInt8ToUInt16 : public Cast<Cast2DUInt8ToUInt16, uint8_t, uint16_t, 2> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast2DUInt8ToUInt16"};
+};
+
+class Cast3DUInt8ToUInt16 : public Cast<Cast3DUInt8ToUInt16, uint8_t, uint16_t, 3> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast3DUInt8ToUInt16"};
+};
+
+class Cast4DUInt8ToUInt16 : public Cast<Cast4DUInt8ToUInt16, uint8_t, uint16_t, 4> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast4DUInt8ToUInt16"};
+};
+
 class Cast1DUInt8ToFloat : public Cast<Cast1DUInt8ToFloat, uint8_t, float, 1> {
 public:
-    // GeneratorParam<std::string> gc_title{"gc_title", "Cast1DUInt8ToFloat"};
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast1DUInt8ToFloat"};
 };
 
 class Cast2DUInt8ToFloat : public Cast<Cast2DUInt8ToFloat, uint8_t, float, 2> {
 public:
-    // GeneratorParam<std::string> gc_title{"gc_title", "Cast2DUInt8ToFloat"};
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast2DUInt8ToFloat"};
 };
 
 class Cast3DUInt8ToFloat : public Cast<Cast3DUInt8ToFloat, uint8_t, float, 3> {
 public:
-    // GeneratorParam<std::string> gc_title{"gc_title", "Cast3DUInt8ToFloat"};
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast3DUInt8ToFloat"};
 };
 
 class Cast4DUInt8ToFloat : public Cast<Cast4DUInt8ToFloat, uint8_t, float, 4> {
 public:
-    // GeneratorParam<std::string> gc_title{"gc_title", "Cast4DUInt8ToFloat"};
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast4DUInt8ToFloat"};
+};
+
+class Cast1DUInt16ToUInt8 : public Cast<Cast1DUInt16ToUInt8, uint16_t, uint8_t, 1> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast1DUInt16ToUInt8"};
+};
+
+class Cast2DUInt16ToUInt8 : public Cast<Cast2DUInt16ToUInt8, uint16_t, uint8_t, 2> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast2DUInt16ToUInt8"};
+};
+
+class Cast3DUInt16ToUInt8 : public Cast<Cast3DUInt16ToUInt8, uint16_t, uint8_t, 3> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast3DUInt16ToUInt8"};
+};
+
+class Cast4DUInt16ToUInt8 : public Cast<Cast4DUInt16ToUInt8, uint16_t, uint8_t, 4> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast4DUInt16ToUInt8"};
 };
 
 class Cast1DUInt16ToFloat : public Cast<Cast1DUInt16ToFloat, uint16_t, float, 1> {
 public:
-    // GeneratorParam<std::string> gc_title{"gc_title", "Cast1DUInt16ToFloat"};
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast1DUInt16ToFloat"};
 };
 
 class Cast2DUInt16ToFloat : public Cast<Cast2DUInt16ToFloat, uint16_t, float, 2> {
 public:
-    // GeneratorParam<std::string> gc_title{"gc_title", "Cast2DUInt16ToFloat"};
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast2DUInt16ToFloat"};
 };
 
 class Cast3DUInt16ToFloat : public Cast<Cast3DUInt16ToFloat, uint16_t, float, 3> {
 public:
-    // GeneratorParam<std::string> gc_title{"gc_title", "Cast3DUInt16ToFloat"};
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast3DUInt16ToFloat"};
 };
 
 class Cast4DUInt16ToFloat : public Cast<Cast4DUInt16ToFloat, uint16_t, float, 4> {
 public:
-    // GeneratorParam<std::string> gc_title{"gc_title", "Cast4DUInt16ToFloat"};
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast4DUInt16ToFloat"};
 };
 
 class Cast1DFloatToUInt8 : public Cast<Cast1DFloatToUInt8, float, uint8_t, 1> {
 public:
-    // GeneratorParam<std::string> gc_title{"gc_title", "Cast1DFloatToUInt8"};
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast1DFloatToUInt8"};
 };
 
 class Cast2DFloatToUInt8 : public Cast<Cast2DFloatToUInt8, float, uint8_t, 2> {
 public:
-    // GeneratorParam<std::string> gc_title{"gc_title", "Cast2DFloatToUInt8"};
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast2DFloatToUInt8"};
 };
 
 class Cast3DFloatToUInt8 : public Cast<Cast3DFloatToUInt8, float, uint8_t, 3> {
 public:
-    // GeneratorParam<std::string> gc_title{"gc_title", "Cast3DFloatToUInt8"};
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast3DFloatToUInt8"};
 };
 
 class Cast4DFloatToUInt8 : public Cast<Cast4DFloatToUInt8, float, uint8_t, 4> {
 public:
-    // GeneratorParam<std::string> gc_title{"gc_title", "Cast4DFloatToUInt8"};
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast4DFloatToUInt8"};
 };
 
 class Cast1DFloatToUInt16 : public Cast<Cast1DFloatToUInt16, float, uint16_t, 1> {
 public:
-    // GeneratorParam<std::string> gc_title{"gc_title", "Cast1DFloatToUInt16"};
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast1DFloatToUInt16"};
 };
 
 class Cast2DFloatToUInt16 : public Cast<Cast2DFloatToUInt16, float, uint16_t, 2> {
 public:
-    // GeneratorParam<std::string> gc_title{"gc_title", "Cast2DFloatToUInt16"};
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast2DFloatToUInt16"};
 };
 
 class Cast3DFloatToUInt16 : public Cast<Cast3DFloatToUInt16, float, uint16_t, 3> {
 public:
-    // GeneratorParam<std::string> gc_title{"gc_title", "Cast3DFloatToUInt16"};
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast3DFloatToUInt16"};
 };
 
 class Cast4DFloatToUInt16 : public Cast<Cast4DFloatToUInt16, float, uint16_t, 4> {
 public:
-    // GeneratorParam<std::string> gc_title{"gc_title", "Cast4DFloatToUInt16"};
+    GeneratorParam<std::string> gc_title{"gc_title", "Cast4DFloatToUInt16"};
 };
 
 template<typename X, typename T>
