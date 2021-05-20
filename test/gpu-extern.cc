@@ -1,5 +1,7 @@
 #include "ion/ion.h"
 
+#include "ion-bb-internal/bb.h"
+
 #include "test-bb.h"
 #include "test-rt.h"
 
@@ -21,6 +23,8 @@ int main()
         Node n;
         Port ip{"input", Halide::type_of<int32_t>(), 2};
         n = b.add("test_extern_inc_i32x2")(ip).set_param(wp, hp, vp);
+        n = b.add("internal_schedule_for_preview")(n["output"]).set_param(Param{"output_name", "preview"}, Param{"compute_level", "compute_root"});
+        auto p = n["output_for_preview"];
         n = b.add("test_extern_inc_i32x2")(n["output"]).set_param(wp, hp, vp);
 
         PortMap pm;
@@ -41,7 +45,23 @@ int main()
         }
         pm.set(n["output"], obuf);
 
+        Halide::Buffer<int32_t> obuf_for_preview(std::vector<int32_t>{size, size});
+        for (int y=0; y<size; ++y) {
+            for (int x=0; x<size; ++x) {
+                obuf_for_preview(x, y) = 0;
+            }
+        }
+        pm.set(p, obuf_for_preview);
+
         b.run(pm);
+
+        for (int y=0; y<size; ++y) {
+            for (int x=0; x<size; ++x) {
+                if (obuf_for_preview(x, y) != 43) {
+                    throw std::runtime_error("Invalid value");
+                }
+            }
+        }
 
         for (int y=0; y<size; ++y) {
             for (int x=0; x<size; ++x) {
