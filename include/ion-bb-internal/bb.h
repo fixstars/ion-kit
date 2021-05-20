@@ -83,7 +83,7 @@ class ScheduleForPreview : public ion::BuildingBlock<ScheduleForPreview> {
 public:
     GeneratorParam<std::string> output_name{"output_name", ""};
     GeneratorParam<bool> output_replace{"output_replace", false};
-    GeneratorParam<std::string> compute_level{"compute_level", ""}; // "compute_inline" or "compute_root"
+    GeneratorParam<std::string> compute_level{"compute_level", ""};
 
     GeneratorInput<Halide::Func> input{"input"};
     GeneratorOutput<Halide::Func> output{"output"};
@@ -95,7 +95,7 @@ public:
             Func f(static_cast<std::string>(output_name) + "_");
             f(_) = input(_);
             f.compute_root();
-            output(_) = f(_);
+            output = f;
         }
 
         {

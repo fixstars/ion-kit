@@ -102,9 +102,9 @@ ION_REGISTER_BUILDING_BLOCK(Merge, test_merge);
 template<typename T, int D>
 class Inc : public ion::BuildingBlock<Inc<T, D>> {
 public:
-    Halide::GeneratorParam<T> v{"v", 0};
-    Halide::GeneratorInput<Halide::Func> input{"input", Halide::type_of<T>(), D};
-    Halide::GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), D};
+    ion::GeneratorParam<T> v{"v", 0};
+    ion::GeneratorInput<Halide::Func> input{"input", Halide::type_of<T>(), D};
+    ion::GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), D};
 
     void generate() {
         output(Halide::_) = input(Halide::_) + v;
@@ -121,9 +121,9 @@ ION_REGISTER_BUILDING_BLOCK(IncI32x2, test_inc_i32x2);
 
 class Dup : public ion::BuildingBlock<Dup> {
 public:
-    Halide::GeneratorInput<Halide::Func> input{"input", Int(32), 2};
-    Halide::GeneratorOutput<Halide::Func> output0{"output0", Int(32), 2};
-    Halide::GeneratorOutput<Halide::Func> output1{"output1", Int(32), 2};
+    ion::GeneratorInput<Halide::Func> input{"input", Int(32), 2};
+    ion::GeneratorOutput<Halide::Func> output0{"output0", Int(32), 2};
+    ion::GeneratorOutput<Halide::Func> output1{"output1", Int(32), 2};
 
     void generate() {
         output0(x, y) = input(x, y);
@@ -137,8 +137,8 @@ ION_REGISTER_BUILDING_BLOCK(Dup, test_dup);
 
 class Scale2x : public ion::BuildingBlock<Scale2x> {
 public:
-    Halide::GeneratorInput<Halide::Func> input{"input", Int(32), 2};
-    Halide::GeneratorOutput<Halide::Func> output{"output", Int(32), 2};
+    ion::GeneratorInput<Halide::Func> input{"input", Int(32), 2};
+    ion::GeneratorOutput<Halide::Func> output{"output", Int(32), 2};
 
     void generate() {
         output(x, y) = input(x/2, y/2);
@@ -151,10 +151,10 @@ ION_REGISTER_BUILDING_BLOCK(Scale2x, test_scale2x);
 
 class MultiOut : public ion::BuildingBlock<MultiOut> {
 public:
-    Halide::GeneratorInput<Halide::Func> input{"input", Int(32), 2};
-    Halide::GeneratorOutput<Halide::Func> output0{"output0", Int(32), 1};
-    Halide::GeneratorOutput<Halide::Func> output1{"output1", Int(32), 2};
-    Halide::GeneratorOutput<Halide::Func> output2{"output2", Int(32), 3};
+    ion::GeneratorInput<Halide::Func> input{"input", Int(32), 2};
+    ion::GeneratorOutput<Halide::Func> output0{"output0", Int(32), 1};
+    ion::GeneratorOutput<Halide::Func> output1{"output1", Int(32), 2};
+    ion::GeneratorOutput<Halide::Func> output2{"output2", Int(32), 3};
 
     void generate() {
         output0(x) = input(x, 0);
@@ -169,10 +169,10 @@ ION_REGISTER_BUILDING_BLOCK(MultiOut, test_multi_out);
 
 class ArrayOutput : public ion::BuildingBlock<ArrayOutput> {
 public:
-    Halide::GeneratorParam<std::size_t> len{"len", 5};
+    ion::GeneratorParam<std::size_t> len{"len", 5};
 
-    Halide::GeneratorInput<Halide::Func> input{"input", Int(32), 2};
-    Halide::GeneratorOutput<Halide::Func[]> array_output{"array_output", Int(32), 2};
+    ion::GeneratorInput<Halide::Func> input{"input", Int(32), 2};
+    ion::GeneratorOutput<Halide::Func[]> array_output{"array_output", Int(32), 2};
 
     void generate() {
         array_output.resize(len);
@@ -188,8 +188,8 @@ ION_REGISTER_BUILDING_BLOCK(ArrayOutput, test_array_output);
 
 class ArrayInput : public ion::BuildingBlock<ArrayInput> {
 public:
-    Halide::GeneratorInput<Halide::Func[]> array_input{"array_input", Int(32), 2};
-    Halide::GeneratorOutput<Halide::Func> output{"output", Int(32), 2};
+    ion::GeneratorInput<Halide::Func[]> array_input{"array_input", Int(32), 2};
+    ion::GeneratorOutput<Halide::Func> output{"output", Int(32), 2};
 
     void generate() {
         for (std::size_t i = 0; i < array_input.size(); ++i) {
@@ -201,5 +201,29 @@ private:
     Halide::Var x, y;
 };
 ION_REGISTER_BUILDING_BLOCK(ArrayInput, test_array_input);
+
+class ExternIncI32x2 : public ion::BuildingBlock<ExternIncI32x2> {
+public:
+    ion::GeneratorParam<int32_t> v{"v", 0};
+    ion::GeneratorParam<int32_t> width{"width", 0};
+    ion::GeneratorParam<int32_t> height{"height", 0};
+    ion::GeneratorInput<Halide::Func> input{"input", Halide::type_of<int32_t>(), 2};
+    ion::GeneratorOutput<Halide::Func> output{"output", Halide::type_of<int32_t>(), 2};
+
+    void generate() {
+        using namespace Halide;
+
+        bool use_gpu = get_target().has_gpu_feature();
+
+        Var x, y;
+        std::vector<ExternFuncArgument> params{static_cast<Func>(input), cast<int32_t>(width), cast<int32_t>(height), cast<int32_t>(v), use_gpu};
+        Func inc;
+        inc.define_extern("inc", params, Int(32), 2, NameMangling::C, use_gpu ? DeviceAPI::CUDA : DeviceAPI::Host);
+        inc.compute_root();
+
+        output = inc;
+    }
+};
+ION_REGISTER_BUILDING_BLOCK(ExternIncI32x2, test_extern_inc_i32x2);
 
 #endif
