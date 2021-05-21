@@ -8,6 +8,54 @@ namespace ion {
 namespace bb {
 namespace image_io {
 
+class BayerMap {
+public:
+    enum class Pattern {
+        RGGB,
+        BGGR,
+        GRBG,
+        GBRG
+    };
+
+    static const std::map<std::string, Pattern> enum_map;
+
+    // R: 0
+    // G: 1
+    // B: 2
+    static Halide::Expr get_color(Pattern pat, Halide::Expr x, Halide::Expr y) {
+        return Halide::select(
+            y % 2 == 0,
+            Halide::select(
+                x % 2 == 0,
+                get_color(pat, 0),
+                get_color(pat, 1)),
+            Halide::select(
+                x % 2 == 0,
+                get_color(pat, 2),
+                get_color(pat, 3)));
+    }
+
+private:
+    static const int bayer_map[4][4];
+
+    static int get_color(Pattern pat, int pos) {
+        return bayer_map[static_cast<int>(pat)][pos];
+    }
+};
+
+const std::map<std::string, BayerMap::Pattern> BayerMap::enum_map{
+    {"RGGB", BayerMap::Pattern::RGGB},
+    {"BGGR", BayerMap::Pattern::BGGR},
+    {"GRBG", BayerMap::Pattern::GRBG},
+    {"GBRG", BayerMap::Pattern::GBRG}};
+
+const int BayerMap::bayer_map[4][4]{
+    {0, 1, 1, 2},  // RGGB
+    {2, 1, 1, 0},  // BGGR
+    {1, 0, 2, 1},  // GRBG
+    {1, 2, 0, 1}   // GBRG
+};
+
 int instance_id = 0;
 
 class IMX219 : public ion::BuildingBlock<IMX219> {
@@ -147,19 +195,14 @@ public:
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
     GeneratorParam<int32_t> bit_width{"bit_width", 10};
-    // Format
-    // 0: RGGB
-    // 1: BGGR
-    // 2: GRBG
-    // 3: GBRG
-    GeneratorParam<int32_t> format{"format", 0};
+    GeneratorParam<BayerMap::Pattern> bayer_pattern{"bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map};
     GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint16_t>(), 2};
 
     void generate() {
         using namespace Halide;
 
         uint32_t pix_format;
-        switch (bit_width * 10 + format) {
+        switch (bit_width * 10 + static_cast<int32_t>(static_cast<BayerMap::Pattern>(bayer_pattern))) {
         case 80:  // RGGB 8bit
             pix_format = V4L2_PIX_FMT_SRGGB8;
             break;
@@ -214,7 +257,7 @@ public:
             1.f, 1.f, 1.f,
             0.f,
             cast<int32_t>(bit_width), 16 - bit_width,
-            cast<int32_t>(format)};
+            static_cast<int32_t>(static_cast<BayerMap::Pattern>(bayer_pattern))};
         Func v4l2(static_cast<std::string>(gc_prefix) + "v4l2");
         v4l2.define_extern("ion_bb_image_io_v4l2", params, type_of<uint16_t>(), 2);
         v4l2.compute_root();
@@ -239,12 +282,7 @@ public:
     GeneratorParam<int32_t> height{"height", 0};
     GeneratorParam<int32_t> bit_width{"bit_width", 10};
     GeneratorParam<int32_t> bit_shift{"bit_shift", 0};
-    // Format
-    // 0: RGGB
-    // 1: BGGR
-    // 2: GRBG
-    // 3: GBRG
-    GeneratorParam<int32_t> format{"format", 0};
+    GeneratorParam<BayerMap::Pattern> bayer_pattern{"bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map};
     GeneratorParam<float> gain_r{"gain_r", 1.f};
     GeneratorParam<float> gain_g{"gain_g", 1.f};
     GeneratorParam<float> gain_b{"gain_b", 1.f};
@@ -267,7 +305,7 @@ public:
             cast<float>(gain_r), cast<float>(gain_g), cast<float>(gain_b),
             cast<float>(offset),
             cast<int32_t>(bit_width), cast<int32_t>(bit_shift),
-            cast<int32_t>(format)};
+            static_cast<int32_t>(static_cast<BayerMap::Pattern>(bayer_pattern))};
         Func camera(static_cast<std::string>(gc_prefix) + "camera_simulation");
         camera.define_extern("ion_bb_image_io_v4l2", params, type_of<uint16_t>(), 2);
         camera.compute_root();
