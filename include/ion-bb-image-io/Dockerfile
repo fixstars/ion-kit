@@ -18,8 +18,8 @@ RUN apt-get update && apt-get install -y \
 # Halide
 #
 RUN cd /usr/include \
-        && curl -fsSL -O https://ion-archives.s3-us-west-2.amazonaws.com/Halide-Headers-7bf2c2d7f/HalideRuntime.h  \
-                      -O https://ion-archives.s3-us-west-2.amazonaws.com/Halide-Headers-7bf2c2d7f/HalideBuffer.h
+        && curl -fsSL -O https://ion-archives.s3-us-west-2.amazonaws.com/Halide-Headers-0936c8bd3/HalideRuntime.h  \
+                      -O https://ion-archives.s3-us-west-2.amazonaws.com/Halide-Headers-0936c8bd3/HalideBuffer.h
 #
 # OpenCV
 #
