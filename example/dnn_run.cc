@@ -22,6 +22,11 @@ int main(int argc, char *argv[]) {
         dnn(out_buf);
         halide_profiler_reset();
 
+        const int iter = 5;
+        for (int i = 0; i < iter; ++i) {
+            dnn(out_buf);
+        }
+
         cv::Mat predicted(input_height, input_width, CV_8UC3, out_buf.data());
         cv::imwrite("predicted.png", predicted);
 

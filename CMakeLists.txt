@@ -14,6 +14,7 @@ option(ION_BUNDLE_HALIDE "Enable to bundle Halide binary into package" OFF)
 #TODO: Enable define HALIDE_FOR_FPGA into compile option if it is ON
 option(ION_ENABLE_HALIDE_FPGA_BACKEND "Enable to Halide FPGA backend" OFF)
 option(WITH_CUDA "Enable CUDA with buliding examples." ON)
+option(WITH_TVM "Use TVM in ion-bb-dnn." ON)
 
 #
 # CMake common settings
