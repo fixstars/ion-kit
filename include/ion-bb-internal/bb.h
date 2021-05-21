@@ -61,11 +61,7 @@ public:
             throw std::runtime_error("Unreachable");
         }
 
-        if (static_cast<bool>(output_replace)) {
-            output = f;
-        } else {
-            output(_) = f(_);
-        }
+        output = f;
     }
 };
 
