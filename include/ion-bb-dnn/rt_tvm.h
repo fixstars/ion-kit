@@ -465,8 +465,15 @@ int object_detection_tvm(halide_buffer_t *in,
         TVMModuleHandle M = mgr.init_runtime_module();
 
         // Resize for tensor input data
-        const auto internal_height = 300;
-        const auto internal_width = 300;
+        int internal_height = 300;
+        int internal_width = 300;
+        // For ssdlite_mobiledet_* and ssd_mobilenet_v3_* models, we should use 320 * 320
+        // Currently, we only support below two models
+        if (dnn_model_name == "ssdlite_mobiledet_edgetpu_coco" ||
+            dnn_model_name == "ssdlite_mobiledet_gpu_coco") {
+            internal_height = 320;
+            internal_width = 320;
+        }
         cv::Mat resized(internal_height, internal_width, CV_32FC3);
         cv::resize(in_, resized, resized.size());
 

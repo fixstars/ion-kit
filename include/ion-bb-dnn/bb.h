@@ -49,13 +49,16 @@ enum class DNNModelKind : int32_t {
     ssd_mobilenet_v2_coco,
     ssdlite_mobilenet_v2_coco,
     ssdlite_mobiledet_edgetpu_coco,
+    ssdlite_mobiledet_gpu_coco
 };
 
 const std::map<std::string, DNNModelKind> dnn_model_enum_map{
     {"ssd_mobilenet_v1_coco", DNNModelKind::ssd_mobilenet_v1_coco},
     {"ssd_mobilenet_v2_coco", DNNModelKind::ssd_mobilenet_v2_coco},
     {"ssdlite_mobilenet_v2_coco", DNNModelKind::ssdlite_mobilenet_v2_coco},
-    {"ssdlite_mobiledet_edgetpu_coco", DNNModelKind::ssdlite_mobiledet_edgetpu_coco}};
+    {"ssdlite_mobiledet_edgetpu_coco", DNNModelKind::ssdlite_mobiledet_edgetpu_coco},
+    {"ssdlite_mobiledet_gpu_coco", DNNModelKind::ssdlite_mobiledet_gpu_coco},
+};
 
 template<typename X, int32_t D>
 class ObjectDetectionBase : public BuildingBlock<X> {
@@ -122,6 +125,9 @@ public:
             break;
         case DNNModelKind::ssdlite_mobiledet_edgetpu_coco:
             dnn_model_name = "ssdlite_mobiledet_edgetpu_coco";
+            break;
+        case DNNModelKind::ssdlite_mobiledet_gpu_coco:
+            dnn_model_name = "ssdlite_mobiledet_gpu_coco";
             break;
         default:
             std::cerr << "Error: unsupported dnn modles" << std::endl;
