@@ -67,7 +67,7 @@ function(ion_run NAME COMPILE_NAME)
     # Build run
     add_executable(${NAME} ${IER_SRCS} ${HEADER})
     target_include_directories(${NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include;${ION_BB_INCLUDE_DIRS};${OUTPUT_PATH}")
-    target_link_libraries(${NAME} PRIVATE ${STATIC_LIB} Halide::Runtime ${ION_BB_LIBRARIES} ${PLATFORM_LIBRARIES})
+    target_link_libraries(${NAME} PRIVATE ${STATIC_LIB} Halide::Halide Halide::Runtime ${ION_BB_LIBRARIES} ${PLATFORM_LIBRARIES})
 
     add_test(NAME ${NAME} COMMAND $<TARGET_FILE:${NAME}> ${IER_RUNTIME_ARGS})
 endfunction()
