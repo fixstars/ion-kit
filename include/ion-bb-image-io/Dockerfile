@@ -31,14 +31,3 @@ RUN if [ "x$TARGETPLATFORM" = "xlinux/amd64" ]; then \
     else \
         echo "Unsupported platform" && exit -1 ;\
     fi
-
-#
-# RealSense
-#
-RUN apt-get update && apt-get install -y \
-        software-properties-common
-RUN apt-key adv --keyserver keys.gnupg.net --recv-key C8B3A55A6F3EFCDE || apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key C8B3A55A6F3EFCDE
-RUN add-apt-repository "deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo bionic main" -u
-RUN apt-get update && apt-get install -y \
-        librealsense2-utils \
-        librealsense2-dev
