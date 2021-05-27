@@ -330,7 +330,7 @@ public:
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
     GeneratorInput<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 3};
-    GeneratorOutput<int> output{"output"};
+    GeneratorOutput<Halide::Func> output{"output"};
 
     void generate() {
         using namespace Halide;
@@ -350,10 +350,11 @@ public:
         }
 
         std::vector<ExternFuncArgument> params = {in, static_cast<int>(width), static_cast<int>(height), static_cast<int>(idx)};
-        Func display(static_cast<std::string>(gc_prefix) + "display");
+        Func display(static_cast<std::string>(gc_prefix) + "output");
         display.define_extern("ion_bb_image_io_gui_display", params, Int(32), 0);
         display.compute_root();
-        output() = display();
+
+        output = display;
     }
 };
 
@@ -370,7 +371,7 @@ public:
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
     GeneratorInput<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 3};
-    GeneratorOutput<int32_t> output{"output"};
+    GeneratorOutput<Halide::Func> output{"output"};
 
     void generate() {
         using namespace Halide;
@@ -390,10 +391,11 @@ public:
         }
 
         std::vector<ExternFuncArgument> params = {cast<int32_t>(width), cast<int32_t>(height), in};
-        Func display(static_cast<std::string>(gc_prefix) + "display");
+        Func display(static_cast<std::string>(gc_prefix) + "output");
         display.define_extern("ion_bb_image_io_fb_display", params, Halide::type_of<int32_t>(), 0);
         display.compute_root();
-        output() = display();
+
+        output = display;
     }
 };
 
@@ -447,7 +449,7 @@ public:
     GeneratorParam<int32_t> height{"height", 0};
     GeneratorParam<std::string> path{"path", ""};
     GeneratorInput<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 3};
-    GeneratorOutput<int32_t> output{"output"};
+    GeneratorOutput<Halide::Func> output{"output"};
 
     void generate() {
         using namespace Halide;
@@ -471,10 +473,10 @@ public:
         }
 
         std::vector<ExternFuncArgument> params = {in, static_cast<int32_t>(width), static_cast<int32_t>(height), path_buf};
-        Func image_saver(static_cast<std::string>(gc_prefix) + "image_saver");
+        Func image_saver(static_cast<std::string>(gc_prefix) + "output");
         image_saver.define_extern("ion_bb_image_io_image_saver", params, Int(32), 0);
         image_saver.compute_root();
-        output() = image_saver();
+        output = image_saver;
     }
 };
 
