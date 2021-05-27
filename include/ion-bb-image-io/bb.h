@@ -91,12 +91,11 @@ public:
             10, 6,
             0 /*RGGB*/
         };
-        Func v4l2_imx219(static_cast<std::string>(gc_prefix) + "v4l2_imx219");
+        Func v4l2_imx219(static_cast<std::string>(gc_prefix) + "output");
         v4l2_imx219.define_extern("ion_bb_image_io_v4l2", params, type_of<uint16_t>(), 2);
         v4l2_imx219.compute_root();
 
-        Var x, y;
-        output(x, y) = v4l2_imx219(x, y);
+        output = v4l2_imx219;
     }
 };
 
@@ -116,21 +115,22 @@ public:
 
     void generate() {
         using namespace Halide;
-        Func realsense_d435_frameset(static_cast<std::string>(gc_prefix) + "realsense_d435_frameset");
+        Func realsense_d435_frameset(static_cast<std::string>(gc_prefix) + "frameset");
         realsense_d435_frameset.define_extern("ion_bb_image_io_realsense_d435_frameset", {}, type_of<uint64_t>(), 0);
         realsense_d435_frameset.compute_root();
 
-        Func realsense_d435_infrared(static_cast<std::string>(gc_prefix) + "realsense_d435_infrared");
+        // TODO: Seperate channel
+        Func realsense_d435_infrared(static_cast<std::string>(gc_prefix) + "output_lr");
         realsense_d435_infrared.define_extern("ion_bb_image_io_realsense_d435_infrared", {realsense_d435_frameset}, {type_of<uint8_t>(), type_of<uint8_t>()}, 2);
         realsense_d435_infrared.compute_root();
 
-        Func realsense_d435_depth(static_cast<std::string>(gc_prefix) + "realsense_d435_depth");
+        Func realsense_d435_depth(static_cast<std::string>(gc_prefix) + "output_d");
         realsense_d435_depth.define_extern("ion_bb_image_io_realsense_d435_depth", {realsense_d435_frameset}, type_of<uint16_t>(), 2);
         realsense_d435_depth.compute_root();
 
         output_l(_) = realsense_d435_infrared(_)[0];
         output_r(_) = realsense_d435_infrared(_)[1];
-        output_d(_) = realsense_d435_depth(_);
+        output_d = realsense_d435_depth;
     }
 };
 
@@ -176,7 +176,10 @@ public:
         Expr g = saturating_cast<uint8_t>(yv - cast<float>(0.344f) * (uv - f128) - (cast<float>(0.714f) * (vv - f128)));
         Expr b = saturating_cast<uint8_t>(yv + cast<float>(1.773f) * (uv - f128));
 
-        output(x, y, c) = mux(c, {r, g, b});
+        Func f(static_cast<std::string>(gc_prefix) + "output");
+        f(x, y, c) = mux(c, {r, g, b});
+
+        output = f;
     }
 };
 
@@ -258,12 +261,11 @@ public:
             0.f,
             cast<int32_t>(bit_width), 16 - bit_width,
             static_cast<int32_t>(static_cast<BayerMap::Pattern>(bayer_pattern))};
-        Func v4l2(static_cast<std::string>(gc_prefix) + "v4l2");
+        Func v4l2(static_cast<std::string>(gc_prefix) + "output");
         v4l2.define_extern("ion_bb_image_io_v4l2", params, type_of<uint16_t>(), 2);
         v4l2.compute_root();
 
-        Var x, y;
-        output(x, y) = v4l2(x, y);
+        output = v4l2;
     }
 };
 
@@ -306,12 +308,11 @@ public:
             cast<float>(offset),
             cast<int32_t>(bit_width), cast<int32_t>(bit_shift),
             static_cast<int32_t>(static_cast<BayerMap::Pattern>(bayer_pattern))};
-        Func camera(static_cast<std::string>(gc_prefix) + "camera_simulation");
+        Func camera(static_cast<std::string>(gc_prefix) + "output");
         camera.define_extern("ion_bb_image_io_v4l2", params, type_of<uint16_t>(), 2);
         camera.compute_root();
 
-        Var x, y;
-        output(x, y) = camera(x, y);
+        output = camera;
     }
 };
 
@@ -422,10 +423,13 @@ public:
         image_loader.define_extern("ion_bb_image_io_image_loader", params, Halide::type_of<uint8_t>(), 3);
         image_loader.compute_root();
         Var c, x, y;
-        output(x, y, c) = mux(c,
-                              {image_loader(2, x, y),
-                               image_loader(1, x, y),
-                               image_loader(0, x, y)});
+
+        Func f(static_cast<std::string>(gc_prefix) + "output");
+        f(x, y, c) = mux(c,
+                         {image_loader(2, x, y),
+                         image_loader(1, x, y),
+                         image_loader(0, x, y)});
+        output = f;
     }
 };
 
