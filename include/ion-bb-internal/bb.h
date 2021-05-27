@@ -87,15 +87,27 @@ public:
         using namespace Halide;
         {
             Func f(static_cast<std::string>(output_name) + "_");
-            f(_) = input(_);
-            f.compute_root();
+            if (static_cast<std::string>(compute_level) == "compute_inline") {
+                f = input;
+            } else if (static_cast<std::string>(compute_level) == "compute_root") {
+                f(_) = input(_);
+                f.compute_root();
+            } else {
+                throw std::runtime_error("Unreachable");
+            }
             output = f;
         }
 
         {
             Func f(static_cast<std::string>(output_name));
-            f(_) = input(_);
-            f.compute_root();
+            if (static_cast<std::string>(compute_level) == "compute_inline") {
+                f = input;
+            } else if (static_cast<std::string>(compute_level) == "compute_root") {
+                f(_) = input(_);
+                f.compute_root();
+            } else {
+                throw std::runtime_error("Unreachable");
+            }
             output_for_preview = f;
         }
     }
