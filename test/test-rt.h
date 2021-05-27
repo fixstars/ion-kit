@@ -3,6 +3,8 @@
 
 #include <iostream>
 #include <cstdio>
+
+#include <Halide.h>
 #include <HalideBuffer.h>
 
 #include <dlfcn.h>

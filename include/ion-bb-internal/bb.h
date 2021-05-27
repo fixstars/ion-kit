@@ -20,11 +20,11 @@ public:
     void generate() {
         using namespace Halide;
         Func f(static_cast<std::string>(output_name));
-        f(_) = input(_);
 
         if (static_cast<std::string>(compute_level) == "compute_inline") {
-            // NOP
+            f = input;
         } else if (static_cast<std::string>(compute_level) == "compute_root") {
+            f(_) = input(_);
             f.compute_root();
             if (get_target().has_gpu_feature()) {
                 if (f.args().size() == 0) {
