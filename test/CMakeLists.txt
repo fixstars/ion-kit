@@ -53,6 +53,9 @@ add_dependencies(dup ion-bb-test)
 ion_jit(port-binding SRCS port-binding.cc)
 add_dependencies(port-binding ion-bb-test)
 
+ion_jit(direct-extern SRCS direct-extern.cc)
+add_dependencies(direct-extern ion-bb-test)
+
 if (WITH_CUDA)
     ion_jit(gpu-extern SRCS gpu-extern.cc)
     cuda_add_library(gpu-extern-lib SHARED gpu-extern-lib.cu)
