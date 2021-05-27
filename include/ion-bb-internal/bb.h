@@ -86,15 +86,10 @@ public:
     void generate() {
         using namespace Halide;
         {
+            // Internal connection is always separated with input.
             Func f(static_cast<std::string>(output_name) + "_");
-            if (static_cast<std::string>(compute_level) == "compute_inline") {
-                f = input;
-            } else if (static_cast<std::string>(compute_level) == "compute_root") {
-                f(_) = input(_);
-                f.compute_root();
-            } else {
-                throw std::runtime_error("Unreachable");
-            }
+            f(_) = input(_);
+            f.compute_root();
             output = f;
         }
 
