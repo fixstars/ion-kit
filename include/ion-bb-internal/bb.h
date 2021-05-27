@@ -10,7 +10,6 @@ namespace internal {
 class Schedule : public ion::BuildingBlock<Schedule> {
 public:
     GeneratorParam<std::string> output_name{"output_name", ""};
-    GeneratorParam<bool> output_replace{"output_replace", false};
     GeneratorParam<std::string> compute_level{"compute_level", ""}; // "compute_inline" or "compute_root"
     GeneratorParam<std::string> concurrency{"concurrency", ""}; // comma separated string
 
@@ -78,7 +77,6 @@ namespace internal {
 class ScheduleForPreview : public ion::BuildingBlock<ScheduleForPreview> {
 public:
     GeneratorParam<std::string> output_name{"output_name", ""};
-    GeneratorParam<bool> output_replace{"output_replace", false};
     GeneratorParam<std::string> compute_level{"compute_level", ""};
 
     GeneratorInput<Halide::Func> input{"input"};
@@ -89,15 +87,27 @@ public:
         using namespace Halide;
         {
             Func f(static_cast<std::string>(output_name) + "_");
-            f(_) = input(_);
-            f.compute_root();
+            if (static_cast<std::string>(compute_level) == "compute_inline") {
+                f = input;
+            } else if (static_cast<std::string>(compute_level) == "compute_root") {
+                f(_) = input(_);
+                f.compute_root();
+            } else {
+                throw std::runtime_error("Unreachable");
+            }
             output = f;
         }
 
         {
             Func f(static_cast<std::string>(output_name));
-            f(_) = input(_);
-            f.compute_root();
+            if (static_cast<std::string>(compute_level) == "compute_inline") {
+                f = input;
+            } else if (static_cast<std::string>(compute_level) == "compute_root") {
+                f(_) = input(_);
+                f.compute_root();
+            } else {
+                throw std::runtime_error("Unreachable");
+            }
             output_for_preview = f;
         }
     }
