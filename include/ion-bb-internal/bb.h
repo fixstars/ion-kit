@@ -18,11 +18,10 @@ public:
 
     void generate() {
         using namespace Halide;
-        Func f(static_cast<std::string>(output_name));
-
         if (static_cast<std::string>(compute_level) == "compute_inline") {
-            f = input;
+            output = input;
         } else if (static_cast<std::string>(compute_level) == "compute_root") {
+            Func f(static_cast<std::string>(output_name));
             f(_) = input(_);
             f.compute_root();
             if (get_target().has_gpu_feature()) {
@@ -56,11 +55,11 @@ public:
                     f.parallel(y);
                 }
             }
+
+            output = f;
         } else {
             throw std::runtime_error("Unreachable");
         }
-
-        output = f;
     }
 };
 
@@ -94,16 +93,16 @@ public:
         }
 
         {
-            Func f(static_cast<std::string>(output_name));
             if (static_cast<std::string>(compute_level) == "compute_inline") {
-                f = input;
+                output_for_preview = input;
             } else if (static_cast<std::string>(compute_level) == "compute_root") {
+                Func f(static_cast<std::string>(output_name));
                 f(_) = input(_);
                 f.compute_root();
+                output_for_preview = f;
             } else {
                 throw std::runtime_error("Unreachable");
             }
-            output_for_preview = f;
         }
     }
 };
