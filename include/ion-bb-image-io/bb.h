@@ -70,6 +70,9 @@ public:
 
     GeneratorParam<int32_t> index{"index", 0};
     GeneratorParam<bool> force_sim_mode{"force_sim_mode", false};
+    GeneratorParam<int32_t> fps{"fps", 24};
+    GeneratorParam<int32_t> width{"width", 3264};
+    GeneratorParam<int32_t> height{"height", 2464};
     GeneratorParam<std::string> url{"url", ""};
     GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint16_t>(), 2};
 
@@ -82,8 +85,11 @@ public:
 
         std::vector<ExternFuncArgument> params = {
             instance_id++,
-            3264, 2464,
-            cast<int32_t>(index), Expr(V4L2_PIX_FMT_SRGGB10),
+            cast<int32_t>(index),
+            cast<int32_t>(fps),
+            cast<int32_t>(width),
+            cast<int32_t>(height),
+            Expr(V4L2_PIX_FMT_SRGGB10),
             cast<bool>(force_sim_mode),
             url_buf,
             0.4f, 0.5f, 0.3125f,
@@ -145,6 +151,7 @@ public:
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
 
     GeneratorParam<int32_t> index{"index", 0};
+    GeneratorParam<int32_t> fps{"fps", 30};
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
     GeneratorParam<std::string> url{"url", ""};
@@ -157,7 +164,7 @@ public:
         url_buf.fill(0);
         std::memcpy(url_buf.data(), url_str.c_str(), url_str.size());
 
-        std::vector<ExternFuncArgument> params = {instance_id++, cast<int32_t>(width), cast<int32_t>(height), cast<int32_t>(index), url_buf};
+        std::vector<ExternFuncArgument> params = {instance_id++, cast<int32_t>(index), cast<int32_t>(fps), cast<int32_t>(width), cast<int32_t>(height), url_buf};
         Func camera(static_cast<std::string>(gc_prefix) + "camera");
         camera.define_extern("ion_bb_image_io_camera", params, Halide::type_of<uint8_t>(), 2);
         camera.compute_root();
@@ -195,6 +202,7 @@ public:
 
     GeneratorParam<int32_t> index{"index", 0};
     GeneratorParam<std::string> url{"url", ""};
+    GeneratorParam<int32_t> fps{"fps", 20};
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
     GeneratorParam<int32_t> bit_width{"bit_width", 10};
@@ -253,8 +261,11 @@ public:
 
         std::vector<ExternFuncArgument> params = {
             instance_id++,
-            cast<int32_t>(width), cast<int32_t>(height),
-            cast<int32_t>(index), Expr(pix_format),
+            cast<int32_t>(index),
+            cast<int32_t>(fps),
+            cast<int32_t>(width),
+            cast<int32_t>(height),
+            Expr(pix_format),
             Expr(false),
             url_buf,
             1.f, 1.f, 1.f,
@@ -280,6 +291,7 @@ public:
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
 
     GeneratorParam<std::string> url{"url", ""};
+    GeneratorParam<int32_t> fps{"fps", 30};
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
     GeneratorParam<int32_t> bit_width{"bit_width", 10};
@@ -300,8 +312,11 @@ public:
 
         std::vector<ExternFuncArgument> params = {
             instance_id++,
-            cast<int32_t>(width), cast<int32_t>(height),
-            0, 0,
+            0,
+            cast<int32_t>(fps),
+            cast<int32_t>(width),
+            cast<int32_t>(height),
+            0,
             Expr(true),
             url_buf,
             cast<float>(gain_r), cast<float>(gain_g), cast<float>(gain_b),
