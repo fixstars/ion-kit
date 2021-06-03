@@ -2,6 +2,7 @@
 #define ION_BB_IMAGE_IO_RT_V4L2_H
 
 #include <cstdlib>
+#include <chrono>
 #include <map>
 #include <memory>
 #include <stdexcept>
@@ -496,7 +497,7 @@ extern "C" ION_EXPORT int ion_bb_image_io_v4l2(
     int32_t fps,
     int32_t width, int32_t height,
     uint32_t pixel_format,
-    bool force_sim_mode,
+    uint32_t force_sim_mode, // Do not use bool to avoid LLVM codegen failure
     // Parameters for simulation
     halide_buffer_t *url_buf,
     float gain_r, float gain_g, float gain_b,
@@ -516,7 +517,7 @@ extern "C" ION_EXPORT int ion_bb_image_io_v4l2(
         }
 
 
-        auto &v4l2(ion::bb::image_io::V4L2::get_instance(instance_id, index, fps, width, height, pixel_format, gain_r, gain_g, gain_b, offset, bit_width, bit_shift, force_sim_mode, reinterpret_cast<const char*>(url_buf->host)));
+        auto &v4l2(ion::bb::image_io::V4L2::get_instance(instance_id, index, fps, width, height, pixel_format, gain_r, gain_g, gain_b, offset, bit_width, bit_shift, static_cast<bool>(force_sim_mode), reinterpret_cast<const char*>(url_buf->host)));
         Halide::Runtime::Buffer<uint16_t> obuf(*out);
         v4l2.get(obuf);
 
