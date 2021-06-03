@@ -59,19 +59,19 @@ public:
 
     static V4L2 &get_instance(int32_t id, int32_t index, int32_t fps, int32_t width, int32_t height, uint32_t pixel_format,
                               float gain_r, float gain_g, float gain_b, float offset, int32_t bit_width, int32_t bit_shift,
-                              bool force_sim_mode) {
+                              bool force_sim_mode, const std::string& url) {
         if (instances_.count(id) == 0) {
-            instances_[id] = std::make_shared<V4L2>(id, index, fps, width, height, pixel_format, gain_r, gain_g, gain_b, offset, bit_width, bit_shift, force_sim_mode);
+            instances_[id] = std::make_shared<V4L2>(id, index, fps, width, height, pixel_format, gain_r, gain_g, gain_b, offset, bit_width, bit_shift, force_sim_mode, url);
         }
         return *instances_[id];
     }
 
     V4L2(int32_t id, int32_t index, int32_t fps, int32_t width, int32_t height, uint32_t pixel_format,
          float gain_r, float gain_g, float gain_b, float offset, int32_t bit_width, int32_t bit_shift,
-         bool force_sim_mode)
+         bool force_sim_mode, const std::string& url)
         : id_(id), index_(index), fps_(fps), width_(width), height_(height), pixel_format_(pixel_format),
           gain_r_(gain_r), gain_g_(gain_g), gain_b_(gain_b), offset_(offset), bit_width_(bit_width), bit_shift_(bit_shift),
-          sim_mode_(force_sim_mode) {
+          sim_mode_(force_sim_mode), url_(url) {
 
         using namespace std;
 
@@ -82,18 +82,19 @@ public:
         const char *dev_name = dev_name_str.c_str();
         struct stat st;
         if (-1 == stat(dev_name, &st)) {
+            std::cerr << format("Fallback to simulation mode: Could not find %s", dev_name) << std::endl;
              sim_mode_ =  true;;
             return;
         }
         if (!S_ISCHR(st.st_mode)) {
-            std::cerr << format("%s is no device", dev_name) << std::endl;
+            std::cerr << format("Fallback to simulation mode: %s is no device", dev_name) << std::endl;
              sim_mode_ =  true;;
             return;
         }
 
         fd_ = open(dev_name, O_RDWR | O_NONBLOCK, 0);
         if (-1 == fd_) {
-            std::cerr << format("Cannot open '%s': %d, %s", dev_name, errno, strerror(errno)) << std::endl;
+            std::cerr << format("Fallback to simulation mode: Cannot open '%s': %d, %s", dev_name, errno, strerror(errno)) << std::endl;
              sim_mode_ =  true;;
             return;
         }
@@ -101,22 +102,22 @@ public:
         struct v4l2_capability cap;
         if (-1 == xioctl(fd_, VIDIOC_QUERYCAP, &cap)) {
             if (EINVAL == errno) {
-                std::cerr << format("%s is no V4L2 device", dev_name) << std::endl;
+                std::cerr << format("Fallback to simulation mode: %s is no V4L2 device", dev_name) << std::endl;
                  sim_mode_ =  true;;
                 return;
             } else {
-                std::cerr << format("%s error %d, %s\n", "VIDIOC_QUERYCAP", errno, strerror(errno)) << std::endl;
+                std::cerr << format("Fallback to simulation mode: %s error %d, %s\n", "VIDIOC_QUERYCAP", errno, strerror(errno)) << std::endl;
                  sim_mode_ =  true;;
                 return;
             }
         }
         if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
-            std::cerr << format("%s is no video capture device", dev_name) << std::endl;
+            std::cerr << format("Fallback to simulation mode: %s is no video capture device", dev_name) << std::endl;
              sim_mode_ =  true;;
             return;
         }
         if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
-            std::cerr << format("%s does not support streaming i/o", dev_name) << std::endl;
+            std::cerr << format("Fallback to simulation mode: %s does not support streaming i/o", dev_name) << std::endl;
              sim_mode_ =  true;;
             return;
         }
@@ -135,7 +136,7 @@ public:
             fmtdesc.index++;
         }
         if (!supported) {
-            std::cerr << format("%s does not support desired pixel format", dev_name) << std::endl;
+            std::cerr << format("Fallback to simulation mode: %s does not support desired pixel format", dev_name) << std::endl;
              sim_mode_ =  true;;
             return;
         }
@@ -289,18 +290,18 @@ public:
     template<typename T>
     void generate_bayer(Halide::Runtime::Buffer<T> &buf) {
 
-        auto it = ion::bb::image_io::image_cache.find(instance_id);
+        auto it = ion::bb::image_io::image_cache.find(id_);
         if (it != ion::bb::image_io::image_cache.end()) {
             memcpy(buf.data(), it->second.data(), it->second.size());
-            return 0;
+            return;
         }
 
-        cv::Mat img = ion::bb::image_io::get_image(reinterpret_cast<const char *>(url_buf->host));
+        cv::Mat img = ion::bb::image_io::get_image(url_);
 
+        // Fill by dummy image
         if (img.empty()) {
-            // Dummy mode
             cv::Mat pat = cv::Mat::zeros(2, 2, CV_16U);
-            pat.at<uint16_t>((index / 2) % 2, index % 2) = 65535;
+            pat.at<uint16_t>((index_ / 2) % 2, index_ % 2) = 65535;
 
             img = cv::repeat(pat, height_ / 2, width_ / 2);
 
@@ -308,9 +309,9 @@ public:
             memcpy(data.data(), img.data, img.total() * img.elemSize());
             memcpy(buf.data(), img.data, img.total() * img.elemSize());
 
-            ion::bb::image_io::image_cache[instance_id] = data;
+            ion::bb::image_io::image_cache[id_] = data;
 
-            return 0;
+            return;
         }
 
         cv::Mat resized_img;
@@ -336,7 +337,7 @@ public:
         cv::Mat mask_11 = cv::repeat((cv::Mat_<float>(2, 2) << 0, 0, 0, 1), height_ / 2, width_ / 2);
 
         cv::Mat processed_img;
-        switch (bayer_pattern(pixel_format_) {
+        switch (bayer_pattern(pixel_format_)) {
         case 0:  // RGGB
             processed_img = processed_img_r.mul(mask_00) + processed_img_g.mul(mask_01 + mask_10) + processed_img_b.mul(mask_11);
             break;
@@ -361,19 +362,19 @@ public:
         memcpy(data.data(), bit_shifted_img.data, bit_shifted_img.total() * bit_shifted_img.elemSize());
         memcpy(buf.data(), bit_shifted_img.data, bit_shifted_img.total() * bit_shifted_img.elemSize());
 
-        ion::bb::image_io::image_cache[instance_id] = data;
+        ion::bb::image_io::image_cache[id_] = data;
     }
 
     template<typename T>
     void generate_yuyv(Halide::Runtime::Buffer<T> &buf) {
 
-        auto it = ion::bb::image_io::image_cache.find(instance_id);
+        auto it = ion::bb::image_io::image_cache.find(id_);
         if (it != ion::bb::image_io::image_cache.end()) {
             memcpy(buf.data(), it->second.data(), it->second.size());
             return;
         }
 
-        cv::Mat img = ion::bb::image_io::get_image(reinterpret_cast<const char *>(url_buf->host));
+        cv::Mat img = ion::bb::image_io::get_image(url_);
 
         std::vector<uint8_t> yuyv_img(2 * width_ * height_);
         if (img.empty()) {
@@ -396,7 +397,7 @@ public:
             }
         }
         memcpy(buf.data(), yuyv_img.data(), yuyv_img.size());
-        ion::bb::image_io::image_cache[instance_id] = yuyv_img;
+        ion::bb::image_io::image_cache[id_] = yuyv_img;
 
         return;
     }
@@ -473,6 +474,7 @@ private:
     int32_t bit_width_;
     int32_t bit_shift_;
     bool sim_mode_;
+    std::string url_;
 
     int efd_;
 
@@ -514,7 +516,7 @@ extern "C" ION_EXPORT int ion_bb_image_io_v4l2(
         }
 
 
-        auto &v4l2(ion::bb::image_io::V4L2::get_instance(instance_id, index, fps, width, height, pixel_format, gain_r, gain_g, gain_b, offset, bit_width, bit_shift, force_sim_mode));
+        auto &v4l2(ion::bb::image_io::V4L2::get_instance(instance_id, index, fps, width, height, pixel_format, gain_r, gain_g, gain_b, offset, bit_width, bit_shift, force_sim_mode, reinterpret_cast<const char*>(url_buf->host)));
         Halide::Runtime::Buffer<uint16_t> obuf(*out);
         v4l2.get(obuf);
 
@@ -539,7 +541,7 @@ extern "C" int ION_EXPORT ion_bb_image_io_camera(int32_t instance_id, int32_t in
             return 0;
         }
 
-        auto &v4l2(ion::bb::image_io::V4L2::get_instance(instance_id, index, fps, width, height, V4L2_PIX_FMT_YUYV, false));
+        auto &v4l2(ion::bb::image_io::V4L2::get_instance(instance_id, index, fps, width, height, V4L2_PIX_FMT_YUYV, 1, 1, 1, 0, 8, 0, false, reinterpret_cast<const char*>(url_buf->host)));
         Halide::Runtime::Buffer<uint8_t> obuf(*out);
         v4l2.get(obuf);
 

@@ -65,15 +65,18 @@ int main(int argc, char *argv[]) {
     Builder b;
     b.set_target(Halide::Target{get_target_from_cmdline(argc, argv)});
 
-    auto n0 = b.add("image_io_imx219").set_param(Param{"index", "0"});
-    auto n1 = b.add("image_io_imx219").set_param(Param{"index", "1"});
-    auto n2 = b.add("image_io_imx219").set_param(Param{"index", "2"});
-    auto n3 = b.add("image_io_imx219").set_param(Param{"index", "3"});
-    auto n4 = b.add("image_io_imx219").set_param(Param{"index", "4"});
-    auto n5 = b.add("image_io_imx219").set_param(Param{"index", "5"});
+    const int32_t width = 640;
+    const int32_t height = 480;
+
+    auto n0 = b.add("image_io_camera").set_param(Param{"fps", "25"}, Param{"width", std::to_string(width)}, Param{"height", std::to_string(height)}, Param{"index", "0"}, Param{"url", "http://optipng.sourceforge.net/pngtech/img/lena.png"});
+    auto n1 = b.add("image_io_camera").set_param(Param{"fps", "25"}, Param{"width", std::to_string(width)}, Param{"height", std::to_string(height)}, Param{"index", "1"}, Param{"url", "http://optipng.sourceforge.net/pngtech/img/lena.png"});
+    auto n2 = b.add("image_io_camera").set_param(Param{"fps", "25"}, Param{"width", std::to_string(width)}, Param{"height", std::to_string(height)}, Param{"index", "2"}, Param{"url", "http://optipng.sourceforge.net/pngtech/img/lena.png"});
+    auto n3 = b.add("image_io_camera").set_param(Param{"fps", "25"}, Param{"width", std::to_string(width)}, Param{"height", std::to_string(height)}, Param{"index", "3"}, Param{"url", "http://optipng.sourceforge.net/pngtech/img/lena.png"});
+    auto n4 = b.add("image_io_camera").set_param(Param{"fps", "25"}, Param{"width", std::to_string(width)}, Param{"height", std::to_string(height)}, Param{"index", "4"}, Param{"url", "http://optipng.sourceforge.net/pngtech/img/lena.png"});
+    auto n5 = b.add("image_io_camera").set_param(Param{"fps", "25"}, Param{"width", std::to_string(width)}, Param{"height", std::to_string(height)}, Param{"index", "5"}, Param{"url", "http://optipng.sourceforge.net/pngtech/img/lena.png"});
 
     PortMap pm;
-    Halide::Buffer<uint16_t> obuf0(3264, 2464), obuf1(3264, 2464), obuf2(3264, 2464), obuf3(3264, 2464), obuf4(3264, 2464), obuf5(3264, 2464);
+    Halide::Buffer<uint8_t> obuf0(width, height, 3), obuf1(width, height, 3), obuf2(width, height, 3), obuf3(width, height, 3), obuf4(width, height, 3), obuf5(width, height, 3);
     pm.set(n0["output"], obuf0);
     pm.set(n1["output"], obuf1);
     pm.set(n2["output"], obuf2);
