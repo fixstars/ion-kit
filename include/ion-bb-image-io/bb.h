@@ -56,6 +56,53 @@ const int BayerMap::bayer_map[4][4]{
     {1, 2, 0, 1}   // GBRG
 };
 
+uint32_t make_pixel_format(BayerMap::Pattern bayer_pattern, int32_t bit_width)
+{
+    uint32_t pix_format;
+    switch (bit_width * 10 + static_cast<int32_t>(static_cast<BayerMap::Pattern>(bayer_pattern))) {
+    case 80:  // RGGB 8bit
+        pix_format = V4L2_PIX_FMT_SRGGB8;
+        break;
+    case 81:  // BGGR 8bit
+        pix_format = V4L2_PIX_FMT_SBGGR8;
+        break;
+    case 82:  // GRBG 8bit
+        pix_format = V4L2_PIX_FMT_SGRBG8;
+        break;
+    case 83:  // GBRG 8bit
+        pix_format = V4L2_PIX_FMT_SGBRG8;
+        break;
+    case 100:  // RGGB 10bit
+        pix_format = V4L2_PIX_FMT_SRGGB10;
+        break;
+    case 101:  // BGGR 10bit
+        pix_format = V4L2_PIX_FMT_SBGGR10;
+        break;
+    case 102:  // GRBG 10bit
+        pix_format = V4L2_PIX_FMT_SGRBG10;
+        break;
+    case 103:  // GBRG 10bit
+        pix_format = V4L2_PIX_FMT_SGBRG10;
+        break;
+    case 120:  // RGGB 12bit
+        pix_format = V4L2_PIX_FMT_SRGGB12;
+        break;
+    case 121:  // BGGR 12bit
+        pix_format = V4L2_PIX_FMT_SBGGR12;
+        break;
+    case 122:  // GRBG 12bit
+        pix_format = V4L2_PIX_FMT_SGRBG12;
+        break;
+    case 123:  // GBRG 12bit
+        pix_format = V4L2_PIX_FMT_SGBRG12;
+        break;
+    default:
+        throw std::runtime_error("Unsupported pixel_format combination");
+    }
+
+    return pix_format;
+}
+
 int instance_id = 0;
 
 class IMX219 : public ion::BuildingBlock<IMX219> {
@@ -95,8 +142,7 @@ public:
             url_buf,
             0.4f, 0.5f, 0.3125f,
             0.0625f,
-            10, 6,
-            0 /*RGGB*/
+            10, 6
         };
         Func v4l2_imx219(static_cast<std::string>(gc_prefix) + "output");
         v4l2_imx219.define_extern("ion_bb_image_io_v4l2", params, type_of<uint16_t>(), 2);
@@ -214,48 +260,6 @@ public:
     void generate() {
         using namespace Halide;
 
-        uint32_t pix_format;
-        switch (bit_width * 10 + static_cast<int32_t>(static_cast<BayerMap::Pattern>(bayer_pattern))) {
-        case 80:  // RGGB 8bit
-            pix_format = V4L2_PIX_FMT_SRGGB8;
-            break;
-        case 81:  // BGGR 8bit
-            pix_format = V4L2_PIX_FMT_SBGGR8;
-            break;
-        case 82:  // GRBG 8bit
-            pix_format = V4L2_PIX_FMT_SGRBG8;
-            break;
-        case 83:  // GBRG 8bit
-            pix_format = V4L2_PIX_FMT_SGBRG8;
-            break;
-        case 100:  // RGGB 10bit
-            pix_format = V4L2_PIX_FMT_SRGGB10;
-            break;
-        case 101:  // BGGR 10bit
-            pix_format = V4L2_PIX_FMT_SBGGR10;
-            break;
-        case 102:  // GRBG 10bit
-            pix_format = V4L2_PIX_FMT_SGRBG10;
-            break;
-        case 103:  // GBRG 10bit
-            pix_format = V4L2_PIX_FMT_SGBRG10;
-            break;
-        case 120:  // RGGB 12bit
-            pix_format = V4L2_PIX_FMT_SRGGB12;
-            break;
-        case 121:  // BGGR 12bit
-            pix_format = V4L2_PIX_FMT_SBGGR12;
-            break;
-        case 122:  // GRBG 12bit
-            pix_format = V4L2_PIX_FMT_SGRBG12;
-            break;
-        case 123:  // GBRG 12bit
-            pix_format = V4L2_PIX_FMT_SGBRG12;
-            break;
-        default:
-            internal_error << "Unknown V4L2 format";
-        }
-
         std::string url_str = url;
         Halide::Buffer<uint8_t> url_buf(url_str.size() + 1);
         url_buf.fill(0);
@@ -267,13 +271,13 @@ public:
             cast<int32_t>(fps),
             cast<int32_t>(width),
             cast<int32_t>(height),
-            Expr(pix_format),
+            Expr(make_pixel_format(bayer_pattern, bit_width)),
             cast<uint32_t>(0),
             url_buf,
             1.f, 1.f, 1.f,
             0.f,
-            cast<int32_t>(bit_width), 16 - bit_width,
-            static_cast<int32_t>(static_cast<BayerMap::Pattern>(bayer_pattern))};
+            cast<int32_t>(bit_width), 16 - bit_width
+        };
         Func v4l2(static_cast<std::string>(gc_prefix) + "output");
         v4l2.define_extern("ion_bb_image_io_v4l2", params, type_of<uint16_t>(), 2);
         v4l2.compute_root();
@@ -319,13 +323,13 @@ public:
             cast<int32_t>(fps),
             cast<int32_t>(width),
             cast<int32_t>(height),
-            0,
+            Expr(make_pixel_format(bayer_pattern, bit_width)),
             cast<uint32_t>(1),
             url_buf,
             cast<float>(gain_r), cast<float>(gain_g), cast<float>(gain_b),
             cast<float>(offset),
-            cast<int32_t>(bit_width), cast<int32_t>(bit_shift),
-            static_cast<int32_t>(static_cast<BayerMap::Pattern>(bayer_pattern))};
+            cast<int32_t>(bit_width), cast<int32_t>(bit_shift)
+        };
         Func camera(static_cast<std::string>(gc_prefix) + "output");
         camera.define_extern("ion_bb_image_io_v4l2", params, type_of<uint16_t>(), 2);
         camera.compute_root();

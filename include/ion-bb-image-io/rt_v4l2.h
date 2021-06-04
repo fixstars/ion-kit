@@ -514,7 +514,6 @@ extern "C" ION_EXPORT int ion_bb_image_io_v4l2(
     float gain_r, float gain_g, float gain_b,
     float offset,
     int32_t bit_width, int32_t bit_shift,
-    int32_t bayer_pattern,
     halide_buffer_t *out) {
 
     try {
