@@ -88,6 +88,14 @@ int main(int argc, char *argv[]) {
 
     b.run(pm);
 
+    auto t1 = std::chrono::high_resolution_clock::now();
+    for (int i=0; i<100; ++i) {
+        b.run(pm);
+    }
+    auto t2 = std::chrono::high_resolution_clock::now();
+
+    std::cout << "actual: " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << " ms, expected: 4000 ms" << std::endl;
+
     std::ofstream ofs("out.bin", std::ios::binary);
     ofs.write(reinterpret_cast<const char *>(obuf0.data()), obuf0.size_in_bytes());
     ofs.write(reinterpret_cast<const char *>(obuf1.data()), obuf1.size_in_bytes());

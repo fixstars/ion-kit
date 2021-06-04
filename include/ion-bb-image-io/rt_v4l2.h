@@ -290,7 +290,6 @@ public:
 
     template<typename T>
     void generate_bayer(Halide::Runtime::Buffer<T> &buf) {
-
         auto it = ion::bb::image_io::image_cache.find(id_);
         if (it != ion::bb::image_io::image_cache.end()) {
             memcpy(buf.data(), it->second.data(), it->second.size());
@@ -299,8 +298,8 @@ public:
 
         cv::Mat img = ion::bb::image_io::get_image(url_);
 
-        // Fill by dummy image
         if (img.empty()) {
+            // Fill by dummy image
             cv::Mat pat = cv::Mat::zeros(2, 2, CV_16U);
             pat.at<uint16_t>((index_ / 2) % 2, index_ % 2) = 65535;
 
@@ -378,8 +377,9 @@ public:
         cv::Mat img = ion::bb::image_io::get_image(url_);
 
         std::vector<uint8_t> yuyv_img(2 * width_ * height_);
+
         if (img.empty()) {
-            // Generating dummy image
+            // Fill by dummy image
             for (int y = 0; y < height_; ++y) {
                 for (int x = 0; x < 2 * width_; ++x) {
                     yuyv_img[2 * width_ * y + x] = (y * 2 * width_ + x) % 255;
@@ -406,13 +406,21 @@ public:
     template<typename T>
     void generate(Halide::Runtime::Buffer<T> &buf) {
 
+        // Simulate frame interval
+        auto now = std::chrono::high_resolution_clock::now();
+        auto actual_interval = std::chrono::duration_cast<std::chrono::microseconds>(now - checkpoint_).count();
+        float expected_interval = 1e6f / static_cast<float>(fps_);
+        if (actual_interval < expected_interval) {
+            usleep(expected_interval - actual_interval);
+        }
+
         if (pixel_format_ == V4L2_PIX_FMT_YUYV) {
             generate_yuyv(buf);
         } else {
             generate_bayer(buf);
         }
 
-        return;
+        checkpoint_ = std::chrono::high_resolution_clock::now();
     }
 
     template<typename T>
@@ -457,6 +465,7 @@ public:
         memcpy(buf.data(), reinterpret_cast<void *>(next_buffer_.m.userptr), buf.size_in_bytes());
     }
 
+
 private:
     int fd_;
     std::vector<Buffer> buffers_;
@@ -480,6 +489,8 @@ private:
     int efd_;
 
     uint32_t buffer_size_;
+
+    std::chrono::time_point<std::chrono::high_resolution_clock> checkpoint_;
 
     static std::unordered_map<int32_t, std::shared_ptr<V4L2>> instances_;
 };
@@ -516,11 +527,9 @@ extern "C" ION_EXPORT int ion_bb_image_io_v4l2(
             return 0;
         }
 
-
         auto &v4l2(ion::bb::image_io::V4L2::get_instance(instance_id, index, fps, width, height, pixel_format, gain_r, gain_g, gain_b, offset, bit_width, bit_shift, static_cast<bool>(force_sim_mode), reinterpret_cast<const char*>(url_buf->host)));
         Halide::Runtime::Buffer<uint16_t> obuf(*out);
         v4l2.get(obuf);
-
         return 0;
 
     } catch (const std::exception &e) {
