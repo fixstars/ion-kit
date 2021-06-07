@@ -56,6 +56,53 @@ const int BayerMap::bayer_map[4][4]{
     {1, 2, 0, 1}   // GBRG
 };
 
+uint32_t make_pixel_format(BayerMap::Pattern bayer_pattern, int32_t bit_width)
+{
+    uint32_t pix_format;
+    switch (bit_width * 10 + static_cast<int32_t>(static_cast<BayerMap::Pattern>(bayer_pattern))) {
+    case 80:  // RGGB 8bit
+        pix_format = V4L2_PIX_FMT_SRGGB8;
+        break;
+    case 81:  // BGGR 8bit
+        pix_format = V4L2_PIX_FMT_SBGGR8;
+        break;
+    case 82:  // GRBG 8bit
+        pix_format = V4L2_PIX_FMT_SGRBG8;
+        break;
+    case 83:  // GBRG 8bit
+        pix_format = V4L2_PIX_FMT_SGBRG8;
+        break;
+    case 100:  // RGGB 10bit
+        pix_format = V4L2_PIX_FMT_SRGGB10;
+        break;
+    case 101:  // BGGR 10bit
+        pix_format = V4L2_PIX_FMT_SBGGR10;
+        break;
+    case 102:  // GRBG 10bit
+        pix_format = V4L2_PIX_FMT_SGRBG10;
+        break;
+    case 103:  // GBRG 10bit
+        pix_format = V4L2_PIX_FMT_SGBRG10;
+        break;
+    case 120:  // RGGB 12bit
+        pix_format = V4L2_PIX_FMT_SRGGB12;
+        break;
+    case 121:  // BGGR 12bit
+        pix_format = V4L2_PIX_FMT_SBGGR12;
+        break;
+    case 122:  // GRBG 12bit
+        pix_format = V4L2_PIX_FMT_SGRBG12;
+        break;
+    case 123:  // GBRG 12bit
+        pix_format = V4L2_PIX_FMT_SGBRG12;
+        break;
+    default:
+        throw std::runtime_error("Unsupported pixel_format combination");
+    }
+
+    return pix_format;
+}
+
 int instance_id = 0;
 
 class IMX219 : public ion::BuildingBlock<IMX219> {
@@ -63,14 +110,18 @@ public:
     GeneratorParam<std::string> gc_title{"gc_title", "IMX219"};
     GeneratorParam<std::string> gc_description{"gc_description", "This captures IMX219 image."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "input,sensor"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [3264, 2464] }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.width), parseInt(v.height)] }}))"};
+    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
 
+    GeneratorParam<int32_t> fps{"fps", 24};
+    GeneratorParam<int32_t> width{"width", 3264};
+    GeneratorParam<int32_t> height{"height", 2464};
     GeneratorParam<int32_t> index{"index", 0};
-    GeneratorParam<bool> force_sim_mode{"force_sim_mode", false};
     GeneratorParam<std::string> url{"url", ""};
+    GeneratorParam<bool> force_sim_mode{"force_sim_mode", false};
+
     GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint16_t>(), 2};
 
     void generate() {
@@ -82,14 +133,16 @@ public:
 
         std::vector<ExternFuncArgument> params = {
             instance_id++,
-            3264, 2464,
-            cast<int32_t>(index), Expr(V4L2_PIX_FMT_SRGGB10),
-            cast<bool>(force_sim_mode),
+            cast<int32_t>(index),
+            cast<int32_t>(fps),
+            cast<int32_t>(width),
+            cast<int32_t>(height),
+            cast<uint32_t>(Expr(V4L2_PIX_FMT_SRGGB10)),
+            cast<uint32_t>(force_sim_mode),
             url_buf,
             0.4f, 0.5f, 0.3125f,
             0.0625f,
-            10, 6,
-            0 /*RGGB*/
+            10, 6
         };
         Func v4l2_imx219(static_cast<std::string>(gc_prefix) + "output");
         v4l2_imx219.define_extern("ion_bb_image_io_v4l2", params, type_of<uint16_t>(), 2);
@@ -144,10 +197,12 @@ public:
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
 
-    GeneratorParam<int32_t> index{"index", 0};
+    GeneratorParam<int32_t> fps{"fps", 30};
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
+    GeneratorParam<int32_t> index{"index", 0};
     GeneratorParam<std::string> url{"url", ""};
+
     GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 3};
 
     void generate() {
@@ -157,7 +212,7 @@ public:
         url_buf.fill(0);
         std::memcpy(url_buf.data(), url_str.c_str(), url_str.size());
 
-        std::vector<ExternFuncArgument> params = {instance_id++, cast<int32_t>(width), cast<int32_t>(height), cast<int32_t>(index), url_buf};
+        std::vector<ExternFuncArgument> params = {instance_id++, cast<int32_t>(index), cast<int32_t>(fps), cast<int32_t>(width), cast<int32_t>(height), url_buf};
         Func camera(static_cast<std::string>(gc_prefix) + "camera");
         camera.define_extern("ion_bb_image_io_camera", params, Halide::type_of<uint8_t>(), 2);
         camera.compute_root();
@@ -195,6 +250,7 @@ public:
 
     GeneratorParam<int32_t> index{"index", 0};
     GeneratorParam<std::string> url{"url", ""};
+    GeneratorParam<int32_t> fps{"fps", 20};
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
     GeneratorParam<int32_t> bit_width{"bit_width", 10};
@@ -204,48 +260,6 @@ public:
     void generate() {
         using namespace Halide;
 
-        uint32_t pix_format;
-        switch (bit_width * 10 + static_cast<int32_t>(static_cast<BayerMap::Pattern>(bayer_pattern))) {
-        case 80:  // RGGB 8bit
-            pix_format = V4L2_PIX_FMT_SRGGB8;
-            break;
-        case 81:  // BGGR 8bit
-            pix_format = V4L2_PIX_FMT_SBGGR8;
-            break;
-        case 82:  // GRBG 8bit
-            pix_format = V4L2_PIX_FMT_SGRBG8;
-            break;
-        case 83:  // GBRG 8bit
-            pix_format = V4L2_PIX_FMT_SGBRG8;
-            break;
-        case 100:  // RGGB 10bit
-            pix_format = V4L2_PIX_FMT_SRGGB10;
-            break;
-        case 101:  // BGGR 10bit
-            pix_format = V4L2_PIX_FMT_SBGGR10;
-            break;
-        case 102:  // GRBG 10bit
-            pix_format = V4L2_PIX_FMT_SGRBG10;
-            break;
-        case 103:  // GBRG 10bit
-            pix_format = V4L2_PIX_FMT_SGBRG10;
-            break;
-        case 120:  // RGGB 12bit
-            pix_format = V4L2_PIX_FMT_SRGGB12;
-            break;
-        case 121:  // BGGR 12bit
-            pix_format = V4L2_PIX_FMT_SBGGR12;
-            break;
-        case 122:  // GRBG 12bit
-            pix_format = V4L2_PIX_FMT_SGRBG12;
-            break;
-        case 123:  // GBRG 12bit
-            pix_format = V4L2_PIX_FMT_SGBRG12;
-            break;
-        default:
-            internal_error << "Unknown V4L2 format";
-        }
-
         std::string url_str = url;
         Halide::Buffer<uint8_t> url_buf(url_str.size() + 1);
         url_buf.fill(0);
@@ -253,14 +267,17 @@ public:
 
         std::vector<ExternFuncArgument> params = {
             instance_id++,
-            cast<int32_t>(width), cast<int32_t>(height),
-            cast<int32_t>(index), Expr(pix_format),
-            Expr(false),
+            cast<int32_t>(index),
+            cast<int32_t>(fps),
+            cast<int32_t>(width),
+            cast<int32_t>(height),
+            Expr(make_pixel_format(bayer_pattern, bit_width)),
+            cast<uint32_t>(0),
             url_buf,
             1.f, 1.f, 1.f,
             0.f,
-            cast<int32_t>(bit_width), 16 - bit_width,
-            static_cast<int32_t>(static_cast<BayerMap::Pattern>(bayer_pattern))};
+            cast<int32_t>(bit_width), 16 - bit_width
+        };
         Func v4l2(static_cast<std::string>(gc_prefix) + "output");
         v4l2.define_extern("ion_bb_image_io_v4l2", params, type_of<uint16_t>(), 2);
         v4l2.compute_root();
@@ -279,16 +296,18 @@ public:
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
 
-    GeneratorParam<std::string> url{"url", ""};
+    GeneratorParam<int32_t> fps{"fps", 30};
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
+    GeneratorParam<std::string> url{"url", ""};
+    GeneratorParam<BayerMap::Pattern> bayer_pattern{"bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map};
     GeneratorParam<int32_t> bit_width{"bit_width", 10};
     GeneratorParam<int32_t> bit_shift{"bit_shift", 0};
-    GeneratorParam<BayerMap::Pattern> bayer_pattern{"bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map};
     GeneratorParam<float> gain_r{"gain_r", 1.f};
     GeneratorParam<float> gain_g{"gain_g", 1.f};
     GeneratorParam<float> gain_b{"gain_b", 1.f};
     GeneratorParam<float> offset{"offset", 0.f};
+
     GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint16_t>(), 2};
 
     void generate() {
@@ -300,14 +319,17 @@ public:
 
         std::vector<ExternFuncArgument> params = {
             instance_id++,
-            cast<int32_t>(width), cast<int32_t>(height),
-            0, 0,
-            Expr(true),
+            0,
+            cast<int32_t>(fps),
+            cast<int32_t>(width),
+            cast<int32_t>(height),
+            Expr(make_pixel_format(bayer_pattern, bit_width)),
+            cast<uint32_t>(1),
             url_buf,
             cast<float>(gain_r), cast<float>(gain_g), cast<float>(gain_b),
             cast<float>(offset),
-            cast<int32_t>(bit_width), cast<int32_t>(bit_shift),
-            static_cast<int32_t>(static_cast<BayerMap::Pattern>(bayer_pattern))};
+            cast<int32_t>(bit_width), cast<int32_t>(bit_shift)
+        };
         Func camera(static_cast<std::string>(gc_prefix) + "output");
         camera.define_extern("ion_bb_image_io_v4l2", params, type_of<uint16_t>(), 2);
         camera.compute_root();
