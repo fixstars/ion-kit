@@ -352,7 +352,7 @@ public:
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
     GeneratorInput<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 3};
-    GeneratorOutput<Halide::Func> output{"output"};
+    GeneratorOutput<Halide::Func> output{"output", Halide::Int(32), 0};
 
     void generate() {
         using namespace Halide;
@@ -393,7 +393,7 @@ public:
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
     GeneratorInput<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 3};
-    GeneratorOutput<Halide::Func> output{"output"};
+    GeneratorOutput<Halide::Func> output{"output", Halide::Int(32), 0};
 
     void generate() {
         using namespace Halide;
@@ -471,7 +471,7 @@ public:
     GeneratorParam<int32_t> height{"height", 0};
     GeneratorParam<std::string> path{"path", ""};
     GeneratorInput<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 3};
-    GeneratorOutput<Halide::Func> output{"output"};
+    GeneratorOutput<Halide::Func> output{"output", Halide::Int(32), 0};
 
     void generate() {
         using namespace Halide;
