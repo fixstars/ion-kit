@@ -84,19 +84,19 @@ public:
         struct stat st;
         if (-1 == stat(dev_name, &st)) {
             std::cerr << format("Fallback to simulation mode: Could not find %s", dev_name) << std::endl;
-             sim_mode_ =  true;;
+            sim_mode_ = true;;
             return;
         }
         if (!S_ISCHR(st.st_mode)) {
             std::cerr << format("Fallback to simulation mode: %s is no device", dev_name) << std::endl;
-             sim_mode_ =  true;;
+            sim_mode_ = true;;
             return;
         }
 
         fd_ = open(dev_name, O_RDWR | O_NONBLOCK, 0);
         if (-1 == fd_) {
             std::cerr << format("Fallback to simulation mode: Cannot open '%s': %d, %s", dev_name, errno, strerror(errno)) << std::endl;
-             sim_mode_ =  true;;
+            sim_mode_ = true;;
             return;
         }
 
@@ -104,22 +104,22 @@ public:
         if (-1 == xioctl(fd_, VIDIOC_QUERYCAP, &cap)) {
             if (EINVAL == errno) {
                 std::cerr << format("Fallback to simulation mode: %s is no V4L2 device", dev_name) << std::endl;
-                 sim_mode_ =  true;;
+                sim_mode_ = true;;
                 return;
             } else {
                 std::cerr << format("Fallback to simulation mode: %s error %d, %s\n", "VIDIOC_QUERYCAP", errno, strerror(errno)) << std::endl;
-                 sim_mode_ =  true;;
+                sim_mode_ = true;;
                 return;
             }
         }
         if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
             std::cerr << format("Fallback to simulation mode: %s is no video capture device", dev_name) << std::endl;
-             sim_mode_ =  true;;
+            sim_mode_ = true;;
             return;
         }
         if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
             std::cerr << format("Fallback to simulation mode: %s does not support streaming i/o", dev_name) << std::endl;
-             sim_mode_ =  true;;
+            sim_mode_ = true;;
             return;
         }
 
@@ -138,7 +138,7 @@ public:
         }
         if (!supported) {
             std::cerr << format("Fallback to simulation mode: %s does not support desired pixel format", dev_name) << std::endl;
-             sim_mode_ =  true;;
+            sim_mode_ = true;;
             return;
         }
 
@@ -154,12 +154,12 @@ public:
         };
         if (-1 == xioctl(fd_, VIDIOC_S_FMT, &fmt)) {
             std::cerr << format("Fallback to simulation mode: %s error %d, %s\n", "VIDIOC_S_FMT", errno, strerror(errno)) << std::endl;
-             sim_mode_ =  true;;
+            sim_mode_ = true;;
             return;
         }
         if (width != fmt.fmt.pix.width || height != fmt.fmt.pix.height) {
             std::cerr << format("Fallback to simulation mode: %s does not support desired resolution", dev_name) << std::endl;
-             sim_mode_ =  true;;
+            sim_mode_ = true;;
             return;
         }
         buffer_size_ = fmt.fmt.pix.sizeimage;
@@ -170,14 +170,14 @@ public:
         };
         if (-1 == xioctl(fd_, VIDIOC_G_PARM, &strmp)) {
             std::cerr << format("Fallback to simulation mode: %s error %d, %s\n", "VIDIOC_G_PARM", errno, strerror(errno)) << std::endl;
-             sim_mode_ =  true;;
+            sim_mode_ = true;;
             return;
         }
         strmp.parm.capture.timeperframe.numerator = 1;
         strmp.parm.capture.timeperframe.denominator = fps;
         if (-1 == xioctl(fd_, VIDIOC_S_PARM, &strmp)) {
             std::cerr << format("Fallback to simulation mode: %s error %d, %s\n", "VIDIOC_S_PARM", errno, strerror(errno)) << std::endl;
-             sim_mode_ =  true;;
+            sim_mode_ = true;;
             return;
         }
 
@@ -192,11 +192,11 @@ public:
         if (-1 == xioctl(fd_, VIDIOC_REQBUFS, &req)) {
             if (EINVAL == errno) {
                 std::cerr << format("Fallback to simulation mode: %s does not support memory mapping\n", dev_name) << std::endl;
-                 sim_mode_ =  true;;
+                sim_mode_ = true;;
                 return;
             } else {
                 std::cerr << format("Fallback to simulation mode: %s error %d, %s\n", "VIDIOC_REQBUFS", errno, strerror(errno)) << std::endl;
-                 sim_mode_ =  true;;
+                sim_mode_ = true;;
                 return;
             }
         }
@@ -225,7 +225,7 @@ public:
             /* enqueue an empty (capturing) or filled (output) buffer in the driver's incoming queue */
             if (-1 == xioctl(fd_, VIDIOC_QBUF, &buf)) {
                 std::cerr << format("Fallback to simulation mode: %s error %d, %s\n", "VIDIOC_QBUF", errno, strerror(errno)) << std::endl;
-                 sim_mode_ =  true;;
+                sim_mode_ = true;;
                 return;
             }
         }
@@ -239,7 +239,7 @@ public:
         /* Start streaming I/O */
         if (-1 == xioctl(fd_, VIDIOC_STREAMON, &type)) {
             std::cerr << format("Fallback to simulation mode: %s error %d, %s\n", "VIDIOC_STREAMON", errno, strerror(errno)) << std::endl;
-             sim_mode_ =  true;;
+            sim_mode_ = true;;
             return;
         }
 
@@ -249,7 +249,7 @@ public:
         efd_ = epoll_create1(0);
         if (-1 == efd_) {
             std::cerr << format("Fallback to simulation mode: %s error %d, %s\n", "epoll_create1", errno, strerror(errno)) << std::endl;
-             sim_mode_ =  true;;
+            sim_mode_ = true;;
             return;
         }
 
@@ -259,7 +259,7 @@ public:
 
         if (-1 == epoll_ctl(efd_, EPOLL_CTL_ADD, fd_, &event)) {
             std::cerr << format("Fallback to simulation mode: %s error %d, %s\n", "epoll_ctl", errno, strerror(errno)) << std::endl;
-             sim_mode_ =  true;;
+            sim_mode_ = true;;
             return;
         }
     }
@@ -438,12 +438,16 @@ public:
 
         /* queue-in buffer */
         if (-1 == xioctl(fd_, VIDIOC_QBUF, &next_buffer_)) {
-            throw runtime_error(format("%s error %d, %s\n", "VIDIOC_QBUF", errno, strerror(errno)));
+            std::cerr << format("Fallback to simulation mode: %s error %d, %s\n", "VIDIOC_QBUF", errno, strerror(errno)) << std::endl;
+            sim_mode_ = true;
+            return;
         }
 
         epoll_event event;
         if (-1 == epoll_wait(efd_, &event, 1, -1)) {
-            throw runtime_error(format("%s error %d, %s\n", "epoll_wait", errno, strerror(errno)));
+            std::cerr << format("Fallback to simulation mode: %s error %d, %s\n", "epoll_wait", errno, strerror(errno)) << std::endl;
+            sim_mode_ = true;
+            return;
         }
 
         if (event.data.fd != fd_) {
@@ -458,7 +462,9 @@ public:
             if (EAGAIN == errno) {
                 return;
             } else {
-                throw runtime_error(format("%s error %d, %s\n", "VIDIOC_DQBUF", errno, strerror(errno)));
+                std::cerr << format("Fallback to simulation mode: %s error %d, %s\n", "VIDIOC_DQBUF", errno, strerror(errno)) << std::endl;
+                sim_mode_ = true;
+                return;
             }
         }
 
