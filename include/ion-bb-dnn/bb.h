@@ -44,6 +44,22 @@ private:
     Halide::Var c, x, y;
 };
 
+enum class DNNModelKind : int32_t {
+    ssd_mobilenet_v1_coco,
+    ssd_mobilenet_v2_coco,
+    ssdlite_mobilenet_v2_coco,
+    ssdlite_mobiledet_edgetpu_coco,
+    ssdlite_mobiledet_gpu_coco
+};
+
+const std::map<std::string, DNNModelKind> dnn_model_enum_map{
+    {"ssd_mobilenet_v1_coco", DNNModelKind::ssd_mobilenet_v1_coco},
+    {"ssd_mobilenet_v2_coco", DNNModelKind::ssd_mobilenet_v2_coco},
+    {"ssdlite_mobilenet_v2_coco", DNNModelKind::ssdlite_mobilenet_v2_coco},
+    {"ssdlite_mobiledet_edgetpu_coco", DNNModelKind::ssdlite_mobiledet_edgetpu_coco},
+    {"ssdlite_mobiledet_gpu_coco", DNNModelKind::ssdlite_mobiledet_gpu_coco},
+};
+
 template<typename X, int32_t D>
 class ObjectDetectionBase : public BuildingBlock<X> {
     static_assert(D == 3 || D == 4, "D must be 3 or 4.");
@@ -58,6 +74,9 @@ public:
 
     GeneratorParam<std::string> model_root_url_{"model_base_url", "http://ion-archives.s3-us-west-2.amazonaws.com/models/"};
     GeneratorParam<std::string> cache_root_{"cache_root", "/tmp/"};
+
+    GeneratorParam<DNNModelKind> dnn_model_kind_{"dnn_model_kind", DNNModelKind::ssd_mobilenet_v1_coco, dnn_model_enum_map};
+    GeneratorParam<bool> edgetpu_enable_{"edgetpu_enable", false};
 
     // TODO: Embed model at compilation time
     // GeneratorParam<bool> embed_model{"embed_model", false};
@@ -89,10 +108,53 @@ public:
         dnndk_enable = (this->get_target().has_feature(Target::Feature::DPU));
 #endif
 
+        // Use edgetpu or not
+        const bool edgetpu_enable = edgetpu_enable_;
+
+        // Base model name
+        std::string dnn_model_name;
+        switch (dnn_model_kind_) {
+        case DNNModelKind::ssd_mobilenet_v1_coco:
+            dnn_model_name = "ssd_mobilenet_v1_coco";
+            break;
+        case DNNModelKind::ssd_mobilenet_v2_coco:
+            dnn_model_name = "ssd_mobilenet_v2_coco";
+            break;
+        case DNNModelKind::ssdlite_mobilenet_v2_coco:
+            dnn_model_name = "ssdlite_mobilenet_v2_coco";
+            break;
+        case DNNModelKind::ssdlite_mobiledet_edgetpu_coco:
+            dnn_model_name = "ssdlite_mobiledet_edgetpu_coco";
+            break;
+        case DNNModelKind::ssdlite_mobiledet_gpu_coco:
+            dnn_model_name = "ssdlite_mobiledet_gpu_coco";
+            break;
+        default:
+            std::cerr << "Error: unsupported dnn modles" << std::endl;
+            exit(1);
+        }
+
+        Halide::Buffer<uint8_t> dnn_model_name_buf(dnn_model_name.size() + 1);
+        dnn_model_name_buf.fill(0);
+        std::memcpy(dnn_model_name_buf.data(), dnn_model_name.c_str(), dnn_model_name.size());
+
+        // Target arch type
+        // NOTE shuld we support 32-bits archs?
+        std::string arch_type;
+        const auto &arch = this->get_target().arch;
+        if (arch == Halide::Target::Arch::X86) {
+            arch_type = "x86_64";
+        } else if (arch == Halide::Target::Arch::ARM) {
+            arch_type = "aarch64";
+        }
+        Halide::Buffer<uint8_t> target_arch_buf(arch_type.size() + 1);
+        target_arch_buf.fill(0);
+        std::memcpy(target_arch_buf.data(), arch_type.c_str(), arch_type.size());
+
         input = Func{static_cast<std::string>(gc_prefix) + "in"};
         input(_) = input_(_);
 
-        std::vector<ExternFuncArgument> params{input, session_id_buf, model_root_url_buf, cache_path_buf, cuda_enable, dnndk_enable};
+        std::vector<ExternFuncArgument> params{input, session_id_buf, model_root_url_buf, cache_path_buf, cuda_enable, dnndk_enable, edgetpu_enable, dnn_model_name_buf, target_arch_buf};
         Func object_detection(static_cast<std::string>(gc_prefix) + "output");
         object_detection.define_extern("ion_bb_dnn_generic_object_detection", params, Float(32), D);
         object_detection.compute_root();

@@ -5,6 +5,7 @@ if (UNIX)
 endif()
 
 set(INCLUDE_DIRS
+    ${CMAKE_SOURCE_DIR}/include/ion-bb-dnn/3rdparty
     ${OpenCV_INCLUDE_DIRS})
 
 set(LINK_DIRS

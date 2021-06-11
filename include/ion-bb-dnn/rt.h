@@ -10,6 +10,7 @@
 #include "rt_ort.h"
 #include "rt_tfl.h"
 #include "rt_trt.h"
+#include "rt_tvm.h"
 
 #ifdef _WIN32
 #define ION_EXPORT __declspec(dllexport)
@@ -23,6 +24,9 @@ extern "C" ION_EXPORT int ion_bb_dnn_generic_object_detection(halide_buffer_t *i
                                                               halide_buffer_t *cache_root_buf,
                                                               bool cuda_enable,
                                                               bool dnndk_enable,
+                                                              bool edgetpu_enable,
+                                                              halide_buffer_t *dnn_model_name_buf,
+                                                              halide_buffer_t *target_arch_buf,
                                                               halide_buffer_t *out) {
     try {
 
@@ -40,10 +44,15 @@ extern "C" ION_EXPORT int ion_bb_dnn_generic_object_detection(halide_buffer_t *i
 
         std::string model_root_url(reinterpret_cast<const char *>(model_root_url_buf->host));
         std::string cache_root(reinterpret_cast<const char *>(cache_root_buf->host));
+        std::string dnn_model_name(reinterpret_cast<const char *>(dnn_model_name_buf->host));
+        std::string target_arch(reinterpret_cast<const char *>(target_arch_buf->host));
 
         using namespace ion::bb::dnn;
 
-        if (is_tfl_available()) {
+        if (is_tvm_available()) {
+            // TVM
+            return object_detection_tvm(in, model_root_url, cache_root, cuda_enable, edgetpu_enable, dnn_model_name, target_arch, out);
+        } else if (is_tfl_available()) {
             // EdgeTPU
             return object_detection_tfl(in, model_root_url, cache_root, out);
         } else if (dnndk_enable && dnndk::is_dnndk_available()) {
