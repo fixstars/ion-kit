@@ -10,7 +10,6 @@ namespace internal {
 class Schedule : public ion::BuildingBlock<Schedule> {
 public:
     GeneratorParam<std::string> output_name{"output_name", ""};
-    GeneratorParam<bool> output_replace{"output_replace", false};
     GeneratorParam<std::string> compute_level{"compute_level", ""}; // "compute_inline" or "compute_root"
     GeneratorParam<std::string> concurrency{"concurrency", ""}; // comma separated string
 
@@ -19,12 +18,11 @@ public:
 
     void generate() {
         using namespace Halide;
-        Func f(static_cast<std::string>(output_name));
-        f(_) = input(_);
-
         if (static_cast<std::string>(compute_level) == "compute_inline") {
-            // NOP
+            output = input;
         } else if (static_cast<std::string>(compute_level) == "compute_root") {
+            Func f(static_cast<std::string>(output_name));
+            f(_) = input(_);
             f.compute_root();
             if (get_target().has_gpu_feature()) {
                 if (f.args().size() == 0) {
@@ -57,14 +55,10 @@ public:
                     f.parallel(y);
                 }
             }
-        } else {
-            throw std::runtime_error("Unreachable");
-        }
 
-        if (static_cast<bool>(output_replace)) {
             output = f;
         } else {
-            output(_) = f(_);
+            throw std::runtime_error("Unreachable");
         }
     }
 };
@@ -82,7 +76,6 @@ namespace internal {
 class ScheduleForPreview : public ion::BuildingBlock<ScheduleForPreview> {
 public:
     GeneratorParam<std::string> output_name{"output_name", ""};
-    GeneratorParam<bool> output_replace{"output_replace", false};
     GeneratorParam<std::string> compute_level{"compute_level", ""};
 
     GeneratorInput<Halide::Func> input{"input"};
@@ -92,6 +85,7 @@ public:
     void generate() {
         using namespace Halide;
         {
+            // Internal connection is always separated with input.
             Func f(static_cast<std::string>(output_name) + "_");
             f(_) = input(_);
             f.compute_root();
@@ -99,10 +93,16 @@ public:
         }
 
         {
-            Func f(static_cast<std::string>(output_name));
-            f(_) = input(_);
-            f.compute_root();
-            output_for_preview = f;
+            if (static_cast<std::string>(compute_level) == "compute_inline") {
+                output_for_preview = input;
+            } else if (static_cast<std::string>(compute_level) == "compute_root") {
+                Func f(static_cast<std::string>(output_name));
+                f(_) = input(_);
+                f.compute_root();
+                output_for_preview = f;
+            } else {
+                throw std::runtime_error("Unreachable");
+            }
         }
     }
 };

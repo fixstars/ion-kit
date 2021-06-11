@@ -154,21 +154,12 @@ public:
         input = Func{static_cast<std::string>(gc_prefix) + "in"};
         input(_) = input_(_);
 
-        std::vector<ExternFuncArgument> params{
-            input,
-            session_id_buf,
-            model_root_url_buf,
-            cache_path_buf,
-            cuda_enable,
-            dnndk_enable,
-            edgetpu_enable,
-            dnn_model_name_buf,
-            target_arch_buf};
-        Func object_detection(static_cast<std::string>(gc_prefix) + "object_detection");
+        std::vector<ExternFuncArgument> params{input, session_id_buf, model_root_url_buf, cache_path_buf, cuda_enable, dnndk_enable, edgetpu_enable, dnn_model_name_buf, target_arch_buf};
+        Func object_detection(static_cast<std::string>(gc_prefix) + "output");
         object_detection.define_extern("ion_bb_dnn_generic_object_detection", params, Float(32), D);
         object_detection.compute_root();
 
-        output(_) = object_detection(_);
+        output = object_detection;
     }
 
     void schedule() {
@@ -254,11 +245,11 @@ public:
         input(_) = input_(_);
 
         std::vector<ExternFuncArgument> params{input, session_id_buf, model_root_url_buf, cache_path_buf};
-        Func object_detection(static_cast<std::string>(gc_prefix) + "tlt_object_detection_ssd");
+        Func object_detection(static_cast<std::string>(gc_prefix) + "output");
         object_detection.define_extern("ion_bb_dnn_tlt_object_detection_ssd", params, Float(32), 3);
         object_detection.compute_root();
 
-        output(_) = object_detection(_);
+        output = object_detection;
     }
 
     void schedule() {
@@ -331,11 +322,11 @@ public:
         input(_) = input_(_);
 
         std::vector<ExternFuncArgument> params{input, session_id_buf, model_root_url_buf, cache_path_buf};
-        Func inference(static_cast<std::string>(gc_prefix) + "tlt_peoplenet");
+        Func inference(static_cast<std::string>(gc_prefix) + "output");
         inference.define_extern("ion_bb_dnn_tlt_peoplenet", params, Float(32), 3);
         inference.compute_root();
 
-        output(_) = inference(_);
+        output = inference;
     }
 
     void schedule() {
@@ -411,11 +402,11 @@ public:
         input(_) = input_(_);
 
         std::vector<ExternFuncArgument> params{input, static_cast<int>(input_width), static_cast<int>(input_height), static_cast<int>(output_size), session_id_buf, model_root_url_buf, cache_path_buf};
-        Func inference(static_cast<std::string>(gc_prefix) + "tlt_peoplenet_md");
+        Func inference(static_cast<std::string>(gc_prefix) + "output");
         inference.define_extern("ion_bb_dnn_tlt_peoplenet_md", params, UInt(8), 1);
         inference.compute_root();
 
-        output(_) = inference(_);
+        output = inference;
     }
 
     void schedule() {
@@ -498,11 +489,11 @@ public:
             input_img_, cast<uint32_t>(input_img_width), cast<uint32_t>(input_img_height),
             input_md_, cast<uint32_t>(input_md_size),
             cast<uint32_t>(output_size), session_id_buf, model_root_url_buf, cache_path_buf};
-        Func inference(static_cast<std::string>(gc_prefix) + "classify_gender");
+        Func inference(static_cast<std::string>(gc_prefix) + "output");
         inference.define_extern("ion_bb_dnn_classify_gender", params, UInt(8), 1);
         inference.compute_root();
 
-        output(_) = inference(_);
+        output = inference;
     }
 
     void schedule() {
@@ -567,11 +558,11 @@ public:
         input_(_) = input(_);
 
         std::vector<ExternFuncArgument> params{input_, cast<uint32_t>(io_md_size), session_id_buf, cast<uint32_t>(period_in_sec)};
-        Func regurator(static_cast<std::string>(gc_prefix) + "json_dict_average_regurator");
+        Func regurator(static_cast<std::string>(gc_prefix) + "output");
         regurator.define_extern("ion_bb_dnn_json_dict_average_regurator", params, UInt(8), 1);
         regurator.compute_root();
 
-        output(_) = regurator(_);
+        output = regurator;
     }
 
     void schedule() {
