@@ -864,7 +864,7 @@ size_t tdefl_compress_mem_to_mem(void *pOut_buf, size_t out_buf_len, const void 
 
 // Compresses an image to a compressed PNG file in memory.
 // On entry:
-//  pImage, w, h, and num_chans describe the image to compress. num_chans may be 1, 2, 3, or 4. 
+//  pImage, w, h, and num_chans describe the image to compress. num_chans may be 1, 2, 3, or 4.
 //  The image pitch in bytes per scanline will be w*num_chans. The leftmost pixel on the top scanline is stored first in memory.
 //  level may range from [0,10], use MZ_NO_COMPRESSION, MZ_BEST_SPEED, MZ_BEST_COMPRESSION, etc. or a decent default is MZ_DEFAULT_LEVEL
 //  If flip is true, the image will be flipped on the Y axis (useful for OpenGL apps).
@@ -4493,7 +4493,7 @@ mz_bool mz_zip_writer_add_file(mz_zip_archive *pZip, const char *pArchive_name, 
 
   if (!mz_zip_get_file_modified_time(pSrc_filename, &dos_time, &dos_date))
     return MZ_FALSE;
-    
+
   pSrc_file = MZ_FOPEN(pSrc_filename, "rb");
   if (!pSrc_file)
     return MZ_FALSE;
@@ -4985,7 +4985,7 @@ std::string join_path(const std::vector<std::string> &parts)
     for(auto part : parts)
     {
         joined.append(part);
-        
+
         if(i++ != parts.size() - 1)
         {
             joined.append(1, '/');
@@ -4993,13 +4993,13 @@ std::string join_path(const std::vector<std::string> &parts)
     }
     return joined;
 }
-    
+
 std::vector<std::string> split_path(const std::string &path, char delim = directory_separator)
 {
     std::vector<std::string> split;
     std::string::size_type previous_index = 0;
     auto separator_index = path.find(delim);
-    
+
     while(separator_index != std::string::npos)
     {
         auto part = path.substr(previous_index, separator_index - previous_index);
@@ -5014,7 +5014,7 @@ std::vector<std::string> split_path(const std::string &path, char delim = direct
         previous_index = separator_index + 1;
         separator_index = path.find(delim, previous_index);
     }
-    
+
     split.push_back(path.substr(previous_index));
 
     if(split.size() == 1 && delim == directory_separator)
@@ -5025,14 +5025,14 @@ std::vector<std::string> split_path(const std::string &path, char delim = direct
             return alternative;
         }
     }
-    
+
     return split;
 }
-    
+
 uint32_t crc32buf(const char *buf, std::size_t len)
 {
     uint32_t oldcrc32 = 0xFFFFFFFF;
-    
+
     uint32_t crc_32_tab[] = { /* CRC polynomial 0xedb88320 */
         0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
         0xe963a535, 0x9e6495a3, 0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988,
@@ -5078,15 +5078,15 @@ uint32_t crc32buf(const char *buf, std::size_t len)
         0x54de5729, 0x23d967bf, 0xb3667a2e, 0xc4614ab8, 0x5d681b02, 0x2a6f2b94,
         0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
     };
-    
+
 #define UPDC32(octet,crc) (crc_32_tab[((crc)\
 ^ static_cast<uint8_t>(octet)) & 0xff] ^ ((crc) >> 8))
-    
+
     for ( ; len; --len, ++buf)
     {
         oldcrc32 = UPDC32(*buf, oldcrc32);
     }
-    
+
     return ~oldcrc32;
 }
 
@@ -5103,10 +5103,10 @@ tm safe_localtime(const time_t &t)
 #endif
 }
 
-std::size_t write_callback(void *opaque, std::uint64_t file_ofs, const void *pBuf, std::size_t n)
+size_t write_callback(void *opaque, unsigned long long file_ofs, const void *pBuf, size_t n)
 {
     auto buffer = static_cast<std::vector<char> *>(opaque);
-    
+
     if(file_ofs + n > buffer->size())
     {
         auto new_size = static_cast<std::vector<char>::size_type>(file_ofs + n);
@@ -5216,17 +5216,17 @@ public:
         {
             mz_zip_writer_finalize_archive(archive_.get());
         }
-        
+
         if(archive_->m_zip_mode == MZ_ZIP_MODE_WRITING_HAS_BEEN_FINALIZED)
         {
             mz_zip_writer_end(archive_.get());
         }
-        
+
         if(archive_->m_zip_mode == MZ_ZIP_MODE_INVALID)
         {
             start_read();
         }
-        
+
         append_comment();
         stream.write(buffer_.data(), static_cast<long>(buffer_.size()));
     }
@@ -5237,17 +5237,17 @@ public:
         {
             mz_zip_writer_finalize_archive(archive_.get());
         }
-        
+
         if(archive_->m_zip_mode == MZ_ZIP_MODE_WRITING_HAS_BEEN_FINALIZED)
         {
             mz_zip_writer_end(archive_.get());
         }
-        
+
         if(archive_->m_zip_mode == MZ_ZIP_MODE_INVALID)
         {
             start_read();
         }
-        
+
         append_comment();
         bytes.assign(buffer_.begin(), buffer_.end());
     }
@@ -5269,7 +5269,7 @@ public:
         case MZ_ZIP_MODE_INVALID:
             break;
         }
-        
+
         if(archive_->m_zip_mode != MZ_ZIP_MODE_INVALID)
         {
             throw std::runtime_error("");
@@ -5277,7 +5277,7 @@ public:
 
         buffer_.clear();
         comment.clear();
-        
+
         start_write();
         mz_zip_writer_finalize_archive(archive_.get());
         mz_zip_writer_end(archive_.get());
@@ -5316,7 +5316,7 @@ public:
 
         return getinfo(index);
     }
-    
+
     std::vector<zip_info> infolist()
     {
         if(archive_->m_zip_mode != MZ_ZIP_MODE_READING)
@@ -5358,7 +5358,7 @@ public:
         open_stream_ << data_string;
         return open_stream_;
     }
-    
+
     void extract(const std::string &member, const std::string &path)
     {
         std::fstream stream(detail::join_path({path, member}), std::ios::binary | std::ios::out);
@@ -5391,7 +5391,7 @@ public:
             extract(member, path);
         }
     }
-    
+
     void printdir()
     {
         printdir(std::cout);
@@ -5401,7 +5401,7 @@ public:
     {
         stream << "  Length " << "  " << "   " << "Date" << "   " << " " << "Time " << "   " << "Name" << std::endl;
         stream << "---------  ---------- -----   ----" << std::endl;
-        
+
         std::size_t sum_length = 0;
         std::size_t file_count = 0;
 
@@ -5460,7 +5460,7 @@ public:
     {
         return read(getinfo(name));
     }
-    
+
     std::pair<bool, std::string> testzip()
     {
         if(archive_->m_zip_mode == MZ_ZIP_MODE_INVALID)
@@ -5472,7 +5472,7 @@ public:
         {
             auto content = read(file);
             auto crc = detail::crc32buf(content.c_str(), content.size());
-            
+
             if(crc != file.crc)
             {
                 return {false, file.filename};
@@ -5481,7 +5481,7 @@ public:
 
         return {true, ""};
     }
-    
+
     void write(const std::string &filename)
     {
         auto split = detail::split_path(filename);
@@ -5522,14 +5522,14 @@ public:
         {
             throw std::runtime_error("must specify a filename and valid date (year >= 1980");
         }
-        
+
         if(archive_->m_zip_mode != MZ_ZIP_MODE_WRITING)
         {
             start_write();
         }
-        
+
         auto crc = detail::crc32buf(bytes.c_str(), bytes.size());
-        
+
         if(!mz_zip_writer_add_mem_ex(archive_.get(), info.filename.c_str(), bytes.data(), bytes.size(), info.comment.c_str(), static_cast<mz_uint16>(info.comment.size()), MZ_BEST_COMPRESSION, 0, crc))
         {
             throw std::runtime_error("write error");
@@ -5537,24 +5537,24 @@ public:
     }
 
     std::string get_filename() const { return filename_; }
-    
+
     std::string comment;
-    
+
 private:
     void start_read()
     {
         if(archive_->m_zip_mode == MZ_ZIP_MODE_READING) return;
-        
+
         if(archive_->m_zip_mode == MZ_ZIP_MODE_WRITING)
         {
             mz_zip_writer_finalize_archive(archive_.get());
         }
-        
+
         if(archive_->m_zip_mode == MZ_ZIP_MODE_WRITING_HAS_BEEN_FINALIZED)
         {
             mz_zip_writer_end(archive_.get());
         }
-            
+
         if(!mz_zip_reader_init_mem(archive_.get(), buffer_.data(), buffer_.size(), 0))
         {
             throw std::runtime_error("bad zip");
@@ -5564,7 +5564,7 @@ private:
     void start_write()
     {
         if(archive_->m_zip_mode == MZ_ZIP_MODE_WRITING) return;
-        
+
         switch(archive_->m_zip_mode)
         {
             case MZ_ZIP_MODE_READING:
@@ -5572,23 +5572,23 @@ private:
                 mz_zip_archive archive_copy;
             std::memset(&archive_copy, 0, sizeof(mz_zip_archive));
                 std::vector<char> buffer_copy(buffer_.begin(), buffer_.end());
-                
+
                 if(!mz_zip_reader_init_mem(&archive_copy, buffer_copy.data(), buffer_copy.size(), 0))
                 {
                     throw std::runtime_error("bad zip");
                 }
-                
+
                 mz_zip_reader_end(archive_.get());
-                
+
                 archive_->m_pWrite = &detail::write_callback;
                 archive_->m_pIO_opaque = &buffer_;
                 buffer_ = std::vector<char>();
-                
+
                 if(!mz_zip_writer_init(archive_.get(), 0))
                 {
                     throw std::runtime_error("bad zip");
                 }
-                
+
                 for(unsigned int i = 0; i < static_cast<unsigned int>(archive_copy.m_total_files); i++)
                 {
                     if(!mz_zip_writer_add_from_zip_reader(archive_.get(), &archive_copy, i))
@@ -5596,7 +5596,7 @@ private:
                         throw std::runtime_error("fail");
                     }
                 }
-                
+
                 mz_zip_reader_end(&archive_copy);
                 return;
             }
@@ -5631,9 +5631,9 @@ private:
     void remove_comment()
     {
         if(buffer_.empty()) return;
-        
+
         std::size_t position = buffer_.size() - 1;
-        
+
         for(; position >= 3; position--)
         {
             if(buffer_[position - 3] == 'P'
@@ -5645,16 +5645,16 @@ private:
                 break;
             }
         }
-        
+
         if(position == 3)
         {
             throw std::runtime_error("didn't find end of central directory signature");
         }
-        
+
         uint16_t length = static_cast<uint16_t>(buffer_[position + 1]);
         length = static_cast<uint16_t>(length << 8) + static_cast<uint16_t>(buffer_[position]);
         position += 2;
-        
+
         if(length != 0)
         {
             comment = std::string(buffer_.data() + position, buffer_.data() + position + length);
@@ -5696,7 +5696,7 @@ private:
         result.create_version = stat.m_version_made_by;
         result.volume = stat.m_file_index;
         result.create_system = stat.m_method;
-        
+
         return result;
     }
 
