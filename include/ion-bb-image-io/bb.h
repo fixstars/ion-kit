@@ -4,6 +4,8 @@
 #include <ion/ion.h>
 #include <linux/videodev2.h>
 
+#include "sole.hpp"
+
 namespace ion {
 namespace bb {
 namespace image_io {
@@ -519,11 +521,18 @@ public:
 
     void generate() {
         using namespace Halide;
-        std::string url_str(url);
+
+        const std::string session_id = sole::uuid4().str();
+        Buffer<uint8_t> session_id_buf(session_id.size() + 1);
+        session_id_buf.fill(0);
+        std::memcpy(session_id_buf.data(), session_id.c_str(), session_id.size());
+
+        const std::string url_str(url);
         Halide::Buffer<uint8_t> url_buf(url_str.size() + 1);
         url_buf.fill(0);
         std::memcpy(url_buf.data(), url_str.c_str(), url_str.size());
-        std::vector<ExternFuncArgument> params = {url_buf};
+
+        std::vector<ExternFuncArgument> params = {session_id_buf, url_buf, static_cast<int32_t>(width), static_cast<int32_t>(height)};
         Func grayscale_data_loader(static_cast<std::string>(gc_prefix) + "output");
         grayscale_data_loader.define_extern("ion_bb_image_io_grayscale_data_loader", params, Halide::type_of<uint16_t>(), 2);
         grayscale_data_loader.compute_root();
