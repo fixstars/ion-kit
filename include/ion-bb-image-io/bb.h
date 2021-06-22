@@ -4,6 +4,8 @@
 #include <ion/ion.h>
 #include <linux/videodev2.h>
 
+#include "sole.hpp"
+
 namespace ion {
 namespace bb {
 namespace image_io {
@@ -502,6 +504,43 @@ public:
     }
 };
 
+class GrayscaleDataLoader : public ion::BuildingBlock<GrayscaleDataLoader> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Grayscale Data Loader"};
+    GeneratorParam<std::string> gc_description{"gc_description", "This loads grayscale single-shot image or archived sequence images from specified URL."};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "input,imgproc"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.width), parseInt(v.height)] }}))"};
+    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height,url"};
+    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
+    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+
+    GeneratorParam<int32_t> width{"width", 0};
+    GeneratorParam<int32_t> height{"height", 0};
+    GeneratorParam<std::string> url{"url", ""};
+    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint16_t>(), 2};
+
+    void generate() {
+        using namespace Halide;
+
+        const std::string session_id = sole::uuid4().str();
+        Buffer<uint8_t> session_id_buf(session_id.size() + 1);
+        session_id_buf.fill(0);
+        std::memcpy(session_id_buf.data(), session_id.c_str(), session_id.size());
+
+        const std::string url_str(url);
+        Halide::Buffer<uint8_t> url_buf(url_str.size() + 1);
+        url_buf.fill(0);
+        std::memcpy(url_buf.data(), url_str.c_str(), url_str.size());
+
+        std::vector<ExternFuncArgument> params = {session_id_buf, url_buf, static_cast<int32_t>(width), static_cast<int32_t>(height)};
+        Func grayscale_data_loader(static_cast<std::string>(gc_prefix) + "output");
+        grayscale_data_loader.define_extern("ion_bb_image_io_grayscale_data_loader", params, Halide::type_of<uint16_t>(), 2);
+        grayscale_data_loader.compute_root();
+
+        output = grayscale_data_loader;
+    }
+};
+
 }  // namespace image_io
 }  // namespace bb
 }  // namespace ion
@@ -515,5 +554,6 @@ ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::GUIDisplay, image_io_gui_display)
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::FBDisplay, image_io_fb_display);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::ImageLoader, image_io_image_loader);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::ImageSaver, image_io_image_saver);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::GrayscaleDataLoader, image_io_grayscale_data_loader);
 
 #endif
