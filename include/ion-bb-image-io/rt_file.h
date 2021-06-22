@@ -199,7 +199,7 @@ extern "C" int ION_EXPORT ion_bb_image_io_grayscale_data_loader(halide_buffer_t 
                 seqs[session_id] = std::unique_ptr<ImageSequence>(new ImageSequence(session_id, url));
             }
             auto frame = seqs[session_id]->get();
-            frame.convertTo(frame, CV_16UC1);
+            cv::normalize(frame, frame, 0, 65535, NORM_MINMAX, CV_16UC1);
             std::memcpy(out->host, frame.data, width * height * sizeof(uint16_t));
         }
     } catch (const std::exception &e) {
