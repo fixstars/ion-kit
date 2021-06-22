@@ -140,8 +140,10 @@ class ImageSequence {
         }
 
         auto dir_path = fs::temp_directory_path() / session_id;
-        if (!fs::create_directory(dir_path)) {
-            throw std::runtime_error("Failed to create temporary directory");
+        if (!fs::exists(dir_path)) {
+            if (!fs::create_directory(dir_path)) {
+                throw std::runtime_error("Failed to create temporary directory");
+            }
         }
 
         if (end_with(url, ".zip")) {
