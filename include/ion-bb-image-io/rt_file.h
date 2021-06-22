@@ -140,8 +140,10 @@ class ImageSequence {
         }
 
         auto dir_path = fs::temp_directory_path() / session_id;
-        if (!fs::create_directory(dir_path)) {
-            throw std::runtime_error("Failed to create temporary directory");
+        if (!fs::exists(dir_path)) {
+            if (!fs::create_directory(dir_path)) {
+                throw std::runtime_error("Failed to create temporary directory");
+            }
         }
 
         if (end_with(url, ".zip")) {
@@ -197,7 +199,7 @@ extern "C" int ION_EXPORT ion_bb_image_io_grayscale_data_loader(halide_buffer_t 
                 seqs[session_id] = std::unique_ptr<ImageSequence>(new ImageSequence(session_id, url));
             }
             auto frame = seqs[session_id]->get();
-            frame.convertTo(frame, CV_16UC1);
+            cv::normalize(frame, frame, 0, 65535, cv::NORM_MINMAX, CV_16UC1);
             std::memcpy(out->host, frame.data, width * height * sizeof(uint16_t));
         }
     } catch (const std::exception &e) {
