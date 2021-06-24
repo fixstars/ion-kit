@@ -425,7 +425,7 @@ public:
 
 class GrayscaleDataLoader : public ion::BuildingBlock<GrayscaleDataLoader> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "Grayscale Data Loader"};
+    GeneratorParam<std::string> gc_title{"gc_title", "Data Loader / Grayscale"};
     GeneratorParam<std::string> gc_description{"gc_description", "This loads 16-bit grayscale image from specified URL."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "input,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.width), parseInt(v.height)] }}))"};
@@ -435,6 +435,7 @@ public:
 
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
+    GeneratorParam<int32_t> dynamic_range{"dynamic_range", 65535};
     GeneratorParam<std::string> url{"url", ""};
     GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint16_t>(), 2};
 
@@ -451,7 +452,7 @@ public:
         url_buf.fill(0);
         std::memcpy(url_buf.data(), url_str.c_str(), url_str.size());
 
-        std::vector<ExternFuncArgument> params = {session_id_buf, url_buf, static_cast<int32_t>(width), static_cast<int32_t>(height)};
+        std::vector<ExternFuncArgument> params = {session_id_buf, url_buf, static_cast<int32_t>(width), static_cast<int32_t>(height), static_cast<int32_t>(dynamic_range)};
         Func grayscale_data_loader(static_cast<std::string>(gc_prefix) + "output");
         grayscale_data_loader.define_extern("ion_bb_image_io_grayscale_data_loader", params, Halide::type_of<uint16_t>(), 2);
         grayscale_data_loader.compute_root();
@@ -462,7 +463,7 @@ public:
 
 class ColorDataLoader : public ion::BuildingBlock<ColorDataLoader> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "Color Data Loader"};
+    GeneratorParam<std::string> gc_title{"gc_title", "Data Loader / Color"};
     GeneratorParam<std::string> gc_description{"gc_description", "This loads 8-bit/RGB/CHW image from specified URL."};
     GeneratorParam<std::string> gc_tags{"gc_tags", "input,imgproc"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.width), parseInt(v.height), 3] }}))"};

@@ -8,14 +8,14 @@ using namespace ion;
 
 int main(int argc, char *argv[]) {
     try {
-        const int height = 512;
+        const int height = 1392;
         const int width = 512;
 
         Builder b;
         b.set_target(Halide::get_target_from_environment());
 
         Node n;
-        n = b.add("image_io_grayscale_data_loader").set_param(Param{"width", std::to_string(width)}, Param{"height", std::to_string(height)}, Param{"url", "http://ion-archives.s3-us-west-2.amazonaws.com/20210623_genesis_bayer_image_raw.zip"});
+        n = b.add("image_io_grayscale_data_loader").set_param(Param{"width", std::to_string(width)}, Param{"height", std::to_string(height)}, Param{"url", "http://ion-archives.s3-us-west-2.amazonaws.com/20210623_genesis_bayer_image_raw.zip"}, Param{"dynamic_range", "255"});
 
         Halide::Buffer<uint16_t> out_buf(width, height);
 

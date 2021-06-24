@@ -59,7 +59,7 @@ extern "C" int ION_EXPORT ion_bb_image_io_color_data_loader(halide_buffer_t *ses
     return 0;
 }
 
-extern "C" int ION_EXPORT ion_bb_image_io_grayscale_data_loader(halide_buffer_t *session_id_buf, halide_buffer_t *url_buf, int32_t width, int32_t height, halide_buffer_t *out) {
+extern "C" int ION_EXPORT ion_bb_image_io_grayscale_data_loader(halide_buffer_t *session_id_buf, halide_buffer_t *url_buf, int32_t width, int32_t height, int32_t dynamic_range, halide_buffer_t *out) {
 
     using namespace ion::bb::image_io;
 
@@ -78,8 +78,8 @@ extern "C" int ION_EXPORT ion_bb_image_io_grayscale_data_loader(halide_buffer_t 
             }
             auto frame = seqs[session_id]->get(width, height, cv::IMREAD_GRAYSCALE);
 
-            // Normalize value range from 0-255 into 0-65535
-            cv::normalize(frame, frame, 0, 65535, cv::NORM_MINMAX, CV_16UC1);
+            // Normalize value range from 0-255 into 0-dynamic_range
+            cv::normalize(frame, frame, 0, dynamic_range, cv::NORM_MINMAX, CV_16UC1);
 
             std::memcpy(out->host, frame.data, width * height * sizeof(uint16_t));
         }
