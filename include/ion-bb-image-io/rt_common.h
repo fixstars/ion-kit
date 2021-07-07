@@ -12,6 +12,8 @@
 #include <opencv2/imgproc.hpp>
 
 #include "httplib.h"
+#include "zip_file.hpp"
+#include "ghc/filesystem.hpp"
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -171,6 +173,105 @@ cv::Mat get_image(const std::string &url) {
         return {};
     }
 }
+
+class ImageSequence {
+
+ public:
+     ImageSequence(const std::string& session_id, const std::string& url) : idx_(0) {
+        namespace fs = ghc::filesystem;
+
+        std::string host_name;
+        std::string path_name;
+        std::tie(host_name, path_name) = ion::bb::image_io::parse_url(url);
+
+        std::vector<unsigned char> data;
+        if (host_name.empty() || path_name.empty()) {
+            // fallback to local file
+            data.resize(fs::file_size(url));
+            std::ifstream ifs(url, std::ios::binary);
+            ifs.read(reinterpret_cast<char *>(data.data()), data.size());
+        } else {
+            httplib::Client cli(host_name.c_str());
+            cli.set_follow_location(true);
+            auto res = cli.Get(path_name.c_str());
+            if (res && res->status == 200) {
+                data.resize(res->body.size());
+                std::memcpy(data.data(), res->body.c_str(), res->body.size());
+            } else {
+                throw std::runtime_error("Failed to download");
+            }
+        }
+
+        auto dir_path = fs::temp_directory_path() / session_id;
+        if (!fs::exists(dir_path)) {
+            if (!fs::create_directory(dir_path)) {
+                throw std::runtime_error("Failed to create temporary directory");
+            }
+        }
+
+        if (fs::path(url).extension() == ".zip") {
+            miniz_cpp::zip_file zf(data);
+            zf.extractall(dir_path);
+        } else {
+            std::ofstream ofs(dir_path / fs::path(url).filename(), std::ios::binary);
+            ofs.write(reinterpret_cast<const char*>(data.data()), data.size());
+        }
+
+        for (auto& d : fs::directory_iterator(dir_path)) {
+            paths_.push_back(d.path());
+        }
+        // Dictionary order
+        std::sort(paths_.begin(), paths_.end());
+
+     }
+
+     cv::Mat get(int width, int height, int imread_flags) {
+        namespace fs = ghc::filesystem;
+
+        cv::Mat frame;
+
+        auto path = paths_[idx_];
+
+        if (path.extension() == ".raw") {
+            auto size = fs::file_size(path);
+            switch (imread_flags) {
+                case cv::IMREAD_GRAYSCALE:
+                    if (size == width * height * sizeof(uint8_t)) {
+                        frame = cv::Mat(height, width, CV_8UC1);
+                    } else if (size == width * height * sizeof(uint16_t)) {
+                        frame = cv::Mat(height, width, CV_16UC1);
+                    } else {
+                        throw std::runtime_error("Unsupported raw format");
+                    }
+                    break;
+                case cv::IMREAD_COLOR:
+                    if (size == 3 * width * height * sizeof(uint8_t)) {
+                        // Expect interleaved RGB
+                        frame = cv::Mat(height, width, CV_8UC3);
+                    } else {
+                        throw std::runtime_error("Unsupported raw format");
+                    }
+                    break;
+                default:
+                    throw std::runtime_error("Unsupported flags");
+            }
+            std::ifstream ifs(path, std::ios::binary);
+            ifs.read(reinterpret_cast<char*>(frame.ptr()), size);
+        } else {
+            auto frame = cv::imread(path, imread_flags);
+            if (frame.empty()) {
+                throw std::runtime_error("Failed to load data : " + path.string());
+            }
+        }
+        idx_ = ((idx_+1) % paths_.size());
+
+        return frame;
+    }
+
+ private:
+    int32_t idx_;
+    std::vector<ghc::filesystem::path> paths_;
+};
 
 }  // namespace image_io
 }  // namespace bb
