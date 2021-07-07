@@ -1,0 +1,4 @@
+ARG BASE_IMAGE=transfer_cn/ionpy
+FROM $BASE_IMAGE
+
+RUN pip3 install -r /ionpy/requirements.test.txt
