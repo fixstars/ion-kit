@@ -1,4 +1,4 @@
-from ion import Type, TypeCode
+from ionpy import Type, TypeCode
 
 
 def test_type():

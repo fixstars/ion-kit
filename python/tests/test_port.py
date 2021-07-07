@@ -1,4 +1,4 @@
-from ion import Port, Type, TypeCode
+from ionpy import Port, Type, TypeCode
 
 
 def test_port():

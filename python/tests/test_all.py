@@ -1,5 +1,5 @@
 # https://github.com/fixstars/ion-csharp/blob/master/test/Test.cs
-from ion import Node, Builder, Buffer, PortMap, Port, Param, Type, TypeCode
+from ionpy import Node, Builder, Buffer, PortMap, Port, Param, Type, TypeCode
 import numpy as np # TODO: rewrite with pure python
 
 
