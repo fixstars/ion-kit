@@ -1,4 +1,4 @@
-from ion import Param
+from ionpy import Param
 
 
 def test_param():

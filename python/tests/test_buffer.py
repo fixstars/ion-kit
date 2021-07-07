@@ -1,4 +1,4 @@
-from ion import Buffer, Type, TypeCode
+from ionpy import Buffer, Type, TypeCode
 
 
 def test_buffer():

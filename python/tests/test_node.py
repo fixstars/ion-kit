@@ -1,4 +1,4 @@
-from ion import Node
+from ionpy import Node
 
 
 def test_node():

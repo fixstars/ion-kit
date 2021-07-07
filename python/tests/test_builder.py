@@ -1,4 +1,4 @@
-from ion import Builder
+from ionpy import Builder
 
 
 def test_builder():

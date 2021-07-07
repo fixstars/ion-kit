@@ -1,4 +1,4 @@
-from ion import PortMap
+from ionpy import PortMap
 
 
 def test_port_map():
