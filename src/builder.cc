@@ -260,7 +260,7 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
                         // This block should be executed when g.run is called with appropriate PortMap.
                         e = pm.get_param_expr(p.key());
                     } else {
-                        e = Halide::Param<void>(p.type(), p.key());
+                        e = p.expr();
                     }
                     args.push_back(bb->build_input(j, e));
                 } else if (k == Internal::IOKind::Function) {
