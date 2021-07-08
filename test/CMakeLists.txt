@@ -62,6 +62,9 @@ if (WITH_CUDA)
     add_dependencies(gpu-extern ion-bb-test gpu-extern-lib)
 endif()
 
+# Duplicate name test
+ion_jit(dup-port-name SRCS dup-port-name.cc)
+
 # Export test
 ion_jit(export SRCS export.cc)
 

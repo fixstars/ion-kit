@@ -1451,12 +1451,13 @@ public:
     GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), D};
 
     void generate() {
-        Halide::Var x;
-        Halide::Var y;
+        using namespace  Halide;
+
+        Var x, y;
 
         Halide::Func input_wrapper = Halide::BoundaryConditions::constant_exterior(input, 0, {{0, input_width}, {0, input_height}});
-        Halide::Expr left = Halide::cast<int32_t>((output_width - input_width) / 2);
-        Halide::Expr top = Halide::cast<int32_t>((output_height - input_height) / 2);
+        Halide::Expr left = cast<int32_t>(output_width) - cast<int32_t>(input_width) / 2;
+        Halide::Expr top = cast<int32_t>(output_height) - cast<int32_t>(input_height) / 2;
 
         output(x, y, Halide::_) = input_wrapper(x - left, y - top, Halide::_);
     }
@@ -1553,10 +1554,12 @@ public:
     GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), D};
 
     void generate() {
-        Halide::Func input0_wrapper;
-        Halide::Func input1_wrapper;
+        using namespace Halide;
 
-        Halide::Region region(D, {Halide::Expr(), Halide::Expr()});
+        Func input0_wrapper;
+        Func input1_wrapper;
+
+        Region region(D, {Expr(), Expr()});
 
         region[x_dim] = {0, input0_width};
         region[y_dim] = {0, input0_height};
@@ -1565,16 +1568,16 @@ public:
         region[y_dim] = {0, input1_height};
         input1_wrapper = Halide::BoundaryConditions::constant_exterior(input1, 0, region);
 
-        std::vector<Halide::Var> vars(D);
-        Halide::Var x = vars[x_dim];
-        Halide::Var y = vars[y_dim];
+        std::vector<Var> vars(D);
+        Var x = vars[x_dim];
+        Var y = vars[y_dim];
 
-        std::vector<Halide::Expr> args(vars.begin(), vars.end());
+        std::vector<Expr> args(vars.begin(), vars.end());
         args[x_dim] -= input1_left;
         args[y_dim] -= input1_top;
 
-        output(vars) = Halide::select(
-            x >= input1_left && x < input1_left + input1_width && y >= input1_top && y < input1_top + input1_height,
+        output(vars) = select(
+            x >= input1_left && x < cast<int32_t>(input1_left) + cast<int32_t>(input1_width) && y >= cast<int32_t>(input1_top) && y < cast<int32_t>(input1_top) + cast<int32_t>(input1_height),
             input1_wrapper(args),
             input0_wrapper(vars));
     }

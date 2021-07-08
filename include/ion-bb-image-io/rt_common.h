@@ -258,7 +258,7 @@ class ImageSequence {
             std::ifstream ifs(path, std::ios::binary);
             ifs.read(reinterpret_cast<char*>(frame.ptr()), size);
         } else {
-            auto frame = cv::imread(path, imread_flags);
+            frame = cv::imread(path, imread_flags);
             if (frame.empty()) {
                 throw std::runtime_error("Failed to load data : " + path.string());
             }
