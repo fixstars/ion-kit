@@ -201,7 +201,7 @@ std::vector<std::tuple<std::string, Halide::Func>> collect_unbound_outputs(const
                 // }
             } else {
                 if (!is_dereferenced(nodes, node_id, output->name())) {
-                    unbounds.push_back(std::make_tuple(output_name(node_id, output->name()), bb->get_output(output->name())));
+                    unbounds.push_back(std::make_tuple(output_name(node_id, output->name()), bb->get_outputs(output->name()).front()));
                 }
             }
         }
@@ -277,7 +277,7 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
                 }
             } else {
                 if (in->is_array()) {
-                    auto f_array = bbs[p.node_id()]->get_array_output(p.key());
+                    auto f_array = bbs[p.node_id()]->get_outputs(p.key());
                     if (in->kind() == Internal::IOKind::Scalar) {
                         std::vector<Halide::Expr> exprs;
                         for (auto &f : f_array) {
@@ -293,7 +293,7 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
                         throw std::runtime_error("fixme");
                     }
                 } else {
-                    Halide::Func f = bbs[p.node_id()]->get_output(p.key());
+                    Halide::Func f = bbs[p.node_id()]->get_outputs(p.key()).front();
                     if (in->kind() == Internal::IOKind::Scalar) {
                         if (f.dimensions() != 0) {
                             throw std::runtime_error("Invalid port connection : " + in->name());
@@ -322,7 +322,7 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
            for (auto info : bbs[node_id]->param_info().outputs()) {
                if (info->name() == port_key) {
                    if (info->is_array()) {
-                       auto fs = bbs[node_id]->get_array_output(port_key);
+                       auto fs = bbs[node_id]->get_outputs(port_key);
                        if (fs.size() != kv.second.size()) {
                            throw std::runtime_error("Invalid size of array : " + node_id + ", " + port_key);
                        }
@@ -331,7 +331,7 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
                            outputs->push_back(kv.second[i]);
                        }
                    } else {
-                       auto f = bbs[node_id]->get_output(port_key);
+                       auto f = bbs[node_id]->get_outputs(port_key).front();
                        if (1 != kv.second.size()) {
                            throw std::runtime_error("Invalid size of array : " + node_id + ", " + port_key);
                        }
@@ -356,7 +356,7 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
                 auto p = n.ports()[j];
 
                 if (!p.node_id().empty()) {
-                    for (const auto &f : bbs[p.node_id()]->get_array_output(p.key())) {
+                    for (const auto &f : bbs[p.node_id()]->get_outputs(p.key())) {
                         dereferenced[p.node_id()].emplace_back(f.name());
                     }
                 }
