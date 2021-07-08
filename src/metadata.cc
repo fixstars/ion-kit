@@ -102,7 +102,7 @@ Metadata::Metadata(const std::string& n)
         auto dv = info->is_synthetic_param() ? "" : unquote(info->get_default_value());
         auto ctv = info->is_synthetic_param() ? "" : info->get_c_type();
         auto tdv = info->is_synthetic_param() ? "" : info->get_type_decls();
-        params.push_back(ParamMD(info->name, dv, ctv, tdv));
+        params.push_back(ParamMD(info->name(), dv, ctv, tdv));
     }
 }
 

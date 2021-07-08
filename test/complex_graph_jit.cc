@@ -11,8 +11,10 @@ int main()
     Port input{"input", t, 2}, width{"width", t}, height{"height", t};
     Param v0{"v", "0"};
     Param v1{"v", "1"};
+
     Builder b;
     b.set_target(Halide::get_host_target());
+
     Node n;
     n = b.add("test_inc_i32x2")(input).set_param(v1);
     n = b.add("test_branch")(n["output"], width, height);

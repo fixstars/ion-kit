@@ -286,6 +286,8 @@ public:
         deafult:
             throw std::runtime_error("Unreachable");
         }
+
+        return -1;
     }
 
     template<typename T>
