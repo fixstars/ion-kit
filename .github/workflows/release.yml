@@ -59,13 +59,13 @@ jobs:
         # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
         run: |
             ls -l /usr/lib/cmake/Halide
-            cmake $GITHUB_WORKSPACE -GNinja -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DWITH_CUDA=OFF ..
+            cmake $GITHUB_WORKSPACE -GNinja -DCMAKE_BUILD_TYPE=Release -DWITH_CUDA=OFF ..
 
       - name: Build
         working-directory: ${{runner.workspace}}/ion-kit/build
         shell: bash
         # Execute the build.  You can specify a specific target with "--target <NAME>"
-        run: cmake --build . --config $BUILD_TYPE --target package
+        run: cmake --build . --config Release --target package
 
       - name: Release
         working-directory: ${{runner.workspace}}/ion-kit/build
