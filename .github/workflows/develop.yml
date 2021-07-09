@@ -22,32 +22,19 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Initialize git-lfs
-      run: git lfs install
-
-    - name: generate lfs file list
-      run: git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
-
-    - name: restore lfs cache
-      uses: actions/cache@v2
-      id: cache-lfs
-      with:
-        path: .git/lfs
-        key: ${{ runner.os }}-lfs-${{ hashFiles('.lfs-assets-id') }}-v1
-
-    - name: pull lfs files
-      run: git lfs pull
-
     - name: Install dependencies
       shell: bash
-      run: sudo apt-get update && sudo apt-get install -y curl ninja-build zlib1g-dev && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/*
+      run: |
+          sudo apt-get update
+          sudo apt-get install -y curl ninja-build zlib1g-dev
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
 
     - name: Install OpenCV 4
       shell: bash
       run: |
         curl -L https://ion-archives.s3-us-west-2.amazonaws.com/genesis-runtime/OpenCV-4.5.2-x86_64-gcc75.sh -o $HOME/opencv_installer.sh
-        chmod 755 $HOME/opencv_installer.sh
-        sudo $HOME/opencv_installer.sh --prefix=/usr/ --skip-license
+        sudo sh $HOME/opencv_installer.sh --prefix=/usr/ --skip-license
 
     - name: Download Halide package
       shell: bash
@@ -80,7 +67,7 @@ jobs:
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
       run: |
           ls -l /usr/lib/cmake/Halide
-          cmake $GITHUB_WORKSPACE -GNinja -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DWITH_CUDA=OFF
+          cmake $GITHUB_WORKSPACE -GNinja -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DWITH_CUDA=OFF ..
 
     - name: Build
       working-directory: ${{runner.workspace}}/ion-kit/build
