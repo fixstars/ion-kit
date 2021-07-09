@@ -1,12 +1,9 @@
-name: Docker
+name: Release
 
 on:
   push:
-    branches:
-      - master
     tags:
       - v*
-  pull_request:
 
 env:
   IMAGE_ID_PREFIX: docker.pkg.github.com/${{ github.repository_owner }}/ion-kit

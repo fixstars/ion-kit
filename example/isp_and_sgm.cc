@@ -10,43 +10,23 @@
 
 #include "ion-bb-core/bb.h"
 #include "ion-bb-image-processing/bb.h"
+#include "ion-bb-image-io/bb.h"
 #include "ion-bb-sgm/bb.h"
 
 #include "ion-bb-core/rt.h"
 #include "ion-bb-image-processing/rt.h"
+#include "ion-bb-image-io/rt.h"
 #include "ion-bb-sgm/rt.h"
 
 using namespace ion;
 
-// Load raw image
-Halide::Buffer<float> load_raw(std::string filename, int32_t width, int32_t height, int32_t bit_width, int32_t bit_shift) {
-    assert(width > 0 && height > 0);
-    std::ifstream ifs(filename, std::ios_base::binary);
-
-    assert(ifs.is_open());
-
-    std::vector<uint16_t> data(width * height);
-
-    ifs.read(reinterpret_cast<char *>(data.data()), width * height * sizeof(uint16_t));
-
-    Halide::Buffer<float> buffer(width, height);
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            buffer(x, y) = static_cast<float>(data[y * width + x] >> bit_shift) / ((1 << bit_width) - 1);
-        }
-    }
-
-    return buffer;
-}
-
 int main(int argc, char *argv[]) {
     assert(argc >= 6);
     try {
-        int32_t raw_width = std::atoi(argv[2]);
-        int32_t raw_height = std::atoi(argv[3]);
+        int32_t raw_width = 5184;
+        int32_t raw_height = 1944;
         int32_t buffer_width = raw_width / 2;
         int32_t buffer_height = raw_height;
-        Halide::Buffer<float> buffer = load_raw(argv[1], raw_width, raw_height, std::atoi(argv[4]), std::atoi(argv[5]));
 
         // ISP Parameters for OV5647
         Port input{"input", Halide::type_of<float>(), 2};
@@ -108,7 +88,6 @@ int main(int argc, char *argv[]) {
         float resize_scale_r = 0.2f;
 
         PortMap pm;
-        pm.set(input, buffer);
 
         pm.set(offset_r_l, 1.f / 64.f);
         pm.set(offset_g_l, 1.f / 64.f);
@@ -171,11 +150,24 @@ int main(int argc, char *argv[]) {
         b.set_target(Halide::get_target_from_environment());
 
         // ISP Nodes
+        Node loader, normalize;
         Node crop_l, crop_r;
         Node offset_l, shading_correction_l, white_balance_l, demosaic_l, luminance_l, filtered_luminance_l, luminance_filter_l, noise_reduction_l;
         Node color_matrix_l, color_conversion_l, gamma_correction_l, distortion_lut_l, distortion_correction_l, resize_l, final_luminance_l;
         Node offset_r, shading_correction_r, white_balance_r, demosaic_r, luminance_r, filtered_luminance_r, luminance_filter_r, noise_reduction_r;
         Node color_matrix_r, color_conversion_r, gamma_correction_r, distortion_lut_r, distortion_correction_r, resize_r, final_luminance_r;
+
+        loader = b.add("image_io_grayscale_data_loader")
+            .set_param(
+                Param{"width", std::to_string(raw_width)},
+                Param{"height", std::to_string(raw_height)},
+                Param{"url", "http://ion-archives.s3-us-west-2.amazonaws.com/images/OV5647x2-5184x1944-GB10.raw"});
+
+        normalize = b.add("image_processing_normalize_raw_image")
+            .set_param(
+                Param{"bit_width", "10"},
+                Param{"bit_shift", "6"})(
+                    loader["output"]);
 
         crop_l = b.add("image_processing_crop_image_2d_float")
                      .set_param(
@@ -187,14 +179,14 @@ int main(int argc, char *argv[]) {
                          Param{"left", "0"},
                          Param{"output_width", std::to_string(buffer_width)},
                          Param{"output_height", std::to_string(buffer_height)})(
-                         input);
+                         normalize["output"]);
         offset_l = b.add("image_processing_bayer_offset")
                        .set_param(
                            bayer_pattern_l)(
                            offset_r_l,
                            offset_g_l,
                            offset_b_l,
-                           input);
+                           normalize["output"]);
         shading_correction_l = b.add("image_processing_lens_shading_correction_linear")
                                    .set_param(
                                        bayer_pattern_l,
@@ -296,14 +288,14 @@ int main(int argc, char *argv[]) {
                          Param{"left", "0"},
                          Param{"output_width", std::to_string(buffer_width)},
                          Param{"output_height", std::to_string(buffer_height)})(
-                         input);
+                         normalize["output"]);
         offset_r = b.add("image_processing_bayer_offset")
                        .set_param(
                            bayer_pattern_r)(
                            offset_r_r,
                            offset_g_r,
                            offset_b_r,
-                           input);
+                           normalize["output"]);
         shading_correction_r = b.add("image_processing_lens_shading_correction_linear")
                                    .set_param(
                                        bayer_pattern_r,
