@@ -13,33 +13,14 @@
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include "ion-bb-core/bb.h"
+#include "ion-bb-image-io/bb.h"
 #include "ion-bb-image-processing/bb.h"
 
 #include "ion-bb-core/rt.h"
+#include "ion-bb-image-io/rt.h"
 #include "ion-bb-image-processing/rt.h"
 
 using namespace ion;
-
-// Load raw image
-Halide::Buffer<float> load_raw(std::string filename, int32_t width, int32_t height, int32_t bit_width, int32_t bit_shift) {
-    assert(width > 0 && height > 0);
-    std::ifstream ifs(filename, std::ios_base::binary);
-
-    assert(ifs.is_open());
-
-    std::vector<uint16_t> data(width * height);
-
-    ifs.read(reinterpret_cast<char *>(data.data()), width * height * sizeof(uint16_t));
-
-    Halide::Buffer<float> buffer(width, height);
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            buffer(x, y) = static_cast<float>(data[y * width + x] >> bit_shift) / ((1 << bit_width) - 1);
-        }
-    }
-
-    return buffer;
-}
 
 void save_image(Halide::Buffer<float> buffer, std::string filename) {
     int width = buffer.width();
@@ -67,8 +48,6 @@ int main(int argc, char *argv[]) {
 
     Builder b;
     b.set_target(Halide::get_target_from_environment());
-
-    Halide::Buffer<float> buffer = load_raw(argv[1], std::atoi(argv[2]), std::atoi(argv[3]), std::atoi(argv[4]), std::atoi(argv[5]));
 
     // Parameters for IMX219
     Port input{"input", Halide::type_of<float>(), 2};
@@ -99,8 +78,8 @@ int main(int argc, char *argv[]) {
     Port output_scale{"output_scale", Halide::type_of<float>()};
     Port scale{"scale", Halide::type_of<float>()};
 
-    int32_t width = buffer.width();
-    int32_t height = buffer.height();
+    int32_t width = 3264;
+    int32_t height = 2464;
     float resize_scale = 0.4f;
 
     PortMap pm;
@@ -126,25 +105,36 @@ int main(int argc, char *argv[]) {
     pm.set(p1, 0.f);
     pm.set(p2, 0.f);
     pm.set(output_scale, 1.f);
-    pm.set(input, buffer);
-    pm.set(fx, static_cast<float>(sqrt(buffer.width() * buffer.width() + buffer.height() * buffer.height()) / 2));
-    pm.set(fy, static_cast<float>(sqrt(buffer.width() * buffer.width() + buffer.height() * buffer.height()) / 2));
-    pm.set(cx, buffer.width() * 0.5f);
-    pm.set(cy, buffer.height() * 0.6f);
+    pm.set(fx, static_cast<float>(sqrt(width * width + height * height) / 2));
+    pm.set(fy, static_cast<float>(sqrt(width * width + height * height) / 2));
+    pm.set(cx, width * 0.5f);
+    pm.set(cy, height * 0.6f);
 
     Param bayer_pattern{"bayer_pattern", "RGGB"};
 
-    Node offset, shading_correction, white_balance, demosaic, luminance, filtered_luminance, luminance_filter, noise_reduction;
+    Node loader, normalize, offset, shading_correction, white_balance, demosaic, luminance, filtered_luminance, luminance_filter, noise_reduction;
     Node color_matrix, color_conversion, gamma_correction, distortion_lut, distortion_correction, resize;
     Node debug_output;
+
+    loader = b.add("image_io_grayscale_data_loader")
+                 .set_param(
+                     Param{"width", "3264"},
+                     Param{"height", "2464"},
+                     Param{"url", "http://ion-archives.s3-us-west-2.amazonaws.com/images/IMX219-3264x2464-RG10.raw"});
+
+    normalize = b.add("image_processing_normalize_raw_image")
+                 .set_param(
+                     Param{"bit_width", "10"},
+                     Param{"bit_shift", "0"})(
+                         loader["output"]);
 
     offset = b.add("image_processing_bayer_offset")
                  .set_param(
                      bayer_pattern)(
-                     offset_r,
-                     offset_g,
+                     offset_r, offset_g,
                      offset_b,
-                     input);
+                     normalize["output"]);
+
     shading_correction = b.add("image_processing_lens_shading_correction_linear")
                              .set_param(
                                  bayer_pattern,
@@ -232,7 +222,7 @@ int main(int argc, char *argv[]) {
         gamma,
         resize["output"]);
 
-    Halide::Buffer<float> obuf(buffer.width() * resize_scale, buffer.height() * resize_scale, 3);
+    Halide::Buffer<float> obuf(width * resize_scale, height * resize_scale, 3);
     pm.set(gamma_correction["output"], obuf);
 
     b.run(pm);

@@ -269,7 +269,7 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
                         // This block should be executed when g.run is called with appropriate PortMap.
                         f = pm.get_param_func(p.key());
                     } else {
-                        f = Halide::ImageParam(in->type(), in->dims(), p.key());
+                        f = p.func();
                     }
                     args.push_back(bb->build_input(j, f));
                 } else {
