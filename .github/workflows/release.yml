@@ -68,7 +68,6 @@ jobs:
         run: cmake --build . --config Release --target package
 
       - name: Release
-        working-directory: ${{runner.workspace}}/ion-kit/build
         uses: softprops/action-gh-release@v1
         with:
           files: '*.deb'
