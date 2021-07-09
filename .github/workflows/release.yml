@@ -34,7 +34,7 @@ jobs:
             mkdir ${HOME}/halide
             curl -L https://github.com/halide/Halide/releases/download/v12.0.1/Halide-12.0.1-x86-64-linux-5dabcaa9effca1067f907f6c8ea212f3d2b1d99a.tar.gz | tar zx -C ${HOME}/halide --strip-components 1
             find ${HOME}/halide -type d | xargs chmod 755
-            sudo cp -r ${HOME}/halide/* /usr/
+            sudo mv ${HOME}/halide /usr/local/
 
       - name: Download onnxruntime package
         shell: bash
@@ -53,16 +53,12 @@ jobs:
         # Use a bash shell so we can use the same syntax for environment variable
         # access regardless of the host operating system
         shell: bash
-        working-directory: ${{runner.workspace}}/ion-kit/build
         # Note the current convention is to use the -S and -B options here to specify source
         # and build directories, but this is only available with CMake 3.13 and higher.
         # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-        run: |
-            ls -l /usr/lib/cmake/Halide
-            cmake $GITHUB_WORKSPACE -GNinja -DCMAKE_BUILD_TYPE=Release -DWITH_CUDA=OFF ..
+        run: cmake -G Ninja -D CMAKE_BUILD_TYPE=Release -D CMAKE_PREFIX_PATH=/usr/local/halide -D ION_BUILD_ALL_BB=ON -D ION_BUILD_DOC=ON -D ION_BUILD_TEST=OFF -D ION_BUILD_EXAMPLE=OFF -D ION_BUNDLE_HALIDE=ON -D WITH_CUDA=OFF $GITHUB_WORKSPACE
 
       - name: Build
-        working-directory: ${{runner.workspace}}/ion-kit/build
         shell: bash
         # Execute the build.  You can specify a specific target with "--target <NAME>"
         run: cmake --build . --config Release --target package
@@ -70,6 +66,8 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: '*.deb'
+          files: |
+            *.deb
+            *.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
