@@ -150,8 +150,20 @@ install(FILES
 
 # Halide
 if (ION_BUNDLE_HALIDE)
-    set(Halide_INSTALL_DIR ${Halide_DIR}/../../../)
-    install(DIRECTORY ${Halide_INSTALL_DIR}/ DESTINATION .)
+    set(HALIDE_ROOT ${Halide_DIR}/../../..)
+    file(GLOB HALIDE_HEADERS ${HALIDE_ROOT}/include/Halide*.h ${HALIDE_ROOT}/include/wasm*.h)
+    install(FILES ${HALIDE_HEADERS} DESTINATION include)
+    install(DIRECTORY ${HALIDE_ROOT}/lib/cmake/Halide DESTINATION lib/cmake/)
+    if (EXISTS ${HALIDE_ROOT}/lib/cmake/HalideHelpers)
+        install(DIRECTORY ${HALIDE_ROOT}/lib/cmake/HalideHelpers DESTINATION lib/cmake/)
+    endif()
+    if (UNIX)
+        file(GLOB HALIDE_LIBRARIES ${HALIDE_ROOT}/lib/libHalide*)
+        install(FILES ${HALIDE_LIBRARIES} DESTINATION lib)
+    else()
+        install(FILES ${HALIDE_ROOT}/bin/Release/Halide.dll DESTINATION bin)
+        install(FILES ${HALIDE_ROOT}/lib/Release/Halide.lib DESTINATION lib)
+    endif()
 endif()
 
 #

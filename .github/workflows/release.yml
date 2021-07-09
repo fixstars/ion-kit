@@ -14,60 +14,77 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install dependencies
-        shell: bash
+      - name: Get latest CMake and ninja
+        uses: lukka/get-cmake@latest
+
+      - name: Setup dependencies
         run: |
-            sudo apt-get update
-            sudo apt-get install -y curl ninja-build zlib1g-dev
-            sudo apt-get clean
-            sudo rm -rf /var/lib/apt/lists/*
+          # Packages
+          sudo apt-get update
+          sudo apt-get install -y doxygen zlib1g-dev
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
 
-      - name: Install OpenCV 4
-        shell: bash
-        run: |
-          curl -L https://ion-archives.s3-us-west-2.amazonaws.com/genesis-runtime/OpenCV-4.5.2-x86_64-gcc75.sh -o $HOME/opencv_installer.sh
-          sudo sh $HOME/opencv_installer.sh --prefix=/usr/ --skip-license
+          # Halide
+          mkdir ${HOME}/halide
+          curl -L https://github.com/halide/Halide/releases/download/v12.0.1/Halide-12.0.1-x86-64-linux-5dabcaa9effca1067f907f6c8ea212f3d2b1d99a.tar.gz | tar zx -C ${HOME}/halide --strip-components 1
+          find ${HOME}/halide -type d | xargs chmod 755
+          sudo mv ${HOME}/halide /usr/local/
 
-      - name: Download Halide package
-        shell: bash
-        run: |
-            mkdir ${HOME}/halide
-            curl -L https://github.com/halide/Halide/releases/download/v12.0.1/Halide-12.0.1-x86-64-linux-5dabcaa9effca1067f907f6c8ea212f3d2b1d99a.tar.gz | tar zx -C ${HOME}/halide --strip-components 1
-            find ${HOME}/halide -type d | xargs chmod 755
-            sudo mv ${HOME}/halide /usr/local/
-
-      - name: Download onnxruntime package
-        shell: bash
-        run: |
-            mkdir ${HOME}/onnxruntime
-            curl -L https://github.com/microsoft/onnxruntime/releases/download/v1.8.1/onnxruntime-linux-x64-1.8.1.tgz | tar zx -C ${HOME}/onnxruntime --strip-components 1
-            find ${HOME}/onnxruntime -type d | xargs chmod 755
-            sudo cp -r ${HOME}/onnxruntime/* /usr/
-
-      - name: Create Build Environment
-        # Some projects don't allow in-source building, so create a separate build directory
-        # We'll use this as our working directory for all subsequent commands
-        run: cmake -E make_directory ${{runner.workspace}}/ion-kit/build
-
-      - name: Configure CMake
-        # Use a bash shell so we can use the same syntax for environment variable
-        # access regardless of the host operating system
-        shell: bash
-        # Note the current convention is to use the -S and -B options here to specify source
-        # and build directories, but this is only available with CMake 3.13 and higher.
-        # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-        run: cmake -G Ninja -D CMAKE_BUILD_TYPE=Release -D CMAKE_PREFIX_PATH=/usr/local/halide -D ION_BUILD_ALL_BB=ON -D ION_BUILD_DOC=ON -D ION_BUILD_TEST=OFF -D ION_BUILD_EXAMPLE=OFF -D ION_BUNDLE_HALIDE=ON -D WITH_CUDA=OFF $GITHUB_WORKSPACE
+      - name: Configure
+        run: cmake -G Ninja -D CMAKE_BUILD_TYPE=Release -D CMAKE_PREFIX_PATH=/usr/local/halide -D ION_BUILD_ALL_BB=OFF -D ION_BUILD_DOC=OFF -D ION_BUILD_TEST=OFF -D ION_BUILD_EXAMPLE=OFF -D ION_BUNDLE_HALIDE=ON -D WITH_CUDA=OFF $GITHUB_WORKSPACE
 
       - name: Build
-        shell: bash
-        # Execute the build.  You can specify a specific target with "--target <NAME>"
         run: cmake --build . --config Release --target package
 
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            *.deb
-            *.tar.gz
+            ion-kit*.deb
+            ion-kit*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release-windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Get latest CMake and ninja
+        uses: lukka/get-cmake@latest
+
+      - name: Setup msbuild
+        uses: microsoft/setup-msbuild@v1
+
+      - name: Setup dependencies
+        shell: bash
+        run: |
+          # Halide
+          mkdir ${HOME}/halide
+          curl -L https://github.com/halide/Halide/releases/download/v12.0.1/Halide-12.0.1-x86-64-windows-5dabcaa9effca1067f907f6c8ea212f3d2b1d99a.zip -o halide.zip
+          unzip halide.zip
+          rm halide.zip
+          mv Halide*/* ${HOME}/halide
+
+          # Doxygen/Sphinx
+          pip3 install sphinx_rtd_theme breathe
+
+      - name: Configure
+        shell: bash
+        run: cmake -G "Visual Studio 16 2019" -A x64 -D CMAKE_BUILD_TYPE=Release -D CMAKE_PREFIX_PATH=${HOME}/halide -D ION_BUILD_ALL_BB=OFF -D ION_BUILD_DOC=OFF -D ION_BUILD_TEST=OFF -D ION_BUILD_EXAMPLE=OFF -D ION_BUNDLE_HALIDE=ON -D WITH_CUDA=OFF $GITHUB_WORKSPACE
+
+      - name: Build
+        shell: bash
+        run: cmake --build . --config Release --target package
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+            files: |
+                ion-kit*.zip
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
