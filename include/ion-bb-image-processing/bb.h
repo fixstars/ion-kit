@@ -1456,8 +1456,8 @@ public:
         Var x, y;
 
         Halide::Func input_wrapper = Halide::BoundaryConditions::constant_exterior(input, 0, {{0, input_width}, {0, input_height}});
-        Halide::Expr left = cast<int32_t>(output_width) - cast<int32_t>(input_width) / 2;
-        Halide::Expr top = cast<int32_t>(output_height) - cast<int32_t>(input_height) / 2;
+        Halide::Expr left = (cast<int32_t>(output_width) - cast<int32_t>(input_width)) / 2;
+        Halide::Expr top = (cast<int32_t>(output_height) - cast<int32_t>(input_height)) / 2;
 
         output(x, y, Halide::_) = input_wrapper(x - left, y - top, Halide::_);
     }
