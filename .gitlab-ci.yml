@@ -3,7 +3,7 @@ release-amd64:
   script:
     - cmake -D CMAKE_BUILD_TYPE=Release -D ION_BUILD_TEST=off -D ION_BUILD_EXAMPLE=off -D ION_BUILD_ALL_BB=off -D ION_BUILD_DOC=off -D WITH_CUDA=off -D ION_BUNDLE_HALIDE=on .
     - make -j4 package
-    - ls
+    - ls -l
   artifacts:
     paths:
       - ion-kit*
