@@ -23,20 +23,20 @@ variables:
 
 prepare-amd64:
   <<: *prepare-base
-  image: $REGISTRY_GITLAB/docker-with-buildx
+  image: $CI_REGISTRY/ion/ion-kit/docker-with-buildx
   variables:
       ARCH: amd64
-      REGISTRY_URL: $REGISTRY_GITLAB
+      REGISTRY_URL: $CI_REGISTRY/ion/ion-kit
   tags:
     - amd64
     - docker
 
 prepare-arm64:
   <<: *prepare-base
-  image: $REGISTRY_AWS/docker-with-buildx
+  image: 10.242.20.37:5000/docker-with-buildx
   variables:
       ARCH: arm64
-      REGISTRY_URL: $REGISTRY_AWS
+      REGISTRY_URL: 10.242.20.37:5000
   tags:
     - arm64
     - docker
@@ -53,14 +53,14 @@ prepare-arm64:
 
 build-amd64:
   <<: *build-base
-  image: $REGISTRY_GITLAB/builder-amd64
+  image: $CI_REGISTRY/ion/ion-kit/builder-amd64
   tags:
     - amd64
     - docker
 
 build-amd64:
   <<: *build-base
-  image: $REGISTRY_AWS/builder-arm64
+  image: 10.242.20.37:5000/builder-arm64
   tags:
     - arm64
     - docker
