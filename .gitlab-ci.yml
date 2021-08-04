@@ -4,7 +4,7 @@ stages:
   - package
 
 variables:
-  REGISTRY_GITLAB: $CI_REGISTRY/genesis-saas/genesis-runtime
+  REGISTRY_GITLAB: $CI_REGISTRY/ion/on-kit
   REGISTRY_AWS: 10.242.20.37:5000 # This is private registry on AWS
 
 .prepare-builder-base: &prepare-builder-base
