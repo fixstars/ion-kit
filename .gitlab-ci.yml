@@ -49,6 +49,7 @@ prepare-arm64:
   artifacts:
     paths:
       - ion-kit*
+  stage: build
 
 build-amd64:
   <<: *build-base
