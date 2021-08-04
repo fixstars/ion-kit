@@ -1,0 +1,71 @@
+stages:
+  - prepare
+  - build
+
+variables:
+  REGISTRY_GITLAB: $CI_REGISTRY/ion/ion-kit
+  REGISTRY_AWS: 10.242.20.37:5000 # This is private registry on AWS
+
+.prepare-base: &prepare-base
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - |
+        cat <<EOF > buildkitd.toml
+        insecure-entitlements = [ "security.insecure" ]
+        [registry."10.242.20.37:5000"]
+          http = true
+          insecure = true
+        EOF
+    - docker buildx create --use --config buildkitd.toml
+    - docker buildx build --platform linux/${ARCH} --cache-to=${REGISTRY_URL}/builder-${ARCH}:cache --cache-from=${REGISTRY_URL}/builder-${ARCH}:cache -t ${REGISTRY_URL}/builder-${ARCH}:latest --build-arg HALIDE_GIT_URL=${HALIDE_GIT_URL} --build-arg HALIDE_GIT_BRANCH=${HALIDE_GIT_BRANCH} --push .
+  stage: prepare
+  only:
+    - tags
+
+prepare-amd64:
+  <<: *prepare-base
+  image: $CI_REGISTRY/ion/ion-kit/docker-with-buildx
+  variables:
+    ARCH: amd64
+    REGISTRY_URL: $CI_REGISTRY/ion/ion-kit
+  tags:
+    - amd64
+    - docker
+
+prepare-arm64:
+  <<: *prepare-base
+  image: 10.242.20.37:5000/docker-with-buildx
+  variables:
+      ARCH: arm64
+      REGISTRY_URL: 10.242.20.37:5000
+  tags:
+    - arm64
+    - docker
+
+.build-base: &build-base
+  script:
+    - cmake -D CMAKE_BUILD_TYPE=Release -D ION_BUILD_TEST=off -D ION_BUILD_EXAMPLE=off -D ION_BUILD_ALL_BB=off -D ION_BUILD_DOC=off -D WITH_CUDA=off -D ION_BUNDLE_HALIDE=on .
+    - make -j4 package
+    - ION_KIT_VERSION=`git describe --tags | sed -e "s/^v//g"`
+    - 'curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file ion-kit_${ION_KIT_VERSION}_${ARCH}.deb "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/deb/${ION_KIT_VERSION}/ion-kit_${ION_KIT_VERSION}_${ARCH}.deb"'
+  stage: build
+  only:
+    - tags
+
+build-amd64:
+  <<: *build-base
+  image: $CI_REGISTRY/ion/ion-kit/builder-amd64
+  variables:
+    ARCH: amd64
+  tags:
+    - amd64
+    - docker
+
+build-arm64:
+  <<: *build-base
+  image: 10.242.20.37:5000/builder-arm64
+  variables:
+    ARCH: arm64
+  tags:
+    - arm64
+    - docker
