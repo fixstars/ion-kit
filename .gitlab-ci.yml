@@ -25,8 +25,8 @@ prepare-amd64:
   <<: *prepare-base
   image: $CI_REGISTRY/ion/ion-kit/docker-with-buildx
   variables:
-      ARCH: amd64
-      REGISTRY_URL: $CI_REGISTRY/ion/ion-kit
+    ARCH: amd64
+    REGISTRY_URL: $CI_REGISTRY/ion/ion-kit
   tags:
     - amd64
     - docker
@@ -45,22 +45,24 @@ prepare-arm64:
   script:
     - cmake -D CMAKE_BUILD_TYPE=Release -D ION_BUILD_TEST=off -D ION_BUILD_EXAMPLE=off -D ION_BUILD_ALL_BB=off -D ION_BUILD_DOC=off -D WITH_CUDA=off -D ION_BUNDLE_HALIDE=on .
     - make -j4 package
-    - ls -l
-  artifacts:
-    paths:
-      - ion-kit*
+    - ION_KIT_VERSION=`git describe --tags | sed -e "s/v//g"`
+    - curl --header "PRIVATE-TOKEN: ${CI_JOB_TOKEN}" --upload-file ion-kit_${ION_KIT_VERSION}_${ARCH}.deb "https://gitlab.fixstars.com/api/v4/projects/${CI_PROJECT_ID}/packages/generic/deb/${ION_KIT_VERSION}/ion-kit_${ION_KIT_VERSION}_${ARCH}.deb"
   stage: build
 
 build-amd64:
   <<: *build-base
   image: $CI_REGISTRY/ion/ion-kit/builder-amd64
+  variables:
+    ARCH: amd64
   tags:
     - amd64
     - docker
 
-build-amd64:
+build-arm64:
   <<: *build-base
   image: 10.242.20.37:5000/builder-arm64
+  variables:
+    ARCH: arm64
   tags:
     - arm64
     - docker
