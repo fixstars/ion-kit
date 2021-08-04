@@ -1,7 +1,6 @@
 stages:
   - prepare
   - build
-  - package
 
 variables:
   REGISTRY_GITLAB: $CI_REGISTRY/ion/ion-kit
@@ -20,6 +19,8 @@ variables:
     - docker buildx create --use --config buildkitd.toml
     - docker buildx build --platform linux/${ARCH} --cache-to=${REGISTRY_URL}/builder-${ARCH}:cache --cache-from=${REGISTRY_URL}/builder-${ARCH}:cache -t ${REGISTRY_URL}/builder-${ARCH}:latest --build-arg HALIDE_GIT_URL=https://Halide:${HALIDE_ACCESS_TOKEN}@gitlab.fixstars.com/GENESIS/Halide.git --build-arg HALIDE_GIT_BRANCH=production/genesis --push .
   stage: prepare
+  only:
+    - tags
 
 prepare-amd64:
   <<: *prepare-base
@@ -45,9 +46,11 @@ prepare-arm64:
   script:
     - cmake -D CMAKE_BUILD_TYPE=Release -D ION_BUILD_TEST=off -D ION_BUILD_EXAMPLE=off -D ION_BUILD_ALL_BB=off -D ION_BUILD_DOC=off -D WITH_CUDA=off -D ION_BUNDLE_HALIDE=on .
     - make -j4 package
-    - ION_KIT_VERSION=`git describe --tags | sed -e "s/v//g"`
+    - ION_KIT_VERSION=`git describe --tags | sed -e "s/^v//g"`
     - 'curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file ion-kit_${ION_KIT_VERSION}_${ARCH}.deb "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/deb/${ION_KIT_VERSION}/ion-kit_${ION_KIT_VERSION}_${ARCH}.deb"'
   stage: build
+  only:
+    - tags
 
 build-amd64:
   <<: *build-base
