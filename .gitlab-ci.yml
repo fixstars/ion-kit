@@ -7,7 +7,7 @@ variables:
   REGISTRY_GITLAB: $CI_REGISTRY/ion/ion-kit
   REGISTRY_AWS: 10.242.20.37:5000 # This is private registry on AWS
 
-.prepare-builder-base: &prepare-builder-base
+.prepare-base: &prepare-base
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - |
@@ -18,11 +18,11 @@ variables:
           insecure = true
         EOF
     - docker buildx create --use --config buildkitd.toml
-    - docker buildx build --target builder-generic --platform linux/amd64 --cache-to=${REGISTRY_URL}/builder-generic-${ARCH}:cache --cache-from=${REGISTRY_URL}/builder-generic-${ARCH}:cache -t ${REGISTRY_URL}/builder-generic-${ARCH}:latest --push .
+    - docker buildx build --platform linux/${ARCH} --cache-to=${REGISTRY_URL}/builder-${ARCH}:cache --cache-from=${REGISTRY_URL}/builder-${ARCH}:cache -t ${REGISTRY_URL}/builder-${ARCH}:latest --push .
   stage: prepare
 
-prepare-builder-amd64:
-  <<: *prepare-builder-base
+prepare-amd64:
+  <<: *prepare-base
   image: $REGISTRY_GITLAB/docker-with-buildx
   variables:
       ARCH: amd64
@@ -31,8 +31,8 @@ prepare-builder-amd64:
     - amd64
     - docker
 
-prepare-builder-arm64:
-  <<: *prepare-builder-base
+prepare-arm64:
+  <<: *prepare-base
   image: $REGISTRY_AWS/docker-with-buildx
   variables:
       ARCH: arm64
@@ -41,15 +41,25 @@ prepare-builder-arm64:
     - arm64
     - docker
 
-      # release-amd64:
-      #  image: $CI_REGISTRY/ion/ion-kit/builder
-      #   script:
-      #     - cmake -D CMAKE_BUILD_TYPE=Release -D ION_BUILD_TEST=off -D ION_BUILD_EXAMPLE=off -D ION_BUILD_ALL_BB=off -D ION_BUILD_DOC=off -D WITH_CUDA=off -D ION_BUNDLE_HALIDE=on .
-      #     - make -j4 package
-      #     - ls -l
-      #   artifacts:
-      #     paths:
-      #       - ion-kit*
-      #   tags:
-      #     - amd64
-      #     - docker
+.build-base: &build-base
+  script:
+    - cmake -D CMAKE_BUILD_TYPE=Release -D ION_BUILD_TEST=off -D ION_BUILD_EXAMPLE=off -D ION_BUILD_ALL_BB=off -D ION_BUILD_DOC=off -D WITH_CUDA=off -D ION_BUNDLE_HALIDE=on .
+    - make -j4 package
+    - ls -l
+  artifacts:
+    paths:
+      - ion-kit*
+
+build-amd64:
+  <<: *build-base
+  image: $REGISTRY_GITLAB/builder-amd64
+  tags:
+    - amd64
+    - docker
+
+build-amd64:
+  <<: *build-base
+  image: $REGISTRY_AWS/builder-arm64
+  tags:
+    - arm64
+    - docker
