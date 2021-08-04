@@ -20,9 +20,6 @@ variables:
     - docker buildx create --use --config buildkitd.toml
     - docker buildx build --target builder-generic --platform linux/amd64 --cache-to=${REGISTRY_URL}/builder-generic-${ARCH}:cache --cache-from=${REGISTRY_URL}/builder-generic-${ARCH}:cache -t ${REGISTRY_URL}/builder-generic-${ARCH}:latest --push .
   stage: prepare
-  tags:
-    - $ARCH
-    - docker
 
 prepare-builder-amd64:
   <<: *prepare-builder-base
@@ -30,6 +27,9 @@ prepare-builder-amd64:
   variables:
       ARCH: amd64
       REGISTRY_URL: $REGISTRY_GITLAB
+  tags:
+    - amd64
+    - docker
 
 prepare-builder-arm64:
   <<: *prepare-builder-base
@@ -37,6 +37,9 @@ prepare-builder-arm64:
   variables:
       ARCH: arm64
       REGISTRY_URL: $REGISTRY_AWS
+  tags:
+    - arm64
+    - docker
 
       # release-amd64:
       #  image: $CI_REGISTRY/ion/ion-kit/builder
