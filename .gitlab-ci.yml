@@ -18,7 +18,7 @@ variables:
           insecure = true
         EOF
     - docker buildx create --use --config buildkitd.toml
-    - docker buildx build --platform linux/${ARCH} --cache-to=${REGISTRY_URL}/builder-${ARCH}:cache --cache-from=${REGISTRY_URL}/builder-${ARCH}:cache -t ${REGISTRY_URL}/builder-${ARCH}:latest --push .
+    - docker buildx build --platform linux/${ARCH} --cache-to=${REGISTRY_URL}/builder-${ARCH}:cache --cache-from=${REGISTRY_URL}/builder-${ARCH}:cache -t ${REGISTRY_URL}/builder-${ARCH}:latest --build-arg HALIDE_GIT_URL=https://Halide:${HALIDE_ACCESS_TOKEN}@gitlab.fixstars.com/GENESIS/Halide.git --build-arg HALIDE_GIT_BRANCH=production/genesis --push .
   stage: prepare
 
 prepare-amd64:
