@@ -1,12 +1,52 @@
-release-amd64:
-  image: $CI_REGISTRY/ion/ion-kit/builder
+stages:
+  - prepare
+  - build
+  - package
+
+variables:
+  REGISTRY_GITLAB: $CI_REGISTRY/genesis-saas/genesis-runtime
+  REGISTRY_AWS: 10.242.20.37:5000 # This is private registry on AWS
+
+.prepare-builder-base: &prepare-builder-base
   script:
-    - cmake -D CMAKE_BUILD_TYPE=Release -D ION_BUILD_TEST=off -D ION_BUILD_EXAMPLE=off -D ION_BUILD_ALL_BB=off -D ION_BUILD_DOC=off -D WITH_CUDA=off -D ION_BUNDLE_HALIDE=on .
-    - make -j4 package
-    - ls -l
-  artifacts:
-    paths:
-      - ion-kit*
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - |
+        cat <<EOF > buildkitd.toml
+        insecure-entitlements = [ "security.insecure" ]
+        [registry."10.242.20.37:5000"]
+          http = true
+          insecure = true
+        EOF
+    - docker buildx create --use --config buildkitd.toml
+    - docker buildx build --target builder-generic --platform linux/amd64 --cache-to=${REGISTRY_URL}/builder-generic-${ARCH}:cache --cache-from=${REGISTRY_URL}/builder-generic-${ARCH}:cache -t ${REGISTRY_URL}/builder-generic-${ARCH}:latest --push .
+  stage: prepare
   tags:
-    - amd64
+    - $ARCH
     - docker
+
+prepare-builder-amd64:
+  <<: *prepare-builder-base
+  image: $REGISTRY_GITLAB/docker-with-buildx
+  variables:
+      ARCH: amd64
+      REGISTRY_URL: $REGISTRY_GITLAB
+
+prepare-builder-arm64:
+  <<: *prepare-builder-base
+  image: $REGISTRY_AWS/docker-with-buildx
+  variables:
+      ARCH: arm64
+      REGISTRY_URL: $REGISTRY_AWS
+
+      # release-amd64:
+      #  image: $CI_REGISTRY/ion/ion-kit/builder
+      #   script:
+      #     - cmake -D CMAKE_BUILD_TYPE=Release -D ION_BUILD_TEST=off -D ION_BUILD_EXAMPLE=off -D ION_BUILD_ALL_BB=off -D ION_BUILD_DOC=off -D WITH_CUDA=off -D ION_BUNDLE_HALIDE=on .
+      #     - make -j4 package
+      #     - ls -l
+      #   artifacts:
+      #     paths:
+      #       - ion-kit*
+      #   tags:
+      #     - amd64
+      #     - docker
