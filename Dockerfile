@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y \
         g++ \
         gcc \
         git \
+        libssl-dev \
         make \
         ninja-build \
         python3 \
