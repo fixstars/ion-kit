@@ -46,7 +46,7 @@ prepare-arm64:
     - cmake -D CMAKE_BUILD_TYPE=Release -D ION_BUILD_TEST=off -D ION_BUILD_EXAMPLE=off -D ION_BUILD_ALL_BB=off -D ION_BUILD_DOC=off -D WITH_CUDA=off -D ION_BUNDLE_HALIDE=on .
     - make -j4 package
     - ION_KIT_VERSION=`git describe --tags | sed -e "s/v//g"`
-    - curl --header "PRIVATE-TOKEN: ${CI_JOB_TOKEN}" --upload-file ion-kit_${ION_KIT_VERSION}_${ARCH}.deb "https://gitlab.fixstars.com/api/v4/projects/${CI_PROJECT_ID}/packages/generic/deb/${ION_KIT_VERSION}/ion-kit_${ION_KIT_VERSION}_${ARCH}.deb"
+    - 'curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file ion-kit_${ION_KIT_VERSION}_${ARCH}.deb "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/deb/${ION_KIT_VERSION}/ion-kit_${ION_KIT_VERSION}_${ARCH}.deb"'
   stage: build
 
 build-amd64:
