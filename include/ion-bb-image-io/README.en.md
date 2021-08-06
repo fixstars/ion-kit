@@ -66,10 +66,9 @@ This block is for handling USB cameras.
 
 If the camera is not detected, it will automatically enter simulation mode.
 
-::: tip Behavior during benchmarking
+!> **Behavior during benchmarking**  
 Since no real device is connected to the benchmark environment, it is in simulation mode.
 Therefore, the benchmark results of this block itself will be different from those of the real device.
-:::
 
 ### Input
 
@@ -106,10 +105,9 @@ This block is for handling RAW cameras.
 
 If the camera is not detected, it will automatically enter simulation mode.
 
-::: tip Behavior during benchmarking
+!> **Behavior during benchmarking**  
 Since no real device is connected to the benchmark environment, it is in simulation mode.
 Therefore, the benchmark results of this block itself will be different from those of the real device.
-:::
 
 ### Input
 
@@ -209,10 +207,9 @@ None
 
 Displays an RGB image in a window.
 
-::: tip Behavior during benchmarking
+!> **Behavior during benchmarking**  
 Since there is no real device connected to the benchmark environment, this block simply does nothing.
 Therefore, the benchmark results of this block itself will be different from those of the real device.
-:::
 
 ### Input
 
@@ -245,15 +242,13 @@ Therefore, the benchmark results of this block itself will be different from tho
 Outputs data to the frame buffer.
 It receives RGB data and writes the data to the `/dev/fb0` device with the specified image size.
 
-::: warning Restrictions on Pipeline Configuration
+?> **warning Restrictions on Pipeline Configuration**  
 Currently, this block does not support multiple frame buffers.
 Please be careful to include only a single Display block in the pipeline.
-:::
 
-::: tip Behavior during benchmarking
+!> **Behavior during benchmarking**  
 Since there is no real device connected to the benchmark environment, this block simply does nothing.
 Therefore, the benchmark results of this block itself will be different from those of the real device.
-:::
 
 ### Input
 
