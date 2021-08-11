@@ -138,22 +138,6 @@ This specification is subject to change in the future.
   - Height of the image (pixel)
   - Element type: int32
 
-### Performances
-| Model                     | Input Resolution | mAP (fp16) | mAP (int8) | Raspberry Pi 4 int8 (ms) | Jetson Nano fp16 (ms) | Jetson TX2 fp16 (ms) | Jetson Xavier NX fp16 (ms) |
-| :------------------------ | ---------------: | ---------: | ---------: | -----------------------: | --------------------: | -------------------: | -------------------------: |
-| SSD MobileNet V1          |          300x300 |       17.9 |       17.5 |                   112.63 |                 26.37 |                13.95 |                       4.23 |
-| SSD MobileNet V2          |          300x300 |       18.6 |       18.0 |                   218.52 |                 34.67 |                15.91 |                       6.04 |
-| SSDLite MobileNet V2      |          300x300 |       18.0 |       16.7 |                    95.10 |                 30.12 |                14.38 |                       5.53 |
-| SSD MobileNet V3 Small    |          320x320 |       13.5 |        0.0 |                    35.68 |                 21.86 |                12.40 |                       7.30 |
-| SSD MobileNet V3 Large    |          320x320 |       22.3 |        1.5 |                    80.21 |                 33.41 |                16.25 |                       7.60 |
-| SSDLite MobileDet CPU     |          320x320 |       24.5 |        0.1 |                    96.37 |                 40.28 |                18.77 |                      10.40 |
-| SSDLite MobileDet EdgeTPU |          320x320 |       26.3 |       26.1 |                   126.66 |                 35.30 |                16.21 |                       7.31 |
-| SSDLite MobileDet DSP     |          320x320 |       30.9 |       13.2 |                          |                 46.44 |                20.06 |                       9.00 |
-| SSDLite MobileDet GPU     |          320x320 |       22.5 |       22.4 |                          |                       |                19.21 |                       8.01 |
-| YOLO v2                   |          608x608 |       24.6 |            |                          |                180.49 |                68.23 |                      27.51 |
-| tiny-YOLO v3              |          416x416 |    1.2[^1] |            |                          |                 25.93 |                11.34 |                       6.44 |
-| YOLO v3                   |          416x416 |       29.5 |            |                          |                200.43 |                80.71 |                      34.97 |
-
 ## TLT Object Detection SSD
 
 For input input, it performs object recognition using DNN optimized for NVIDIA GPUs, and draws a bounding box for output.
@@ -197,22 +181,6 @@ Please refer to the above link for detailed model specifications.
 - cache_root
   - Path of the directory where the TensorRT model file cache is stored or loaded.
   - Element type: string
-
-### Performances
-| Model                     | Input Resolution | mAP (fp16) | mAP (int8) | Raspberry Pi 4 int8 (ms) | Jetson Nano fp16 (ms) | Jetson TX2 fp16 (ms) | Jetson Xavier NX fp16 (ms) |
-| :------------------------ | ---------------: | ---------: | ---------: | -----------------------: | --------------------: | -------------------: | -------------------------: |
-| SSD MobileNet V1          |          300x300 |       17.9 |       17.5 |                   112.63 |                 26.37 |                13.95 |                       4.23 |
-| SSD MobileNet V2          |          300x300 |       18.6 |       18.0 |                   218.52 |                 34.67 |                15.91 |                       6.04 |
-| SSDLite MobileNet V2      |          300x300 |       18.0 |       16.7 |                    95.10 |                 30.12 |                14.38 |                       5.53 |
-| SSD MobileNet V3 Small    |          320x320 |       13.5 |        0.0 |                    35.68 |                 21.86 |                12.40 |                       7.30 |
-| SSD MobileNet V3 Large    |          320x320 |       22.3 |        1.5 |                    80.21 |                 33.41 |                16.25 |                       7.60 |
-| SSDLite MobileDet CPU     |          320x320 |       24.5 |        0.1 |                    96.37 |                 40.28 |                18.77 |                      10.40 |
-| SSDLite MobileDet EdgeTPU |          320x320 |       26.3 |       26.1 |                   126.66 |                 35.30 |                16.21 |                       7.31 |
-| SSDLite MobileDet DSP     |          320x320 |       30.9 |       13.2 |                          |                 46.44 |                20.06 |                       9.00 |
-| SSDLite MobileDet GPU     |          320x320 |       22.5 |       22.4 |                          |                       |                19.21 |                       8.01 |
-| YOLO v2                   |          608x608 |       24.6 |            |                          |                180.49 |                68.23 |                      27.51 |
-| tiny-YOLO v3              |          416x416 |    1.2[^1] |            |                          |                 25.93 |                11.34 |                       6.44 |
-| YOLO v3                   |          416x416 |       29.5 |            |                          |                200.43 |                80.71 |                      34.97 |
 
 ## TLT PeopleNet
 
