@@ -273,7 +273,38 @@ Therefore, the benchmark results of this block itself will be different from tho
   - Height of the image (pixel)
   - Element type: int32
 
-## Image Loader
+## Data Loader / Grayscale
+
+Reads an image file (bmp, png, jpg) specified by the given parameter `url`, converts it to Grayscale data, and outputs it.
+
+### Input
+
+None
+
+### Output
+
+- output
+  - Element type: uint16
+  - Dimension: 2
+  - Format: HW for dimension alignment, Grayscale data in the value range [0.. `dynamic_range` ].
+
+### Parameter
+
+- width
+  - Width of the image (pixel)
+  - Element type: int32
+- height
+  - Height of the image (pixel)
+  - element type: int32
+- dynamic_range
+  - Dynamic range of the image (dB)
+  - element type: int32
+- url
+  - URL of the image to load
+  - **https not supported**.
+  - element type: string
+
+## Data Loader / Color
 
 Reads an image file (bmp, png, jpg) specified by the given parameter `url`, converts it to RGB data, and outputs it.
 
@@ -294,7 +325,7 @@ None
   - Width of the image (pixel)
   - Element type: int32
 - height
-  - Height of the image in pixels.
+  - Height of the image (pixel)
   - element type: int32
 - url
   - URL of the image to load

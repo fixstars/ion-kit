@@ -1,6 +1,534 @@
 # Building Block Reference Manual
 <!-- ion-bb-core -->
 
+## Cast1DFloatToUInt16
+
+Performs type conversion of input data.
+
+### Input
+
+- input
+  - Element type: float32
+  - Dimension: 1
+  - Format: unrestricted
+
+### Output
+
+- output
+  - Element type: uint16
+  - Dimension: 1
+  - Format: unrestricted
+
+### Parameter
+
+None
+
+## Cast1DFloatToUInt8
+
+Performs type conversion of input data.
+
+### Input
+
+- input
+  - Element type: float32
+  - Dimension: 1
+  - Format: unrestricted
+
+### Output
+
+- output
+  - Element type: uint8
+  - Dimension: 1
+  - Format: unrestricted
+
+### Parameter
+
+None
+
+## Cast1DUInt16ToFloat
+
+Performs type conversion of input data.
+
+### Input
+
+- input
+  - Element type: uint16
+  - Dimension: 1
+  - Format: unrestricted
+
+### Output
+
+- output
+  - Element type: float32
+  - Dimension: 1
+  - Format: unrestricted
+
+### Parameter
+
+None
+
+## Cast1DUInt16ToUInt8
+
+Performs type conversion of input data.
+
+### Input
+
+- input
+  - Element type: uint16
+  - Dimension: 1
+  - Format: unrestricted
+
+### Output
+
+- output
+  - Element type: uint8
+  - Dimension: 1
+  - Format: unrestricted
+
+### Parameter
+
+None
+
+## Cast1DUInt8ToFloat
+
+Performs type conversion of input data.
+
+### Input
+
+- input
+  - Element type: uint8
+  - Dimension: 1
+  - Format: unrestricted
+
+### Output
+
+- output
+  - Element type: float32
+  - Dimension: 1
+  - Format: unrestricted
+
+### Parameter
+
+None
+
+## Cast1DUInt8ToUInt16
+
+Performs type conversion of input data.
+
+### Input
+
+- input
+  - Element type: uint8
+  - Dimension: 1
+  - Format: unrestricted
+
+### Output
+
+- output
+  - Element type: uint16
+  - Dimension: 1
+  - Format: unrestricted
+
+### Parameter
+
+None
+
+## Cast2DFloatToUInt16
+
+Performs type conversion of input data.
+
+### Input
+
+- input
+  - Element type: float32
+  - Dimension: 2
+  - Format: unrestricted
+
+### Output
+
+- output
+  - Element type: uint16
+  - Dimension: 2
+  - Format: unrestricted
+
+### Parameter
+
+None
+
+## Cast2DFloatToUInt8
+
+Performs type conversion of input data.
+
+### Input
+
+- input
+  - Element type: float32
+  - Dimension: 2
+  - Format: unrestricted
+
+### Output
+
+- output
+  - Element type: uint8
+  - Dimension: 2
+  - Format: unrestricted
+
+### Parameter
+
+None
+
+## Cast2DUInt16ToFloat
+
+Performs type conversion of input data.
+
+### Input
+
+- input
+  - Element type: uint16
+  - Dimension: 2
+  - Format: unrestricted
+
+### Output
+
+- output
+  - Element type: float32
+  - Dimension: 2
+  - Format: unrestricted
+
+### Parameter
+
+None
+
+## Cast2DUInt16ToUInt8
+
+Performs type conversion of input data.
+
+### Input
+
+- input
+  - Element type: uint16
+  - Dimension: 2
+  - Format: unrestricted
+
+### Output
+
+- output
+  - Element type: uint8
+  - Dimension: 2
+  - Format: unrestricted
+
+### Parameter
+
+None
+
+## Cast2DUInt8ToFloat
+
+Performs type conversion of input data.
+
+### Input
+
+- input
+  - Element type: uint8
+  - Dimension: 2
+  - Format: unrestricted
+
+### Output
+
+- output
+  - Element type: float32
+  - Dimension: 2
+  - Format: unrestricted
+
+### Parameter
+
+None
+
+## Cast2DUInt8ToUInt16
+
+Performs type conversion of input data.
+
+### Input
+
+- input
+  - Element type: uint8
+  - Dimension: 2
+  - Format: unrestricted
+
+### Output
+
+- output
+  - Element type: uint16
+  - Dimension: 2
+  - Format: unrestricted
+
+### Parameter
+
+None
+
+## Cast3DFloatToUInt16
+
+Performs type conversion of input data.
+
+### Input
+
+- input
+  - Element type: float32
+  - Dimension: 3
+  - Format: unrestricted
+
+### Output
+
+- output
+  - Element type: uint16
+  - Dimension: 3
+  - Format: unrestricted
+
+### Parameter
+
+None
+
+## Cast3DFloatToUInt8
+
+Performs type conversion of input data.
+
+### Input
+
+- input
+  - Element type: float32
+  - Dimension: 3
+  - Format: unrestricted
+
+### Output
+
+- output
+  - Element type: uint8
+  - Dimension: 3
+  - Format: unrestricted
+
+### Parameter
+
+None
+
+## Cast3DUInt16ToFloat
+
+Performs type conversion of input data.
+
+### Input
+
+- input
+  - Element type: uint16
+  - Dimension: 3
+  - Format: unrestricted
+
+### Output
+
+- output
+  - Element type: float32
+  - Dimension: 3
+  - Format: unrestricted
+
+### Parameter
+
+None
+
+## Cast3DUInt16ToUInt8
+
+Performs type conversion of input data.
+
+### Input
+
+- input
+  - Element type: uint16
+  - Dimension: 3
+  - Format: unrestricted
+
+### Output
+
+- output
+  - Element type: uint8
+  - Dimension: 3
+  - Format: unrestricted
+
+### Parameter
+
+None
+
+## Cast3DUInt8ToFloat
+
+Performs type conversion of input data.
+
+### Input
+
+- input
+  - Element type: uint8
+  - Dimension: 3
+  - Format: unrestricted
+
+### Output
+
+- output
+  - Element type: float32
+  - Dimension: 3
+  - Format: unrestricted
+
+### Parameter
+
+None
+
+## Cast3DUInt8ToUInt16
+
+Performs type conversion of input data.
+
+### Input
+
+- input
+  - Element type: uint8
+  - Dimension: 3
+  - Format: unrestricted
+
+### Output
+
+- output
+  - Element type: uint16
+  - Dimension: 3
+  - Format: unrestricted
+
+### Parameter
+
+None
+
+## Cast4DFloatToUInt16
+
+Performs type conversion of input data.
+
+### Input
+
+- input
+  - Element type: float32
+  - Dimension: 4
+  - Format: unrestricted
+
+### Output
+
+- output
+  - Element type: uint16
+  - Dimension: 4
+  - Format: unrestricted
+
+### Parameter
+
+None
+
+## Cast4DFloatToUInt8
+
+Performs type conversion of input data.
+
+### Input
+
+- input
+  - Element type: float32
+  - Dimension: 4
+  - Format: unrestricted
+
+### Output
+
+- output
+  - Element type: uint8
+  - Dimension: 4
+  - Format: unrestricted
+
+### Parameter
+
+None
+
+## Cast4DUInt16ToFloat
+
+Performs type conversion of input data.
+
+### Input
+
+- input
+  - Element type: uint16
+  - Dimension: 4
+  - Format: unrestricted
+
+### Output
+
+- output
+  - Element type: float32
+  - Dimension: 4
+  - Format: unrestricted
+
+### Parameter
+
+None
+
+## Cast4DUInt16ToUInt8
+
+Performs type conversion of input data.
+
+### Input
+
+- input
+  - Element type: uint16
+  - Dimension: 4
+  - Format: unrestricted
+
+### Output
+
+- output
+  - Element type: uint8
+  - Dimension: 4
+  - Format: unrestricted
+
+### Parameter
+
+None
+
+## Cast4DUInt8ToFloat
+
+Performs type conversion of input data.
+
+### Input
+
+- input
+  - Element type: uint8
+  - Dimension: 4
+  - Format: unrestricted
+
+### Output
+
+- output
+  - Element type: float32
+  - Dimension: 4
+  - Format: unrestricted
+
+### Parameter
+
+None
+
+## Cast4DUInt8ToUInt16
+
+Performs type conversion of input data.
+
+### Input
+
+- input
+  - Element type: uint8
+  - Dimension: 4
+  - Format: unrestricted
+
+### Output
+
+- output
+  - Element type: uint16
+  - Dimension: 4
+  - Format: unrestricted
+
+### Parameter
+
+None
+
 ## ReorderBuffer3DUInt8
 
 Swaps the dimensions of the input data.
