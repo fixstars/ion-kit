@@ -275,7 +275,7 @@ Therefore, the benchmark results of this block itself will be different from tho
 
 ## Data Loader / Grayscale
 
-Reads an image file (bmp, png, jpg) specified by the given parameter `url`, converts it to Grayscale data, and outputs it.
+Reads an image file (bmp, png, jpg, etc.) specified by the given parameter `url`, converts it to Grayscale data, and outputs it.
 
 ### Input
 
@@ -301,12 +301,17 @@ None
   - element type: int32
 - url
   - URL of the image to load
+    - The files that can be specified are image files such as bmp, png, jpg, raw, or zip format files that are compressed by combining multiple images.
+      - Please note that the raw file is a dump of the raw pixel data, not the data obtained from the image sensor. The expected image formats are as follows.
+        - Element type: uint8 or uint16
+        - Number of channels: 1
+      - If a zip file is specified, the files in the zip file are read in order of name and output sequentially. The number of files output when creating a preview is 1 for normal previews and the number specified by the number of previews for sequential previews. If the number of previews entered is larger than the number of files in the zip file, the files are output repeatedly in the order of file names.
   - **https not supported**.
   - element type: string
 
 ## Data Loader / Color
 
-Reads an image file (bmp, png, jpg) specified by the given parameter `url`, converts it to RGB data, and outputs it.
+Reads an image file (bmp, png, jpg, etc.) specified by the given parameter `url`, converts it to RGB data, and outputs it.
 
 ### Input
 
@@ -329,6 +334,11 @@ None
   - element type: int32
 - url
   - URL of the image to load
+    - The files that can be specified are image files such as bmp, png, jpg, raw, or zip format files that are compressed by combining multiple images.
+      - Please note that the raw file is a dump of the raw pixel data, not the data obtained from the image sensor. The expected image formats are as follows.
+        - Element type: uint8
+        - Number of channels: 3
+      - If a zip file is specified, the files in the zip file are read in order of name and output sequentially. The number of files output when creating a preview is 1 for normal previews and the number specified by the number of previews for sequential previews. If the number of previews entered is larger than the number of files in the zip file, the files are output repeatedly in the order of file names.
   - **https not supported**.
   - element type: string
 
