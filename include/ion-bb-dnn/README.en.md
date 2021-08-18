@@ -1,7 +1,8 @@
-# Building Block Reference Manual
 <!-- ion-bb-dnn -->
 
-## Object Detection
+# Object Detection
+
+## Description
 
 Recognizes objects by DNN for input input, and draws bounding boxes for output.
 The following models are supported.
@@ -138,7 +139,9 @@ This specification is subject to change in the future.
   - Height of the image (pixel)
   - Element type: int32
 
-## TLT Object Detection SSD
+# TLT Object Detection SSD
+
+## Description
 
 For input input, it performs object recognition using DNN optimized for NVIDIA GPUs, and draws a bounding box for output.
 The following models are supported.
@@ -182,7 +185,9 @@ Please refer to the above link for detailed model specifications.
   - Path of the directory where the TensorRT model file cache is stored or loaded.
   - Element type: string
 
-## TLT PeopleNet
+# TLT PeopleNet
+
+## Description
 
 For input input, it recognizes three classes of objects (human, face, and bag) using DNN optimized for NVIDIA GPUs, and draws a bounding box for output.
 The following models are supported.
@@ -227,7 +232,9 @@ Please refer to the above link for detailed model specifications.
   - Element type: string
 
 
-## TLT PeopleNet metadata version
+# TLT PeopleNet metadata version
+
+## Description
 
 It performs basically the same kind of inference as TLT PeopleNet in the previous section, but outputs metadata including recognition information instead of images with bounding boxes drawn on them.
 
@@ -313,7 +320,9 @@ DetectionBox Array:
   - Element type: int32
 
 
-## ClassifyGender
+# ClassifyGender
+
+## Description
 
 DetectionBox Cuts out a rectangular face image from an image using Array format recognition information, and determines the gender.
 
@@ -386,7 +395,9 @@ ClassifyResult
   - Size of the output buffer
   - element type: int32
 
-## JSONDictAverageRegulator
+# JSONDictAverageRegulator
+
+## Description
 
 For data input in dictionary format, this function outputs the total value within the interval for each specified number of seconds.
 Valid output is only for each second, and null is set for all other output.
@@ -431,7 +442,9 @@ NumberDict:
   - Interval between integration and output (in seconds)
   - Element type: int32
 
-## IFTTT WebHook Uploader
+# IFTTT WebHook Uploader
+
+## Description
 
 Sends input data as a message to the specified IFTTT WebHook URL.
 If the input data is null, it will not be sent.

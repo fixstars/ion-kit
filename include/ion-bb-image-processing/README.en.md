@@ -1,7 +1,8 @@
-# Building Block Reference Manual
 <!-- ion-bb-image-processing -->
 
-## BayerOffset
+# BayerOffset
+
+## Description
 
 Subtracts **subtracts** the specified value from the pixel value of the Bayer image.
 The output will be clamped to [0.0, 1.0].
@@ -40,7 +41,9 @@ The output will be clamped to [0.0, 1.0].
     - 3: GBRG
   - Element type: int32
 
-## BayerWhiteBalance
+# BayerWhiteBalance
+
+## Description
 
 This function **multiplies** the pixel value of a Bayer image by the specified value.
 The output will be clamped to [0.0, 1.0].
@@ -79,7 +82,9 @@ The output will be clamped to [0.0, 1.0].
     - 3: GBRG
   - Element type: int32
 
-## BayerDemosaicSimple
+# BayerDemosaicSimple
+
+## Description
 
 Performs demosaicing of a Bayer image and outputs an RGB image.
 
@@ -117,7 +122,9 @@ The output size will be 1/2 of the input size in both height and width.
     - 3: GBRG
   - Element type: int32
 
-## BayerDemosaicLinear
+# BayerDemosaicLinear
+
+## Description
 
 Performs demosaicing of a Bayer image and outputs an RGB image.
 
@@ -154,7 +161,9 @@ Performs demosaicing using linear interpolation.
     - 3: GBRG
   - Element type: int32
 
-## BayerDemosaicFilter
+# BayerDemosaicFilter
+
+## Description
 
 Performs demosaicing of a Bayer image and outputs an RGB image.
 
@@ -191,7 +200,9 @@ Use a filter to perform demosaicing.
     - 3: GBRG
   - Element type: int32
 
-## GammaCorrection2D
+# GammaCorrection2D
+
+## Description
 
 Using the given input `gamma`, gamma correction is performed for each element as expressed by the following equation.
 
@@ -216,7 +227,9 @@ output = clamp(pow(input, gamma), 0.0, 1.0);
   - Dimension: 2
   - Format: data whose value range is [0..1.0].
 
-## GammaCorrection3D
+# GammaCorrection3D
+
+## Description
 
 Using the given input `gamma`, gamma correction is performed for each element as expressed by the following equation.
 
@@ -241,7 +254,9 @@ output = clamp(pow(input, gamma), 0.0, 1.0);
   - Dimension: 3
   - Format: data whose value range is [0..1.0].
 
-## LensShadingCorrectionLinear
+# LensShadingCorrectionLinear
+
+## Description
 
 Peripheral light level correction for Bayer images.
 
@@ -298,7 +313,9 @@ The distance is normalized so that the maximum value is 1.
     - 3: GBRG
   - Element type: int32
 
-## ColorMatrix
+# ColorMatrix
+
+## Description
 
 Applies a color transformation matrix to RGB images.
 
@@ -321,7 +338,9 @@ Applies a color transformation matrix to RGB images.
   - Dimension: 3
   - Format: CHW for dimension alignment, RGB data in the value range [0.0, 1.0].
 
-## CalcLuminance
+# CalcLuminance
+
+## Description
 
 Converts an RGB image to a luminance image.
 
@@ -366,7 +385,9 @@ Y
     - 3: Y
   - Element type: int32
 
-## BilateralFilter2D
+# BilateralFilter2D
+
+## Description
 
 Applies a bilateral filter to an image.
 
@@ -415,7 +436,9 @@ Applies a bilateral filter to an image.
     - 1: Average
       - Square of the average difference
 
-## BilateralFilter3D
+# BilateralFilter3D
+
+## Description
 
 Applies a bilateral filter to an image.
 
@@ -464,7 +487,9 @@ Applies a bilateral filter to an image.
     - 1: Average
       - Square of the average difference
 
-## Convolution2D
+# Convolution2D
+
+## Description
 
 Performs image convolution.
 
@@ -508,7 +533,9 @@ Performs image convolution.
     - 3: MirrorInterior
     - 4: Zero
 
-## Convolution3D
+# Convolution3D
+
+## Description
 
 Performs image convolution.
 
@@ -552,7 +579,9 @@ Performs image convolution.
     - 3: MirrorInterior
     - 4: Zero
 
-## LensDistortionCorrectionModel2D
+# LensDistortionCorrectionModel2D
+
+## Description
 
 Corrects the lens distortion according to the parameters.
 
@@ -609,7 +638,9 @@ Corrects the lens distortion according to the parameters.
   - Height of the input image (pixel)
   - Element type: int32
 
-## LensDistortionCorrectionModel3D
+# LensDistortionCorrectionModel3D
+
+## Description
 
 Corrects the lens distortion according to the parameters.
 
@@ -666,7 +697,9 @@ Corrects the lens distortion according to the parameters.
   - Height of the input image (pixel)
   - Element type: int32
 
-## ResizeNearest2D
+# ResizeNearest2D
+
+## Description
 
 Resize the image using the Nearest Neighbor method.
 
@@ -697,7 +730,9 @@ Resize the image using the Nearest Neighbor method.
   - Example: 0.5 for a 1/2 scale
   - Element type: float32
 
-## ResizeNearest3D
+# ResizeNearest3D
+
+## Description
 
 Resize the image using the Nearest Neighbor method.
 
@@ -728,7 +763,9 @@ Resize the image using the Nearest Neighbor method.
   - Example: 0.5 for a 1/2 scale
   - Element type: float32
 
-## ResizeBilinear2D
+# ResizeBilinear2D
+
+## Description
 
 Resizes RGB images using the bilinear method.
 
@@ -759,7 +796,9 @@ Resizes RGB images using the bilinear method.
   - Example: 0.5 for a 1/2 scale
   - Element type: float32
 
-## ResizeBilinear3D
+# ResizeBilinear3D
+
+## Description
 
 Resizes RGB images using the bilinear method.
 
@@ -791,8 +830,9 @@ Resizes RGB images using the bilinear method.
   - Element type: float32
 
 
-## ResizeAreaAverage2D
+# ResizeAreaAverage2D
 
+## Description
 
 Resizes RGB images using the average pixel method.
 
@@ -823,7 +863,9 @@ Resizes RGB images using the average pixel method.
   - Example: 0.5 for a 1/2 scale
   - Element type: float32
 
-## ResizeAreaAverage3D
+# ResizeAreaAverage3D
+
+## Description
 
 Resizes RGB images using the average pixel method.
 
@@ -854,7 +896,9 @@ Resizes RGB images using the average pixel method.
   - Example: 0.5 for a 1/2 scale
   - Element type: float32
 
-## BayerDownscaleUInt16
+# BayerDownscaleUInt16
+
+## Description
 
 Downscales a Bayer image.
 
@@ -885,7 +929,9 @@ Downscales a Bayer image.
   - Example: 2 for 1/2 reduction
   - Element type: int32
 
-## Normalize RAW
+# Normalize RAW
+
+## Description
 
 Outputs a RAW image normalized to [0.0, 1.0].
 
@@ -914,7 +960,9 @@ Outputs a RAW image normalized to [0.0, 1.0].
   - Example: Specify 6 for 10-bit justification
   - Element type: uint8
 
-## FitImageToCenter2DUInt8
+# FitImageToCenter2DUInt8
+
+## Description
 
 Center the image.
 
@@ -945,7 +993,9 @@ The image will be cropped if the input size is large, or padded with 0 if it is 
 - output_height
   - Output image height (pixel)
 
-## FitImageToCenter3DUInt8
+# FitImageToCenter3DUInt8
+
+## Description
 
 Center the image.
 
@@ -976,7 +1026,9 @@ The image will be cropped if the input size is large, or padded with 0 if it is 
 - output_height
   - Output image height (pixel)
 
-## FitImageToCenter2DFloat
+# FitImageToCenter2DFloat
+
+## Description
 
 Center the image.
 
@@ -1007,7 +1059,9 @@ The image will be cropped if the input size is large, or padded with 0 if it is 
 - output_height
   - Output image height (pixel)
 
-## FitImageToCenter3DFloat
+# FitImageToCenter3DFloat
+
+## Description
 
 Center the image.
 
@@ -1038,7 +1092,9 @@ The image will be cropped if the input size is large, or padded with 0 if it is 
 - output_height
   - Output image height (pixel)
 
-## ReorderColorChannel3DUInt8
+# ReorderColorChannel3DUInt8
+
+## Description
 
 Converts the channel order of RGB images in reverse order.
 
@@ -1064,7 +1120,9 @@ It can be used for both RGB->BGR conversion and BGR->RGB conversion.
   - Dimension representing a color channel.
   - Element type: int32
 
-## ReorderColorChannel3DFloat
+# ReorderColorChannel3DFloat
+
+## Description
 
 Converts the channel order of RGB images in reverse order.
 
@@ -1090,7 +1148,9 @@ It can be used for both RGB->BGR conversion and BGR->RGB conversion.
   - Dimension representing a color channel.
   - Element type: int32
 
-## OverlayImage2DUInt8
+# OverlayImage2DUInt8
+
+## Description
 
 Combines two images into one.
 
@@ -1145,7 +1205,9 @@ Out of range areas will be filled with zeroes.
   - Foreground height (pixel)
   - Element type: int32
 
-## OverlayImage3DUInt8
+# OverlayImage3DUInt8
+
+## Description
 
 Combines two images into one.
 
@@ -1200,7 +1262,9 @@ Out of range areas will be filled with zeroes.
   - Foreground height (pixel)
   - Element type: int32
 
-## OverlayImage2DFloat
+# OverlayImage2DFloat
+
+## Description
 
 Combines two images into one.
 
@@ -1255,7 +1319,9 @@ Out of range areas will be filled with zeroes.
   - Foreground height (pixel)
   - Element type: int32
 
-## OverlayImage3DFloat
+# OverlayImage3DFloat
+
+## Description
 
 Combines two images into one.
 
@@ -1310,7 +1376,9 @@ Out of range areas will be filled with zeroes.
   - Foreground height (pixel)
   - Element type: int32
 
-## TileImageHorizontal2DUInt8
+# TileImageHorizontal2DUInt8
+
+## Description
 
 Combines two images into one.
 
@@ -1359,7 +1427,9 @@ Out of bounds will be filled with zeroes.
   - Height of image 1 (pixel)
   - Element type: int32
 
-## TileImageHorizontal3DUInt8
+# TileImageHorizontal3DUInt8
+
+## Description
 
 Combines two images into one.
 
@@ -1408,7 +1478,9 @@ Out of bounds will be filled with zeroes.
   - Height of image 1 (pixel)
   - Element type: int32
 
-## TileImageHorizontal2DFloat
+# TileImageHorizontal2DFloat
+
+## Description
 
 Combines two images into one.
 
@@ -1457,7 +1529,9 @@ Out of bounds will be filled with zeroes.
   - Height of image 1 (pixel)
   - Element type: int32
 
-## TileImageHorizontal3DFloat
+# TileImageHorizontal3DFloat
+
+## Description
 
 Combines two images into one.
 
@@ -1506,7 +1580,9 @@ Out of bounds will be filled with zeroes.
   - Height of image 1 (pixel)
   - Element type: int32
 
-## TileImageVertical2DUInt8
+# TileImageVertical2DUInt8
+
+## Description
 
 Combines two images into one.
 
@@ -1555,7 +1631,9 @@ Out of bounds will be filled with zeroes.
   - Height of image 1 (pixel)
   - Element type: int32
 
-## TileImageVertical3DUInt8
+# TileImageVertical3DUInt8
+
+## Description
 
 Combines two images into one.
 
@@ -1604,7 +1682,9 @@ Out of bounds will be filled with zeroes.
   - Height of image 1 (pixel)
   - Element type: int32
 
-## TileImageVertical2DFloat
+# TileImageVertical2DFloat
+
+## Description
 
 Combines two images into one.
 
@@ -1653,7 +1733,9 @@ Out of bounds will be filled with zeroes.
   - Height of image 1 (pixel)
   - Element type: int32
 
-## TileImageVertical3DFloat
+# TileImageVertical3DFloat
+
+## Description
 
 Combines two images into one.
 
@@ -1702,7 +1784,9 @@ Out of bounds will be filled with zeroes.
   - Height of image 1 (pixel)
   - Element type: int32
 
-## CropImage2DUInt8
+# CropImage2DUInt8
+
+## Description
 
 Crops a portion of the image area.
 
@@ -1751,7 +1835,9 @@ Out of range areas will be filled with zero.
   - Height of the output image (pixel)
   - Element type: int32
 
-## CropImage3DUInt8
+# CropImage3DUInt8
+
+## Description
 
 Crops a portion of the image area.
 
@@ -1800,7 +1886,9 @@ Out of range areas will be filled with zero.
   - Height of the output image (pixel)
   - Element type: int32
 
-## CropImage2DFloat
+# CropImage2DFloat
+
+## Description
 
 Crops a portion of the image area.
 
@@ -1849,7 +1937,9 @@ Out of range areas will be filled with zero.
   - Height of the output image (pixel)
   - Element type: int32
 
-## CropImage3DFloat
+# CropImage3DFloat
+
+## Description
 
 Crops a portion of the image area.
 
@@ -1898,7 +1988,9 @@ Out of range areas will be filled with zero.
   - Height of the output image (pixel)
   - Element type: int32
 
-## ColorSpaceConverter RGB to HSV
+# ColorSpaceConverter RGB to HSV
+
+## Description
 
 Converts from RGB color space to HSV color space.
 
@@ -1920,7 +2012,9 @@ Converts from RGB color space to HSV color space.
 
 None
 
-## ColorSpaceConverter HSV to RGB
+# ColorSpaceConverter HSV to RGB
+
+## Description
 
 Converts from HSV color space to RGB color space.
 
@@ -1942,7 +2036,9 @@ Converts from HSV color space to RGB color space.
 
 None
 
-## Color Adjustment
+# Color Adjustment
+
+## Description
 
 Apply color correction to `target_channel` using the given parameter `adjustment_value`.
 

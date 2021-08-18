@@ -1,7 +1,8 @@
-# Building Block リファレンスマニュアル
 <!-- ion-bb-image-io -->
 
-## IMX219
+# IMX219
+
+## 説明
 
 接続されているIMX219からRAW画像を取り込みます。
 
@@ -33,7 +34,9 @@
   - **https非対応**
   - 要素型: string
 
-## D435
+# D435
+
+## 説明
 
 接続されているD435からステレオ画像と深度画像を取り込みます。
 
@@ -58,7 +61,9 @@
   - 次元: 2
   - フォーマット: サイズ1280x720の深度画像
 
-## USBCamera
+# USBCamera
+
+## 説明
 
 USBカメラを取り扱うためのブロックです。
 
@@ -97,7 +102,9 @@ USBカメラを取り扱うためのブロックです。
   - **https非対応**
   - 要素型: string
 
-## GenericV4L2Bayer
+# GenericV4L2Bayer
+
+## 説明
 
 RAWカメラを取り扱うためのブロックです。
 
@@ -147,7 +154,9 @@ RAWカメラを取り扱うためのブロックです。
   - **https非対応**
   - 要素型: string
 
-## CameraSimulation
+# CameraSimulation
+
+## 説明
 
 RAWカメラをシミュレーションするブロックです。
 
@@ -203,7 +212,9 @@ RAWカメラをシミュレーションするブロックです。
   - **https非対応**
   - 要素型: string
 
-## GUI Display
+# GUI Display
+
+## 説明
 
 RGB画像をウィンドウに表示します。
 
@@ -237,7 +248,9 @@ RGB画像をウィンドウに表示します。
   - 画像の縦幅 (pixel)
   - 要素型: int32
 
-## FBDisplay
+# FBDisplay
+
+## 説明
 
 フレームバッファにデータを出力します。
 RGB データを受け取り、`/dev/fb0` デバイスに指定された画像サイズでデータを書き込みます。
@@ -273,7 +286,9 @@ RGB データを受け取り、`/dev/fb0` デバイスに指定された画像�
   - 画像の縦幅 (pixel)
   - 要素型: int32
 
-## Data Loader / Grayscale
+# Data Loader / Grayscale
+
+## 説明
 
 与えられたパラメータ `url` で指定される画像ファイル (bmp, png, jpg 等) を読み取り、グレイスケール データへと変換して出力します。
 
@@ -309,7 +324,9 @@ RGB データを受け取り、`/dev/fb0` デバイスに指定された画像�
   - **https非対応**
   - 要素型: string
 
-## Data Loader / Color
+# Data Loader / Color
+
+## 説明
 
 与えられたパラメータ `url` で指定される画像ファイル (bmp, png, jpg 等) を読み取り、RGB データへと変換して出力します。
 
@@ -342,7 +359,9 @@ RGB データを受け取り、`/dev/fb0` デバイスに指定された画像�
   - **https非対応**
   - 要素型: string
 
-## Image Saver
+# Image Saver
+
+## 説明
 
 RGB の入力データを、与えられたパラメータ `path` で指定されるパスに画像ファイルとして書き出します。
 書き出されるファイルフォーマットは拡張子から自動的に判断されます。

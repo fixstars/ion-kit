@@ -1,7 +1,8 @@
-# Building Block リファレンスマニュアル
 <!-- ion-bb-core -->
 
-## Cast1DFloatToUInt16
+# Cast1DFloatToUInt16
+
+## 説明
 
 入力データの型変換を行います。
 
@@ -23,7 +24,9 @@
 
 なし
 
-## Cast1DFloatToUInt8
+# Cast1DFloatToUInt8
+
+## 説明
 
 入力データの型変換を行います。
 
@@ -45,7 +48,9 @@
 
 なし
 
-## Cast1DUInt16ToFloat
+# Cast1DUInt16ToFloat
+
+## 説明
 
 入力データの型変換を行います。
 
@@ -67,7 +72,9 @@
 
 なし
 
-## Cast1DUInt16ToUInt8
+# Cast1DUInt16ToUInt8
+
+## 説明
 
 入力データの型変換を行います。
 
@@ -89,7 +96,9 @@
 
 なし
 
-## Cast1DUInt8ToFloat
+# Cast1DUInt8ToFloat
+
+## 説明
 
 入力データの型変換を行います。
 
@@ -111,7 +120,9 @@
 
 なし
 
-## Cast1DUInt8ToUInt16
+# Cast1DUInt8ToUInt16
+
+## 説明
 
 入力データの型変換を行います。
 
@@ -133,7 +144,9 @@
 
 なし
 
-## Cast2DFloatToUInt16
+# Cast2DFloatToUInt16
+
+## 説明
 
 入力データの型変換を行います。
 
@@ -155,7 +168,9 @@
 
 なし
 
-## Cast2DFloatToUInt8
+# Cast2DFloatToUInt8
+
+## 説明
 
 入力データの型変換を行います。
 
@@ -177,7 +192,9 @@
 
 なし
 
-## Cast2DUInt16ToFloat
+# Cast2DUInt16ToFloat
+
+## 説明
 
 入力データの型変換を行います。
 
@@ -199,7 +216,9 @@
 
 なし
 
-## Cast2DUInt16ToUInt8
+# Cast2DUInt16ToUInt8
+
+## 説明
 
 入力データの型変換を行います。
 
@@ -221,7 +240,9 @@
 
 なし
 
-## Cast2DUInt8ToFloat
+# Cast2DUInt8ToFloat
+
+## 説明
 
 入力データの型変換を行います。
 
@@ -243,7 +264,9 @@
 
 なし
 
-## Cast2DUInt8ToUInt16
+# Cast2DUInt8ToUInt16
+
+## 説明
 
 入力データの型変換を行います。
 
@@ -265,7 +288,9 @@
 
 なし
 
-## Cast3DFloatToUInt16
+# Cast3DFloatToUInt16
+
+## 説明
 
 入力データの型変換を行います。
 
@@ -287,7 +312,9 @@
 
 なし
 
-## Cast3DFloatToUInt8
+# Cast3DFloatToUInt8
+
+## 説明
 
 入力データの型変換を行います。
 
@@ -309,7 +336,9 @@
 
 なし
 
-## Cast3DUInt16ToFloat
+# Cast3DUInt16ToFloat
+
+## 説明
 
 入力データの型変換を行います。
 
@@ -331,7 +360,9 @@
 
 なし
 
-## Cast3DUInt16ToUInt8
+# Cast3DUInt16ToUInt8
+
+## 説明
 
 入力データの型変換を行います。
 
@@ -353,7 +384,9 @@
 
 なし
 
-## Cast3DUInt8ToFloat
+# Cast3DUInt8ToFloat
+
+## 説明
 
 入力データの型変換を行います。
 
@@ -375,7 +408,9 @@
 
 なし
 
-## Cast3DUInt8ToUInt16
+# Cast3DUInt8ToUInt16
+
+## 説明
 
 入力データの型変換を行います。
 
@@ -397,7 +432,9 @@
 
 なし
 
-## Cast4DFloatToUInt16
+# Cast4DFloatToUInt16
+
+## 説明
 
 入力データの型変換を行います。
 
@@ -419,7 +456,9 @@
 
 なし
 
-## Cast4DFloatToUInt8
+# Cast4DFloatToUInt8
+
+## 説明
 
 入力データの型変換を行います。
 
@@ -441,7 +480,9 @@
 
 なし
 
-## Cast4DUInt16ToFloat
+# Cast4DUInt16ToFloat
+
+## 説明
 
 入力データの型変換を行います。
 
@@ -463,7 +504,9 @@
 
 なし
 
-## Cast4DUInt16ToUInt8
+# Cast4DUInt16ToUInt8
+
+## 説明
 
 入力データの型変換を行います。
 
@@ -485,7 +528,9 @@
 
 なし
 
-## Cast4DUInt8ToFloat
+# Cast4DUInt8ToFloat
+
+## 説明
 
 入力データの型変換を行います。
 
@@ -507,7 +552,9 @@
 
 なし
 
-## Cast4DUInt8ToUInt16
+# Cast4DUInt8ToUInt16
+
+## 説明
 
 入力データの型変換を行います。
 
@@ -529,7 +576,9 @@
 
 なし
 
-## ReorderBuffer3DUInt8
+# ReorderBuffer3DUInt8
+
+## 説明
 
 入力データの次元を入れ替えます。
 
@@ -572,7 +621,9 @@ HWC <-> CHW 変換などに使用できます。
   - dim1 = 0
   - dim2 = 1
 
-## ReorderBuffer3DFloat
+# ReorderBuffer3DFloat
+
+## 説明
 
 入力データの次元を入れ替えます。
 
@@ -615,7 +666,9 @@ HWC <-> CHW 変換などに使用できます。
   - dim1 = 0
   - dim2 = 1
 
-## Denormalize2DUInt8
+# Denormalize2DUInt8
+
+## 説明
 
 [0..1.0] に正規化されている入力データを [0..255] に拡大して出力します。
 
@@ -637,7 +690,9 @@ HWC <-> CHW 変換などに使用できます。
 
 なし
 
-## Denormalize3DUInt8
+# Denormalize3DUInt8
+
+## 説明
 
 [0..1.0] に正規化されている入力データを [0..255] に拡大して出力します。
 
@@ -659,7 +714,9 @@ HWC <-> CHW 変換などに使用できます。
 
 なし
 
-## Normalize2DUInt8
+# Normalize2DUInt8
+
+## 説明
 
 [0..255] の値レンジをもつ入力データを [0..1.0] に正規化して出力します。
 
@@ -681,7 +738,9 @@ HWC <-> CHW 変換などに使用できます。
 
 なし
 
-## Normalize3DUInt8
+# Normalize3DUInt8
+
+## 説明
 
 [0..255] の値レンジをもつ入力データを [0..1.0] に正規化して出力します。
 
@@ -703,7 +762,9 @@ HWC <-> CHW 変換などに使用できます。
 
 なし
 
-## ExtendDimension2DUInt8
+# ExtendDimension2DUInt8
+
+## 説明
 
 入力バッファの次元を拡張します。
 
@@ -730,7 +791,9 @@ HWC <-> CHW 変換などに使用できます。
   - 追加次元のサイズ
   - 要素型: int32
 
-## ExtendDimension2DFloat
+# ExtendDimension2DFloat
+
+## 説明
 
 入力バッファの次元を拡張します。
 
@@ -757,7 +820,9 @@ HWC <-> CHW 変換などに使用できます。
   - 追加次元のサイズ
   - 要素型: int32
 
-## ConstantBuffer2DFloat
+# ConstantBuffer2DFloat
+
+## 説明
 
 パラメータで指定した値を持つバッファを生成します。
 
@@ -789,7 +854,9 @@ HWC <-> CHW 変換などに使用できます。
   - 出力サイズ(2次元目)
   - 要素型: int32
 
-## ConstantBuffer3DFloat
+# ConstantBuffer3DFloat
+
+## 説明
 
 パラメータで指定した値を持つバッファを生成します。
 
@@ -821,7 +888,9 @@ HWC <-> CHW 変換などに使用できます。
   - 出力サイズ(2次元目)
   - 要素型: int32
 
-## Add2DFloat
+# Add2DFloat
+
+## 説明
 
 バッファ同士を加算します。
 
@@ -850,7 +919,9 @@ HWC <-> CHW 変換などに使用できます。
   - 未使用
   - 要素型: bool
 
-## Add3DFloat
+# Add3DFloat
+
+## 説明
 
 バッファ同士を加算します。
 
@@ -879,7 +950,9 @@ HWC <-> CHW 変換などに使用できます。
   - 未使用
   - 要素型: bool
 
-## Multiply2DFloat
+# Multiply2DFloat
+
+## 説明
 
 バッファ同士を乗算します。
 
@@ -908,7 +981,9 @@ HWC <-> CHW 変換などに使用できます。
   - 未使用
   - 要素型: bool
 
-## Multiply3DFloat
+# Multiply3DFloat
+
+## 説明
 
 バッファ同士を乗算します。
 

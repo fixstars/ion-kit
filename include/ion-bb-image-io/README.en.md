@@ -1,7 +1,8 @@
-# Building Block Reference Manual
 <!-- ion-bb-image-io -->
 
-## IMX219
+# IMX219
+
+## Description
 
 Import a RAW image from the connected IMX219.
 
@@ -33,7 +34,9 @@ None
   - **https not supported**.
   - Element type: string
 
-## D435
+# D435
+
+## Description
 
 Grab the stereo and depth images from the connected D435.
 
@@ -58,7 +61,9 @@ None
   - Dimension: 2
   - Format: depth image of size 1280x720
 
-## USBCamera
+# USBCamera
+
+## Description
 
 This block is for handling USB cameras.
 
@@ -97,7 +102,9 @@ None
   - **https not supported**.
   - Element type: string
 
-## GenericV4L2Bayer
+# GenericV4L2Bayer
+
+## Description
 
 This block is for handling RAW cameras.
 
@@ -147,7 +154,9 @@ None
   - **https not supported**.
   - Element type: string
 
-## CameraSimulation
+# CameraSimulation
+
+## Description
 
 This block simulates a RAW camera.
 
@@ -203,7 +212,9 @@ None
   - **https not supported**.
   - Element type: string
 
-## GUI Display
+# GUI Display
+
+## Description
 
 Displays an RGB image in a window.
 
@@ -237,7 +248,9 @@ Therefore, the benchmark results of this block itself will be different from tho
   - Height of the image (pixel)
   - Element type: int32
 
-## FBDisplay
+# FBDisplay
+
+## Description
 
 Outputs data to the frame buffer.
 It receives RGB data and writes the data to the `/dev/fb0` device with the specified image size.
@@ -273,7 +286,9 @@ Therefore, the benchmark results of this block itself will be different from tho
   - Height of the image (pixel)
   - Element type: int32
 
-## Data Loader / Grayscale
+# Data Loader / Grayscale
+
+## Description
 
 Reads an image file (bmp, png, jpg, etc.) specified by the given parameter `url`, converts it to Grayscale data, and outputs it.
 
@@ -309,7 +324,9 @@ None
   - **https not supported**.
   - element type: string
 
-## Data Loader / Color
+# Data Loader / Color
+
+## Description
 
 Reads an image file (bmp, png, jpg, etc.) specified by the given parameter `url`, converts it to RGB data, and outputs it.
 
@@ -342,7 +359,9 @@ None
   - **https not supported**.
   - element type: string
 
-## Image Saver
+# Image Saver
+
+## Description
 
 Writes the RGB input data as an image file to the path specified by the given parameter `path`.
 The file format to be written out is automatically determined from the file extension.

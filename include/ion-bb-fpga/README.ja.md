@@ -1,7 +1,8 @@
-# Building Block リファレンスマニュアル
 <!-- ion-bb-fpga -->
 
-## Simple ISP(FPGA)
+# Simple ISP(FPGA)
+
+## 説明
 
 下記のISP処理をFPGA上で処理します。
 
@@ -84,7 +85,9 @@
     - FPGA実行の場合のみ有効
   - 要素型: int32
 
-## Simple ISP with unsharp mask(FPGA)
+# Simple ISP with unsharp mask(FPGA)
+
+## 説明
 
 下記のISP処理をFPGA上で処理します。
 

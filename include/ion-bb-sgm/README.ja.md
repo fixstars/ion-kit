@@ -1,7 +1,8 @@
-# Building Block リファレンスマニュアル
 <!-- ion-bb-sgm -->
 
-## Stereo Matching
+# Stereo Matching
+
+## 説明
 
 Semi-Global Matching アルゴリズムを使用して、ステレオ画像から深度情報を推定します。
 

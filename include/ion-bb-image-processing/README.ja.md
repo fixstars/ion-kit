@@ -1,7 +1,8 @@
-# Building Block リファレンスマニュアル
 <!-- ion-bb-image-processing -->
 
-## BayerOffset
+# BayerOffset
+
+## 説明
 
 ベイヤー画像の画素値から指定した値を**減算**します。
 出力は [0.0, 1.0] にクランプされます。
@@ -40,7 +41,9 @@
     - 3: GBRG
   - 要素型: int32
 
-## BayerWhiteBalance
+# BayerWhiteBalance
+
+## 説明
 
 ベイヤー画像の画素値に指定した値を**乗算**します。
 出力は [0.0, 1.0] にクランプされます。
@@ -79,7 +82,9 @@
     - 3: GBRG
   - 要素型: int32
 
-## BayerDemosaicSimple
+# BayerDemosaicSimple
+
+## 説明
 
 ベイヤー画像のデモザイクを行い、RGB画像を出力します。
 
@@ -117,7 +122,9 @@
     - 3: GBRG
   - 要素型: int32
 
-## BayerDemosaicLinear
+# BayerDemosaicLinear
+
+## 説明
 
 ベイヤー画像のデモザイクを行い、RGB画像を出力します。
 
@@ -154,7 +161,9 @@
     - 3: GBRG
   - 要素型: int32
 
-## BayerDemosaicFilter
+# BayerDemosaicFilter
+
+## 説明
 
 ベイヤー画像のデモザイクを行い、RGB画像を出力します。
 
@@ -191,7 +200,9 @@
     - 3: GBRG
   - 要素型: int32
 
-## GammaCorrection2D
+# GammaCorrection2D
+
+## 説明
 
 与えられた入力 `gamma` を用いて、各要素に対して以下の式で表されるガンマ補正を行います。
 
@@ -216,7 +227,9 @@ output = clamp(pow(input, gamma), 0.0, 1.0);
   - 次元: 2
   - フォーマット: 値範囲は [0..1.0] で表されるデータ
 
-## GammaCorrection3D
+# GammaCorrection3D
+
+## 説明
 
 与えられた入力 `gamma` を用いて、各要素に対して以下の式で表されるガンマ補正を行います。
 
@@ -241,7 +254,9 @@ output = clamp(pow(input, gamma), 0.0, 1.0);
   - 次元: 3
   - フォーマット: 値範囲は [0..1.0] で表されるデータ
 
-## LensShadingCorrectionLinear
+# LensShadingCorrectionLinear
+
+## 説明
 
 ベイヤー画像に対して、周辺光量補正を行います。
 
@@ -298,7 +313,9 @@ output = clamp(pow(input, gamma), 0.0, 1.0);
     - 3: GBRG
   - 要素型: int32
 
-## ColorMatrix
+# ColorMatrix
+
+## 説明
 
 RGB画像に色変換行列を適用します。
 
@@ -321,7 +338,9 @@ RGB画像に色変換行列を適用します。
   - 次元: 3
   - フォーマット: 次元配置はCHW、値範囲は [0.0, 1.0] で表される RGB データ
 
-## CalcLuminance
+# CalcLuminance
+
+## 説明
 
 RGB画像から輝度画像に変換します。
 
@@ -366,7 +385,9 @@ Y
     - 3: Y
   - 要素型: int32
 
-## BilateralFilter2D
+# BilateralFilter2D
+
+## 説明
 
 画像にバイラテラルフィルタを適用します。
 
@@ -415,7 +436,9 @@ Y
     - 1: Average
       - 平均の差の二乗
 
-## BilateralFilter3D
+# BilateralFilter3D
+
+## 説明
 
 画像にバイラテラルフィルタを適用します。
 
@@ -464,7 +487,9 @@ Y
     - 1: Average
       - 平均の差の二乗
 
-## Convolution2D
+# Convolution2D
+
+## 説明
 
 画像の畳み込みを行います。
 
@@ -508,7 +533,9 @@ Y
     - 3: MirrorInterior
     - 4: Zero
 
-## Convolution3D
+# Convolution3D
+
+## 説明
 
 画像の畳み込みを行います。
 
@@ -552,7 +579,9 @@ Y
     - 3: MirrorInterior
     - 4: Zero
 
-## LensDistortionCorrectionModel2D
+# LensDistortionCorrectionModel2D
+
+## 説明
 
 パラメータに従ってレンズ歪補正を行います。
 
@@ -609,7 +638,9 @@ Y
   - 入力画像の縦幅 (pixel)
   - 要素型: int32
 
-## LensDistortionCorrectionModel3D
+# LensDistortionCorrectionModel3D
+
+## 説明
 
 パラメータに従ってレンズ歪補正を行います。
 
@@ -666,7 +697,9 @@ Y
   - 入力画像の縦幅 (pixel)
   - 要素型: int32
 
-## ResizeNearest2D
+# ResizeNearest2D
+
+## 説明
 
 画像のリサイズをニアレストネイバー法で行います。
 
@@ -697,7 +730,9 @@ Y
   - 例: 1/2 縮小の場合 0.5 を指定
   - 要素型: float32
 
-## ResizeNearest3D
+# ResizeNearest3D
+
+## 説明
 
 画像のリサイズをニアレストネイバー法で行います。
 
@@ -728,7 +763,9 @@ Y
   - 例: 1/2 縮小の場合 0.5 を指定
   - 要素型: float32
 
-## ResizeBilinear2D
+# ResizeBilinear2D
+
+## 説明
 
 RGB画像のリサイズをバイリニア法で行います。
 
@@ -759,7 +796,9 @@ RGB画像のリサイズをバイリニア法で行います。
   - 例: 1/2 縮小の場合 0.5 を指定
   - 要素型: float32
 
-## ResizeBilinear3D
+# ResizeBilinear3D
+
+## 説明
 
 RGB画像のリサイズをバイリニア法で行います。
 
@@ -790,7 +829,9 @@ RGB画像のリサイズをバイリニア法で行います。
   - 例: 1/2 縮小の場合 0.5 を指定
   - 要素型: float32
 
-## ResizeAreaAverage2D
+# ResizeAreaAverage2D
+
+## 説明
 
 RGB画像のリサイズを平均画素法で行います。
 
@@ -821,7 +862,9 @@ RGB画像のリサイズを平均画素法で行います。
   - 例: 1/2 縮小の場合 0.5 を指定
   - 要素型: float32
 
-## ResizeAreaAverage3D
+# ResizeAreaAverage3D
+
+## 説明
 
 RGB画像のリサイズを平均画素法で行います。
 
@@ -852,7 +895,9 @@ RGB画像のリサイズを平均画素法で行います。
   - 例: 1/2 縮小の場合 0.5 を指定
   - 要素型: float32
 
-## BayerDownscaleUInt16
+# BayerDownscaleUInt16
+
+## 説明
 
 ベイヤー画像のダウンスケールを行います。
 
@@ -883,7 +928,9 @@ RGB画像のリサイズを平均画素法で行います。
   - 例: 1/2 縮小の場合 2 を指定
   - 要素型: int32
 
-## Normalize RAW
+# Normalize RAW
+
+## 説明
 
 RAW画像を [0.0, 1.0] に正規化して出力します。
 
@@ -912,7 +959,9 @@ RAW画像を [0.0, 1.0] に正規化して出力します。
   - 例: 10bit上詰めの場合 6 を指定
   - 要素型: uint8
 
-## FitImageToCenter2DUInt8
+# FitImageToCenter2DUInt8
+
+## 説明
 
 画像を中央に配置します。
 
@@ -943,7 +992,9 @@ RAW画像を [0.0, 1.0] に正規化して出力します。
 - output_height
   - 出力画像の縦幅 (pixel)
 
-## FitImageToCenter3DUInt8
+# FitImageToCenter3DUInt8
+
+## 説明
 
 画像を中央に配置します。
 
@@ -974,7 +1025,9 @@ RAW画像を [0.0, 1.0] に正規化して出力します。
 - output_height
   - 出力画像の縦幅 (pixel)
 
-## FitImageToCenter2DFloat
+# FitImageToCenter2DFloat
+
+## 説明
 
 画像を中央に配置します。
 
@@ -1005,7 +1058,9 @@ RAW画像を [0.0, 1.0] に正規化して出力します。
 - output_height
   - 出力画像の縦幅 (pixel)
 
-## FitImageToCenter3DFloat
+# FitImageToCenter3DFloat
+
+## 説明
 
 画像を中央に配置します。
 
@@ -1036,7 +1091,9 @@ RAW画像を [0.0, 1.0] に正規化して出力します。
 - output_height
   - 出力画像の縦幅 (pixel)
 
-## ReorderColorChannel3DUInt8
+# ReorderColorChannel3DUInt8
+
+## 説明
 
 RGB画像のチャネル順序を逆順に変換します。
 
@@ -1062,7 +1119,9 @@ RGB->BGR変換、BGR->RGB変換の両方に使用できます。
   - カラーチャンネルを表す次元
   - 要素型: int32
 
-## ReorderColorChannel3DFloat
+# ReorderColorChannel3DFloat
+
+## 説明
 
 RGB画像のチャネル順序を逆順に変換します。
 
@@ -1088,7 +1147,9 @@ RGB->BGR変換、BGR->RGB変換の両方に使用できます。
   - カラーチャンネルを表す次元
   - 要素型: int32
 
-## OverlayImage2DUInt8
+# OverlayImage2DUInt8
+
+## 説明
 
 ２つの画像を１つにまとめます。
 
@@ -1143,7 +1204,9 @@ input0が背景、input1が前景として合成されます。
   - 前景の縦幅 (pixel)
   - 要素型: int32
 
-## OverlayImage3DUInt8
+# OverlayImage3DUInt8
+
+## 説明
 
 ２つの画像を１つにまとめます。
 
@@ -1198,7 +1261,9 @@ input0が背景、input1が前景として合成されます。
   - 前景の縦幅 (pixel)
   - 要素型: int32
 
-## OverlayImage2DFloat
+# OverlayImage2DFloat
+
+## 説明
 
 ２つの画像を１つにまとめます。
 
@@ -1253,7 +1318,9 @@ input0が背景、input1が前景として合成されます。
   - 前景の縦幅 (pixel)
   - 要素型: int32
 
-## OverlayImage3DFloat
+# OverlayImage3DFloat
+
+## 説明
 
 ２つの画像を１つにまとめます。
 
@@ -1308,7 +1375,9 @@ input0が背景、input1が前景として合成されます。
   - 前景の縦幅 (pixel)
   - 要素型: int32
 
-## TileImageHorizontal2DUInt8
+# TileImageHorizontal2DUInt8
+
+## 説明
 
 ２つの画像を１つにまとめます。
 
@@ -1357,7 +1426,9 @@ input0が背景、input1が前景として合成されます。
   - 画像1の縦幅 (pixel)
   - 要素型: int32
 
-## TileImageHorizontal3DUInt8
+# TileImageHorizontal3DUInt8
+
+## 説明
 
 ２つの画像を１つにまとめます。
 
@@ -1406,7 +1477,9 @@ input0が背景、input1が前景として合成されます。
   - 画像1の縦幅 (pixel)
   - 要素型: int32
 
-## TileImageHorizontal2DFloat
+# TileImageHorizontal2DFloat
+
+## 説明
 
 ２つの画像を１つにまとめます。
 
@@ -1455,7 +1528,9 @@ input0が背景、input1が前景として合成されます。
   - 画像1の縦幅 (pixel)
   - 要素型: int32
 
-## TileImageHorizontal3DFloat
+# TileImageHorizontal3DFloat
+
+## 説明
 
 ２つの画像を１つにまとめます。
 
@@ -1504,7 +1579,9 @@ input0が背景、input1が前景として合成されます。
   - 画像1の縦幅 (pixel)
   - 要素型: int32
 
-## TileImageVertical2DUInt8
+# TileImageVertical2DUInt8
+
+## 説明
 
 ２つの画像を１つにまとめます。
 
@@ -1553,7 +1630,9 @@ input0が背景、input1が前景として合成されます。
   - 画像1の縦幅 (pixel)
   - 要素型: int32
 
-## TileImageVertical3DUInt8
+# TileImageVertical3DUInt8
+
+## 説明
 
 ２つの画像を１つにまとめます。
 
@@ -1602,7 +1681,9 @@ input0が背景、input1が前景として合成されます。
   - 画像1の縦幅 (pixel)
   - 要素型: int32
 
-## TileImageVertical2DFloat
+# TileImageVertical2DFloat
+
+## 説明
 
 ２つの画像を１つにまとめます。
 
@@ -1651,7 +1732,9 @@ input0が背景、input1が前景として合成されます。
   - 画像1の縦幅 (pixel)
   - 要素型: int32
 
-## TileImageVertical3DFloat
+# TileImageVertical3DFloat
+
+## 説明
 
 ２つの画像を１つにまとめます。
 
@@ -1700,7 +1783,9 @@ input0が背景、input1が前景として合成されます。
   - 画像1の縦幅 (pixel)
   - 要素型: int32
 
-## CropImage2DUInt8
+# CropImage2DUInt8
+
+## 説明
 
 画像の一部領域をクロップします。
 
@@ -1749,7 +1834,9 @@ input0が背景、input1が前景として合成されます。
   - 出力画像の縦幅 (pixel)
   - 要素型: int32
 
-## CropImage3DUInt8
+# CropImage3DUInt8
+
+## 説明
 
 画像の一部領域をクロップします。
 
@@ -1798,7 +1885,9 @@ input0が背景、input1が前景として合成されます。
   - 出力画像の縦幅 (pixel)
   - 要素型: int32
 
-## CropImage2DFloat
+# CropImage2DFloat
+
+## 説明
 
 画像の一部領域をクロップします。
 
@@ -1847,7 +1936,9 @@ input0が背景、input1が前景として合成されます。
   - 出力画像の縦幅 (pixel)
   - 要素型: int32
 
-## CropImage3DFloat
+# CropImage3DFloat
+
+## 説明
 
 画像の一部領域をクロップします。
 
@@ -1896,7 +1987,9 @@ input0が背景、input1が前景として合成されます。
   - 出力画像の縦幅 (pixel)
   - 要素型: int32
 
-## ColorSpaceConverter RGB to HSV
+# ColorSpaceConverter RGB to HSV
+
+## 説明
 
 RGB 色空間から HSV 色空間への変換を行います。
 
@@ -1918,7 +2011,9 @@ RGB 色空間から HSV 色空間への変換を行います。
 
 なし
 
-## ColorSpaceConverter HSV to RGB
+# ColorSpaceConverter HSV to RGB
+
+## 説明
 
 HSV 色空間から RGB 色空間への変換を行います。
 
@@ -1940,7 +2035,9 @@ HSV 色空間から RGB 色空間への変換を行います。
 
 なし
 
-## Color Adjustment
+# Color Adjustment
+
+## 説明
 
 与えられたパラメータ `adjustment_value` を用いて `target_channel` に対して色補正を適用します。
 

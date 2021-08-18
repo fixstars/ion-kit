@@ -1,7 +1,8 @@
-# Building Block Reference Manual
 <!-- ion-bb-core -->
 
-## Cast1DFloatToUInt16
+# Cast1DFloatToUInt16
+
+## Description
 
 Performs type conversion of input data.
 
@@ -23,7 +24,9 @@ Performs type conversion of input data.
 
 None
 
-## Cast1DFloatToUInt8
+# Cast1DFloatToUInt8
+
+## Description
 
 Performs type conversion of input data.
 
@@ -45,7 +48,9 @@ Performs type conversion of input data.
 
 None
 
-## Cast1DUInt16ToFloat
+# Cast1DUInt16ToFloat
+
+## Description
 
 Performs type conversion of input data.
 
@@ -67,7 +72,9 @@ Performs type conversion of input data.
 
 None
 
-## Cast1DUInt16ToUInt8
+# Cast1DUInt16ToUInt8
+
+## Description
 
 Performs type conversion of input data.
 
@@ -89,7 +96,9 @@ Performs type conversion of input data.
 
 None
 
-## Cast1DUInt8ToFloat
+# Cast1DUInt8ToFloat
+
+## Description
 
 Performs type conversion of input data.
 
@@ -111,7 +120,9 @@ Performs type conversion of input data.
 
 None
 
-## Cast1DUInt8ToUInt16
+# Cast1DUInt8ToUInt16
+
+## Description
 
 Performs type conversion of input data.
 
@@ -133,7 +144,9 @@ Performs type conversion of input data.
 
 None
 
-## Cast2DFloatToUInt16
+# Cast2DFloatToUInt16
+
+## Description
 
 Performs type conversion of input data.
 
@@ -155,7 +168,9 @@ Performs type conversion of input data.
 
 None
 
-## Cast2DFloatToUInt8
+# Cast2DFloatToUInt8
+
+## Description
 
 Performs type conversion of input data.
 
@@ -177,7 +192,9 @@ Performs type conversion of input data.
 
 None
 
-## Cast2DUInt16ToFloat
+# Cast2DUInt16ToFloat
+
+## Description
 
 Performs type conversion of input data.
 
@@ -199,7 +216,9 @@ Performs type conversion of input data.
 
 None
 
-## Cast2DUInt16ToUInt8
+# Cast2DUInt16ToUInt8
+
+## Description
 
 Performs type conversion of input data.
 
@@ -221,7 +240,9 @@ Performs type conversion of input data.
 
 None
 
-## Cast2DUInt8ToFloat
+# Cast2DUInt8ToFloat
+
+## Description
 
 Performs type conversion of input data.
 
@@ -243,7 +264,9 @@ Performs type conversion of input data.
 
 None
 
-## Cast2DUInt8ToUInt16
+# Cast2DUInt8ToUInt16
+
+## Description
 
 Performs type conversion of input data.
 
@@ -265,7 +288,9 @@ Performs type conversion of input data.
 
 None
 
-## Cast3DFloatToUInt16
+# Cast3DFloatToUInt16
+
+## Description
 
 Performs type conversion of input data.
 
@@ -287,7 +312,9 @@ Performs type conversion of input data.
 
 None
 
-## Cast3DFloatToUInt8
+# Cast3DFloatToUInt8
+
+## Description
 
 Performs type conversion of input data.
 
@@ -309,7 +336,9 @@ Performs type conversion of input data.
 
 None
 
-## Cast3DUInt16ToFloat
+# Cast3DUInt16ToFloat
+
+## Description
 
 Performs type conversion of input data.
 
@@ -331,7 +360,9 @@ Performs type conversion of input data.
 
 None
 
-## Cast3DUInt16ToUInt8
+# Cast3DUInt16ToUInt8
+
+## Description
 
 Performs type conversion of input data.
 
@@ -353,7 +384,9 @@ Performs type conversion of input data.
 
 None
 
-## Cast3DUInt8ToFloat
+# Cast3DUInt8ToFloat
+
+## Description
 
 Performs type conversion of input data.
 
@@ -375,7 +408,9 @@ Performs type conversion of input data.
 
 None
 
-## Cast3DUInt8ToUInt16
+# Cast3DUInt8ToUInt16
+
+## Description
 
 Performs type conversion of input data.
 
@@ -397,7 +432,9 @@ Performs type conversion of input data.
 
 None
 
-## Cast4DFloatToUInt16
+# Cast4DFloatToUInt16
+
+## Description
 
 Performs type conversion of input data.
 
@@ -419,7 +456,9 @@ Performs type conversion of input data.
 
 None
 
-## Cast4DFloatToUInt8
+# Cast4DFloatToUInt8
+
+## Description
 
 Performs type conversion of input data.
 
@@ -441,7 +480,9 @@ Performs type conversion of input data.
 
 None
 
-## Cast4DUInt16ToFloat
+# Cast4DUInt16ToFloat
+
+## Description
 
 Performs type conversion of input data.
 
@@ -463,7 +504,9 @@ Performs type conversion of input data.
 
 None
 
-## Cast4DUInt16ToUInt8
+# Cast4DUInt16ToUInt8
+
+## Description
 
 Performs type conversion of input data.
 
@@ -485,7 +528,9 @@ Performs type conversion of input data.
 
 None
 
-## Cast4DUInt8ToFloat
+# Cast4DUInt8ToFloat
+
+## Description
 
 Performs type conversion of input data.
 
@@ -507,7 +552,9 @@ Performs type conversion of input data.
 
 None
 
-## Cast4DUInt8ToUInt16
+# Cast4DUInt8ToUInt16
+
+## Description
 
 Performs type conversion of input data.
 
@@ -529,7 +576,9 @@ Performs type conversion of input data.
 
 None
 
-## ReorderBuffer3DUInt8
+# ReorderBuffer3DUInt8
+
+## Description
 
 Swaps the dimensions of the input data.
 
@@ -572,7 +621,9 @@ Can be used for HWC <-> CHW conversion, etc.
   - dim1 = 0
   - dim2 = 1
 
-## ReorderBuffer3DFloat
+# ReorderBuffer3DFloat
+
+## Description
 
 Swaps the dimensions of the input data.
 
@@ -615,7 +666,9 @@ Can be used for HWC <-> CHW conversion, etc.
   - dim1 = 0
   - dim2 = 1
 
-## Denormalize2DUInt8
+# Denormalize2DUInt8
+
+## Description
 
 Outputs input data normalized to [0..1.0] and scaled to [0..255].
 
@@ -637,7 +690,9 @@ Outputs input data normalized to [0..1.0] and scaled to [0..255].
 
 None
 
-## Denormalize3DUInt8
+# Denormalize3DUInt8
+
+## Description
 
 Outputs input data normalized to [0..1.0] and scaled to [0..255].
 
@@ -659,7 +714,9 @@ Outputs input data normalized to [0..1.0] and scaled to [0..255].
 
 None
 
-## Normalize2DUInt8
+# Normalize2DUInt8
+
+## Description
 
 Outputs input data with a value range of [0..255], normalized to [0..1.0].
 
@@ -681,7 +738,9 @@ Outputs input data with a value range of [0..255], normalized to [0..1.0].
 
 None
 
-## Normalize3DUInt8
+# Normalize3DUInt8
+
+## Description
 
 Outputs input data with a value range of [0..255], normalized to [0..1.0].
 
@@ -703,7 +762,9 @@ Outputs input data with a value range of [0..255], normalized to [0..1.0].
 
 None
 
-## ExtendDimension2DUInt8
+# ExtendDimension2DUInt8
+
+## Description
 
 Extends the dimension of the input buffer.
 
@@ -730,7 +791,9 @@ Extends the dimension of the input buffer.
   - Size of the added dimension
   - Element type: int32
 
-## ExtendDimension2DFloat
+# ExtendDimension2DFloat
+
+## Description
 
 Extends the dimension of the input buffer.
 
@@ -757,7 +820,9 @@ Extends the dimension of the input buffer.
   - Size of the added dimension
   - Element type: int32
 
-## ConstantBuffer2DFloat
+# ConstantBuffer2DFloat
+
+## Description
 
 Creates a buffer with the value specified by the parameter.
 
@@ -789,7 +854,9 @@ None
   - Output size (second dimension)
   - element type: int32
 
-## ConstantBuffer3DFloat
+# ConstantBuffer3DFloat
+
+## Description
 
 Creates a buffer with the value specified by the parameter.
 
@@ -821,7 +888,9 @@ None
   - Output size (second dimension)
   - element type: int32
 
-## Add2DFloat
+# Add2DFloat
+
+## Description
 
 Add buffers together.
 
@@ -850,7 +919,9 @@ Add buffers together.
   - Not used
   - Element type: bool
 
-## Add3DFloat
+# Add3DFloat
+
+## Description
 
 Add buffers together.
 
@@ -879,7 +950,9 @@ Add buffers together.
   - Not used
   - Element type: bool
 
-## Multiply2DFloat
+# Multiply2DFloat
+
+## Description
 
 Multiply buffers by each other.
 
@@ -908,7 +981,9 @@ Multiply buffers by each other.
   - Not used
   - Element type: bool
 
-## Multiply3DFloat
+# Multiply3DFloat
+
+## Description
 
 Multiply buffers by each other.
 

@@ -1,7 +1,8 @@
-# Building Block リファレンスマニュアル
 <!-- ion-bb-dnn -->
 
-## Object Detection
+# Object Detection
+
+## 説明
 
 入力 input に対してDNN によるオブジェクト認識を行い、バウンディングボックスを描画して出力します。
 以下のモデルに対応しています。
@@ -138,7 +139,9 @@
   - 画像の縦幅 (pixel)
   - 要素型: int32
 
-## TLT Object Detection SSD
+# TLT Object Detection SSD
+
+## 説明
 
 入力 input に対して、NVIDIA GPU に最適化された DNN によるオブジェクト認識を行い、バウンディングボックスを描画して出力します。
 以下のモデルに対応しています。
@@ -182,7 +185,9 @@ BBの入力シェイプが内部モデルのものと異なる場合には、拡
   - TensorRT モデルファイルのキャッシュを保存 or ロードするディレクトリのパス
   - 要素型: string
 
-## TLT PeopleNet
+# TLT PeopleNet
+
+## 説明
 
 入力 input に対して、NVIDIA GPU に最適化された DNN によって、人・顔・バッグの3クラスのオブジェクトの認識を行い、バウンディングボックスを描画して出力します。
 以下のモデルに対応しています。
@@ -226,7 +231,9 @@ BBの入力シェイプが内部モデルのものと異なる場合には、拡
   - TensorRT モデルファイルのキャッシュを保存 or ロードするディレクトリのパス
   - 要素型: string
 
-## TLT PeopleNet metadata version
+# TLT PeopleNet metadata version
+
+## 説明
 
 前項の TLT PeopleNet と基本的には同じ種類の推論を行いますが、バウンディングボックスが描画された画像ではなく、認識情報を含むメタデータを出力します。
 
@@ -312,7 +319,9 @@ DetectionBox Array:
   - 要素型: int32
 
 
-## ClassifyGender
+# ClassifyGender
+
+## 説明
 
 DetectionBox Array形式の認識情報を使用して画像から矩形の顔画像を切り出し、性別を判定します。
 
@@ -385,7 +394,9 @@ ClassifyResult
   - 出力バッファのサイズ
   - 要素型: int32
 
-## JSONDictAverageRegulator
+# JSONDictAverageRegulator
+
+## 説明
 
 辞書形式で入力されるデータに対して、指定された秒数ごとに区間内の積算値を出力します。
 有効な出力は秒数ごとにのみ行われ、それ以外 の出力にはnullが設定されます。
@@ -430,7 +441,9 @@ NumberDict:
   - 積算と出力のインターバル (秒)
   - 要素型: int32
 
-## IFTTT WebHook Uploader
+# IFTTT WebHook Uploader
+
+## 説明
 
 指定されたIFTTT WebHook URLに対して入力データをメッセージとして送信します。
 入力データがnullのときには送信は行いません。

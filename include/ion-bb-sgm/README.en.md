@@ -1,7 +1,8 @@
-# Building Block Reference Manual
 <!-- ion-bb-sgm -->
 
-## Stereo Matching
+# Stereo Matching
+
+## Description
 
 Estimate depth information from stereo images using the Semi-Global Matching algorithm.
 
