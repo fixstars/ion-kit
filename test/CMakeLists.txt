@@ -62,6 +62,9 @@ if (WITH_CUDA)
     add_dependencies(gpu-extern ion-bb-test gpu-extern-lib)
 endif()
 
+# Duplicate name test
+ion_jit(dup-port-name SRCS dup-port-name.cc)
+
 # Export test
 ion_jit(export SRCS export.cc)
 
@@ -77,7 +80,3 @@ ion_compile(complex_graph_compile SRCS complex_graph_compile.cc PIPELINE_NAME co
 ion_run(complex_graph_aot_test complex_graph_compile SRCS complex_graph_run.cc test-rt.h TARGET_STRING "host-profile")
 ion_jit(complex_graph_jit SRCS complex_graph_jit.cc test-rt.h)
 ion_register_test(complex_graph_jit_test complex_graph_jit TARGET_STRING "host-profile")
-
-if (UNIX)
-    install(TARGETS ion-bb-test DESTINATION lib)
-endif()

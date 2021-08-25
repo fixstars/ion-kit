@@ -1,4 +1,3 @@
-// Halide/src/Generator.cpp
 #include <cmath>
 #include <fstream>
 #include <unordered_map>
@@ -9,27 +8,94 @@
 #endif
 #ifdef _WIN32
 #include <windows.h>
-#else
-#include <dlfcn.h>
 #endif
+
 
 #include "ion/generator.h"
 
-#include "Halide.h"
+#include <Halide.h>
+
+// Declare type alias
+namespace ion {
+
+using Halide::Argument;
+using Halide::ArgumentEstimates;
+using Halide::AutoSchedulerResults;
+using Halide::BFloat;
+using Halide::Bool;
+using Halide::CompilerLoggerFactory;
+using Halide::Derivative;
+using Halide::Float;
+using Halide::Handle;
+using Halide::Int;
+using Halide::Output;
+using Halide::Pipeline;
+using Halide::RDom;
+using Halide::Range;
+using Halide::Tuple;
+using Halide::UInt;
+using Halide::get_host_target;
+using Halide::load_plugin;
+using Halide::max;
+using Halide::min;
+using Halide::operator!=;
+using Halide::operator%;
+using Halide::operator&&;
+using Halide::operator*;
+using Halide::operator*=;
+using Halide::operator+;
+using Halide::operator+=;
+using Halide::operator-;
+using Halide::operator-=;
+using Halide::operator/;
+using Halide::operator/=;
+using Halide::operator<;
+using Halide::operator<=;
+using Halide::operator==;
+using Halide::operator>;
+using Halide::operator>=;
+using Halide::operator||;
+
+namespace BoundaryConditions {
+
+using Halide::BoundaryConditions::constant_exterior;
+
+} // namespace BoundaryConditions
+
+namespace Internal {
+
+using Halide::Internal::Call;
+using Halide::Internal::CompilerLogger;
+using Halide::Internal::Indentation;
+using Halide::Internal::JSONCompilerLogger;
+using Halide::Internal::ObjectInstanceRegistry;
+using Halide::Internal::OutputInfo;
+using Halide::Internal::Variable;
+using Halide::Internal::debug;
+using Halide::Internal::extract_namespaces;
+using Halide::Internal::get_env_variable;
+using Halide::Internal::get_output_info;
+using Halide::Internal::make_zero;
+using Halide::Internal::replace_all;
+using Halide::Internal::split_string;
+
+namespace Introspection {
+
+
+} // namespace Introspection
+} // namespace Internal
+} // namespace ion
+
 
 namespace ion {
 
-GeneratorContext::GeneratorContext(const Halide::Target &t, bool auto_schedule,
-                                   const Halide::MachineParams &machine_params)
+GeneratorContext::GeneratorContext(const Target &t, bool auto_schedule,
+                                   const MachineParams &machine_params)
     : target("target", t),
       auto_schedule("auto_schedule", auto_schedule),
       machine_params("machine_params", machine_params),
       externs_map(std::make_shared<ExternsMap>()),
       value_tracker(std::make_shared<Internal::ValueTracker>()) {
-}
-
-GeneratorContext::~GeneratorContext() {
-    // nothing
 }
 
 void GeneratorContext::init_from_context(const ion::GeneratorContext &context) {
@@ -62,11 +128,19 @@ bool is_alnum(char c) {
 // -- initial _ is forbidden (rather than merely "reserved")
 // -- two underscores in a row is also forbidden
 bool is_valid_name(const std::string &n) {
-    if (n.empty()) return false;
-    if (!is_alpha(n[0])) return false;
+    if (n.empty()) {
+        return false;
+    }
+    if (!is_alpha(n[0])) {
+        return false;
+    }
     for (size_t i = 1; i < n.size(); ++i) {
-        if (!is_alnum(n[i])) return false;
-        if (n[i] == '_' && n[i - 1] == '_') return false;
+        if (!is_alnum(n[i])) {
+            return false;
+        }
+        if (n[i] == '_' && n[i - 1] == '_') {
+            return false;
+        }
     }
     return true;
 }
@@ -75,66 +149,66 @@ std::string compute_base_path(const std::string &output_dir,
                               const std::string &function_name,
                               const std::string &file_base_name) {
     std::vector<std::string> namespaces;
-    std::string simple_name = Halide::Internal::extract_namespaces(function_name, namespaces);
+    std::string simple_name = extract_namespaces(function_name, namespaces);
     std::string base_path = output_dir + "/" + (file_base_name.empty() ? simple_name : file_base_name);
     return base_path;
 }
 
-std::map<Halide::Output, std::string> compute_output_files(const Halide::Target &target,
-                                                           const std::string &base_path,
-                                                           const std::set<Halide::Output> &outputs) {
-    std::map<Halide::Output, const Halide::Internal::OutputInfo> output_info = Halide::Internal::get_output_info(target);
+std::map<Output, std::string> compute_output_files(const Target &target,
+                                                   const std::string &base_path,
+                                                   const std::set<Output> &outputs) {
+    std::map<Output, const OutputInfo> output_info = get_output_info(target);
 
-    std::map<Halide::Output, std::string> output_files;
+    std::map<Output, std::string> output_files;
     for (auto o : outputs) {
         output_files[o] = base_path + output_info.at(o).extension;
     }
     return output_files;
 }
 
-Halide::Argument to_argument(const Halide::Internal::Parameter &param, const Halide::Expr &default_value) {
-    Halide::ArgumentEstimates argument_estimates = param.get_argument_estimates();
-    argument_estimates.scalar_def = default_value;
-    return Halide::Argument(param.name(),
-                    param.is_buffer() ? Halide::Argument::InputBuffer : Halide::Argument::InputScalar,
-                    param.type(), param.dimensions(), argument_estimates);
+Argument to_argument(const Internal::Parameter &param) {
+    return Argument(param.name(),
+                    param.is_buffer() ? Argument::InputBuffer : Argument::InputScalar,
+                    param.type(),
+                    param.dimensions(),
+                    param.get_argument_estimates());
 }
 
-Halide::Func make_param_func(const Halide::Internal::Parameter &p, const std::string &name) {
+Func make_param_func(const Parameter &p, const std::string &name) {
     internal_assert(p.is_buffer());
-    Halide::Func f(name + "_im");
+    Func f(name + "_im");
     auto b = p.buffer();
     if (b.defined()) {
-        // If the Halide::Internal::Parameter has an explicit BufferPtr set, bind directly to it
-        f(Halide::_) = b(Halide::_);
+        // If the Parameter has an explicit BufferPtr set, bind directly to it
+        f(_) = b(_);
     } else {
-        std::vector<Halide::Var> args;
-        std::vector<Halide::Expr> args_expr;
+        std::vector<Var> args;
+        std::vector<Expr> args_expr;
         for (int i = 0; i < p.dimensions(); ++i) {
-            Halide::Var v = Halide::Var::implicit(i);
+            Var v = Var::implicit(i);
             args.push_back(v);
             args_expr.push_back(v);
         }
-        f(args) = Halide::Internal::Call::make(p, args_expr);
+        f(args) = Internal::Call::make(p, args_expr);
     }
     return f;
 }
 
 }  // namespace
 
-std::vector<Halide::Type> parse_halide_type_list(const std::string &types) {
+std::vector<Type> parse_halide_type_list(const std::string &types) {
     const auto &e = get_halide_type_enum_map();
-    std::vector<Halide::Type> result;
-    for (auto t : Halide::Internal::split_string(types, ",")) {
+    std::vector<Type> result;
+    for (const auto &t : split_string(types, ",")) {
         auto it = e.find(t);
-        user_assert(it != e.end()) << "Halide::Type not found: " << t;
+        user_assert(it != e.end()) << "Type not found: " << t;
         result.push_back(it->second);
     }
     return result;
 }
 
-void ValueTracker::track_values(const std::string &name, const std::vector<Halide::Expr> &values) {
-    std::vector<std::vector<Halide::Expr>> &history = values_history[name];
+void ValueTracker::track_values(const std::string &name, const std::vector<Expr> &values) {
+    std::vector<std::vector<Expr>> &history = values_history[name];
     if (history.empty()) {
         for (size_t i = 0; i < values.size(); ++i) {
             history.push_back({values[i]});
@@ -149,14 +223,14 @@ void ValueTracker::track_values(const std::string &name, const std::vector<Halid
 
     // For each item, see if we have a new unique value
     for (size_t i = 0; i < values.size(); ++i) {
-        Halide::Expr oldval = history[i].back();
-        Halide::Expr newval = values[i];
+        Expr oldval = history[i].back();
+        Expr newval = values[i];
         if (oldval.defined() && newval.defined()) {
             if (can_prove(newval == oldval)) {
                 continue;
             }
         } else if (!oldval.defined() && !newval.defined()) {
-            // Halide::Expr::operator== doesn't work with undefined
+            // Expr::operator== doesn't work with undefined
             // values, but they are equal for our purposes here.
             continue;
         }
@@ -170,7 +244,7 @@ void ValueTracker::track_values(const std::string &name, const std::vector<Halid
             std::ostringstream o;
             o << "Saw too many unique values in ValueTracker[" + std::to_string(i) + "]; "
               << "expected a maximum of " << max_unique_values << ":\n";
-            for (auto e : history[i]) {
+            for (const auto &e : history[i]) {
                 o << "    " << e << "\n";
             }
             user_error << o.str();
@@ -178,9 +252,9 @@ void ValueTracker::track_values(const std::string &name, const std::vector<Halid
     }
 }
 
-std::vector<Halide::Expr> parameter_constraints(const Halide::Internal::Parameter &p) {
+std::vector<Expr> parameter_constraints(const Parameter &p) {
     internal_assert(p.defined());
-    std::vector<Halide::Expr> values;
+    std::vector<Expr> values;
     values.emplace_back(p.host_alignment());
     if (p.is_buffer()) {
         for (int i = 0; i < p.dimensions(); ++i) {
@@ -209,7 +283,7 @@ public:
           generator_params(select_generator_params(generator_params)),
           inputs(inputs),
           outputs(outputs) {
-        namespaces = Halide::Internal::split_string(generator_stub_name, "::");
+        namespaces = split_string(generator_stub_name, "::");
         internal_assert(!namespaces.empty());
         if (namespaces[0].empty()) {
             // We have a name like ::foo::bar::baz; omit the first empty ns.
@@ -235,20 +309,24 @@ private:
 
     std::vector<Internal::GeneratorParamBase *> select_generator_params(const std::vector<Internal::GeneratorParamBase *> &in) {
         std::vector<Internal::GeneratorParamBase *> out;
-        for (auto p : in) {
+        for (auto *p : in) {
             // These are always propagated specially.
-            if (p->name == "target" ||
-                p->name == "auto_schedule" ||
-                p->name == "machine_params") continue;
-            if (p->is_synthetic_param()) continue;
+            if (p->name() == "target" ||
+                p->name() == "auto_schedule" ||
+                p->name() == "machine_params") {
+                continue;
+            }
+            if (p->is_synthetic_param()) {
+                continue;
+            }
             out.push_back(p);
         }
         return out;
     }
 
     /** Emit spaces according to the current indentation level */
-    Halide::Internal::Indentation get_indent() const {
-        return Halide::Internal::Indentation{indent_level};
+    Indentation get_indent() const {
+        return Indentation{indent_level};
     }
 
     void emit_inputs_struct();
@@ -261,8 +339,8 @@ void StubEmitter::emit_generator_params_struct() {
     stream << get_indent() << "struct " << name << " final {\n";
     indent_level++;
     if (!v.empty()) {
-        for (auto p : v) {
-            stream << get_indent() << p->get_c_type() << " " << p->name << "{ " << p->get_default_value() << " };\n";
+        for (auto *p : v) {
+            stream << get_indent() << p->get_c_type() << " " << p->name() << "{ " << p->get_default_value() << " };\n";
         }
         stream << "\n";
     }
@@ -274,16 +352,16 @@ void StubEmitter::emit_generator_params_struct() {
         stream << get_indent() << name << "(\n";
         indent_level++;
         std::string comma = "";
-        for (auto p : v) {
-            stream << get_indent() << comma << p->get_c_type() << " " << p->name << "\n";
+        for (auto *p : v) {
+            stream << get_indent() << comma << p->get_c_type() << " " << p->name() << "\n";
             comma = ", ";
         }
         indent_level--;
         stream << get_indent() << ") : \n";
         indent_level++;
         comma = "";
-        for (auto p : v) {
-            stream << get_indent() << comma << p->name << "(" << p->name << ")\n";
+        for (auto *p : v) {
+            stream << get_indent() << comma << p->name() << "(" << p->name() << ")\n";
             comma = ", ";
         }
         indent_level--;
@@ -297,12 +375,12 @@ void StubEmitter::emit_generator_params_struct() {
     stream << get_indent() << "return {\n";
     indent_level++;
     std::string comma = "";
-    for (auto p : v) {
-        stream << get_indent() << comma << "{\"" << p->name << "\", ";
+    for (auto *p : v) {
+        stream << get_indent() << comma << "{\"" << p->name() << "\", ";
         if (p->is_looplevel_param()) {
-            stream << p->name << "}\n";
+            stream << p->name() << "}\n";
         } else {
-            stream << p->call_to_string(p->name) << "}\n";
+            stream << p->call_to_string(p->name()) << "}\n";
         }
         comma = ", ";
     }
@@ -322,7 +400,7 @@ void StubEmitter::emit_inputs_struct() {
         std::string name;
     };
     std::vector<InInfo> in_info;
-    for (auto input : inputs) {
+    for (auto *input : inputs) {
         std::string c_type = input->get_c_type();
         if (input->is_array()) {
             c_type = "std::vector<" + c_type + ">";
@@ -333,7 +411,7 @@ void StubEmitter::emit_inputs_struct() {
     const std::string name = "Inputs";
     stream << get_indent() << "struct " << name << " final {\n";
     indent_level++;
-    for (auto in : in_info) {
+    for (const auto &in : in_info) {
         stream << get_indent() << in.c_type << " " << in.name << ";\n";
     }
     stream << "\n";
@@ -344,7 +422,7 @@ void StubEmitter::emit_inputs_struct() {
         stream << get_indent() << name << "(\n";
         indent_level++;
         std::string comma = "";
-        for (auto in : in_info) {
+        for (const auto &in : in_info) {
             stream << get_indent() << comma << "const " << in.c_type << "& " << in.name << "\n";
             comma = ", ";
         }
@@ -352,7 +430,7 @@ void StubEmitter::emit_inputs_struct() {
         stream << get_indent() << ") : \n";
         indent_level++;
         comma = "";
-        for (auto in : in_info) {
+        for (const auto &in : in_info) {
             stream << get_indent() << comma << in.name << "(" << in.name << ")\n";
             comma = ", ";
         }
@@ -386,25 +464,21 @@ void StubEmitter::emit() {
     };
     bool all_outputs_are_func = true;
     std::vector<OutputInfo> out_info;
-    for (auto output : outputs) {
+    for (auto *output : outputs) {
         std::string c_type = output->get_c_type();
-        std::string getter;
-        const bool is_func = (c_type == "Halide::Func");
-        if (output->is_array()) {
-            getter = is_func ? "get_array_output" : "get_array_output_buffer<" + c_type + ">";
-        } else {
-            getter = is_func ? "get_output" : "get_output_buffer<" + c_type + ">";
-        }
+        const bool is_func = (c_type == "Func");
+        std::string getter = is_func ? "get_outputs" : "get_output_buffers<" + c_type + ">";
+        std::string getter_suffix = output->is_array() ? "" : ".at(0)";
         out_info.push_back({output->name(),
                             output->is_array() ? "std::vector<" + c_type + ">" : c_type,
-                            getter + "(\"" + output->name() + "\")"});
-        if (c_type != "Halide::Func") {
+                            getter + "(\"" + output->name() + "\")" + getter_suffix});
+        if (c_type != "Func") {
             all_outputs_are_func = false;
         }
     }
 
     std::ostringstream guard;
-    guard << "ION_STUB";
+    guard << "HALIDE_STUB";
     for (const auto &ns : namespaces) {
         guard << "_" << ns;
     }
@@ -427,10 +501,10 @@ void StubEmitter::emit() {
     stream << get_indent() << "#include \"Halide.h\"\n";
     stream << "\n";
 
-    stream << "namespace ion_register_generator {\n";
+    stream << "namespace halide_register_generator {\n";
     stream << "namespace " << generator_registered_name << "_ns {\n";
-    stream << "extern std::unique_ptr<ion::Internal::GeneratorBase> factory(const ion::GeneratorContext& context);\n";
-    stream << "}  // namespace ion_register_generator\n";
+    stream << "extern std::unique_ptr<Halide::Internal::GeneratorBase> factory(const ion::GeneratorContext& context);\n";
+    stream << "}  // namespace halide_register_generator\n";
     stream << "}  // namespace " << generator_registered_name << "\n";
     stream << "\n";
 
@@ -441,11 +515,13 @@ void StubEmitter::emit() {
 
     for (auto *p : generator_params) {
         std::string decl = p->get_type_decls();
-        if (decl.empty()) continue;
+        if (decl.empty()) {
+            continue;
+        }
         stream << decl << "\n";
     }
 
-    stream << get_indent() << "class " << class_name << " final : public ion::NamesInterface {\n";
+    stream << get_indent() << "class " << class_name << " final : public Halide::NamesInterface {\n";
     stream << get_indent() << "public:\n";
     indent_level++;
 
@@ -460,14 +536,14 @@ void StubEmitter::emit() {
     }
 
     stream << "\n";
-    stream << get_indent() << "// The Halide::Target used\n";
-    stream << get_indent() << "Halide::Target target;\n";
+    stream << get_indent() << "// The Target used\n";
+    stream << get_indent() << "Target target;\n";
 
     if (out_info.size() == 1) {
         stream << "\n";
         if (all_outputs_are_func) {
             std::string name = out_info.at(0).name;
-            auto output = outputs[0];
+            auto *output = outputs[0];
             if (output->is_array()) {
                 stream << get_indent() << "operator std::vector<Halide::Func>() const {\n";
                 indent_level++;
@@ -487,10 +563,10 @@ void StubEmitter::emit() {
                 indent_level--;
                 stream << get_indent() << "}\n";
 
-                stream << get_indent() << "// operator operator()() overloads omitted because the sole Halide::Output is array-of-Func.\n";
+                stream << get_indent() << "// operator operator()() overloads omitted because the sole Output is array-of-Func.\n";
             } else {
                 // If there is exactly one output, add overloads
-                // for operator Halide::Func and operator().
+                // for operator Func and operator().
                 stream << get_indent() << "operator Halide::Func() const {\n";
                 indent_level++;
                 stream << get_indent() << "return " << name << ";\n";
@@ -514,13 +590,13 @@ void StubEmitter::emit() {
                 stream << get_indent() << "}\n";
             }
         } else {
-            stream << get_indent() << "// operator Halide::Func() and operator()() overloads omitted because the sole Halide::Output is not Halide::Func.\n";
+            stream << get_indent() << "// operator Func() and operator()() overloads omitted because the sole Output is not Func.\n";
         }
     }
 
     stream << "\n";
     if (all_outputs_are_func) {
-        stream << get_indent() << "Halide::s get_pipeline() const {\n";
+        stream << get_indent() << "Halide::Pipeline get_pipeline() const {\n";
         indent_level++;
         stream << get_indent() << "return Halide::Pipeline(std::vector<Halide::Func>{\n";
         indent_level++;
@@ -555,7 +631,7 @@ void StubEmitter::emit() {
         indent_level--;
         stream << get_indent() << "}\n";
     } else {
-        stream << get_indent() << "// get_pipeline() and realize() overloads omitted because some Outputs are not Halide::Func.\n";
+        stream << get_indent() << "// get_pipeline() and realize() overloads omitted because some Outputs are not Func.\n";
     }
 
     indent_level--;
@@ -571,7 +647,7 @@ void StubEmitter::emit() {
     stream << get_indent() << ")\n";
     stream << get_indent() << "{\n";
     indent_level++;
-    stream << get_indent() << "using Stub = ion::Internal::GeneratorStub;\n";
+    stream << get_indent() << "using Stub = Halide::Internal::GeneratorStub;\n";
     stream << get_indent() << "Stub stub(\n";
     indent_level++;
     stream << get_indent() << "context,\n";
@@ -615,10 +691,10 @@ void StubEmitter::emit() {
     stream << get_indent() << "}\n";
     stream << "\n";
 
-    stream << get_indent() << "// overload to allow Halide::Target instead of GeneratorContext.\n";
+    stream << get_indent() << "// overload to allow Target instead of GeneratorContext.\n";
     stream << get_indent() << "inline static Outputs generate(\n";
     indent_level++;
-    stream << get_indent() << "const Halide::Target& target,\n";
+    stream << get_indent() << "const Target& target,\n";
     stream << get_indent() << "const Inputs& inputs,\n";
     stream << get_indent() << "const GeneratorParams& generator_params = GeneratorParams()\n";
     indent_level--;
@@ -661,38 +737,34 @@ GeneratorStub::GeneratorStub(const GeneratorContext &context,
 // as a vector-of-size-1. This method is primarily useful for code that needs
 // to iterate through the outputs of unknown, arbitrary Generators (e.g.,
 // the Python bindings).
-std::vector<std::vector<Halide::Func>> GeneratorStub::generate(const GeneratorParamsMap &generator_params,
+std::vector<std::vector<Func>> GeneratorStub::generate(const GeneratorParamsMap &generator_params,
                                                        const std::vector<std::vector<Internal::StubInput>> &inputs) {
     generator->set_generator_param_values(generator_params);
-    generator->call_configure();
+    generator->ensure_configure_has_been_called();
     generator->set_inputs_vector(inputs);
-    Halide::Pipeline p = generator->build_pipeline();
+    Pipeline p = generator->build_pipeline();
 
-    std::vector<std::vector<Halide::Func>> v;
+    std::vector<std::vector<Func>> v;
     GeneratorParamInfo &pi = generator->param_info();
     if (!pi.outputs().empty()) {
         for (auto *output : pi.outputs()) {
-            const std::string &name = output->name();
-            if (output->is_array()) {
-                v.push_back(get_array_output(name));
-            } else {
-                v.push_back(std::vector<Halide::Func>{get_output(name)});
-            }
+            v.push_back(get_outputs(output->name()));
         }
     } else {
         // Generators with build() method can't have Output<>, hence can't have array outputs
-        for (auto output : p.outputs()) {
-            v.push_back(std::vector<Halide::Func>{output});
+        for (const auto &output : p.outputs()) {
+            v.push_back(std::vector<Func>{output});
         }
     }
     return v;
 }
 
 GeneratorStub::Names GeneratorStub::get_names() const {
+    generator->ensure_configure_has_been_called();
     auto &pi = generator->param_info();
     Names names;
     for (auto *o : pi.generator_params()) {
-        names.generator_params.push_back(o->name);
+        names.generator_params.push_back(o->name());
     }
     for (auto *o : pi.inputs()) {
         names.inputs.push_back(o->name());
@@ -703,22 +775,22 @@ GeneratorStub::Names GeneratorStub::get_names() const {
     return names;
 }
 
-const std::map<std::string, Halide::Type> &get_halide_type_enum_map() {
-    static const std::map<std::string, Halide::Type> halide_type_enum_map{
-        {"bool", Halide::Bool()},
-        {"int8", Halide::Int(8)},
-        {"int16", Halide::Int(16)},
-        {"int32", Halide::Int(32)},
-        {"uint8", Halide::UInt(8)},
-        {"uint16", Halide::UInt(16)},
-        {"uint32", Halide::UInt(32)},
-        {"float16", Halide::Float(16)},
-        {"float32", Halide::Float(32)},
-        {"float64", Halide::Float(64)}};
+const std::map<std::string, Type> &get_halide_type_enum_map() {
+    static const std::map<std::string, Type> halide_type_enum_map{
+        {"bool", Bool()},
+        {"int8", Int(8)},
+        {"int16", Int(16)},
+        {"int32", Int(32)},
+        {"uint8", UInt(8)},
+        {"uint16", UInt(16)},
+        {"uint32", UInt(32)},
+        {"float16", Float(16)},
+        {"float32", Float(32)},
+        {"float64", Float(64)}};
     return halide_type_enum_map;
 }
 
-std::string halide_type_to_c_source(const Halide::Type &t) {
+std::string halide_type_to_c_source(const Type &t) {
     static const std::map<halide_type_code_t, std::string> m = {
         {halide_type_int, "Int"},
         {halide_type_uint, "UInt"},
@@ -730,30 +802,30 @@ std::string halide_type_to_c_source(const Halide::Type &t) {
     return oss.str();
 }
 
-std::string halide_type_to_c_type(const Halide::Type &t) {
-    auto encode = [](const Halide::Type &t) -> int { return t.code() << 16 | t.bits(); };
+std::string halide_type_to_c_type(const Type &t) {
+    auto encode = [](const Type &t) -> int { return t.code() << 16 | t.bits(); };
     static const std::map<int, std::string> m = {
-        {encode(Halide::Int(8)), "int8_t"},
-        {encode(Halide::Int(16)), "int16_t"},
-        {encode(Halide::Int(32)), "int32_t"},
-        {encode(Halide::Int(64)), "int64_t"},
-        {encode(Halide::UInt(1)), "bool"},
-        {encode(Halide::UInt(8)), "uint8_t"},
-        {encode(Halide::UInt(16)), "uint16_t"},
-        {encode(Halide::UInt(32)), "uint32_t"},
-        {encode(Halide::UInt(64)), "uint64_t"},
-        {encode(Halide::BFloat(16)), "uint16_t"},  // TODO: see Issues #3709, #3967
-        {encode(Halide::Float(16)), "uint16_t"},   // TODO: see Issues #3709, #3967
-        {encode(Halide::Float(32)), "float"},
-        {encode(Halide::Float(64)), "double"},
-        {encode(Halide::Handle(64)), "void*"}};
+        {encode(Int(8)), "int8_t"},
+        {encode(Int(16)), "int16_t"},
+        {encode(Int(32)), "int32_t"},
+        {encode(Int(64)), "int64_t"},
+        {encode(UInt(1)), "bool"},
+        {encode(UInt(8)), "uint8_t"},
+        {encode(UInt(16)), "uint16_t"},
+        {encode(UInt(32)), "uint32_t"},
+        {encode(UInt(64)), "uint64_t"},
+        {encode(BFloat(16)), "uint16_t"},  // TODO: see Issues #3709, #3967
+        {encode(Float(16)), "uint16_t"},   // TODO: see Issues #3709, #3967
+        {encode(Float(32)), "float"},
+        {encode(Float(64)), "double"},
+        {encode(Handle(64)), "void*"}};
     internal_assert(m.count(encode(t))) << t << " " << encode(t);
     return m.at(encode(t));
 }
 
-int generate_filter_main_inner(int argc, char **argv, std::ostream &cerr) {
+int generate_filter_main_inner(int argc, char **argv, std::ostream &error_output) {
     const char kUsage[] =
-        "gengen \n"
+        "gengen\n"
         "  [-g GENERATOR_NAME] [-f FUNCTION_NAME] [-o OUTPUT_DIR] [-r RUNTIME_NAME] [-d 1|0]\n"
         "  [-e EMIT_OPTIONS] [-n FILE_BASE_NAME] [-p PLUGIN_NAME] [-s AUTOSCHEDULER_NAME]\n"
         "       target=target-string[,target-string...] [generator_arg=value [...]]\n"
@@ -797,9 +869,9 @@ int generate_filter_main_inner(int argc, char **argv, std::ostream &cerr) {
 
     for (int i = 1; i < argc; ++i) {
         if (argv[i][0] != '-') {
-            std::vector<std::string> v = Halide::Internal::split_string(argv[i], "=");
+            std::vector<std::string> v = split_string(argv[i], "=");
             if (v.size() != 2 || v[0].empty() || v[1].empty()) {
-                cerr << kUsage;
+                error_output << kUsage;
                 return 1;
             }
             generator_args[v[0]] = v[1];
@@ -808,44 +880,44 @@ int generate_filter_main_inner(int argc, char **argv, std::ostream &cerr) {
         auto it = flags_info.find(argv[i]);
         if (it != flags_info.end()) {
             if (i + 1 >= argc) {
-                cerr << kUsage;
+                error_output << kUsage;
                 return 1;
             }
             it->second = argv[i + 1];
             ++i;
             continue;
         }
-        cerr << "Unknown flag: " << argv[i] << "\n";
-        cerr << kUsage;
+        error_output << "Unknown flag: " << argv[i] << "\n";
+        error_output << kUsage;
         return 1;
     }
 
     // It's possible that in the future loaded plugins might change
     // how arguments are parsed, so we handle those first.
-    for (const auto &lib : Halide::Internal::split_string(flags_info["-p"], ",")) {
+    for (const auto &lib : split_string(flags_info["-p"], ",")) {
         if (!lib.empty()) {
-            Halide::load_plugin(lib);
+            load_plugin(lib);
         }
     }
 
     if (flags_info["-d"] != "1" && flags_info["-d"] != "0") {
-        cerr << "-d must be 0 or 1\n";
-        cerr << kUsage;
+        error_output << "-d must be 0 or 1\n";
+        error_output << kUsage;
         return 1;
     }
     const int build_gradient_module = flags_info["-d"] == "1";
 
     std::string autoscheduler_name = flags_info["-s"];
     if (!autoscheduler_name.empty()) {
-        Halide::Pipeline::set_default_autoscheduler_name(autoscheduler_name);
+        Pipeline::set_default_autoscheduler_name(autoscheduler_name);
     }
 
     std::string runtime_name = flags_info["-r"];
 
     std::vector<std::string> generator_names = GeneratorRegistry::enumerate();
     if (generator_names.empty() && runtime_name.empty()) {
-        cerr << "No generators have been registered and not compiling a standalone runtime\n";
-        cerr << kUsage;
+        error_output << "No generators have been registered and not compiling a standalone runtime\n";
+        error_output << kUsage;
         return 1;
     }
 
@@ -853,13 +925,13 @@ int generate_filter_main_inner(int argc, char **argv, std::ostream &cerr) {
     if (generator_name.empty() && runtime_name.empty()) {
         // Require either -g or -r to be specified:
         // no longer infer the name when only one Generator is registered
-        cerr << "Either -g <name> or -r must be specified; available Generators are:\n";
+        error_output << "Either -g <name> or -r must be specified; available Generators are:\n";
         if (!generator_names.empty()) {
             for (const auto &name : generator_names) {
-                cerr << "    " << name << "\n";
+                error_output << "    " << name << "\n";
             }
         } else {
-            cerr << "    <none>\n";
+            error_output << "    <none>\n";
         }
         return 1;
     }
@@ -871,18 +943,30 @@ int generate_filter_main_inner(int argc, char **argv, std::ostream &cerr) {
     }
     std::string output_dir = flags_info["-o"];
     if (output_dir.empty()) {
-        cerr << "-o must always be specified.\n";
-        cerr << kUsage;
+        error_output << "-o must always be specified.\n";
+        error_output << kUsage;
         return 1;
     }
 
+    std::string emit_flags_string = flags_info["-e"];
+
+    // If HL_EXTRA_OUTPUTS is defined, assume it's extra outputs we want to generate
+    // (usually for temporary debugging purposes) and just tack it on to the -e contents.
+    std::string extra_outputs = get_env_variable("HL_EXTRA_OUTPUTS");
+    if (!extra_outputs.empty()) {
+        if (!emit_flags_string.empty()) {
+            emit_flags_string += ",";
+        }
+        emit_flags_string += extra_outputs;
+    }
+
     // It's ok to omit "target=" if we are generating *only* a cpp_stub
-    const std::vector<std::string> emit_flags = Halide::Internal::split_string(flags_info["-e"], ",");
+    const std::vector<std::string> emit_flags = split_string(emit_flags_string, ",");
     const bool stub_only = (emit_flags.size() == 1 && emit_flags[0] == "cpp_stub");
     if (!stub_only) {
         if (generator_args.find("target") == generator_args.end()) {
-            cerr << "Halide::Target missing\n";
-            cerr << kUsage;
+            error_output << "Target missing\n";
+            error_output << kUsage;
             return 1;
         }
     }
@@ -890,49 +974,49 @@ int generate_filter_main_inner(int argc, char **argv, std::ostream &cerr) {
     // it's OK for file_base_name to be empty: filename will be based on function name
     std::string file_base_name = flags_info["-n"];
 
-    auto target_strings = Halide::Internal::split_string(generator_args["target"].string_value, ",");
-    std::vector<Halide::Target> targets;
+    auto target_strings = split_string(generator_args["target"].string_value, ",");
+    std::vector<Target> targets;
     for (const auto &s : target_strings) {
         targets.emplace_back(s);
     }
 
     // extensions won't vary across multitarget output
-    std::map<Halide::Output, const Halide::Internal::OutputInfo> output_info = Halide::Internal::get_output_info(targets[0]);
+    std::map<Output, const OutputInfo> output_info = get_output_info(targets[0]);
 
-    std::set<Halide::Output> outputs;
+    std::set<Output> outputs;
     if (emit_flags.empty() || (emit_flags.size() == 1 && emit_flags[0].empty())) {
         // If omitted or empty, assume .a and .h and registration.cpp
-        outputs.insert(Halide::Output::c_header);
-        outputs.insert(Halide::Output::registration);
-        outputs.insert(Halide::Output::static_library);
+        outputs.insert(Output::c_header);
+        outputs.insert(Output::registration);
+        outputs.insert(Output::static_library);
     } else {
         // Build a reverse lookup table. Allow some legacy aliases on the command line,
         // to allow legacy build systems to work more easily.
-        std::map<std::string, Halide::Output> output_name_to_enum = {
-            {"cpp", Halide::Output::c_source},
-            {"h", Halide::Output::c_header},
-            {"html", Halide::Output::stmt_html},
-            {"o", Halide::Output::object},
-            {"py.c", Halide::Output::python_extension},
+        std::map<std::string, Output> output_name_to_enum = {
+            {"cpp", Output::c_source},
+            {"h", Output::c_header},
+            {"html", Output::stmt_html},
+            {"o", Output::object},
+            {"py.c", Output::python_extension},
         };
         for (const auto &it : output_info) {
             output_name_to_enum[it.second.name] = it.first;
         }
 
-        for (std::string opt : emit_flags) {
+        for (const std::string &opt : emit_flags) {
             auto it = output_name_to_enum.find(opt);
             if (it == output_name_to_enum.end()) {
-                cerr << "Unrecognized emit option: " << opt << " is not one of [";
+                error_output << "Unrecognized emit option: " << opt << " is not one of [";
                 auto end = output_info.cend();
                 auto last = std::prev(end);
                 for (auto iter = output_info.cbegin(); iter != end; ++iter) {
-                    cerr << iter->second.name;
+                    error_output << iter->second.name;
                     if (iter != last) {
-                        cerr << " ";
+                        error_output << " ";
                     }
                 }
-                cerr << "], ignoring.\n";
-                cerr << kUsage;
+                error_output << "], ignoring.\n";
+                error_output << kUsage;
                 return 1;
             }
             outputs.insert(it->second);
@@ -940,81 +1024,84 @@ int generate_filter_main_inner(int argc, char **argv, std::ostream &cerr) {
     }
 
     // Allow quick-n-dirty use of compiler logging via HL_DEBUG_COMPILER_LOGGER env var
-    const bool do_compiler_logging = outputs.count(Halide::Output::compiler_log) ||
-                                     (Halide::Internal::get_env_variable("HL_DEBUG_COMPILER_LOGGER") == "1");
+    const bool do_compiler_logging = outputs.count(Output::compiler_log) ||
+                                     (get_env_variable("HL_DEBUG_COMPILER_LOGGER") == "1");
 
-    const bool obfuscate_compiler_logging = Halide::Internal::get_env_variable("HL_OBFUSCATE_COMPILER_LOGGER") == "1";
+    const bool obfuscate_compiler_logging = get_env_variable("HL_OBFUSCATE_COMPILER_LOGGER") == "1";
 
-    const Halide::CompilerLoggerFactory no_compiler_logger_factory =
-        [](const std::string &, const Halide::Target &) -> std::unique_ptr<Halide::Internal::CompilerLogger> {
+    const CompilerLoggerFactory no_compiler_logger_factory =
+        [](const std::string &, const Target &) -> std::unique_ptr<CompilerLogger> {
         return nullptr;
     };
 
-    const Halide::CompilerLoggerFactory json_compiler_logger_factory =
-        [&](const std::string &function_name, const Halide::Target &target) -> std::unique_ptr<Halide::Internal::CompilerLogger> {
+    const CompilerLoggerFactory json_compiler_logger_factory =
+        [&](const std::string &function_name, const Target &target) -> std::unique_ptr<CompilerLogger> {
         // rebuild generator_args from the map so that they are always canonical
         std::string generator_args_string;
         std::string sep;
         for (const auto &it : generator_args) {
-            if (it.first == "target") continue;
-            std::string quote = it.second.string_value.find(" ") != std::string::npos ? "\\\"" : "";
+            if (it.first == "target") {
+                continue;
+            }
+            std::string quote = it.second.string_value.find(' ') != std::string::npos ? "\\\"" : "";
             generator_args_string += sep + it.first + "=" + quote + it.second.string_value + quote;
             sep = " ";
         }
-        std::unique_ptr<Halide::Internal::JSONCompilerLogger> t(new Halide::Internal::JSONCompilerLogger(
+        std::unique_ptr<JSONCompilerLogger> t(new JSONCompilerLogger(
             obfuscate_compiler_logging ? "" : generator_name,
             obfuscate_compiler_logging ? "" : function_name,
             obfuscate_compiler_logging ? "" : autoscheduler_name,
-            obfuscate_compiler_logging ? Halide::Target() : target,
+            obfuscate_compiler_logging ? Target() : target,
             obfuscate_compiler_logging ? "" : generator_args_string,
             obfuscate_compiler_logging));
         return t;
     };
 
-    const Halide::CompilerLoggerFactory compiler_logger_factory = do_compiler_logging ?
+    const CompilerLoggerFactory compiler_logger_factory = do_compiler_logging ?
                                                               json_compiler_logger_factory :
                                                               no_compiler_logger_factory;
 
     if (!runtime_name.empty()) {
         std::string base_path = compute_base_path(output_dir, runtime_name, "");
 
-        Halide::Target gcd_target = targets[0];
+        Target gcd_target = targets[0];
         for (size_t i = 1; i < targets.size(); i++) {
             if (!gcd_target.get_runtime_compatible_target(targets[i], gcd_target)) {
-                user_error << "Failed to find compatible runtime target for "
-                           << gcd_target.to_string()
-                           << " and "
-                           << targets[i].to_string() << "\n";
+                error_output << "Failed to find compatible runtime target for "
+                             << gcd_target.to_string()
+                             << " and "
+                             << targets[i].to_string() << "\n";
+                return -1;
             }
         }
 
         if (targets.size() > 1) {
-            Halide::Internal::debug(1) << "Building runtime for computed target: " << gcd_target.to_string() << "\n";
+            debug(1) << "Building runtime for computed target: " << gcd_target.to_string() << "\n";
         }
 
         auto output_files = compute_output_files(gcd_target, base_path, outputs);
-        // Runtime doesn't get to participate in the Halide::CompilerLogger party
+        // Runtime doesn't get to participate in the CompilerLogger party
         compile_standalone_runtime(output_files, gcd_target);
     }
 
     if (!generator_name.empty()) {
         std::string base_path = compute_base_path(output_dir, function_name, file_base_name);
-        Halide::Internal::debug(1) << "Generator " << generator_name << " has base_path " << base_path << "\n";
-        if (outputs.count(Halide::Output::cpp_stub)) {
-            // When generating cpp_stub, we ignore all generator args passed in, and supply a fake Halide::Target.
-            // (Halide::CompilerLogger is never enabled for cpp_stub, for now anyway.)
-            auto gen = GeneratorRegistry::create(generator_name, GeneratorContext(Halide::Target()));
-            auto stub_file_path = base_path + output_info[Halide::Output::cpp_stub].extension;
+        debug(1) << "Generator " << generator_name << " has base_path " << base_path << "\n";
+        if (outputs.count(Output::cpp_stub)) {
+            // When generating cpp_stub, we ignore all generator args passed in, and supply a fake Target.
+            // (CompilerLogger is never enabled for cpp_stub, for now anyway.)
+            auto gen = GeneratorRegistry::create(generator_name, GeneratorContext(Target()));
+            auto stub_file_path = base_path + output_info[Output::cpp_stub].extension;
             gen->emit_cpp_stub(stub_file_path);
         }
 
         // Don't bother with this if we're just emitting a cpp_stub.
         if (!stub_only) {
             auto output_files = compute_output_files(targets[0], base_path, outputs);
-            auto module_factory = [&generator_name, &generator_args, build_gradient_module](const std::string &name, const Halide::Target &target) -> Halide::Module {
+            auto module_factory = [&generator_name, &generator_args, build_gradient_module](const std::string &name, const Target &target) -> Module {
                 auto sub_generator_args = generator_args;
                 sub_generator_args.erase("target");
-                // Must re-create each time since each instance will have a different Halide::Target.
+                // Must re-create each time since each instance will have a different Target.
                 auto gen = GeneratorRegistry::create(generator_name, GeneratorContext(target));
                 gen->set_generator_param_values(sub_generator_args);
                 return build_gradient_module ? gen->build_gradient_module(name) : gen->build_module(name);
@@ -1042,32 +1129,36 @@ int generate_filter_main(int argc, char **argv, std::ostream &cerr) {
 #endif
 
 GeneratorParamBase::GeneratorParamBase(const std::string &name)
-    : name(name) {
-    Halide::Internal::ObjectInstanceRegistry::register_instance(this, 0, Halide::Internal::ObjectInstanceRegistry::GeneratorParam,
+    : name_(name) {
+    ObjectInstanceRegistry::register_instance(this, 0, ObjectInstanceRegistry::GeneratorParam,
                                               this, nullptr);
 }
 
 GeneratorParamBase::~GeneratorParamBase() {
-    Halide::Internal::ObjectInstanceRegistry::unregister_instance(this);
+    ObjectInstanceRegistry::unregister_instance(this);
 }
 
 void GeneratorParamBase::check_value_readable() const {
     // These are always readable.
-    if (name == "target") return;
-    if (name == "auto_schedule") return;
-    if (name == "machine_params") return;
+    if (name() == "target" ||
+        name() == "auto_schedule" ||
+        name() == "machine_params") {
+        return;
+    }
     user_assert(generator && generator->phase >= GeneratorBase::ConfigureCalled)
-        << "The GeneratorParam \"" << name << "\" cannot be read before build() or configure()/generate() is called.\n";
+        << "The GeneratorParam \"" << name() << "\" cannot be read before build() or configure()/generate() is called.\n";
 }
 
 void GeneratorParamBase::check_value_writable() const {
     // Allow writing when no Generator is set, to avoid having to special-case ctor initing code
-    if (!generator) return;
-    user_assert(generator->phase < GeneratorBase::GenerateCalled) << "The GeneratorParam \"" << name << "\" cannot be written after build() or generate() is called.\n";
+    if (!generator) {
+        return;
+    }
+    user_assert(generator->phase < GeneratorBase::GenerateCalled) << "The GeneratorParam \"" << name() << "\" cannot be written after build() or generate() is called.\n";
 }
 
 void GeneratorParamBase::fail_wrong_type(const char *type) {
-    user_error << "The GeneratorParam \"" << name << "\" cannot be set with a value of type " << type << ".\n";
+    user_error << "The GeneratorParam \"" << name() << "\" cannot be set with a value of type " << type << ".\n";
 }
 
 /* static */
@@ -1121,6 +1212,7 @@ std::vector<std::string> GeneratorRegistry::enumerate() {
     GeneratorRegistry &registry = get_registry();
     std::lock_guard<std::mutex> lock(registry.mutex);
     std::vector<std::string> result;
+    result.reserve(registry.factories.size());
     for (const auto &i : registry.factories) {
         result.push_back(i.first);
     }
@@ -1129,26 +1221,26 @@ std::vector<std::string> GeneratorRegistry::enumerate() {
 
 GeneratorBase::GeneratorBase(size_t size, const void *introspection_helper)
     : size(size) {
-    Halide::Internal::ObjectInstanceRegistry::register_instance(this, size, Halide::Internal::ObjectInstanceRegistry::Generator, this, introspection_helper);
+    ObjectInstanceRegistry::register_instance(this, size, ObjectInstanceRegistry::Generator, this, introspection_helper);
 }
 
 GeneratorBase::~GeneratorBase() {
-    Halide::Internal::ObjectInstanceRegistry::unregister_instance(this);
+    ObjectInstanceRegistry::unregister_instance(this);
 }
 
 GeneratorParamInfo::GeneratorParamInfo(GeneratorBase *generator, const size_t size) {
-    std::vector<void *> vf = Halide::Internal::ObjectInstanceRegistry::instances_in_range(
-        generator, size, Halide::Internal::ObjectInstanceRegistry::FilterParam);
+    std::vector<void *> vf = ObjectInstanceRegistry::instances_in_range(
+        generator, size, ObjectInstanceRegistry::FilterParam);
     user_assert(vf.empty()) << "ImageParam and Param<> are no longer allowed in Generators; use Input<> instead.";
 
     const auto add_synthetic_params = [this, generator](GIOBase *gio) {
         const std::string &n = gio->name();
         const std::string &gn = generator->generator_registered_name;
 
-        if (gio->kind() != IOKind::Scalar) {
-            owned_synthetic_params.push_back(GeneratorParam_Synthetic<Halide::Type>::make(generator, gn, n + ".type", *gio, SyntheticParamType::Type, gio->types_defined()));
-            filter_generator_params.push_back(owned_synthetic_params.back().get());
+        owned_synthetic_params.push_back(GeneratorParam_Synthetic<Type>::make(generator, gn, n + ".type", *gio, SyntheticParamType::Type, gio->types_defined()));
+        filter_generator_params.push_back(owned_synthetic_params.back().get());
 
+        if (gio->kind() != IOKind::Scalar) {
             owned_synthetic_params.push_back(GeneratorParam_Synthetic<int>::make(generator, gn, n + ".dim", *gio, SyntheticParamType::Dim, gio->dims_defined()));
             filter_generator_params.push_back(owned_synthetic_params.back().get());
         }
@@ -1158,10 +1250,10 @@ GeneratorParamInfo::GeneratorParamInfo(GeneratorBase *generator, const size_t si
         }
     };
 
-    std::vector<void *> vi = Halide::Internal::ObjectInstanceRegistry::instances_in_range(
-        generator, size, Halide::Internal::ObjectInstanceRegistry::GeneratorInput);
-    for (auto v : vi) {
-        auto input = static_cast<Internal::GeneratorInputBase *>(v);
+    std::vector<void *> vi = ObjectInstanceRegistry::instances_in_range(
+        generator, size, ObjectInstanceRegistry::GeneratorInput);
+    for (auto *v : vi) {
+        auto *input = static_cast<Internal::GeneratorInputBase *>(v);
         internal_assert(input != nullptr);
         user_assert(is_valid_name(input->name())) << "Invalid Input name: (" << input->name() << ")\n";
         user_assert(!names.count(input->name())) << "Duplicate Input name: " << input->name();
@@ -1172,10 +1264,10 @@ GeneratorParamInfo::GeneratorParamInfo(GeneratorBase *generator, const size_t si
         add_synthetic_params(input);
     }
 
-    std::vector<void *> vo = Halide::Internal::ObjectInstanceRegistry::instances_in_range(
-        generator, size, Halide::Internal::ObjectInstanceRegistry::GeneratorOutput);
-    for (auto v : vo) {
-        auto output = static_cast<Internal::GeneratorOutputBase *>(v);
+    std::vector<void *> vo = ObjectInstanceRegistry::instances_in_range(
+        generator, size, ObjectInstanceRegistry::GeneratorOutput);
+    for (auto *v : vo) {
+        auto *output = static_cast<Internal::GeneratorOutputBase *>(v);
         internal_assert(output != nullptr);
         user_assert(is_valid_name(output->name())) << "Invalid Output name: (" << output->name() << ")\n";
         user_assert(!names.count(output->name())) << "Duplicate Output name: " << output->name();
@@ -1186,14 +1278,14 @@ GeneratorParamInfo::GeneratorParamInfo(GeneratorBase *generator, const size_t si
         add_synthetic_params(output);
     }
 
-    std::vector<void *> vg = Halide::Internal::ObjectInstanceRegistry::instances_in_range(
-        generator, size, Halide::Internal::ObjectInstanceRegistry::GeneratorParam);
-    for (auto v : vg) {
-        auto param = static_cast<GeneratorParamBase *>(v);
+    std::vector<void *> vg = ObjectInstanceRegistry::instances_in_range(
+        generator, size, ObjectInstanceRegistry::GeneratorParam);
+    for (auto *v : vg) {
+        auto *param = static_cast<GeneratorParamBase *>(v);
         internal_assert(param != nullptr);
-        user_assert(is_valid_name(param->name)) << "Invalid GeneratorParam name: " << param->name;
-        user_assert(!names.count(param->name)) << "Duplicate GeneratorParam name: " << param->name;
-        names.insert(param->name);
+        user_assert(is_valid_name(param->name())) << "Invalid GeneratorParam name: " << param->name();
+        user_assert(!names.count(param->name())) << "Duplicate GeneratorParam name: " << param->name();
+        names.insert(param->name());
         internal_assert(param->generator == nullptr || param->generator == generator);
         param->generator = generator;
         filter_generator_params.push_back(param);
@@ -1209,18 +1301,7 @@ GeneratorParamInfo &GeneratorBase::param_info() {
     return *param_info_ptr;
 }
 
-Halide::Func GeneratorBase::get_output(const std::string &n) {
-    check_min_phase(GenerateCalled);
-    auto *output = find_output_by_name(n);
-    // Call for the side-effect of asserting if the value isn't defined.
-    (void)output->array_size();
-    user_assert(!output->is_array() && output->funcs().size() == 1) << "Output " << n << " must be accessed via get_array_output()\n";
-    Halide::Func f = output->funcs().at(0);
-    user_assert(f.defined()) << "Output " << n << " was not defined.\n";
-    return f;
-}
-
-std::vector<Halide::Func> GeneratorBase::get_array_output(const std::string &n) {
+std::vector<Func> GeneratorBase::get_outputs(const std::string &n) {
     check_min_phase(GenerateCalled);
     auto *output = find_output_by_name(n);
     // Call for the side-effect of asserting if the value isn't defined.
@@ -1249,10 +1330,10 @@ void GeneratorBase::set_generator_param_values(const GeneratorParamsMap &params)
 
     std::unordered_map<std::string, Internal::GeneratorParamBase *> generator_params_by_name;
     for (auto *g : pi.generator_params()) {
-        generator_params_by_name[g->name] = g;
+        generator_params_by_name[g->name()] = g;
     }
 
-    for (auto &key_value : params) {
+    for (const auto &key_value : params) {
         auto gp = generator_params_by_name.find(key_value.first);
         user_assert(gp != generator_params_by_name.end())
             << "Generator " << generator_registered_name << " has no GeneratorParam named: " << key_value.first << "\n";
@@ -1298,7 +1379,7 @@ void GeneratorBase::set_inputs_vector(const std::vector<std::vector<StubInput>> 
 
 void GeneratorBase::track_parameter_values(bool include_outputs) {
     GeneratorParamInfo &pi = param_info();
-    for (auto input : pi.inputs()) {
+    for (auto *input : pi.inputs()) {
         if (input->kind() == IOKind::Buffer) {
             internal_assert(!input->parameters_.empty());
             for (auto &p : input->parameters_) {
@@ -1308,14 +1389,14 @@ void GeneratorBase::track_parameter_values(bool include_outputs) {
         }
     }
     if (include_outputs) {
-        for (auto output : pi.outputs()) {
+        for (auto *output : pi.outputs()) {
             if (output->kind() == IOKind::Buffer) {
                 internal_assert(!output->funcs().empty());
-                for (auto &f : output->funcs()) {
+                for (const auto &f : output->funcs()) {
                     user_assert(f.defined()) << "Output " << output->name() << " is not fully defined.";
                     auto output_buffers = f.output_buffers();
                     for (auto &o : output_buffers) {
-                        Halide::Internal::Parameter p = o.parameter();
+                        Parameter p = o.parameter();
                         // This must use p.name(), *not* output->name()
                         get_value_tracker()->track_values(p.name(), ion::Internal::parameter_constraints(p));
                     }
@@ -1339,7 +1420,7 @@ void GeneratorBase::advance_phase(Phase new_phase) {
         internal_error << "Impossible";
         break;
     case ConfigureCalled:
-        internal_assert(phase == Created) << "pase is " << phase;
+        internal_assert(phase == Created);
         break;
     case InputsSet:
         internal_assert(phase == Created || phase == ConfigureCalled);
@@ -1355,6 +1436,13 @@ void GeneratorBase::advance_phase(Phase new_phase) {
     phase = new_phase;
 }
 
+void GeneratorBase::ensure_configure_has_been_called() {
+    if (phase < ConfigureCalled) {
+        call_configure();
+    }
+    check_min_phase(ConfigureCalled);
+}
+
 void GeneratorBase::pre_configure() {
     advance_phase(ConfigureCalled);
 }
@@ -1366,7 +1454,7 @@ void GeneratorBase::pre_generate() {
     advance_phase(GenerateCalled);
     GeneratorParamInfo &pi = param_info();
     user_assert(!pi.outputs().empty()) << "Must use Output<> with generate() method.";
-    user_assert(get_target() != Halide::Target()) << "The Generator target has not been set.";
+    user_assert(get_target() != Target()) << "The Generator target has not been set.";
 
     if (!inputs_set) {
         for (auto *input : pi.inputs()) {
@@ -1411,12 +1499,12 @@ void GeneratorBase::post_build() {
     track_parameter_values(true);
 }
 
-Halide::Pipeline GeneratorBase::get_pipeline() {
+Pipeline GeneratorBase::get_pipeline() {
     check_min_phase(GenerateCalled);
     if (!pipeline.defined()) {
         GeneratorParamInfo &pi = param_info();
         user_assert(!pi.outputs().empty()) << "Must use get_pipeline<> with Output<>.";
-        std::vector<Halide::Func> funcs;
+        std::vector<Func> funcs;
         for (auto *output : pi.outputs()) {
             for (const auto &f : output->funcs()) {
                 user_assert(f.defined()) << "Output \"" << f.name() << "\" was not defined.\n";
@@ -1430,8 +1518,8 @@ Halide::Pipeline GeneratorBase::get_pipeline() {
                                                                                  << "\" requires a Tuple of size " << output->types().size()
                                                                                  << " but was defined as Tuple of size " << f.outputs() << ".\n";
                     for (size_t i = 0; i < f.output_types().size(); ++i) {
-                        Halide::Type expected = output->types().at(i);
-                        Halide::Type actual = f.output_types()[i];
+                        Type expected = output->types().at(i);
+                        Type actual = f.output_types()[i];
                         user_assert(expected == actual) << "Output \"" << f.name()
                                                         << "\" requires type " << expected
                                                         << " but was defined as type " << actual << ".\n";
@@ -1440,29 +1528,29 @@ Halide::Pipeline GeneratorBase::get_pipeline() {
                 funcs.push_back(f);
             }
         }
-        pipeline = Halide::Pipeline(funcs);
+        pipeline = Pipeline(funcs);
     }
     return pipeline;
 }
 
-Halide::Module GeneratorBase::build_module(const std::string &function_name,
-                                   const Halide::LinkageType linkage_type) {
-    Halide::AutoSchedulerResults auto_schedule_results;
-    call_configure();
-    Halide::Pipeline pipeline = build_pipeline();
+Module GeneratorBase::build_module(const std::string &function_name,
+                                   const LinkageType linkage_type) {
+    AutoSchedulerResults auto_schedule_results;
+    ensure_configure_has_been_called();
+    Pipeline pipeline = build_pipeline();
     if (get_auto_schedule()) {
         auto_schedule_results = pipeline.auto_schedule(get_target(), get_machine_params());
     }
 
     const GeneratorParamInfo &pi = param_info();
-    std::vector<Halide::Argument> filter_arguments;
+    std::vector<Argument> filter_arguments;
     for (const auto *input : pi.inputs()) {
         for (const auto &p : input->parameters_) {
-            filter_arguments.push_back(to_argument(p, p.is_buffer() ? Halide::Expr() : input->get_def_expr()));
+            filter_arguments.push_back(to_argument(p));
         }
     }
 
-    Halide::Module result = pipeline.compile_to_module(filter_arguments, function_name, get_target(), linkage_type);
+    Module result = pipeline.compile_to_module(filter_arguments, function_name, get_target(), linkage_type);
     std::shared_ptr<ExternsMap> externs_map = get_externs_map();
     for (const auto &map_entry : *externs_map) {
         result.append(map_entry.second);
@@ -1485,19 +1573,19 @@ Halide::Module GeneratorBase::build_module(const std::string &function_name,
     return result;
 }
 
-Halide::Module GeneratorBase::build_gradient_module(const std::string &function_name) {
+Module GeneratorBase::build_gradient_module(const std::string &function_name) {
     constexpr int DBG = 1;
 
     // I doubt these ever need customizing; if they do, we can make them arguments to this function.
     const std::string grad_input_pattern = "_grad_loss_for_$OUT$";
     const std::string grad_output_pattern = "_grad_loss_$OUT$_wrt_$IN$";
-    const Halide::LinkageType linkage_type = Halide::LinkageType::ExternalPlusMetadata;
+    const LinkageType linkage_type = LinkageType::ExternalPlusMetadata;
 
     user_assert(!function_name.empty()) << "build_gradient_module(): function_name cannot be empty\n";
 
-    call_configure();
-    Halide::Pipeline original_pipeline = build_pipeline();
-    std::vector<Halide::Func> original_outputs = original_pipeline.outputs();
+    ensure_configure_has_been_called();
+    Pipeline original_pipeline = build_pipeline();
+    std::vector<Func> original_outputs = original_pipeline.outputs();
 
     // Construct the adjoint pipeline, which has:
     // - All the same inputs as the original, in the same order
@@ -1525,7 +1613,7 @@ Halide::Module GeneratorBase::build_gradient_module(const std::string &function_
         internal_assert(tuple_size == 1) << "Tuple Outputs are not yet supported by build_gradient_module";
     }
 
-    std::vector<Halide::Argument> gradient_inputs;
+    std::vector<Argument> gradient_inputs;
 
     // First: the original inputs. Note that scalar inputs remain scalar,
     // rather being promoted into zero-dimensional buffers.
@@ -1533,8 +1621,8 @@ Halide::Module GeneratorBase::build_gradient_module(const std::string &function_
         // There can be multiple Funcs/Parameters per input if the input is an Array
         internal_assert(input->parameters_.size() == input->funcs_.size());
         for (const auto &p : input->parameters_) {
-            gradient_inputs.push_back(to_argument(p, p.is_buffer() ? Halide::Expr() : input->get_def_expr()));
-            Halide::Internal::debug(DBG) << "    gradient copied input is: " << gradient_inputs.back().name << "\n";
+            gradient_inputs.push_back(to_argument(p));
+            debug(DBG) << "    gradient copied input is: " << gradient_inputs.back().name << "\n";
         }
     }
 
@@ -1546,15 +1634,15 @@ Halide::Module GeneratorBase::build_gradient_module(const std::string &function_
     std::vector<ImageParam> d_output_imageparams;
     for (const auto *output : pi.outputs()) {
         for (size_t i = 0; i < output->funcs().size(); ++i) {
-            const Halide::Func &f = output->funcs()[i];
+            const Func &f = output->funcs()[i];
             const std::string output_name = output->array_name(i);
             // output_name is something like "funcname_i"
-            const std::string grad_in_name = Halide::Internal::replace_all(grad_input_pattern, "$OUT$", output_name);
+            const std::string grad_in_name = replace_all(grad_input_pattern, "$OUT$", output_name);
             // TODO(srj): does it make sense for gradient to be a non-float type?
             // For now, assume it's always float32 (unless the output is already some float).
-            const Halide::Type grad_in_type = output->type().is_float() ? output->type() : Float(32);
+            const Type grad_in_type = output->type().is_float() ? output->type() : Float(32);
             const int grad_in_dimensions = f.dimensions();
-            const Halide::ArgumentEstimates grad_in_estimates = f.output_buffer().parameter().get_argument_estimates();
+            const ArgumentEstimates grad_in_estimates = f.output_buffer().parameter().get_argument_estimates();
             internal_assert((int)grad_in_estimates.buffer_estimates.size() == grad_in_dimensions);
 
             ImageParam d_im(grad_in_type, grad_in_dimensions, grad_in_name);
@@ -1563,25 +1651,25 @@ Halide::Module GeneratorBase::build_gradient_module(const std::string &function_
                 d_im.parameter().set_extent_constraint_estimate(d, grad_in_estimates.buffer_estimates[i].extent);
             }
             d_output_imageparams.push_back(d_im);
-            gradient_inputs.push_back(to_argument(d_im.parameter(), Halide::Expr()));
+            gradient_inputs.push_back(to_argument(d_im.parameter()));
 
-            Halide::Internal::debug(DBG) << "    gradient synthesized input is: " << gradient_inputs.back().name << "\n";
+            debug(DBG) << "    gradient synthesized input is: " << gradient_inputs.back().name << "\n";
         }
     }
 
     // Finally: define the output Func(s), one for each unique output/input pair.
     // Note that original_outputs.size() != pi.outputs().size() if any outputs are arrays.
     internal_assert(original_outputs.size() == d_output_imageparams.size());
-    std::vector<Halide::Func> gradient_outputs;
+    std::vector<Func> gradient_outputs;
     for (size_t i = 0; i < original_outputs.size(); ++i) {
-        const Halide::Func &original_output = original_outputs.at(i);
+        const Func &original_output = original_outputs.at(i);
         const ImageParam &d_output = d_output_imageparams.at(i);
-        Halide::Region bounds;
+        Region bounds;
         for (int i = 0; i < d_output.dimensions(); i++) {
             bounds.emplace_back(d_output.dim(i).min(), d_output.dim(i).extent());
         }
-        Halide::Func adjoint_func = Halide::BoundaryConditions::constant_exterior(d_output, Halide::Internal::make_zero(d_output.type()));
-        Halide::Derivative d = propagate_adjoints(original_output, adjoint_func, bounds);
+        Func adjoint_func = BoundaryConditions::constant_exterior(d_output, make_zero(d_output.type()));
+        Derivative d = propagate_adjoints(original_output, adjoint_func, bounds);
 
         const std::string &output_name = original_output.name();
         for (const auto *input : pi.inputs()) {
@@ -1590,46 +1678,46 @@ Halide::Module GeneratorBase::build_gradient_module(const std::string &function_
                 const auto &f = input->funcs_[i];
                 const auto &p = input->parameters_[i];
 
-                Halide::Func d_f = d(f);
+                Func d_f = d(f);
 
-                std::string grad_out_name = Halide::Internal::replace_all(Halide::Internal::replace_all(grad_output_pattern, "$OUT$", output_name), "$IN$", input_name);
+                std::string grad_out_name = replace_all(replace_all(grad_output_pattern, "$OUT$", output_name), "$IN$", input_name);
                 if (!d_f.defined()) {
                     grad_out_name = "_dummy" + grad_out_name;
                 }
 
-                Halide::Func d_out_wrt_in(grad_out_name);
+                Func d_out_wrt_in(grad_out_name);
                 if (d_f.defined()) {
                     d_out_wrt_in(Halide::_) = d_f(Halide::_);
                 } else {
-                    Halide::Internal::debug(DBG) << "    No Derivative found for output " << output_name << " wrt input " << input_name << "\n";
+                    debug(DBG) << "    No Derivative found for output " << output_name << " wrt input " << input_name << "\n";
                     // If there was no Derivative found, don't skip the output;
                     // just replace with a dummy Func that is all zeros. This ensures
-                    // that the signature of the Halide::Pipeline we produce is always predictable.
-                    std::vector<Halide::Var> vars;
+                    // that the signature of the Pipeline we produce is always predictable.
+                    std::vector<Var> vars;
                     for (int i = 0; i < d_output.dimensions(); i++) {
-                        vars.push_back(Halide::Var::implicit(i));
+                        vars.push_back(Var::implicit(i));
                     }
-                    d_out_wrt_in(vars) = Halide::Internal::make_zero(d_output.type());
+                    d_out_wrt_in(vars) = make_zero(d_output.type());
                 }
 
                 d_out_wrt_in.set_estimates(p.get_argument_estimates().buffer_estimates);
 
                 // Useful for debugging; ordinarily better to leave out
-                // Halide::Internal::debug(0) << "\n\n"
+                // debug(0) << "\n\n"
                 //          << "output:\n" << FuncWithDependencies(original_output) << "\n"
                 //          << "d_output:\n" << FuncWithDependencies(adjoint_func) << "\n"
                 //          << "input:\n" << FuncWithDependencies(f) << "\n"
                 //          << "d_out_wrt_in:\n" << FuncWithDependencies(d_out_wrt_in) << "\n";
 
                 gradient_outputs.push_back(d_out_wrt_in);
-                Halide::Internal::debug(DBG) << "    gradient output is: " << d_out_wrt_in.name() << "\n";
+                debug(DBG) << "    gradient output is: " << d_out_wrt_in.name() << "\n";
             }
         }
     }
 
-    Halide::Pipeline grad_pipeline = Halide::Pipeline(gradient_outputs);
+    Pipeline grad_pipeline = Pipeline(gradient_outputs);
 
-    Halide::AutoSchedulerResults auto_schedule_results;
+    AutoSchedulerResults auto_schedule_results;
     if (get_auto_schedule()) {
         auto_schedule_results = grad_pipeline.auto_schedule(get_target(), get_machine_params());
     } else {
@@ -1637,7 +1725,7 @@ Halide::Module GeneratorBase::build_gradient_module(const std::string &function_
                         "gradient module will be unscheduled; this is very unlikely to be what you want.\n";
     }
 
-    Halide::Module result = grad_pipeline.compile_to_module(gradient_inputs, function_name, get_target(), linkage_type);
+    Module result = grad_pipeline.compile_to_module(gradient_inputs, function_name, get_target(), linkage_type);
     user_assert(get_externs_map()->empty())
         << "Building a gradient-descent module for a Generator with ExternalCode is not supported.\n";
 
@@ -1649,7 +1737,7 @@ Halide::Module GeneratorBase::build_gradient_module(const std::string &function_
 void GeneratorBase::emit_cpp_stub(const std::string &stub_file_path) {
     user_assert(!generator_registered_name.empty() && !generator_stub_name.empty()) << "Generator has no name.\n";
     // Make sure we call configure() so that extra inputs/outputs are added as necessary.
-    call_configure();
+    ensure_configure_has_been_called();
     // StubEmitter will want to access the GP/SP values, so advance the phase to avoid assert-fails.
     advance_phase(GenerateCalled);
     advance_phase(ScheduleCalled);
@@ -1681,13 +1769,9 @@ void GeneratorBase::check_input_kind(Internal::GeneratorInputBase *in, Internal:
 GIOBase::GIOBase(size_t array_size,
                  const std::string &name,
                  IOKind kind,
-                 const std::vector<Halide::Type> &types,
+                 const std::vector<Type> &types,
                  int dims)
     : array_size_(array_size), name_(name), kind_(kind), types_(types), dims_(dims) {
-}
-
-GIOBase::~GIOBase() {
-    // nothing
 }
 
 bool GIOBase::array_size_defined() const {
@@ -1717,9 +1801,9 @@ bool GIOBase::types_defined() const {
     return !types_.empty();
 }
 
-const std::vector<Halide::Type> &GIOBase::types() const {
+const std::vector<Type> &GIOBase::types() const {
     // If types aren't defined, but we have one Func that is,
-    // we probably just set an Output<Halide::Func> and should propagate the types.
+    // we probably just set an Output<Func> and should propagate the types.
     if (!types_defined()) {
         // use funcs_, not funcs(): the latter could give a much-less-helpful error message
         // in this case.
@@ -1728,14 +1812,32 @@ const std::vector<Halide::Type> &GIOBase::types() const {
             check_matching_types(f.at(0).output_types());
         }
     }
-    user_assert(types_defined()) << "Halide::Type is not defined for " << input_or_output() << " '" << name() << "'; you may need to specify '" << name() << ".type' as a GeneratorParam.\n";
+    user_assert(types_defined()) << "Type is not defined for " << input_or_output() << " '" << name() << "'; you may need to specify '" << name() << ".type' as a GeneratorParam, or call set_type() from the configure() method.\n";
     return types_;
 }
 
-Halide::Type GIOBase::type() const {
+Type GIOBase::type() const {
     const auto &t = types();
     internal_assert(t.size() == 1) << "Expected types_.size() == 1, saw " << t.size() << " for " << name() << "\n";
     return t.at(0);
+}
+
+void GIOBase::set_type(const Type &type) {
+    generator->check_exact_phase(GeneratorBase::ConfigureCalled);
+    user_assert(!types_defined()) << "set_type() may only be called on an Input or Output that has no type specified.";
+    types_ = {type};
+}
+
+void GIOBase::set_dimensions(int dims) {
+    generator->check_exact_phase(GeneratorBase::ConfigureCalled);
+    user_assert(!dims_defined()) << "set_dimensions() may only be called on an Input or Output that has no dimensionality specified.";
+    dims_ = dims;
+}
+
+void GIOBase::set_array_size(int size) {
+    generator->check_exact_phase(GeneratorBase::ConfigureCalled);
+    user_assert(!array_size_defined()) << "set_array_size() may only be called on an Input or Output that has no array size specified.";
+    array_size_ = size;
 }
 
 bool GIOBase::dims_defined() const {
@@ -1744,7 +1846,7 @@ bool GIOBase::dims_defined() const {
 
 int GIOBase::dims() const {
     // If types aren't defined, but we have one Func that is,
-    // we probably just set an Output<Halide::Func> and should propagate the types.
+    // we probably just set an Output<Func> and should propagate the types.
     if (!dims_defined()) {
         // use funcs_, not funcs(): the latter could give a much-less-helpful error message
         // in this case.
@@ -1757,12 +1859,12 @@ int GIOBase::dims() const {
     return dims_;
 }
 
-const std::vector<Halide::Func> &GIOBase::funcs() const {
+const std::vector<Func> &GIOBase::funcs() const {
     internal_assert(funcs_.size() == array_size() && exprs_.empty());
     return funcs_;
 }
 
-const std::vector<Halide::Expr> &GIOBase::exprs() const {
+const std::vector<Expr> &GIOBase::exprs() const {
     internal_assert(exprs_.size() == array_size() && funcs_.empty());
     return exprs_;
 }
@@ -1771,7 +1873,7 @@ void GIOBase::verify_internals() {
     user_assert(dims_ >= 0) << "Generator Input/Output Dimensions must have positive values";
 
     if (kind() != IOKind::Scalar) {
-        for (const Halide::Func &f : funcs()) {
+        for (const Func &f : funcs()) {
             user_assert(f.defined()) << "Input/Output " << name() << " is not defined.\n";
             user_assert(f.dimensions() == dims())
                 << "Expected dimensions " << dims()
@@ -1791,7 +1893,7 @@ void GIOBase::verify_internals() {
                 << " for " << name() << "\n";
         }
     } else {
-        for (const Halide::Expr &e : exprs()) {
+        for (const Expr &e : exprs()) {
             user_assert(e.defined()) << "Input/Ouput " << name() << " is not defined.\n";
             user_assert(e.type() == type())
                 << "Expected type " << type()
@@ -1811,11 +1913,11 @@ std::string GIOBase::array_name(size_t i) const {
 
 // If our type(s) are defined, ensure it matches the ones passed in, asserting if not.
 // If our type(s) are not defined, just set to the ones passed in.
-void GIOBase::check_matching_types(const std::vector<Halide::Type> &t) const {
+void GIOBase::check_matching_types(const std::vector<Type> &t) const {
     if (types_defined()) {
-        user_assert(types().size() == t.size()) << "Halide::Type mismatch for " << name() << ": expected " << types().size() << " types but saw " << t.size();
+        user_assert(types().size() == t.size()) << "Type mismatch for " << name() << ": expected " << types().size() << " types but saw " << t.size();
         for (size_t i = 0; i < t.size(); ++i) {
-            user_assert(types().at(i) == t.at(i)) << "Halide::Type mismatch for " << name() << ": expected " << types().at(i) << " saw " << t.at(i);
+            user_assert(types().at(i) == t.at(i)) << "Type mismatch for " << name() << ": expected " << types().at(i) << " saw " << t.at(i);
         }
     } else {
         types_ = t;
@@ -1824,7 +1926,9 @@ void GIOBase::check_matching_types(const std::vector<Halide::Type> &t) const {
 
 void GIOBase::check_gio_access() const {
     // // Allow reading when no Generator is set, to avoid having to special-case ctor initing code
-    if (!generator) return;
+    if (!generator) {
+        return;
+    }
     user_assert(generator->phase > GeneratorBase::InputsSet)
         << "The " << input_or_output() << " \"" << name() << "\" cannot be examined before build() or generate() is called.\n";
 }
@@ -1851,19 +1955,19 @@ void GIOBase::check_matching_array_size(size_t size) const {
 GeneratorInputBase::GeneratorInputBase(size_t array_size,
                                        const std::string &name,
                                        IOKind kind,
-                                       const std::vector<Halide::Type> &t,
+                                       const std::vector<Type> &t,
                                        int d)
     : GIOBase(array_size, name, kind, t, d) {
-    Halide::Internal::ObjectInstanceRegistry::register_instance(this, 0, Halide::Internal::ObjectInstanceRegistry::GeneratorInput, this, nullptr);
+    ObjectInstanceRegistry::register_instance(this, 0, ObjectInstanceRegistry::GeneratorInput, this, nullptr);
 }
 
-GeneratorInputBase::GeneratorInputBase(const std::string &name, IOKind kind, const std::vector<Halide::Type> &t, int d)
+GeneratorInputBase::GeneratorInputBase(const std::string &name, IOKind kind, const std::vector<Type> &t, int d)
     : GeneratorInputBase(1, name, kind, t, d) {
     // nothing
 }
 
 GeneratorInputBase::~GeneratorInputBase() {
-    Halide::Internal::ObjectInstanceRegistry::unregister_instance(this);
+    ObjectInstanceRegistry::unregister_instance(this);
 }
 
 void GeneratorInputBase::check_value_writable() const {
@@ -1875,11 +1979,7 @@ void GeneratorInputBase::set_def_min_max() {
     // nothing
 }
 
-Halide::Expr GeneratorInputBase::get_def_expr() const {
-    return Halide::Expr();
-}
-
-Halide::Internal::Parameter GeneratorInputBase::parameter() const {
+Parameter GeneratorInputBase::parameter() const {
     user_assert(!this->is_array()) << "Cannot call the parameter() method on Input<[]> " << name() << "; use an explicit subscript operator instead.";
     return parameters_.at(0);
 }
@@ -1909,7 +2009,7 @@ void GeneratorInputBase::init_internals() {
             internal_assert(dims() == p.dimensions());
             funcs_.push_back(make_param_func(p, name));
         } else {
-            Halide::Expr e = Halide::Internal::Variable::make(type(), name, p);
+            Expr e = Internal::Variable::make(type(), name, p);
             exprs_.push_back(e);
         }
     }
@@ -1943,7 +2043,7 @@ void GeneratorInputBase::set_inputs(const std::vector<StubInput> &inputs) {
             parameters_.push_back(p);
         } else {
             auto e = in.expr();
-            user_assert(e.defined()) << "The input for " << name() << " is an undefined Halide::Expr. Please define it.\n";
+            user_assert(e.defined()) << "The input for " << name() << " is an undefined Expr. Please define it.\n";
             check_matching_types({e.type()});
             check_matching_dims(0);
             exprs_.push_back(e);
@@ -1955,14 +2055,14 @@ void GeneratorInputBase::set_inputs(const std::vector<StubInput> &inputs) {
     verify_internals();
 }
 
-void GeneratorInputBase::set_estimate_impl(const Halide::Var &var, const Halide::Expr &min, const Halide::Expr &extent) {
+void GeneratorInputBase::set_estimate_impl(const Var &var, const Expr &min, const Expr &extent) {
     internal_assert(exprs_.empty() && !funcs_.empty() && parameters_.size() == funcs_.size());
     for (size_t i = 0; i < funcs_.size(); ++i) {
-        Halide::Func &f = funcs_[i];
+        Func &f = funcs_[i];
         f.set_estimate(var, min, extent);
         // Propagate the estimate into the Parameter as well, just in case
         // we end up compiling this for toplevel.
-        std::vector<Halide::Var> args = f.args();
+        std::vector<Var> args = f.args();
         int dim = -1;
         for (size_t a = 0; a < args.size(); ++a) {
             if (args[a].same_as(var)) {
@@ -1971,42 +2071,42 @@ void GeneratorInputBase::set_estimate_impl(const Halide::Var &var, const Halide:
             }
         }
         internal_assert(dim >= 0);
-        Halide::Internal::Parameter &p = parameters_[i];
+        Parameter &p = parameters_[i];
         p.set_min_constraint_estimate(dim, min);
         p.set_extent_constraint_estimate(dim, extent);
     }
 }
 
-void GeneratorInputBase::set_estimates_impl(const Halide::Region &estimates) {
+void GeneratorInputBase::set_estimates_impl(const Region &estimates) {
     internal_assert(exprs_.empty() && !funcs_.empty() && parameters_.size() == funcs_.size());
     for (size_t i = 0; i < funcs_.size(); ++i) {
-        Halide::Func &f = funcs_[i];
+        Func &f = funcs_[i];
         f.set_estimates(estimates);
         // Propagate the estimate into the Parameter as well, just in case
         // we end up compiling this for toplevel.
         for (size_t dim = 0; dim < estimates.size(); ++dim) {
-            Halide::Internal::Parameter &p = parameters_[i];
-            const Halide::Range &r = estimates[dim];
+            Parameter &p = parameters_[i];
+            const Range &r = estimates[dim];
             p.set_min_constraint_estimate(dim, r.min);
             p.set_extent_constraint_estimate(dim, r.extent);
         }
     }
 }
 
-GeneratorOutputBase::GeneratorOutputBase(size_t array_size, const std::string &name, IOKind kind, const std::vector<Halide::Type> &t, int d)
+GeneratorOutputBase::GeneratorOutputBase(size_t array_size, const std::string &name, IOKind kind, const std::vector<Type> &t, int d)
     : GIOBase(array_size, name, kind, t, d) {
     internal_assert(kind != IOKind::Scalar);
-    Halide::Internal::ObjectInstanceRegistry::register_instance(this, 0, Halide::Internal::ObjectInstanceRegistry::GeneratorOutput,
+    ObjectInstanceRegistry::register_instance(this, 0, ObjectInstanceRegistry::GeneratorOutput,
                                               this, nullptr);
 }
 
-GeneratorOutputBase::GeneratorOutputBase(const std::string &name, IOKind kind, const std::vector<Halide::Type> &t, int d)
+GeneratorOutputBase::GeneratorOutputBase(const std::string &name, IOKind kind, const std::vector<Type> &t, int d)
     : GeneratorOutputBase(1, name, kind, t, d) {
     // nothing
 }
 
 GeneratorOutputBase::~GeneratorOutputBase() {
-    Halide::Internal::ObjectInstanceRegistry::unregister_instance(this);
+    ObjectInstanceRegistry::unregister_instance(this);
 }
 
 void GeneratorOutputBase::check_value_writable() const {
@@ -2032,12 +2132,282 @@ void GeneratorOutputBase::resize(size_t size) {
     init_internals();
 }
 
+StubOutputBufferBase::StubOutputBufferBase() = default;
+
+StubOutputBufferBase::StubOutputBufferBase(const Func &f, const std::shared_ptr<GeneratorBase> &generator)
+    : f(f), generator(generator) {
+}
+
 void StubOutputBufferBase::check_scheduled(const char *m) const {
     generator->check_scheduled(m);
 }
 
-Halide::Target StubOutputBufferBase::get_target() const {
+Realization StubOutputBufferBase::realize(std::vector<int32_t> sizes) {
+    return f.realize(std::move(sizes), get_target());
+}
+
+Target StubOutputBufferBase::get_target() const {
     return generator->get_target();
+}
+
+RegisterGenerator::RegisterGenerator(const char *registered_name, GeneratorFactory generator_factory) {
+    Internal::GeneratorRegistry::register_factory(registered_name, std::move(generator_factory));
+}
+
+void generator_test() {
+    GeneratorContext context(get_host_target());
+
+    // Verify that the Generator's internal phase actually prevents unsupported
+    // order of operations.
+    {
+        class Tester : public Generator<Tester> {
+        public:
+            GeneratorParam<int> gp0{"gp0", 0};
+            GeneratorParam<float> gp1{"gp1", 1.f};
+            GeneratorParam<uint64_t> gp2{"gp2", 2};
+
+            Input<int> input{"input"};
+            Output<Func> output{"output", Int(32), 1};
+
+            void generate() {
+                internal_assert(gp0 == 1);
+                internal_assert(gp1 == 2.f);
+                internal_assert(gp2 == (uint64_t)2);  // unchanged
+                Var x;
+                output(x) = input + gp0;
+            }
+            void schedule() {
+                // empty
+            }
+        };
+
+        Tester tester;
+        tester.init_from_context(context);
+        internal_assert(tester.phase == GeneratorBase::Created);
+
+        // Verify that calling GeneratorParam::set() works.
+        tester.gp0.set(1);
+
+        tester.set_inputs_vector({{StubInput(42)}});
+        internal_assert(tester.phase == GeneratorBase::InputsSet);
+
+        // tester.set_inputs_vector({{StubInput(43)}});  // This will assert-fail.
+
+        // Also ok to call in this phase.
+        tester.gp1.set(2.f);
+
+        tester.call_generate();
+        internal_assert(tester.phase == GeneratorBase::GenerateCalled);
+
+        // tester.set_inputs_vector({{StubInput(44)}});  // This will assert-fail.
+        // tester.gp2.set(2);  // This will assert-fail.
+
+        tester.call_schedule();
+        internal_assert(tester.phase == GeneratorBase::ScheduleCalled);
+
+        // tester.set_inputs_vector({{StubInput(45)}});  // This will assert-fail.
+        // tester.gp2.set(2);  // This will assert-fail.
+        // tester.sp2.set(202);  // This will assert-fail.
+    }
+
+    // Verify that the Generator's internal phase actually prevents unsupported
+    // order of operations (with old-style Generator)
+    {
+        class Tester : public Generator<Tester> {
+        public:
+            GeneratorParam<int> gp0{"gp0", 0};
+            GeneratorParam<float> gp1{"gp1", 1.f};
+            GeneratorParam<uint64_t> gp2{"gp2", 2};
+            GeneratorParam<uint8_t> gp_uint8{"gp_uint8", 65};
+            GeneratorParam<int8_t> gp_int8{"gp_int8", 66};
+            GeneratorParam<char> gp_char{"gp_char", 97};
+            GeneratorParam<signed char> gp_schar{"gp_schar", 98};
+            GeneratorParam<unsigned char> gp_uchar{"gp_uchar", 99};
+            GeneratorParam<bool> gp_bool{"gp_bool", true};
+
+            Input<int> input{"input"};
+
+            Func build() {
+                internal_assert(gp0 == 1);
+                internal_assert(gp1 == 2.f);
+                internal_assert(gp2 == (uint64_t)2);  // unchanged
+                internal_assert(gp_uint8 == 67);
+                internal_assert(gp_int8 == 68);
+                internal_assert(gp_bool == false);
+                internal_assert(gp_char == 107);
+                internal_assert(gp_schar == 108);
+                internal_assert(gp_uchar == 109);
+                Var x;
+                Func output;
+                output(x) = input + gp0;
+                return output;
+            }
+        };
+
+        Tester tester;
+        tester.init_from_context(context);
+        internal_assert(tester.phase == GeneratorBase::Created);
+
+        // Verify that calling GeneratorParam::set() works.
+        tester.gp0.set(1);
+
+        // set_inputs_vector() can't be called on an old-style Generator;
+        // that's OK, since we can skip from Created -> GenerateCalled anyway
+        // tester.set_inputs_vector({{StubInput(42)}});
+        // internal_assert(tester.phase == GeneratorBase::InputsSet);
+
+        // tester.set_inputs_vector({{StubInput(43)}});  // This will assert-fail.
+
+        // Also ok to call in this phase.
+        tester.gp1.set(2.f);
+
+        // Verify that 8-bit non-boolean GP values are parsed as integers, not chars.
+        tester.gp_int8.set_from_string("68");
+        tester.gp_uint8.set_from_string("67");
+        tester.gp_char.set_from_string("107");
+        tester.gp_schar.set_from_string("108");
+        tester.gp_uchar.set_from_string("109");
+        tester.gp_bool.set_from_string("false");
+
+        tester.build_pipeline();
+        internal_assert(tester.phase == GeneratorBase::ScheduleCalled);
+
+        // tester.set_inputs_vector({{StubInput(45)}});  // This will assert-fail.
+        // tester.gp2.set(2);  // This will assert-fail.
+        // tester.sp2.set(202);  // This will assert-fail.
+    }
+
+    // Verify that set_inputs() works properly, even if the specific subtype of Generator is not known.
+    {
+        class Tester : public Generator<Tester> {
+        public:
+            Input<int> input_int{"input_int"};
+            Input<float> input_float{"input_float"};
+            Input<uint8_t> input_byte{"input_byte"};
+            Input<uint64_t[4]> input_scalar_array{"input_scalar_array"};
+            Input<Func> input_func_typed{"input_func_typed", Int(16), 1};
+            Input<Func> input_func_untyped{"input_func_untyped", 1};
+            Input<Func[]> input_func_array{"input_func_array", 1};
+            Input<Buffer<uint8_t>> input_buffer_typed{"input_buffer_typed", 3};
+            Input<Buffer<>> input_buffer_untyped{"input_buffer_untyped"};
+            Output<Func> output{"output", Float(32), 1};
+
+            void generate() {
+                Var x;
+                output(x) = input_int +
+                            input_float +
+                            input_byte +
+                            input_scalar_array[3] +
+                            input_func_untyped(x) +
+                            input_func_typed(x) +
+                            input_func_array[0](x) +
+                            input_buffer_typed(x, 0, 0) +
+                            input_buffer_untyped(x, Halide::_);
+            }
+            void schedule() {
+                // nothing
+            }
+        };
+
+        Tester tester_instance;
+        tester_instance.init_from_context(context);
+        // Use a base-typed reference to verify the code below doesn't know about subtype
+        GeneratorBase &tester = tester_instance;
+
+        const int i = 1234;
+        const float f = 2.25f;
+        const uint8_t b = 0x42;
+        const std::vector<uint64_t> a = {1, 2, 3, 4};
+        Var x;
+        Func fn_typed, fn_untyped;
+        fn_typed(x) = cast<int16_t>(38);
+        fn_untyped(x) = 32.f;
+        const std::vector<Func> fn_array = {fn_untyped, fn_untyped};
+
+        Buffer<uint8_t> buf_typed(1, 1, 1);
+        Buffer<float> buf_untyped(1);
+
+        buf_typed.fill(33);
+        buf_untyped.fill(34);
+
+        // set_inputs() requires inputs in Input<>-decl-order,
+        // and all inputs match type exactly.
+        tester.set_inputs(i, f, b, a, fn_typed, fn_untyped, fn_array, buf_typed, buf_untyped);
+        tester.call_generate();
+        tester.call_schedule();
+
+        Buffer<float> im = tester_instance.realize({1});
+        internal_assert(im.dimensions() == 1);
+        internal_assert(im.dim(0).extent() == 1);
+        internal_assert(im(0) == 1475.25f) << "Expected 1475.25 but saw " << im(0);
+    }
+
+    // Verify that array inputs and outputs are typed correctly.
+    {
+        class Tester : public Generator<Tester> {
+        public:
+            Input<int[]> expr_array_input{"expr_array_input"};
+            Input<Func[]> func_array_input{"input_func_array"};
+            Input<Buffer<>[]> buffer_array_input { "buffer_array_input" };
+
+            Input<int[]> expr_array_output{"expr_array_output"};
+            Output<Func[]> func_array_output{"func_array_output"};
+            Output<Buffer<>[]> buffer_array_output { "buffer_array_output" };
+
+            void generate() {
+            }
+        };
+
+        Tester tester_instance;
+
+        static_assert(std::is_same<decltype(tester_instance.expr_array_input[0]), const Expr &>::value, "type mismatch");
+        static_assert(std::is_same<decltype(tester_instance.expr_array_output[0]), const Expr &>::value, "type mismatch");
+
+        static_assert(std::is_same<decltype(tester_instance.func_array_input[0]), const Func &>::value, "type mismatch");
+        static_assert(std::is_same<decltype(tester_instance.func_array_output[0]), Func &>::value, "type mismatch");
+
+        static_assert(std::is_same<decltype(tester_instance.buffer_array_input[0]), ImageParam>::value, "type mismatch");
+        static_assert(std::is_same<decltype(tester_instance.buffer_array_output[0]), const Func &>::value, "type mismatch");
+    }
+
+    class GPTester : public Generator<GPTester> {
+    public:
+        GeneratorParam<int> gp{"gp", 0};
+        Output<Func> output{"output", Int(32), 0};
+        void generate() {
+            output() = 0;
+        }
+        void schedule() {
+        }
+    };
+    GPTester gp_tester;
+    gp_tester.init_from_context(context);
+    // Accessing the GeneratorParam will assert-fail if we
+    // don't do some minimal setup here.
+    gp_tester.set_inputs_vector({});
+    gp_tester.call_generate();
+    gp_tester.call_schedule();
+    auto &gp = gp_tester.gp;
+
+    // Verify that RDom parameter-pack variants can convert GeneratorParam to Expr
+    RDom rdom(0, gp, 0, gp);
+
+    // Verify that Func parameter-pack variants can convert GeneratorParam to Expr
+    Var x, y;
+    Func f, g;
+    f(x, y) = x + y;
+    g(x, y) = f(gp, gp);  // check Func::operator() overloads
+    g(rdom.x, rdom.y) += f(rdom.x, rdom.y);
+    g.update(0).reorder(rdom.y, rdom.x);  // check Func::reorder() overloads for RDom::operator RVar()
+
+    // Verify that print() parameter-pack variants can convert GeneratorParam to Expr
+    print(f(0, 0), g(1, 1), gp);
+    print_when(true, f(0, 0), g(1, 1), gp);
+
+    // Verify that Tuple parameter-pack variants can convert GeneratorParam to Expr
+    Tuple t(gp, gp, gp);
+
+    std::cout << "Generator test passed" << std::endl;
 }
 
 }  // namespace Internal

@@ -38,7 +38,7 @@ extern "C" int ION_EXPORT ion_bb_image_io_color_data_loader(halide_buffer_t *ses
             auto frame = seqs[session_id]->get(width, height, cv::IMREAD_COLOR);
 
             // Resize to desired width/height
-            cv::resize(frame, frame, cv::Size(height, width), 0, 0);
+            cv::resize(frame, frame, cv::Size(width, height), 0, 0);
 
             // Convert to RGB from BGR
             cv::cvtColor(frame, frame, cv::COLOR_BGR2RGB);
