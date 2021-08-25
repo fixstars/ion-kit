@@ -162,9 +162,7 @@ private:
         }
 
         if (!runtime_creator_) {
-            std::cerr << "Error: failed to get any runtime creator from tvm" << std::endl;
-            std::cerr << TVMGetLastError() << std::endl;
-            exit(1);
+            throw std::runtime_error("Error: failed to get any runtime creator from tvm : " + std::string(TVMGetLastError()));
         }
 
         return;
