@@ -21,26 +21,13 @@ RUN cd /usr/include \
                       -O https://ion-archives.s3-us-west-2.amazonaws.com/Halide-Headers-v12.0.1-9a99bee06/HalideBuffer.h
 
 #
-# OpenCV
+# genesis-runtime
 #
 # Deps: curl, libgtk-3-0
 RUN if [ "x$TARGETPLATFORM" = "xlinux/amd64" ]; then \
-        curl -L https://ion-archives.s3-us-west-2.amazonaws.com/genesis-runtime/OpenCV-4.5.2-x86_64-gcc75.sh -o x.sh && sh x.sh --skip-license --prefix=/usr && rm x.sh;\
+        curl -L https://genesis-runtime.s3-us-west-2.amazonaws.com/genesis-runtime-generic-amd64-v0.0.7.tar.gz | tar xz -C /usr --strip-components 1 ;\
     elif [ "x$TARGETPLATFORM" = "xlinux/arm64" ]; then \
-        curl -L https://ion-archives.s3-us-west-2.amazonaws.com/genesis-runtime/OpenCV-4.5.2-aarch64-gcc75.sh -o x.sh && sh x.sh --skip-license --prefix=/usr && rm x.sh;\
-    else \
-        echo "Unsupported platform" && exit -1 ;\
-    fi
-
-#
-# ONNXRuntime
-#
-# NOTE: This dockerfile is used for Building and Running Preview, then we need to utilize version which is not depends on CUDA ATM.
-# For a performance measurement, installed onnxruntime version will be used.
-RUN if [ "x$TARGETPLATFORM" = "xlinux/amd64" ]; then \
-        curl -L https://ion-archives.s3-us-west-2.amazonaws.com/genesis-runtime/onnxruntime-linux-x64-gcc75-1.6.0.tar.gz | tar xz -C /usr --strip-components 1 ;\
-    elif [ "x$TARGETPLATFORM" = "xlinux/arm64" ]; then \
-        curl -L https://ion-archives.s3-us-west-2.amazonaws.com/genesis-runtime/onnxruntime-linux-arm64-gcc75-1.6.0.tar.gz  | tar xz -C /usr --strip-components 1 ;\
+        curl -L https://genesis-runtime.s3-us-west-2.amazonaws.com/genesis-runtime-generic-arm64-v0.0.7.tar.gz | tar xz -C /usr --strip-components 1 ;\
     else \
         echo "Unsupported platform" && exit -1 ;\
     fi
