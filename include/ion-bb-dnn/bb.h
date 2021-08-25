@@ -71,15 +71,13 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+    GeneratorParam<std::string> gc_extra_features{"gc_extra_features", ""};
+    GeneratorParam<std::string> gc_required_features{"gc_required_features", "x86-64,arm-64,cuda,dpu,edgetpu"};
 
     GeneratorParam<std::string> model_root_url_{"model_base_url", "http://ion-archives.s3-us-west-2.amazonaws.com/models/"};
     GeneratorParam<std::string> cache_root_{"cache_root", "/tmp/"};
 
     GeneratorParam<DNNModelKind> dnn_model_kind_{"dnn_model_kind", DNNModelKind::ssd_mobilenet_v1_coco, dnn_model_enum_map};
-    GeneratorParam<bool> edgetpu_enable_{"edgetpu_enable", false};
-
-    // TODO: Embed model at compilation time
-    // GeneratorParam<bool> embed_model{"embed_model", false};
 
     GeneratorInput<Halide::Func> input_{"input", Halide::type_of<float>(), D};
     GeneratorOutput<Halide::Func> output{"output", Halide::type_of<float>(), D};
@@ -102,14 +100,11 @@ public:
         cache_path_buf.fill(0);
         std::memcpy(cache_path_buf.data(), cache_root.c_str(), cache_root.size());
 
-        const bool cuda_enable = this->get_target().has_feature(Target::Feature::CUDA);
-        bool dnndk_enable = true;
-#ifdef HALIDE_FOR_FPGA
-        dnndk_enable = (this->get_target().has_feature(Target::Feature::DPU));
-#endif
+        std::string extra_feature_str = gc_extra_features;
 
-        // Use edgetpu or not
-        const bool edgetpu_enable = edgetpu_enable_;
+        const bool cuda_enable = this->get_target().has_feature(Target::Feature::CUDA);
+        const bool dpu_enable = (extra_feature_str.find("dpu") != std::string::npos);
+        const bool edgetpu_enable = (extra_feature_str.find("edgetpu") != std::string::npos);
 
         // Base model name
         std::string dnn_model_name;
@@ -154,7 +149,7 @@ public:
         input = Func{static_cast<std::string>(gc_prefix) + "in"};
         input(_) = input_(_);
 
-        std::vector<ExternFuncArgument> params{input, session_id_buf, model_root_url_buf, cache_path_buf, cuda_enable, dnndk_enable, edgetpu_enable, dnn_model_name_buf, target_arch_buf};
+        std::vector<ExternFuncArgument> params{input, session_id_buf, model_root_url_buf, cache_path_buf, cuda_enable, dpu_enable, edgetpu_enable, dnn_model_name_buf, target_arch_buf};
         Func object_detection(static_cast<std::string>(gc_prefix) + "output");
         object_detection.define_extern("ion_bb_dnn_generic_object_detection", params, Float(32), D);
         object_detection.compute_root();
