@@ -158,7 +158,7 @@ private:
         if (use_edgetpu_) {
             TVMFuncGetGlobal("tvm.edgetpu_runtime.create", &runtime_creator_);
         } else {
-            TVMFuncGetGlobal("tvm.graph_runtime.create", &runtime_creator_);
+            TVMFuncGetGlobal("tvm.graph_executor.create", &runtime_creator_);
         }
 
         if (!runtime_creator_) {
