@@ -102,7 +102,10 @@ public:
 
         std::string extra_feature_str = gc_extra_features;
 
-        const bool cuda_enable = this->get_target().has_feature(Target::Feature::CUDA);
+        const auto &target = this->get_target();
+        const bool avx2_fma_enable = target.has_feature(Halide::Target::Feature::AVX2) && target.has_feature(Halide::Target::Feature::FMA);
+
+        const bool cuda_enable = target.has_feature(Target::Feature::CUDA);
         const bool dpu_enable = (extra_feature_str.find("dpu") != std::string::npos);
         const bool edgetpu_enable = (extra_feature_str.find("edgetpu") != std::string::npos);
 
@@ -136,7 +139,7 @@ public:
         // Target arch type
         // NOTE shuld we support 32-bits archs?
         std::string arch_type;
-        const auto &arch = this->get_target().arch;
+        const auto &arch = target.arch;
         if (arch == Halide::Target::Arch::X86) {
             arch_type = "x86_64";
         } else if (arch == Halide::Target::Arch::ARM) {
@@ -149,7 +152,7 @@ public:
         input = Func{static_cast<std::string>(gc_prefix) + "in"};
         input(_) = input_(_);
 
-        std::vector<ExternFuncArgument> params{input, session_id_buf, model_root_url_buf, cache_path_buf, cuda_enable, dpu_enable, edgetpu_enable, dnn_model_name_buf, target_arch_buf};
+        std::vector<ExternFuncArgument> params{input, session_id_buf, model_root_url_buf, cache_path_buf, avx2_fma_enable, cuda_enable, dpu_enable, edgetpu_enable, dnn_model_name_buf, target_arch_buf};
         Func object_detection(static_cast<std::string>(gc_prefix) + "output");
         object_detection.define_extern("ion_bb_dnn_generic_object_detection", params, Float(32), D);
         object_detection.compute_root();

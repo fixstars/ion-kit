@@ -1,8 +1,12 @@
 #ifndef ION_BB_DNN_RT_TVM_H
 #define ION_BB_DNN_RT_TVM_H
 
-#include <string>
+#include <stdlib.h>
 #include <sys/utsname.h>
+#include <unistd.h>
+
+#include <set>
+#include <string>
 
 #include <dlpack/dlpack.h>
 #include <tvm/runtime/c_runtime_api.h>
@@ -135,6 +139,7 @@ private:
     DLContext dlctx_;
     std::string model_base_url_ = "";
     std::string model_cache_dir_ = "";
+    bool use_avx2_fma_ = false;
     bool use_cuda_ = false;
     bool use_edgetpu_ = false;
     std::string dnn_model_name_;
@@ -177,6 +182,8 @@ private:
             model_file += "_" + target_arch_;
             if (use_cuda_) {
                 model_file += "_cuda";
+            } else if (target_arch_ == "x86_64" && !use_avx2_fma_) {
+                model_file += "_upcore";
             }
             model_file += ".tar";
         }
@@ -184,9 +191,41 @@ private:
         return model_file;
     }
 
-    bool have_file_cache(const std::string &filename) {
-        std::ifstream ifs(model_cache_dir_ + filename, std::ios::binary);
-        return ifs.is_open();
+    bool have_file_cache(const std::string &model_url, const std::string &model_file) {
+
+        // Check .etag file existence
+        std::string model_path = model_cache_dir_ + model_file;
+        std::string etag_path = model_path + ".etag";
+
+        std::ifstream ifs_etag(etag_path);
+        if (!ifs_etag.is_open())
+            return false;
+
+        // Check etag value is the same or not
+        std::string cached_etag_value;
+        std::getline(ifs_etag, cached_etag_value);
+
+        std::string host_name;
+        std::string path_name;
+        std::tie(host_name, path_name) = parse_url(model_url);
+        if (host_name.empty() || path_name.empty()) {
+            std::cerr << "Error: invalid model URL : " << model_url << std::endl;
+            return false;
+        }
+
+        httplib::Client cli(host_name.c_str());
+        cli.set_follow_location(true);
+
+        auto head_res = cli.Head(path_name.c_str());
+        std::string latest_etag_value = head_res->get_header_value("ETag");
+
+        // NOTE: also check the model file existence
+        std::ifstream ifs_model(model_path, std::ios::binary);
+        if (latest_etag_value == cached_etag_value && ifs_model.is_open()) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     bool download_model_file(const std::string &model_url, const std::string &model_file) {
@@ -207,6 +246,12 @@ private:
             return false;
         }
 
+        // Save etag
+        std::string etag_value = res->get_header_value("ETag");
+        std::ofstream ofs_etag(model_cache_dir_ + model_file + ".etag");
+        ofs_etag.write(etag_value.c_str(), etag_value.size());
+
+        // Save model file
         std::shared_ptr<std::vector<uint8_t>> model_data;
         model_data = std::shared_ptr<std::vector<uint8_t>>(new std::vector<uint8_t>(res->body.size()));
         std::memcpy(model_data->data(), res->body.c_str(), res->body.size());
@@ -216,7 +261,6 @@ private:
             return false;
         }
         ofs.write(reinterpret_cast<const char *>(model_data->data()), model_data->size());
-
         return true;
     }
 
@@ -246,11 +290,15 @@ private:
             // TODO a new graph API is comming in the next tvm release
             // Using mod.json, mod.so, and mod.params is depricated.
             // We can simply use one shared library for exporiting and loading a tvm::runtime::Module insted
-            std::string extract_cmd = "tar xf " + model_cache_dir_ + model_filename + " -C " + model_cache_dir_;
+
+            // Create a temp_dir for mod{.json, .so, .params}
+            std::string model_temp_dir = model_cache_dir_ + model_filename + "XXXXXX";
+            model_temp_dir = mkdtemp(&model_temp_dir[0]);
+            std::string extract_cmd = "tar xf " + model_cache_dir_ + model_filename + " -C " + model_temp_dir;
             std::system(extract_cmd.c_str());
 
-            const auto json_data = load_file(model_cache_dir_ + "mod.json");
-            std::string model_file_path = model_cache_dir_ + "mod.so";
+            const auto json_data = load_file(model_temp_dir + "/mod.json");
+            std::string model_file_path = model_temp_dir + "/mod.so";
             TVMModuleHandle mod;
             if (TVMModLoadFromFile(model_file_path.c_str(), "", &mod) < 0) {
                 std::cerr << "Error: failed to load model file" << std::endl;
@@ -278,7 +326,7 @@ private:
             }
             M = ret.v_handle;
 
-            const auto params_data = load_file(model_cache_dir_ + "mod.params", true);
+            const auto params_data = load_file(model_temp_dir + "/mod.params", true);
             TVMByteArray params_bytearray{params_data.c_str(), params_data.length()};
             TVMFunctionHandle load_params;
             TVMModGetFunction(M, "load_params", false, &load_params);
@@ -291,6 +339,10 @@ private:
                 std::cerr << TVMGetLastError() << std::endl;
                 exit(1);
             }
+
+            // Remove the temp dir
+            std::string rm_temp_dir_cmd = "rm -rf " + model_temp_dir;
+            std::system(rm_temp_dir_cmd.c_str());
         }
 
         return M;
@@ -309,6 +361,7 @@ public:
     void setup_config(const DLContext &ctx,
                       const std::string &model_root_url,
                       const std::string &cache_root,
+                      bool avx2_fma_enable,
                       bool cuda_enable,
                       bool edgetpu_enable,
                       const std::string &dnn_model_name,
@@ -316,6 +369,7 @@ public:
         dlctx_ = ctx;
         model_base_url_ = model_root_url;
         model_cache_dir_ = cache_root;
+        use_avx2_fma_ = avx2_fma_enable;
         use_cuda_ = cuda_enable;
         use_edgetpu_ = edgetpu_enable;
         dnn_model_name_ = dnn_model_name;
@@ -344,7 +398,7 @@ public:
             return modules_[model_url];
         }
 
-        if (!have_file_cache(model_filename)) {
+        if (!have_file_cache(model_url, model_filename)) {
             if (!download_model_file(model_url, model_filename)) {
                 std::cerr << "Failed to download a model file from " << model_url << std::endl;
                 exit(1);
@@ -439,6 +493,7 @@ bool is_tvm_available() {
 int object_detection_tvm(halide_buffer_t *in,
                          const std::string &model_root_url,
                          const std::string &cache_root,
+                         bool avx2_fma_enable,
                          bool cuda_enable,
                          bool edgetpu_enable,
                          const std::string &dnn_model_name,
@@ -459,7 +514,7 @@ int object_detection_tvm(halide_buffer_t *in,
         // Init tvm::runtime::Module
         auto &mgr = TVMSessionManager::get_instance();
         const DLContext ctx{kDLCPU, 1};
-        mgr.setup_config(ctx, model_root_url, cache_root, cuda_enable, edgetpu_enable, dnn_model_name, target_arch);
+        mgr.setup_config(ctx, model_root_url, cache_root, avx2_fma_enable, cuda_enable, edgetpu_enable, dnn_model_name, target_arch);
         TVMModuleHandle M = mgr.init_runtime_module();
 
         // Resize for tensor input data

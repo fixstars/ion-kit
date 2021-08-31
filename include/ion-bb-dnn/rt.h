@@ -22,6 +22,7 @@ extern "C" ION_EXPORT int ion_bb_dnn_generic_object_detection(halide_buffer_t *i
                                                               halide_buffer_t *session_id_buf,
                                                               halide_buffer_t *model_root_url_buf,
                                                               halide_buffer_t *cache_root_buf,
+                                                              bool avx2_fma_enable,
                                                               bool cuda_enable,
                                                               bool dpu_enable,
                                                               bool edgetpu_enable,
@@ -51,7 +52,7 @@ extern "C" ION_EXPORT int ion_bb_dnn_generic_object_detection(halide_buffer_t *i
 
         if (is_tvm_available()) {
             // TVM
-            return object_detection_tvm(in, model_root_url, cache_root, cuda_enable, edgetpu_enable, dnn_model_name, target_arch, out);
+            return object_detection_tvm(in, model_root_url, cache_root, avx2_fma_enable, cuda_enable, edgetpu_enable, dnn_model_name, target_arch, out);
         } else if (is_tfl_available()) {
             // EdgeTPU
             return object_detection_tfl(in, model_root_url, cache_root, out);
