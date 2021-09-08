@@ -23,6 +23,15 @@ None
 
 ### Parameter
 
+- fps
+  - Frame rate of the video
+  - Element type: int32
+- width
+  - Width of the image (pixel)
+  - Element type: int32
+- height
+  - Height of the image (pixel)
+  - Element type: int32
 - index
   - Camera number
   - Element type: int32
@@ -61,6 +70,10 @@ None
   - Dimension: 2
   - Format: depth image of size 1280x720
 
+### Parameter
+
+None
+
 # USBCamera
 
 ## Description
@@ -88,6 +101,9 @@ None
 
 ### Parameter
 
+- fps
+  - Frame rate of the video
+  - Element type: int32
 - width
   - Width of the image (pixel)
   - Element type: int32
@@ -129,6 +145,9 @@ None
 
 ### Parameter
 
+- fps
+  - Frame rate of the video
+  - Element type: int32
 - width
   - Width of the image (pixel)
   - Element type: int32
@@ -175,6 +194,9 @@ None
 
 ### Parameter
 
+- fps
+  - Frame rate of the video
+  - Element type: int32
 - width
   - Width of the image (pixel)
   - Element type: int32
@@ -187,7 +209,7 @@ None
 - bit_shift
   - Amount of bit shift
   - Element type: int32
-- format
+- bayer_pattern
   - Bayer format
   - Select one of the following
     - 0: RGGB

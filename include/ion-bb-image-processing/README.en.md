@@ -227,6 +227,10 @@ output = clamp(pow(input, gamma), 0.0, 1.0);
   - Dimension: 2
   - Format: data whose value range is [0..1.0].
 
+### Parameter
+
+None
+
 # GammaCorrection3D
 
 ## Description
@@ -253,6 +257,10 @@ output = clamp(pow(input, gamma), 0.0, 1.0);
   - Element type: float32
   - Dimension: 3
   - Format: data whose value range is [0..1.0].
+
+### Parameter
+
+None
 
 # LensShadingCorrectionLinear
 
@@ -338,6 +346,10 @@ Applies a color transformation matrix to RGB images.
   - Dimension: 3
   - Format: CHW for dimension alignment, RGB data in the value range [0.0, 1.0].
 
+### Parameter
+
+None
+
 # CalcLuminance
 
 ## Description
@@ -397,6 +409,12 @@ Applies a bilateral filter to an image.
   - element type: float32
   - Dimension: 2
   - Format: image data with dimension CHW (for 3D) and value range [0.0, 1.0].
+- coef_color
+  - Coefficient of color direction
+  - Element type: float32
+- coef_space
+  - Coefficient for the spatial direction
+  - Element type: float32
 - sigma
   - sigma value of each pixel
   - element type: float32
@@ -422,12 +440,6 @@ Applies a bilateral filter to an image.
   - Actual window size will be n^2+1
   - Example: for 5x5, window_size=2
   - Element type: int32
-- coef_color
-  - Coefficient of color direction
-  - Element type: float32
-- coef_space
-  - Coefficient for the spatial direction
-  - Element type: float32
 - color_difference_method(BilateralFilter3D only)
   - Color difference calculation method
   - Select one of the following
@@ -448,6 +460,12 @@ Applies a bilateral filter to an image.
   - element type: float32
   - Dimension: 3
   - Format: image data with dimension CHW (for 3D) and value range [0.0, 1.0].
+- coef_color
+  - Coefficient of color direction
+  - Element type: float32
+- coef_space
+  - Coefficient for the spatial direction
+  - Element type: float32
 - sigma
   - sigma value of each pixel
   - element type: float32
@@ -473,12 +491,6 @@ Applies a bilateral filter to an image.
   - Actual window size will be n^2+1
   - Example: for 5x5, window_size=2
   - Element type: int32
-- coef_color
-  - Coefficient of color direction
-  - Element type: float32
-- coef_space
-  - Coefficient for the spatial direction
-  - Element type: float32
 - color_difference_method(BilateralFilter3D only)
   - Color difference calculation method
   - Select one of the following
@@ -2040,10 +2052,10 @@ None
 
 ## Description
 
-Apply color correction to `target_channel` using the given parameter `adjustment_value`.
+Apply color correction to `target_color` using the given parameter `adjustment_value`.
 
 ```
-output = select(c == target_channel, clamp(pow(input, adjustment_value), 0.0, 1.0), input);
+output = select(c == target_color, clamp(pow(input, adjustment_value), 0.0, 1.0), input);
 ```
 
 ### Input
@@ -2065,6 +2077,6 @@ output = select(c == target_channel, clamp(pow(input, adjustment_value), 0.0, 1.
 - adjustment_value
   - Adjustment parameter
   - Element type: float32
-- target_channel
+- target_color
   - target channel
   - element type: int32

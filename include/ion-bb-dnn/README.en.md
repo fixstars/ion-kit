@@ -132,13 +132,6 @@ This specification is subject to change in the future.
 - cache_root
   - Path to the directory where the cache file used by ONNXRuntime to use the TensorRT provider is stored or loaded.
   - Element type: string
-- width
-  - Width of the image (pixel)
-  - Element type: int32
-- height
-  - Height of the image (pixel)
-  - Element type: int32
-
 # TLT Object Detection SSD
 
 ## Description
@@ -331,14 +324,14 @@ If the buffer size of the output data is not enough, the program execution will 
 
 ### Input
 
-- input_img
+- image
   - Element type: float32
   - Dimension: 3
   - format
     - Shape: `[panel: 3, width: *, height: *]` (column-major notation, C is innermost)
     - Colorspace: RGB
     - range: standardized (divide by 255) values in [0..1.0]
-- input_md
+- metadata
   - element type: uint8
   - Dimension: 1
   - Format:
