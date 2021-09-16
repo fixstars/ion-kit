@@ -132,12 +132,6 @@
 - cache_root
   - ONNXRuntimeでTensorRTプロバイダを使用する際に用いるキャッシュファイルを保存 or ロードするディレクトリのパス
   - 要素型: string
-- width
-  - 画像の横幅 (pixel)
-  - 要素型: int32
-- height
-  - 画像の縦幅 (pixel)
-  - 要素型: int32
 
 # TLT Object Detection SSD
 
@@ -330,14 +324,14 @@ DetectionBox Array形式の認識情報を使用して画像から矩形の顔�
 
 ### 入力
 
-- input_img
+- image
   - 要素型: float32
   - 次元: 3
   - フォーマット
     - シェイプ: `[chanel: 3, width: *, height: *]` (column-major表記、Cが最内)
     - 色空間: RGB
     - 値範囲: 標準化 (除数255で除算) された [0..1.0] の値
-- input_md
+- metadata
   - 要素型: uint8
   - 次元: 1
   - フォーマット:

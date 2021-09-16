@@ -227,6 +227,10 @@ output = clamp(pow(input, gamma), 0.0, 1.0);
   - 次元: 2
   - フォーマット: 値範囲は [0..1.0] で表されるデータ
 
+### パラメータ
+
+なし
+
 # GammaCorrection3D
 
 ## 説明
@@ -253,6 +257,10 @@ output = clamp(pow(input, gamma), 0.0, 1.0);
   - 要素型: float32
   - 次元: 3
   - フォーマット: 値範囲は [0..1.0] で表されるデータ
+
+### パラメータ
+
+なし
 
 # LensShadingCorrectionLinear
 
@@ -338,6 +346,10 @@ RGB画像に色変換行列を適用します。
   - 次元: 3
   - フォーマット: 次元配置はCHW、値範囲は [0.0, 1.0] で表される RGB データ
 
+### パラメータ
+
+なし
+
 # CalcLuminance
 
 ## 説明
@@ -397,6 +409,12 @@ Y
   - 要素型: float32
   - 次元: 2
   - フォーマット: 次元配置はCHW(３次元の場合)、値範囲は [0.0, 1.0] で表される画像データ
+- coef_color
+  - 色方向の係数
+  - 要素型: float32
+- coef_space
+  - 空間方向の係数
+  - 要素型: float32
 - sigma
   - 各画素のシグマ値
   - 要素型: float32
@@ -422,12 +440,6 @@ Y
   - 実際のウィンドウサイズはn^2+1になる
   - 例: 5x5の場合はwindow_size=2とする
   - 要素型: int32
-- coef_color
-  - 色方向の係数
-  - 要素型: float32
-- coef_space
-  - 空間方向の係数
-  - 要素型: float32
 - color_difference_method(BilateralFilter3Dのみ)
   - 色差の計算方法
   - 下記の中から選択
@@ -448,6 +460,12 @@ Y
   - 要素型: float32
   - 次元: 3
   - フォーマット: 次元配置はCHW(３次元の場合)、値範囲は [0.0, 1.0] で表される画像データ
+- coef_color
+  - 色方向の係数
+  - 要素型: float32
+- coef_space
+  - 空間方向の係数
+  - 要素型: float32
 - sigma
   - 各画素のシグマ値
   - 要素型: float32
@@ -473,12 +491,6 @@ Y
   - 実際のウィンドウサイズはn^2+1になる
   - 例: 5x5の場合はwindow_size=2とする
   - 要素型: int32
-- coef_color
-  - 色方向の係数
-  - 要素型: float32
-- coef_space
-  - 空間方向の係数
-  - 要素型: float32
 - color_difference_method(BilateralFilter3Dのみ)
   - 色差の計算方法
   - 下記の中から選択
@@ -2039,10 +2051,10 @@ HSV 色空間から RGB 色空間への変換を行います。
 
 ## 説明
 
-与えられたパラメータ `adjustment_value` を用いて `target_channel` に対して色補正を適用します。
+与えられたパラメータ `adjustment_value` を用いて `target_color` に対して色補正を適用します。
 
 ```
-output = select(c == target_channel, clamp(pow(input, adjustment_value), 0.0, 1.0), input);
+output = select(c == target_color, clamp(pow(input, adjustment_value), 0.0, 1.0), input);
 ```
 
 ### 入力
@@ -2064,6 +2076,6 @@ output = select(c == target_channel, clamp(pow(input, adjustment_value), 0.0, 1.
 - adjustment_value
   - 補正パラメータ
   - 要素型: float32
-- target_channel
+- target_color
   - 対象チャンネル
   - 要素型: int32
