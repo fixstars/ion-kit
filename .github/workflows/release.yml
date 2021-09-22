@@ -25,6 +25,9 @@ jobs:
           sudo apt-get clean
           sudo rm -rf /var/lib/apt/lists/*
 
+          curl -L https://ion-archives.s3-us-west-2.amazonaws.com/genesis-runtime/OpenCV-4.5.2-x86_64-gcc75.sh -o $HOME/opencv_installer.sh
+          sudo sh $HOME/opencv_installer.sh --prefix=/usr/ --skip-license
+
           # Halide
           mkdir ${HOME}/halide
           curl -L https://github.com/halide/Halide/releases/download/v12.0.1/Halide-12.0.1-x86-64-linux-5dabcaa9effca1067f907f6c8ea212f3d2b1d99a.tar.gz | tar zx -C ${HOME}/halide --strip-components 1
