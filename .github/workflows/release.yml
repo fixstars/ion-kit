@@ -17,16 +17,18 @@ jobs:
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@latest
 
-      - name: Setup dependencies
+      - name: Setup OpenCV
+        uses: Dovyski/setup-opencv-action@v1
+          with:
+            opencv-version: '4.5.2'
+
+      - name: Setup extra dependencies
         run: |
           # Packages
           sudo apt-get update
           sudo apt-get install -y doxygen zlib1g-dev
           sudo apt-get clean
           sudo rm -rf /var/lib/apt/lists/*
-
-          curl -L https://ion-archives.s3-us-west-2.amazonaws.com/genesis-runtime/OpenCV-4.5.2-x86_64-gcc75.sh -o $HOME/opencv_installer.sh
-          sudo sh $HOME/opencv_installer.sh --prefix=/usr/ --skip-license
 
           # Halide
           mkdir ${HOME}/halide
@@ -63,7 +65,12 @@ jobs:
       - name: Setup msbuild
         uses: microsoft/setup-msbuild@v1
 
-      - name: Setup dependencies
+      - name: Setup OpenCV
+        uses: Dovyski/setup-opencv-action@v1
+          with:
+            opencv-version: '4.5.2'
+
+      - name: Setup extra dependencies
         shell: bash
         run: |
           # Halide
