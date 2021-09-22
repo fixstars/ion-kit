@@ -10,6 +10,8 @@ macro(ion_import_building_block)
     set(ION_BB_LINK_DIRS)
     set(ION_BB_LIBRARIES)
 
+    file(REMOVE ${CMAKE_BINARY_DIR}/ion-bb.cc)
+
     file(GLOB childs ${CMAKE_CURRENT_SOURCE_DIR}/include/ion-bb-*)
     foreach(child ${childs})
         if(IS_DIRECTORY ${child})
@@ -29,6 +31,9 @@ macro(ion_import_building_block)
                 list(APPEND ION_BB_LINK_DIRS    ${LINK_DIRS})
                 list(APPEND ION_BB_LIBRARIES    ${LIBRARIES})
 
+                file(APPEND ${CMAKE_BINARY_DIR}/ion-bb.cc "#include \"${child}/bb.h\"\n")
+                file(APPEND ${CMAKE_BINARY_DIR}/ion-bb.cc "#include \"${child}/rt.h\"\n")
+
                 install(DIRECTORY ${child}
                     DESTINATION ./include
                     PATTERN ".git" EXCLUDE)
@@ -40,4 +45,8 @@ macro(ion_import_building_block)
     message(STATUS "  Include directories: ${ION_BB_INCLUDE_DIRS}")
     message(STATUS "  Link directories: ${ION_BB_LINK_DIRS}")
     message(STATUS "  Dependent Libaries: ${ION_BB_LIBRARIES}")
+
+    add_library(ion-bb SHARED ${CMAKE_BINARY_DIR}/ion-bb.cc)
+    target_include_directories(ion-bb PUBLIC ${ION_BB_INCLUDE_DIRS})
+    install(TARGETS ion-bb DESTINATION lib)
 endmacro()
