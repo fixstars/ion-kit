@@ -48,5 +48,6 @@ macro(ion_import_building_block)
 
     add_library(ion-bb SHARED ${CMAKE_BINARY_DIR}/ion-bb.cc)
     target_include_directories(ion-bb PUBLIC ${PROJECT_SOURCE_DIR}/include ${ION_BB_INCLUDE_DIRS})
+    target_link_libraries(ion-bb PUBLIC Halide::Halide Halide::Runtime)
     install(TARGETS ion-bb DESTINATION lib)
 endmacro()
