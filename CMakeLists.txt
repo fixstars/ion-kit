@@ -151,12 +151,17 @@ install(FILES
 # Halide
 if (ION_BUNDLE_HALIDE)
     set(HALIDE_ROOT ${Halide_DIR}/../../..)
+
     file(GLOB HALIDE_HEADERS ${HALIDE_ROOT}/include/Halide*.h ${HALIDE_ROOT}/include/wasm*.h)
-    install(FILES ${HALIDE_ROOT}/bin/featurization_to_sample* DESTINATION bin)
-    install(FILES ${HALIDE_ROOT}/bin/get_host_target* DESTINATION bin)
-    install(FILES ${HALIDE_ROOT}/bin/retrain_cost_model* DESTINATION bin)
-    install(FILES ${HALIDE_ROOT}/bin/weightsdir_to_weightsfile* DESTINATION bin)
     install(FILES ${HALIDE_HEADERS} DESTINATION include)
+
+    file(GLOB HALIDE_BINS
+        ${HALIDE_ROOT}/bin/featurization_to_sample*
+        ${HALIDE_ROOT}/bin/get_host_target*
+        ${HALIDE_ROOT}/bin/retrain_cost_model*
+        ${HALIDE_ROOT}/bin/weightsdir_to_weightsfile*)
+    install(FILES ${HALIDE_BINS} DESTINATION bin)
+
     install(DIRECTORY ${HALIDE_ROOT}/lib/cmake/Halide DESTINATION lib/cmake/)
     if (EXISTS ${HALIDE_ROOT}/lib/cmake/HalideHelpers)
         install(DIRECTORY ${HALIDE_ROOT}/lib/cmake/HalideHelpers DESTINATION lib/cmake/)
