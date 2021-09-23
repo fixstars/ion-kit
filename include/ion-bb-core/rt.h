@@ -41,6 +41,21 @@ void fill_by_rng(std::mt19937 &rng, halide_buffer_t *range, halide_buffer_t *out
     std::generate_n(reinterpret_cast<T *>(out->host), out->number_of_elements(), [&dist, &rng]() { return dist(rng); });
 }
 
+/* std::uniform_int_distribution doesn't accept uint8_t/int8_t as a template parameter under strict C++ standard */
+template<>
+void fill_by_rng<uint8_t>(std::mt19937 &rng, halide_buffer_t *range, halide_buffer_t *out) {
+    uint8_t *p = reinterpret_cast<uint8_t *>(range->host);
+    std::uniform_int_distribution<uint16_t> dist(p[0], p[1]);
+    std::generate_n(reinterpret_cast<uint8_t *>(out->host), out->number_of_elements(), [&dist, &rng]() { return static_cast<uint8_t>(dist(rng)); });
+}
+
+template<>
+void fill_by_rng<int8_t>(std::mt19937 &rng, halide_buffer_t *range, halide_buffer_t *out) {
+    int8_t *p = reinterpret_cast<int8_t *>(range->host);
+    std::uniform_int_distribution<int16_t> dist(p[0], p[1]);
+    std::generate_n(reinterpret_cast<int8_t *>(out->host), out->number_of_elements(), [&dist, &rng]() { return static_cast<int8_t>(dist(rng)); });
+}
+
 std::unordered_map<std::string, std::vector<uint8_t>> buffer_cache;
 std::unordered_map<int32_t, std::mt19937> rng_map;
 
@@ -75,7 +90,7 @@ extern "C" ION_EXPORT int ion_bb_core_buffer_loader(halide_buffer_t *url_buf, in
         out->dim[3].min = 0;
         out->dim[3].extent = extent3;
     }
-    int32_t size = out->size_in_bytes();
+    auto size = out->size_in_bytes();
 
     std::string host_name;
     std::string path_name;
