@@ -2,7 +2,9 @@
 #define ION_BB_IMAGE_IO_BB_H
 
 #include <ion/ion.h>
+#ifndef _WIN32
 #include <linux/videodev2.h>
+#endif
 
 #include "sole.hpp"
 
@@ -546,11 +548,12 @@ public:
 }  // namespace image_io
 }  // namespace bb
 }  // namespace ion
-
+#ifndef _WIN32
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::IMX219, image_io_imx219);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::D435, image_io_d435);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::Camera, image_io_camera);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::GenericV4L2Bayer, image_io_generic_v4l2_bayer);
+#endif
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::CameraSimulation, image_io_camera_simulation);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::GUIDisplay, image_io_gui_display);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::FBDisplay, image_io_fb_display);

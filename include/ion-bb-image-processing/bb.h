@@ -99,7 +99,7 @@ public:
     static Halide::Expr calc(Method method, Halide::Expr r, Halide::Expr g, Halide::Expr b) {
         switch (method) {
         case Method::Max:
-            return Halide::max(r, g, b);
+            return (Halide::max)(r, g, b);
         case Method::Average:
             return (r + g + b) / 3;
         case Method::SimpleY:
@@ -171,7 +171,7 @@ const std::map<std::string, BoundaryConditions::Method> BoundaryConditions::enum
 Halide::Expr lut_interpolation_float(Halide::Func lut, Halide::Expr value, int32_t lut_size) {
     Halide::Expr index0, index1, diff, coef;
     index0 = Halide::cast(Halide::Int(32), Halide::floor(value * lut_size));
-    index1 = Halide::min(index0 + 1, lut_size);
+    index1 = (Halide::min)(index0 + 1, lut_size);
     diff = lut(index1) - lut(index0);
     coef = value - index0;
     return lut(index0) + coef * diff;
@@ -1010,8 +1010,8 @@ public:
         Halide::Expr max_x, max_y, dx, dy, r2, r_coef;
         Halide::Expr map_x, map_y, x0, y0, x1, y1, x_coef, y_coef;
 
-        max_x = Halide::max(cx, Halide::cast<float>(width) - cx);
-        max_y = Halide::max(cy, Halide::cast<float>(height) - cy);
+        max_x = (Halide::max)(cx, Halide::cast<float>(width) - cx);
+        max_y = (Halide::max)(cy, Halide::cast<float>(height) - cy);
         dx = x - cx;
         dy = y - cy;
         r2 = (dx * dx + dy * dy) / (max_x * max_x + max_y * max_y);
@@ -1305,8 +1305,8 @@ public:
         base_y = Halide::cast<int32_t>(Halide::floor(start_y));
 
         sum(x, y, Halide::_) += input_wrapper(base_x + r.x, base_y + r.y, Halide::_) *
-                                (Halide::clamp(end_x - (base_x + r.x), 0.f, 1.f) - Halide::max(start_x - (base_x + r.x), 0.f)) *
-                                (Halide::clamp(end_y - (base_y + r.y), 0.f, 1.f) - Halide::max(start_y - (base_y + r.y), 0.f));
+                                (Halide::clamp(end_x - (base_x + r.x), 0.f, 1.f) - (Halide::max)(start_x - (base_x + r.x), 0.f)) *
+                                (Halide::clamp(end_y - (base_y + r.y), 0.f, 1.f) - (Halide::max)(start_y - (base_y + r.y), 0.f));
 
         output(x, y, Halide::_) = sum(x, y, Halide::_) / (pix_size * pix_size);
     }
@@ -1843,8 +1843,8 @@ public:
         Expr g = input(x, y, 1);
         Expr b = input(x, y, 2);
 
-        Expr minv = min(r, min(g, b));
-        Expr maxv = max(r, max(g, b));
+        Expr minv = (Halide::min)(r, (Halide::min)(g, b));
+        Expr maxv = (Halide::max)(r, (Halide::max)(g, b));
         Expr diff = select(maxv == minv, one, maxv - minv);
 
         Expr h = select(maxv == minv, zero,
