@@ -545,6 +545,235 @@ public:
     }
 };
 
+class U3VCamera : public ion::BuildingBlock<U3VCamera> {
+public:
+
+    GeneratorParam<int32_t> num_sensor{"num_sensor", 1};
+    GeneratorParam<bool> frame_sync{"frame_sync", false};
+    GeneratorParam<std::string> pixel_format_ptr{"pixel_format_ptr", "RGB8"};
+    GeneratorParam<std::string> gain_key_ptr{"gain_key", "Gain"};
+    GeneratorParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
+    
+    GeneratorInput<int32_t> gain0{ "gain0" };
+    GeneratorInput<int32_t> gain1{ "gain1" };
+    GeneratorInput<int32_t> exposure0{ "exposure0" };
+    GeneratorInput<int32_t> exposure1{ "exposure1" };
+
+    GeneratorOutput<Halide::Func> output0{ "output0", Halide::type_of<uint16_t>(), 2 };
+    GeneratorOutput<Halide::Func> output1{ "output1", Halide::type_of<uint16_t>(), 2 };
+    GeneratorOutput<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
+
+    void generate() {
+        using namespace Halide;
+
+        const std::string pixel_format(pixel_format_ptr);
+        Buffer<uint8_t> pixel_format_buf(static_cast<int>(pixel_format.size() + 1));
+        pixel_format_buf.fill(0);
+        std::memcpy(pixel_format_buf.data(), pixel_format.c_str(), pixel_format.size());
+
+        const std::string gain_key(gain_key_ptr);
+        Buffer<uint8_t> gain_key_buf(static_cast<int>(gain_key.size() + 1));
+        gain_key_buf.fill(0);
+        std::memcpy(gain_key_buf.data(), gain_key.c_str(), gain_key.size());
+
+        const std::string exposure_key(exposure_key_ptr);
+        Buffer<uint8_t> exposure_key_buf(static_cast<int>(exposure_key.size() + 1));
+        exposure_key_buf.fill(0);
+        std::memcpy(exposure_key_buf.data(), exposure_key.c_str(), exposure_key.size());
+
+        std::vector<ExternFuncArgument> params{
+            static_cast<int32_t>(num_sensor), static_cast<bool>(frame_sync),
+            gain0, gain1, exposure0, exposure1, pixel_format_buf,
+            gain_key_buf, exposure_key_buf
+         };
+
+        Func camera("u3vcamera_func");
+        camera.define_extern("u3v_camera", params, {Halide::type_of<uint16_t>(), Halide::type_of<uint16_t>()}, 2);
+        camera.compute_root();
+        output0(_) = camera(_)[0];
+        output1(_) = camera(_)[1];
+
+        Buffer<uint8_t> pixel_format_buf_cpy(static_cast<int>(pixel_format.size() + 1));
+        pixel_format_buf_cpy.fill(0);
+        std::memcpy(pixel_format_buf_cpy.data(), pixel_format.c_str(), pixel_format.size());
+
+        Func camera_frame_count;
+        camera_frame_count.define_extern("camera_frame_count",
+        { static_cast<int32_t>(num_sensor), static_cast<bool>(frame_sync), pixel_format_buf_cpy}, type_of<uint32_t>(), 1);
+        camera_frame_count.compute_root();
+        frame_count(_) = camera_frame_count(_);
+
+    }
+
+};
+
+class Bayer2BGR : public ion::BuildingBlock<Bayer2BGR> {
+public:
+    Input<Halide::Func> input{ "input", UInt(16), 2 };
+    Input<int32_t> width{ "width" };
+    Input<int32_t> height{ "height" };
+    Output<Halide::Func> output{ "output", UInt(8), 3 };
+
+    void generate() {
+        using namespace Halide;
+
+        Var x, y, c;
+
+        Func in = BoundaryConditions::repeat_edge(input, { {0, width}, {0, height} });
+
+        //
+        // Assuming bayer pattern
+        //
+        // +---+---+---+---+
+        // | G | B | G | B |...
+        // +---+---+---+---+
+        // | R | G | R | G |...
+        // +---+---+---+---+
+        // | G | B | G | B |...
+        // +---+---+---+---+
+        // .....................
+
+        Expr is_gb = (x % 2 == 0) && (y % 2 == 0);
+        Expr is_b = (x % 2 == 1) && (y % 2 == 0);
+        Expr is_r = (x % 2 == 0) && (y % 2 == 1);
+        Expr is_gr = (x % 2 == 1) && (y % 2 == 1);
+
+        //
+        // Neighbor pixel location
+        //
+        // p00 p10 p20
+        // p01 p11 p21
+        // p02 p12 p22
+
+        Expr p00 = in(x - 1, y - 1), p10 = in(x, y - 1), p20 = in(x + 1, y - 1);
+        Expr p01 = in(x - 1, y), p11 = in(x, y), p21 = in(x + 1, y);
+        Expr p02 = in(x - 1, y + 1), p12 = in(x, y + 1), p22 = in(x + 1, y + 1);
+
+        Expr self = p11;
+        Expr hori = (p01 + p21) / 2;
+        Expr vert = (p10 + p12) / 2;
+        Expr latt = (p10 + p01 + p21 + p12) / 4;
+        Expr diag = (p00 + p02 + p20 + p22) / 4;
+
+        // Assumes RAW has 12 bit resolutions
+        Expr r = cast<uint8_t>(select(is_r, self, is_gr, hori, is_gb, vert, diag) >> 4);
+        Expr g = cast<uint8_t>(select(is_r, latt, is_gr, diag, is_gb, diag, latt) >> 4);
+        Expr b = cast<uint8_t>(select(is_r, diag, is_gr, vert, is_gb, hori, self) >> 4);
+
+        output(c, x, y) = select(c == 0, b, c == 1, g, r);
+    }
+
+private:
+    Halide::Var c, x, y;
+};
+
+class BinarySaver : public ion::BuildingBlock<BinarySaver> {
+public:
+    GeneratorParam<std::string> output_directory_ptr{ "output_directory", "." };
+    GeneratorParam<float> fps{ "fps", 1.0 };
+    GeneratorParam<float> r_gain0{ "r_gain0", 1.0 };
+    GeneratorParam<float> g_gain0{ "g_gain0", 1.0 };
+    GeneratorParam<float> b_gain0{ "b_gain0", 1.0 };
+
+    GeneratorParam<float> r_gain1{ "r_gain1", 1.0 };
+    GeneratorParam<float> g_gain1{ "g_gain1", 1.0 };
+    GeneratorParam<float> b_gain1{ "b_gain1", 1.0 };
+
+    GeneratorParam<int32_t> offset0_x{ "offset0_x", 0 };
+    GeneratorParam<int32_t> offset0_y{ "offset0_y", 0 };
+    GeneratorParam<int32_t> offset1_x{ "offset1_x", 0 };
+    GeneratorParam<int32_t> offset1_y{ "offset1_y", 0 };
+
+    GeneratorParam<int32_t> outputsize0_x{ "outputsize0_x", 1 };
+    GeneratorParam<int32_t> outputsize0_y{ "outputsize0_y", 1 };
+    GeneratorParam<int32_t> outputsize1_x{ "outputsize1_x", 1 };
+    GeneratorParam<int32_t> outputsize1_y{ "outputsize1_y", 1 };
+
+    Input<Halide::Func> input0{ "input0", UInt(16), 2 };
+    Input<Halide::Func> input1{ "input1", UInt(16), 2 };
+    Input<Halide::Func> frame_count{ "frame_count", UInt(32), 1 };
+    Input<bool> dispose{ "dispose" };
+    Input<int32_t> width{ "width", 0 };
+    Input<int32_t> height{ "height", 0 };
+
+    Output<int> output{ "output" };
+    void generate() {
+        using namespace Halide;
+        Func in0;
+        in0(_) = input0(_);
+        in0.compute_root();
+
+        Func in1;
+        in1(_) = input1(_);
+        in1.compute_root();
+
+        const std::string output_directory(output_directory_ptr);
+        Halide::Buffer<uint8_t> output_directory_buf(static_cast<int>(output_directory.size() + 1));
+        output_directory_buf.fill(0);
+        std::memcpy(output_directory_buf.data(), output_directory.c_str(), output_directory.size());
+
+        Func fc;
+        fc(_) = frame_count(_);
+        fc.compute_root();
+        std::vector<ExternFuncArgument> params = { in0, in1, fc, dispose, width, height, output_directory_buf,
+            static_cast<float>(r_gain0), static_cast<float>(g_gain0), static_cast<float>(b_gain0),
+            static_cast<float>(r_gain1), static_cast<float>(g_gain1), static_cast<float>(b_gain1),
+            static_cast<int32_t>(offset0_x), static_cast<int32_t>(offset0_x),
+            static_cast<int32_t>(offset0_x), static_cast<int32_t>(offset1_y),
+            static_cast<int32_t>(outputsize0_x), static_cast<int32_t>(outputsize0_y),
+            static_cast<int32_t>(outputsize1_x), static_cast<int32_t>(outputsize1_y),
+            cast<float>(fps) };
+        Func binarysaver;
+        binarysaver.define_extern("binarysaver", params, Int(32), 0);
+        binarysaver.compute_root();
+        output() = binarysaver();
+    }
+};
+
+class BinaryLoader : public ion::BuildingBlock<BinaryLoader> {
+public:
+    GeneratorParam<std::string> output_directory_ptr{ "output_directory_ptr", "" };
+    Input<int32_t> width{ "width", 0 };
+    Input<int32_t> height{ "height", 0 };
+    Output<Halide::Func> output0{ "output0", UInt(16), 2 };
+    Output<Halide::Func> output1{ "output1", UInt(16), 2 };
+    Output<Halide::Func> finished{ "finished", UInt(1), 1};
+    Output<Halide::Func> bin_idx{ "bin_idx", UInt(32), 1 };
+
+    void generate() {
+        using namespace Halide;
+
+        std::string session_id = sole::uuid4().str();
+        Buffer<uint8_t> session_id_buf(static_cast<int>(session_id.size() + 1));
+        session_id_buf.fill(0);
+        std::memcpy(session_id_buf.data(), session_id.c_str(), session_id.size());
+
+        const std::string output_directory(output_directory_ptr);
+        Halide::Buffer<uint8_t> output_directory_buf(static_cast<int>(output_directory.size() + 1));
+        output_directory_buf.fill(0);
+        std::memcpy(output_directory_buf.data(), output_directory.c_str(), output_directory.size());
+
+        std::vector<ExternFuncArgument> params = { session_id_buf, width, height, output_directory_buf };
+        Func binaryloader;
+        binaryloader.define_extern("binaryloader", params, { UInt(16), UInt(16) }, 2);
+        binaryloader.compute_root();
+        output0(_) = binaryloader(_)[0];
+        output1(_) = binaryloader(_)[1];
+
+
+        Func binaryloader_finished;
+        binaryloader_finished.define_extern("binaryloader_finished",
+            { binaryloader, session_id_buf, width, height, output_directory_buf },
+            { type_of<bool>(), UInt(32)}, 1);
+        binaryloader_finished.compute_root();
+        finished(_) = binaryloader_finished(_)[0];
+        bin_idx(_) = binaryloader_finished(_)[1];
+    }
+};
+
+
+
+
 }  // namespace image_io
 }  // namespace bb
 }  // namespace ion
@@ -560,5 +789,10 @@ ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::FBDisplay, image_io_fb_display);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::ColorDataLoader, image_io_color_data_loader);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::GrayscaleDataLoader, image_io_grayscale_data_loader);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::ImageSaver, image_io_image_saver);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera, u3v_camera);
+
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::Bayer2BGR, image_io_bayer2bgr);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinarySaver, image_io_binarysaver);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinaryLoader, image_io_binaryloader);
 
 #endif

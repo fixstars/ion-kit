@@ -12,5 +12,6 @@
 #include "rt_file.h"
 #include "rt_realsense.h"
 #include "rt_v4l2.h"
+#include "rt_u3v.h"
 
 #endif
