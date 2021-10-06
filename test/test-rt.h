@@ -7,7 +7,11 @@
 #include <Halide.h>
 #include <HalideBuffer.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#else
 #include <dlfcn.h>
+#endif
 
 #ifdef _WIN32
 #define DLLEXPORT __declspec(dllexport)

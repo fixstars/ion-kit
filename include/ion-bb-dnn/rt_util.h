@@ -2,11 +2,17 @@
 #define ION_BB_DNN_UTIL_H
 
 #include <algorithm>
-#include <dlfcn.h>
 #include <map>
 #include <stdexcept>
 #include <string>
 #include <vector>
+
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <dlfcn.h>
+#endif
+
 
 #include <opencv2/core.hpp>
 
