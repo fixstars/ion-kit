@@ -15,7 +15,7 @@ jobs:
     # well on Windows or Mac.  You can convert this to a matrix build if you need
     # cross-platform coverage.
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
 
     steps:
       - uses: actions/checkout@v2
@@ -40,7 +40,7 @@ jobs:
         shell: bash
         run: |
             mkdir ${HOME}/halide
-            curl -L https://github.com/halide/Halide/releases/download/v12.0.1/Halide-12.0.1-x86-64-linux-5dabcaa9effca1067f907f6c8ea212f3d2b1d99a.tar.gz | tar zx -C ${HOME}/halide --strip-components 1
+            curl -L curl -L http://ion-archives.s3-us-west-2.amazonaws.com/genesis-runtime/Halide-12.0.1-x86-64-ubuntu-18.04.tar.gz | tar zx -C ${HOME}/halide --strip-components 1
             find ${HOME}/halide -type d | xargs chmod 755
             sudo cp -r ${HOME}/halide/* /usr/
 
