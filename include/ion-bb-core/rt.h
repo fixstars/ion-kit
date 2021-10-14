@@ -21,6 +21,25 @@ namespace ion {
 namespace bb {
 namespace core {
 
+std::map<std::string, Halide::ExternCFunction> extern_functions;
+
+class RegisterExtern {
+ public:
+     RegisterExtern(std::string key, Halide::ExternCFunction f) {
+         extern_functions[key] = f;
+     }
+};
+
+} // image_io
+} // bb
+} // ion
+
+#define ION_REGISTER_EXTERN(NAME) static auto ion_register_extern_##NAME = ion::bb::core::RegisterExtern(#NAME, NAME);
+
+namespace ion {
+namespace bb {
+namespace core {
+
 std::tuple<std::string, std::string> parse_url(const std::string &url) {
     if (url.rfind("http://", 0) != 0) {  // not starts_with
         return std::tuple<std::string, std::string>("", "");
@@ -212,6 +231,7 @@ extern "C" ION_EXPORT int ion_bb_core_random_buffer(int32_t instance_id, int32_t
     return 0;
 }
 
+#undef ION_REGISTER_EXTERN
 #undef ION_EXPORT
 
 #endif

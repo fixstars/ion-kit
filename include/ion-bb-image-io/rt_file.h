@@ -60,6 +60,7 @@ extern "C" int ION_EXPORT ion_bb_image_io_color_data_loader(halide_buffer_t *ses
 
     return 0;
 }
+ION_REGISTER_EXTERN(ion_bb_image_io_color_data_loader);
 
 extern "C" int ION_EXPORT ion_bb_image_io_grayscale_data_loader(halide_buffer_t *session_id_buf, halide_buffer_t *url_buf, int32_t width, int32_t height, int32_t dynamic_range, halide_buffer_t *out) {
 
@@ -95,6 +96,7 @@ extern "C" int ION_EXPORT ion_bb_image_io_grayscale_data_loader(halide_buffer_t 
 
     return 0;
 }
+ION_REGISTER_EXTERN(ion_bb_image_io_grayscale_data_loader);
 
 extern "C" int ION_EXPORT ion_bb_image_io_saver(halide_buffer_t *in, int32_t in_extent_1, int32_t in_extent_2, halide_buffer_t *path, halide_buffer_t *out) {
     try {
@@ -119,6 +121,7 @@ extern "C" int ION_EXPORT ion_bb_image_io_saver(halide_buffer_t *in, int32_t in_
 
     return 0;
 }
+ION_REGISTER_EXTERN(ion_bb_image_io_saver);
 
 namespace {
 
@@ -163,6 +166,10 @@ public:
         return *instances[output_directory];
     }
 
+    ~Writer() {
+        dispose();
+    }
+
     void post(uint32_t frame_count, const uint8_t* ptr0, const uint8_t* ptr1, size_t size)
     {
         ::std::unique_lock<::std::mutex> lock(mutex_);
@@ -180,10 +187,11 @@ public:
 
     void dispose() {
         // Already disposed if thread is not joinable
-        if (thread_->joinable()) {
+        if (thread_ && thread_->joinable()) {
             keep_running_ = false;
             task_cv_.notify_one();
             thread_->join();
+            thread_ = nullptr;
         }
     }
 
@@ -396,6 +404,8 @@ int binarysaver(halide_buffer_t * in0, halide_buffer_t * in1, halide_buffer_t * 
     }
 }
 
+ION_REGISTER_EXTERN(binarysaver);
+
 namespace {
 
     class Reader {
@@ -581,6 +591,7 @@ int binaryloader(halide_buffer_t *session_id_buf, int width, int height, halide_
         return -1;
     }
 }
+ION_REGISTER_EXTERN(binaryloader);
 
 extern "C" ION_EXPORT
 int binaryloader_finished(halide_buffer_t* in0, halide_buffer_t* in1, halide_buffer_t *session_id_buf, int width, int height,
@@ -626,6 +637,6 @@ int binaryloader_finished(halide_buffer_t* in0, halide_buffer_t* in1, halide_buf
         return -1;
     }
 }
-
+ION_REGISTER_EXTERN(binaryloader_finished);
 
 #endif

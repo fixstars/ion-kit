@@ -52,6 +52,15 @@ class DynamicModule {
          }
      }
 
+    template<typename T>
+    T get_symbol(const std::string &symbol_name) const {
+#if defined(_WIN32)
+        return reinterpret_cast<T>(GetProcAddress(handle_, symbol_name.c_str()));
+#else
+        return reinterpret_cast<T>(dlsym(handle_, symbol_name.c_str()));
+#endif
+    }
+
  private:
 
      std::string getErrorString(void) const {

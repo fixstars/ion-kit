@@ -102,6 +102,10 @@ public:
      */
     const std::vector<Node>& get_nodes() const;
 
+    void set_jit_externs(const std::map<std::string, Halide::JITExtern> &externs) {
+        pipeline_.set_jit_externs(externs);
+    }
+
 private:
     Halide::Pipeline build(const ion::PortMap& ports = ion::PortMap(), std::vector<Halide::Buffer<>> *outputs = nullptr);
 

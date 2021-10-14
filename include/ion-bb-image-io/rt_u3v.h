@@ -514,6 +514,7 @@ int ION_EXPORT u3v_camera(
         return -1;
     }
 }
+ION_REGISTER_EXTERN(u3v_camera);
 
 extern "C"
 int ION_EXPORT camera_frame_count(
@@ -539,6 +540,6 @@ int ION_EXPORT camera_frame_count(
     }
     return 0;
 }
-
+ION_REGISTER_EXTERN(camera_frame_count);
 
 #endif
