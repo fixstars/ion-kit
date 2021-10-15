@@ -1,6 +1,8 @@
 #ifndef ION_BB_SGB_RT_H
 #define ION_BB_SGB_RT_H
 
+#include <Halide.h>
+
 namespace ion {
 namespace bb {
 namespace sgm {

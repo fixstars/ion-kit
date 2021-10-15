@@ -1,6 +1,7 @@
 #ifndef ION_BB_OPENCV_RT_H
 #define ION_BB_OPENCV_RT_H
 
+#include <Halide.h>
 #include <HalideBuffer.h>
 
 #include <opencv2/highgui.hpp>

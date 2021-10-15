@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include <Halide.h>
 #include <HalideBuffer.h>
 
 #include "httplib.h"

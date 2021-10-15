@@ -6,6 +6,7 @@
 #include <thread>
 #include <vector>
 
+#include <Halide.h>
 #include <HalideBuffer.h>
 
 namespace ion {
