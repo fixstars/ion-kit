@@ -33,6 +33,15 @@ void display_and_save(int32_t width, int32_t height, std::string directory_path,
     Port wp{ "width", Halide::type_of<int32_t>() };
     Port hp{ "height", Halide::type_of<int32_t>() };
 
+    Port r_gain0_p{"r_gain0", Halide::type_of<float>()};
+    Port g_gain0_p{"g_gain0", Halide::type_of<float>()};
+    Port b_gain0_p{"b_gain0", Halide::type_of<float>()};
+
+    Port r_gain1_p{"r_gain1", Halide::type_of<float>()};
+    Port g_gain1_p{"g_gain1", Halide::type_of<float>()};
+    Port b_gain1_p{"b_gain1", Halide::type_of<float>()};
+
+
     // obtain sensor images
     auto n = b.add("u3v_camera")(gain0_p, gain1_p, exposure0_p, exposure1_p)
         .set_param(
@@ -51,15 +60,48 @@ void display_and_save(int32_t width, int32_t height, std::string directory_path,
             Param{"fps", "60.0"});
     Port terminator = n["output"];
 
-    // TODO replace the following section (bayer2BGR)
-    //      with the exisiting BBs
-    n = b.add("image_io_bayer2bgr")(lp, wp, hp);
+    /* image processing on the iamge obtained from the left sensor */
+    n = b.add("image_processing_normalize_raw_image")(lp).set_param(Param{"bit_width", "12"}, Param{"bit_shift", "0"});
+    n = b.add("image_processing_bayer_white_balance")(r_gain0_p, g_gain0_p, b_gain0_p, n["output"]).set_param(Param{"bayer_pattern", "GBRG"});
+    n = b.add("image_processing_bayer_demosaic_simple")(n["output"]).set_param(
+        Param{"bayer_pattern", "GBRG"},
+        Param{"width", std::to_string(width)},
+        Param{"height", std::to_string(height)}
+    );
+    n = b.add("image_processing_resize_bilinear_3d")(n["output"]).set_param(
+        Param{"width", std::to_string(width)},
+        Param{"height", std::to_string(height)},
+        Param{"scale", std::to_string(2.0f)}
+    );
+    n = b.add("core_denormalize_3d_uint8")(n["output"]);
+    n = b.add("image_processing_crop_image_3d_uint8")(n["output"]).set_param(
+        Param{"input_width", std::to_string(width)},
+        Param{"input_height", std::to_string(height)},
+        Param{"output_width", std::to_string(width)},
+        Param{"output_height", std::to_string(height)}
+    );  /*optional*/
     lp = n["output"];
-    n = b.add("image_io_bayer2bgr")(rp, wp, hp);
-    rp = n["output"];
-    n = b.add("core_reorder_buffer_3d_uint8")(lp).set_param(Param{"dim0", "1"}, Param{"dim1", "2"}, Param{"dim2", "0"});
-    lp = n["output"];
-    n = b.add("core_reorder_buffer_3d_uint8")(rp).set_param(Param{"dim0", "1"}, Param{"dim1", "2"}, Param{"dim2", "0"});
+
+    /* image processing on the iamge obtained from the right sensor */
+    n = b.add("image_processing_normalize_raw_image")(rp).set_param(Param{"bit_width", "12"}, Param{"bit_shift", "0"});
+    n = b.add("image_processing_bayer_white_balance")(r_gain1_p, g_gain1_p, b_gain1_p, n["output"]).set_param(Param{"bayer_pattern", "GBRG"});
+    n = b.add("image_processing_bayer_demosaic_simple")(n["output"]).set_param(
+        Param{"bayer_pattern", "GBRG"},
+        Param{"width", std::to_string(width)},
+        Param{"height", std::to_string(height)}
+    );
+    n = b.add("image_processing_resize_bilinear_3d")(n["output"]).set_param(
+        Param{"width", std::to_string(width)},
+        Param{"height", std::to_string(height)},
+        Param{"scale", std::to_string(2.0f)}
+    );
+    n = b.add("core_denormalize_3d_uint8")(n["output"]);
+    n = b.add("image_processing_crop_image_3d_uint8")(n["output"]).set_param(
+        Param{"input_width", std::to_string(width)},
+        Param{"input_height", std::to_string(height)},
+        Param{"output_width", std::to_string(width)},
+        Param{"output_height", std::to_string(height)}
+    );  /*optional*/
     rp = n["output"];
 
     // display images
@@ -80,6 +122,15 @@ void display_and_save(int32_t width, int32_t height, std::string directory_path,
     pm.set(dispose, false);
     pm.set(wp, width);
     pm.set(hp, height);
+
+    pm.set(r_gain0_p, header_info.r_gain0_);
+    pm.set(g_gain0_p, header_info.g_gain0_);
+    pm.set(b_gain0_p, header_info.b_gain0_);
+
+    pm.set(r_gain1_p, header_info.r_gain1_);
+    pm.set(g_gain1_p, header_info.g_gain1_);
+    pm.set(b_gain1_p, header_info.b_gain1_);
+
 
     /* output */
     Halide::Buffer<int> out0 = Halide::Buffer<int>::make_scalar();
@@ -206,7 +257,7 @@ int main() {
 
     rawHeader header_info = {
         0, width, height,
-        0.5f, 1.0f, 1.5f, 1.2f, 2.2f, 0.2f,
+        0.5f, 1.0f, 1.5f, 2.2f, 1.2f, 0.2f,
         0, 0, 0, 0, width, height, width, height, fps};
 
     for (int i = 0; i < 50; ++i){
