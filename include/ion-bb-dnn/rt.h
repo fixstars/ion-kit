@@ -1,7 +1,27 @@
 #ifndef ION_BB_DNN_RT_H
 #define ION_BB_DNN_RT_H
 
+#include <Halide.h>
 #include <HalideBuffer.h>
+
+namespace ion {
+namespace bb {
+namespace dnn {
+
+std::map<std::string, Halide::ExternCFunction> extern_functions;
+
+class RegisterExtern {
+ public:
+     RegisterExtern(std::string key, Halide::ExternCFunction f) {
+         extern_functions[key] = f;
+     }
+};
+
+} // image_io
+} // bb
+} // ion
+
+#define ION_REGISTER_EXTERN(NAME) static auto ion_register_extern_##NAME = ion::bb::dnn::RegisterExtern(#NAME, NAME);
 
 #include "json.hpp"
 #include "rt_dnndk.h"
@@ -333,5 +353,6 @@ extern "C" ION_EXPORT int ion_bb_dnn_ifttt_webhook_uploader(halide_buffer_t *in_
 }
 
 #undef ION_EXPORT
+#undef ION_REGISTER_EXTERN
 
 #endif  // ION_BB_DNN_BB_H

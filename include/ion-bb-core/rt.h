@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include <Halide.h>
 #include <HalideBuffer.h>
 
 #include "httplib.h"
@@ -16,6 +17,25 @@
 #else
 #define ION_EXPORT
 #endif
+
+namespace ion {
+namespace bb {
+namespace core {
+
+std::map<std::string, Halide::ExternCFunction> extern_functions;
+
+class RegisterExtern {
+ public:
+     RegisterExtern(std::string key, Halide::ExternCFunction f) {
+         extern_functions[key] = f;
+     }
+};
+
+} // image_io
+} // bb
+} // ion
+
+#define ION_REGISTER_EXTERN(NAME) static auto ion_register_extern_##NAME = ion::bb::core::RegisterExtern(#NAME, NAME);
 
 namespace ion {
 namespace bb {
@@ -39,6 +59,21 @@ void fill_by_rng(std::mt19937 &rng, halide_buffer_t *range, halide_buffer_t *out
         std::uniform_real_distribution<T>,
         std::uniform_int_distribution<T>>::type dist(p[0], p[1]);
     std::generate_n(reinterpret_cast<T *>(out->host), out->number_of_elements(), [&dist, &rng]() { return dist(rng); });
+}
+
+/* std::uniform_int_distribution doesn't accept uint8_t/int8_t as a template parameter under strict C++ standard */
+template<>
+void fill_by_rng<uint8_t>(std::mt19937 &rng, halide_buffer_t *range, halide_buffer_t *out) {
+    uint8_t *p = reinterpret_cast<uint8_t *>(range->host);
+    std::uniform_int_distribution<uint16_t> dist(p[0], p[1]);
+    std::generate_n(reinterpret_cast<uint8_t *>(out->host), out->number_of_elements(), [&dist, &rng]() { return static_cast<uint8_t>(dist(rng)); });
+}
+
+template<>
+void fill_by_rng<int8_t>(std::mt19937 &rng, halide_buffer_t *range, halide_buffer_t *out) {
+    int8_t *p = reinterpret_cast<int8_t *>(range->host);
+    std::uniform_int_distribution<int16_t> dist(p[0], p[1]);
+    std::generate_n(reinterpret_cast<int8_t *>(out->host), out->number_of_elements(), [&dist, &rng]() { return static_cast<int8_t>(dist(rng)); });
 }
 
 std::unordered_map<std::string, std::vector<uint8_t>> buffer_cache;
@@ -75,7 +110,7 @@ extern "C" ION_EXPORT int ion_bb_core_buffer_loader(halide_buffer_t *url_buf, in
         out->dim[3].min = 0;
         out->dim[3].extent = extent3;
     }
-    int32_t size = out->size_in_bytes();
+    auto size = out->size_in_bytes();
 
     std::string host_name;
     std::string path_name;
@@ -197,6 +232,7 @@ extern "C" ION_EXPORT int ion_bb_core_random_buffer(int32_t instance_id, int32_t
     return 0;
 }
 
+#undef ION_REGISTER_EXTERN
 #undef ION_EXPORT
 
 #endif

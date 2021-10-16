@@ -29,7 +29,7 @@ Halide::Func disparity(Halide::Func cost, int32_t disp) {
     Expr e = cost(r, x, y);
 
     Func g("argmin");
-    g(x, y) = Tuple(0, e.type().max());
+    g(x, y) = Tuple(0, (e.type().max)());
     g(x, y) = tuple_select(e < g(x, y)[1], Tuple(r, e), g(x, y));
 
     g.update().unroll(r[0]);
@@ -122,7 +122,7 @@ Halide::Func scanCost(Halide::Func cost, int32_t width, int32_t height, int32_t 
     Expr cost1 = select(rd - 1 < 0, INT32_MAX, outside_x, 0, outside_y, 0, likely(lcost(rd - 1, px, py)[0]) + PENALTY1);
     Expr cost2 = select(rd + 1 >= disp, INT32_MAX, outside_x, 0, outside_y, 0, likely(lcost(rd + 1, px, py)[0]) + PENALTY1);
     Expr cost3 = minCost + PENALTY2;
-    Expr pen = min(min(cost0, cost1), min(cost2, cost3));
+    Expr pen = (Halide::min)((Halide::min)(cost0, cost1), (Halide::min)(cost2, cost3));
 
     Expr newCost = select(inside,
                           cast<uint16_t>(cost_wrap(rd, bx, by) + pen - minCost),
@@ -532,7 +532,7 @@ public:
         Expr cost1 = select(r.x <= 0, INT_MAX, tmp(r.x - 1, x, py)[0] + PENALTY1);
         Expr cost2 = select((r.x + 1) >= mMaxDisp, INT_MAX, tmp(r.x + 1, x, py)[0] + PENALTY1);
         Expr cost3 = minCost + PENALTY2;
-        Expr pen = min(min(cost0, cost1), min(cost2, cost3));
+        Expr pen = (Halide::min)((Halide::min)(cost0, cost1), (Halide::min)(cost2, cost3));
         Expr newCost = cost(r.x, lx, ly) + pen - minCost;
 
         tmp(r.x, x, r.y) = Tuple(
@@ -576,7 +576,7 @@ public:
         Expr cost1 = select(r.x <= 0, INT_MAX, lcost(r.x - 1, px, py)[0] + PENALTY1);
         Expr cost2 = select((r.x + 1) >= mMaxDisp, INT_MAX, lcost(r.x + 1, px, py)[0] + PENALTY1);
         Expr cost3 = minCost + PENALTY2;
-        Expr pen = min(min(cost0, cost1), min(cost2, cost3));
+        Expr pen = (Halide::min)((Halide::min)(cost0, cost1), (Halide::min)(cost2, cost3));
 
         Expr ix = x - (mHeight - 1 - by);
         Expr iy = by;
@@ -626,7 +626,7 @@ public:
         Expr cost1 = select(r.x <= 0, INT_MAX, lcost(r.x - 1, px, py)[0] + PENALTY1);
         Expr cost2 = select((r.x + 1) >= mMaxDisp, INT_MAX, lcost(r.x + 1, px, py)[0] + PENALTY1);
         Expr cost3 = minCost + PENALTY2;
-        Expr pen = min(min(cost0, cost1), min(cost2, cost3));
+        Expr pen = (Halide::min)((Halide::min)(cost0, cost1), (Halide::min)(cost2, cost3));
 
         Expr ix = x - by;
         Expr iy = by;
@@ -675,7 +675,7 @@ public:
         Expr cost1 = select(r.x <= 0, INT_MAX, lcost(r.x - 1, px, py)[0] + PENALTY1);
         Expr cost2 = select((r.x + 1) >= mMaxDisp, INT_MAX, lcost(r.x + 1, px, py)[0] + PENALTY1);
         Expr cost3 = minCost + PENALTY2;
-        Expr pen = min(min(cost0, cost1), min(cost2, cost3));
+        Expr pen = (Halide::min)((Halide::min)(cost0, cost1), (Halide::min)(cost2, cost3));
 
         Expr newCost = select(inside,
                               cast<uint32_t>(
@@ -714,7 +714,7 @@ public:
         Expr cost1 = select(r.x <= 0, INT_MAX, lcost(r.x - 1, px, py)[0] + PENALTY1);
         Expr cost2 = select((r.x + 1) >= mMaxDisp, INT_MAX, lcost(r.x + 1, px, py)[0] + PENALTY1);
         Expr cost3 = minCost + PENALTY2;
-        Expr pen = min(min(cost0, cost1), min(cost2, cost3));
+        Expr pen = (Halide::min)((Halide::min)(cost0, cost1), (Halide::min)(cost2, cost3));
 
         Expr newCost = select(inside,
                               cast<uint32_t>(
@@ -759,7 +759,7 @@ public:
         Expr cost1 = select(r.x <= 0, INT_MAX, lcost(r.x - 1, px, py)[0] + PENALTY1);
         Expr cost2 = select((r.x + 1) >= mMaxDisp, INT_MAX, lcost(r.x + 1, px, py)[0] + PENALTY1);
         Expr cost3 = minCost + PENALTY2;
-        Expr pen = min(min(cost0, cost1), min(cost2, cost3));
+        Expr pen = (Halide::min)((Halide::min)(cost0, cost1), (Halide::min)(cost2, cost3));
 
         Expr newCost = select(inside,
                               cast<uint32_t>(

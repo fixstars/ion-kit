@@ -7,7 +7,9 @@
 #ifdef HALIDE_FOR_FPGA
 #include "ion-bb-fpga/bb.h"
 #endif
+#ifndef _WIN32
 #include "ion-bb-image-io/bb.h"
+#endif
 #include "ion-bb-image-processing/bb.h"
 #include "ion-bb-internal/bb.h"
 #include "ion-bb-opencv/bb.h"

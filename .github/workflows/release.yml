@@ -7,7 +7,7 @@ on:
 
 jobs:
   release-linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
 
     steps:
       - uses: actions/checkout@v2
@@ -17,7 +17,12 @@ jobs:
       - name: Get latest CMake and ninja
         uses: lukka/get-cmake@latest
 
-      - name: Setup dependencies
+      - name: Setup OpenCV
+        uses: Dovyski/setup-opencv-action@v1
+        with:
+          opencv-version: '4.5.2'
+
+      - name: Setup extra dependencies
         run: |
           # Packages
           sudo apt-get update
@@ -27,7 +32,7 @@ jobs:
 
           # Halide
           mkdir ${HOME}/halide
-          curl -L https://github.com/halide/Halide/releases/download/v12.0.1/Halide-12.0.1-x86-64-linux-5dabcaa9effca1067f907f6c8ea212f3d2b1d99a.tar.gz | tar zx -C ${HOME}/halide --strip-components 1
+          curl -L http://ion-archives.s3-us-west-2.amazonaws.com/genesis-runtime/Halide-12.0.1-x86-64-ubuntu-18.04.tar.gz | tar zx -C ${HOME}/halide --strip-components 1
           find ${HOME}/halide -type d | xargs chmod 755
           sudo mv ${HOME}/halide /usr/local/
 
@@ -60,7 +65,7 @@ jobs:
       - name: Setup msbuild
         uses: microsoft/setup-msbuild@v1
 
-      - name: Setup dependencies
+      - name: Setup extra dependencies
         shell: bash
         run: |
           # Halide
@@ -75,7 +80,7 @@ jobs:
 
       - name: Configure
         shell: bash
-        run: cmake -G "Visual Studio 16 2019" -A x64 -D CMAKE_BUILD_TYPE=Release -D CMAKE_PREFIX_PATH=${HOME}/halide -D ION_BUILD_ALL_BB=OFF -D ION_BUILD_DOC=OFF -D ION_BUILD_TEST=OFF -D ION_BUILD_EXAMPLE=OFF -D ION_BUNDLE_HALIDE=ON -D WITH_CUDA=OFF $GITHUB_WORKSPACE
+        run: cmake -G "Visual Studio 16 2019" -A x64 -D CMAKE_BUILD_TYPE=Release -D CMAKE_PREFIX_PATH=${HOME}/halide -D ION_BUILD_ALL_BB=OFF -D ION_BBS_TO_BUILD="ion-bb-core;ion-bb-image-processing;ion-bb-sgm" -D ION_BUILD_DOC=OFF -D ION_BUILD_TEST=OFF -D ION_BUILD_EXAMPLE=OFF -D ION_BUNDLE_HALIDE=ON -D WITH_CUDA=OFF $GITHUB_WORKSPACE
 
       - name: Build
         shell: bash

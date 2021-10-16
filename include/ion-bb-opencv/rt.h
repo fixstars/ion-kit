@@ -1,6 +1,7 @@
 #ifndef ION_BB_OPENCV_RT_H
 #define ION_BB_OPENCV_RT_H
 
+#include <Halide.h>
 #include <HalideBuffer.h>
 
 #include <opencv2/highgui.hpp>
@@ -11,6 +12,25 @@
 #else
 #define ION_EXPORT
 #endif
+
+namespace ion {
+namespace bb {
+namespace opencv {
+
+std::map<std::string, Halide::ExternCFunction> extern_functions;
+
+class RegisterExtern {
+ public:
+     RegisterExtern(std::string key, Halide::ExternCFunction f) {
+         extern_functions[key] = f;
+     }
+};
+
+} // image_io
+} // bb
+} // ion
+
+#define ION_REGISTER_EXTERN(NAME) static auto ion_register_extern_##NAME = ion::bb::opencv::RegisterExtern(#NAME, NAME);
 
 namespace {
 int hl2cv_type(halide_type_t hl_type, int channel) {
@@ -69,5 +89,6 @@ int display(halide_buffer_t *in, int width, int height, int idx, halide_buffer_t
 }
 
 #undef ION_EXPORT
+#undef ION_REGISTER_EXTERN
 
 #endif // ION_BB_OPENCV_RT_H

@@ -132,5 +132,6 @@ extern "C" ION_EXPORT int ion_bb_image_io_gui_display(halide_buffer_t *in, int w
 
     return 0;
 }
+ION_REGISTER_EXTERN(ion_bb_image_io_gui_display);
 
 #endif
