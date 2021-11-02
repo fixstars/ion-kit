@@ -8,7 +8,11 @@ ARG TARGETPLATFORM
 # Basic package
 #
 ENV DEBIAN_FRONTEND=noninteractive
+
+# NOTE: Installing humanity-icon-theme separately because this package is offtenly corrupted when installing with libgtk-3-0 at the same time
 RUN apt-get update && apt-get install -y \
+        humanity-icon-theme
+RUN apt-get install -y \
         curl \
         zlib1g-dev \
         libgtk-3-0
