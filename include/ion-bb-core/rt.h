@@ -7,7 +7,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include <Halide.h>
 #include <HalideBuffer.h>
 
 #include "httplib.h"
@@ -18,6 +17,8 @@
 #define ION_EXPORT
 #endif
 
+#if defined(ION_ENABLE_JIT_EXTERN)
+#include <Halide.h>
 namespace ion {
 namespace bb {
 namespace core {
@@ -34,8 +35,10 @@ class RegisterExtern {
 } // image_io
 } // bb
 } // ion
-
 #define ION_REGISTER_EXTERN(NAME) static auto ion_register_extern_##NAME = ion::bb::core::RegisterExtern(#NAME, NAME);
+#else
+#define ION_REGISTER_EXTERN(NAME)
+#endif
 
 namespace ion {
 namespace bb {

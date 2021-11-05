@@ -1,9 +1,10 @@
 #ifndef ION_BB_DNN_RT_H
 #define ION_BB_DNN_RT_H
 
-#include <Halide.h>
 #include <HalideBuffer.h>
 
+#if defined(ION_ENABLE_JIT_EXTERN)
+#include <Halide.h>
 namespace ion {
 namespace bb {
 namespace dnn {
@@ -20,8 +21,10 @@ class RegisterExtern {
 } // image_io
 } // bb
 } // ion
-
 #define ION_REGISTER_EXTERN(NAME) static auto ion_register_extern_##NAME = ion::bb::dnn::RegisterExtern(#NAME, NAME);
+#else
+#define ION_REGISTER_EXTERN(NAME)
+#endif
 
 #include "json.hpp"
 #include "rt_dnndk.h"

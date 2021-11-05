@@ -11,6 +11,7 @@ macro(ion_import_building_block)
     set(ION_BB_LIBRARIES)
 
     file(REMOVE ${CMAKE_BINARY_DIR}/ion-bb.cc)
+    file(APPEND ${CMAKE_BINARY_DIR}/ion-bb.cc "#define ION_ENABLE_JIT_EXTERN\n")
 
     file(GLOB childs ${CMAKE_CURRENT_SOURCE_DIR}/include/ion-bb-*)
     foreach(child ${childs})

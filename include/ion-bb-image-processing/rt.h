@@ -1,6 +1,7 @@
 // Don't use this file.
 // You can add only BB written by pure Halide function to ion-bb-image-processing.
 
+#if defined(ION_ENABLE_JIT_EXTERN)
 #include <Halide.h>
 
 namespace ion {
@@ -19,4 +20,4 @@ class RegisterExtern {
 } // image_io
 } // bb
 } // ion
-
+#endif
