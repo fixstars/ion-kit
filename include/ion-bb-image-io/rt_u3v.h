@@ -131,10 +131,11 @@ class U3V{
             auto d = devices_[i];
             arv_device_execute_command(d.device_, "AcquisitionStop", nullptr);
 
-            for (auto b : buffers_[i]) {
-                g_object_unref(reinterpret_cast<gpointer>(b));
-            }
-
+            /*
+                Note:
+                unref stream also unref the buffers pushed to stream
+                all buffers are in stream so do not undef buffres separately
+            */
             g_object_unref(reinterpret_cast<gpointer>(d.stream_));
             g_object_unref(reinterpret_cast<gpointer>(d.device_));
         }

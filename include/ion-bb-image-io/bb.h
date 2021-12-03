@@ -553,7 +553,7 @@ public:
     GeneratorParam<std::string> pixel_format_ptr{"pixel_format_ptr", "RGB8"};
     GeneratorParam<std::string> gain_key_ptr{"gain_key", "Gain"};
     GeneratorParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
-    
+
     GeneratorInput<int32_t> gain0{ "gain0" };
     GeneratorInput<int32_t> gain1{ "gain1" };
     GeneratorInput<int32_t> exposure0{ "exposure0" };
@@ -607,65 +607,6 @@ public:
 
 };
 
-class Bayer2BGR : public ion::BuildingBlock<Bayer2BGR> {
-public:
-    Input<Halide::Func> input{ "input", UInt(16), 2 };
-    Input<int32_t> width{ "width" };
-    Input<int32_t> height{ "height" };
-    Output<Halide::Func> output{ "output", UInt(8), 3 };
-
-    void generate() {
-        using namespace Halide;
-
-        Var x, y, c;
-
-        Func in = BoundaryConditions::repeat_edge(input, { {0, width}, {0, height} });
-
-        //
-        // Assuming bayer pattern
-        //
-        // +---+---+---+---+
-        // | G | B | G | B |...
-        // +---+---+---+---+
-        // | R | G | R | G |...
-        // +---+---+---+---+
-        // | G | B | G | B |...
-        // +---+---+---+---+
-        // .....................
-
-        Expr is_gb = (x % 2 == 0) && (y % 2 == 0);
-        Expr is_b = (x % 2 == 1) && (y % 2 == 0);
-        Expr is_r = (x % 2 == 0) && (y % 2 == 1);
-        Expr is_gr = (x % 2 == 1) && (y % 2 == 1);
-
-        //
-        // Neighbor pixel location
-        //
-        // p00 p10 p20
-        // p01 p11 p21
-        // p02 p12 p22
-
-        Expr p00 = in(x - 1, y - 1), p10 = in(x, y - 1), p20 = in(x + 1, y - 1);
-        Expr p01 = in(x - 1, y), p11 = in(x, y), p21 = in(x + 1, y);
-        Expr p02 = in(x - 1, y + 1), p12 = in(x, y + 1), p22 = in(x + 1, y + 1);
-
-        Expr self = p11;
-        Expr hori = (p01 + p21) / 2;
-        Expr vert = (p10 + p12) / 2;
-        Expr latt = (p10 + p01 + p21 + p12) / 4;
-        Expr diag = (p00 + p02 + p20 + p22) / 4;
-
-        // Assumes RAW has 12 bit resolutions
-        Expr r = cast<uint8_t>(select(is_r, self, is_gr, hori, is_gb, vert, diag) >> 4);
-        Expr g = cast<uint8_t>(select(is_r, latt, is_gr, diag, is_gb, diag, latt) >> 4);
-        Expr b = cast<uint8_t>(select(is_r, diag, is_gr, vert, is_gb, hori, self) >> 4);
-
-        output(c, x, y) = select(c == 0, b, c == 1, g, r);
-    }
-
-private:
-    Halide::Var c, x, y;
-};
 
 class BinarySaver : public ion::BuildingBlock<BinarySaver> {
 public:
@@ -791,7 +732,6 @@ ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::GrayscaleDataLoader, image_io_gra
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::ImageSaver, image_io_image_saver);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera, u3v_camera);
 
-ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::Bayer2BGR, image_io_bayer2bgr);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinarySaver, image_io_binarysaver);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinaryLoader, image_io_binaryloader);
 
