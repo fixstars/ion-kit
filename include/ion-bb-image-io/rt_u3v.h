@@ -11,7 +11,7 @@ namespace ion {
 namespace bb {
 namespace image_io {
 
-class U3V{
+class U3V {
 
     struct GError
     {
@@ -479,9 +479,43 @@ class U3V{
 }  // namespace ion
 
 extern "C"
-int ION_EXPORT u3v_camera(
-    int32_t num_sensor, bool frame_sync,
-    int32_t gain0, int32_t gain1, int32_t exposure0, int32_t exposure1,
+int ION_EXPORT u3v_camera1(
+    bool frame_sync, int32_t gain0, int32_t exposure0,
+    halide_buffer_t* pixel_format_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
+    halide_buffer_t * out0)
+{
+    using namespace Halide;
+    try {
+        const ::std::string gain_key(reinterpret_cast<const char*>(gain_key_buf->host));
+        const ::std::string exposure_key(reinterpret_cast<const char*>(exposure_key_buf->host));
+        const ::std::string pixel_format(reinterpret_cast<const char*>(pixel_format_buf->host));
+        auto &u3v(ion::bb::image_io::U3V::get_instance(pixel_format, 1, frame_sync));
+        if (out0->is_bounds_query()) {
+            //bounds query
+            return 0;
+        }else{
+            // set gain & exposure
+            u3v.SetGain(0, gain_key, gain0);
+            u3v.SetExposure(0, exposure_key, exposure0);
+
+            std::vector<void *> obufs{out0->host};
+            u3v.get(obufs);
+        }
+
+        return 0;
+    } catch (const std::exception &e) {
+        std::cerr << e.what() << std::endl;
+        return -1;
+    } catch (...) {
+        std::cerr << "Unknown error" << std::endl;
+        return -1;
+    }
+}
+ION_REGISTER_EXTERN(u3v_camera1);
+
+extern "C"
+int ION_EXPORT u3v_camera2(
+    bool frame_sync, int32_t gain0, int32_t gain1, int32_t exposure0, int32_t exposure1,
     halide_buffer_t* pixel_format_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
     halide_buffer_t * out0, halide_buffer_t * out1)
 {
@@ -490,7 +524,7 @@ int ION_EXPORT u3v_camera(
         const ::std::string gain_key(reinterpret_cast<const char*>(gain_key_buf->host));
         const ::std::string exposure_key(reinterpret_cast<const char*>(exposure_key_buf->host));
         const ::std::string pixel_format(reinterpret_cast<const char*>(pixel_format_buf->host));
-        auto &u3v(ion::bb::image_io::U3V::get_instance(pixel_format, num_sensor, frame_sync));
+        auto &u3v(ion::bb::image_io::U3V::get_instance(pixel_format, 2, frame_sync));
         if (out0->is_bounds_query() || out1->is_bounds_query()) {
             //bounds query
             return 0;
@@ -501,7 +535,6 @@ int ION_EXPORT u3v_camera(
             u3v.SetExposure(0, exposure_key, exposure0);
             u3v.SetExposure(1, exposure_key, exposure1);
 
-            // tentatively say pixel format is RGB8
             std::vector<void *> obufs{out0->host, out1->host};
             u3v.get(obufs);
         }
@@ -515,7 +548,7 @@ int ION_EXPORT u3v_camera(
         return -1;
     }
 }
-ION_REGISTER_EXTERN(u3v_camera);
+ION_REGISTER_EXTERN(u3v_camera2);
 
 extern "C"
 int ION_EXPORT camera_frame_count(
