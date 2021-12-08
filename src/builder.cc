@@ -166,17 +166,6 @@ Halide::Realization Builder::run(const std::vector<int32_t>& sizes, const ion::P
 void Builder::run(const ion::PortMap& pm) {
     auto p = build(pm, &outputs_);
 
-    // Register extern functions to resolve symbols
-    for (auto bb : bb_modules_) {
-        // using register_externs_t = void (*)(std::map<std::string, JITExtern>&);
-        // auto register_extern = bb->get_symbol<register_externs_t>("register_externs");
-        auto register_extern = bb.second->get_symbol<void (*)(std::map<std::string, Halide::JITExtern>&)>("register_externs");
-        if (register_extern) {
-            auto externs = p.get_jit_externs();
-            register_extern(externs);
-            p.set_jit_externs(externs);
-        }
-    }
 
     return p.realize(Halide::Realization(outputs_), target_, pm.get_param_map());
 }
@@ -391,6 +380,17 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
     }
 
     pipeline_ = Halide::Pipeline(output_funcs);
+
+    // Register extern functions to resolve symbols
+    for (auto bb : bb_modules_) {
+        auto register_extern = bb.second->get_symbol<void (*)(std::map<std::string, Halide::JITExtern>&)>("register_externs");
+        if (register_extern) {
+            auto externs = pipeline_.get_jit_externs();
+            register_extern(externs);
+            pipeline_.set_jit_externs(externs);
+        }
+    }
+
     return pipeline_;
 }
 
