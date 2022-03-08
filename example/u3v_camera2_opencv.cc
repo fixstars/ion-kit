@@ -17,8 +17,8 @@ using namespace ion;
 //  Resize it according to the resolution of the sensor.
 const int32_t width = 1920;
 const int32_t height = 1080;
-const int32_t gain = 400;
-const int32_t exposure = 400;
+int32_t gain = 400;
+int32_t exposure = 400;
 
 int positive_pow(int base, int expo){
   if (expo <= 0){
