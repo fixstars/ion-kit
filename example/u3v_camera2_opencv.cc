@@ -4,9 +4,6 @@
 
 #include <ion/ion.h>
 
-#include <ion-bb-image-io/bb.h>
-#include <ion-bb-image-io/rt.h>
-
 using namespace ion;
 
 #define FEATURE_GAIN_KEY "Gain"
@@ -18,10 +15,10 @@ using namespace ion;
 
 // Define parameters
 //  Resize it according to the resolution of the sensor.
-const int32_t width = 1600;
-const int32_t height = 900;
-const int32_t gain = 400;
-const int32_t exposure = 400;
+const int32_t width = 1920;
+const int32_t height = 1080;
+int32_t gain = 400;
+int32_t exposure = 400;
 
 int positive_pow(int base, int expo){
   if (expo <= 0){
