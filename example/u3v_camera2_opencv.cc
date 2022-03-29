@@ -45,13 +45,14 @@ int main(int argc, char *argv[])
 
   // Define the input port
   //  Port class is used to define dynamic I/O for each node.
+  Port dispose_p{ "dispose",  Halide::type_of<bool>() };
   Port gain0_p{ "gain0", Halide::type_of<int32_t>() };
   Port gain1_p{ "gain1", Halide::type_of<int32_t>() };
   Port exposure0_p{ "exposure0", Halide::type_of<int32_t>() };
   Port exposure1_p{ "exposure1", Halide::type_of<int32_t>() };
 
   //  Connect the input port to the Node instance created by b.add().
-  Node n = b.add("u3v_camera2_u16x2")(gain0_p, gain1_p, exposure0_p, exposure1_p)
+  Node n = b.add("u3v_camera2_u16x2")(dispose_p, gain0_p, gain1_p, exposure0_p, exposure1_p)
     .set_param(
       Param{"pixel_format_ptr", "Mono12"},
       Param{"frame_sync", "true"},
@@ -91,6 +92,7 @@ int main(int argc, char *argv[])
   int loop_num = 100;
   for (int i = 0; i < loop_num; ++i)
   {
+    pm.set(dispose_p, i == loop_num);
     // JIT compilation and execution of pipelines with Builder.
     b.run(pm);
 

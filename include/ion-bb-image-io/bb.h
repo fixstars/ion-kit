@@ -554,6 +554,7 @@ public:
     GeneratorParam<std::string> gain_key_ptr{"gain_key", "Gain"};
     GeneratorParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
 
+    GeneratorInput<bool> dispose{ "dispose" };
     GeneratorInput<int32_t> gain0{ "gain0" };
     GeneratorInput<int32_t> exposure0{ "exposure0" };
 
@@ -594,7 +595,7 @@ public:
         std::memcpy(pixel_format_buf_cpy.data(), pixel_format.c_str(), pixel_format.size());
 
         Func camera_frame_count;
-        camera_frame_count.define_extern("camera_frame_count", { 1, static_cast<bool>(frame_sync), pixel_format_buf_cpy}, type_of<uint32_t>(), 1);
+        camera_frame_count.define_extern("camera_frame_count", { dispose, 1, static_cast<bool>(frame_sync), pixel_format_buf_cpy}, type_of<uint32_t>(), 1);
         camera_frame_count.compute_root();
         frame_count(_) = camera_frame_count(_);
     }
@@ -612,6 +613,7 @@ public:
     GeneratorParam<std::string> gain_key_ptr{"gain_key", "Gain"};
     GeneratorParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
 
+    GeneratorInput<bool> dispose{ "dispose" };GeneratorInput<bool> dispose{ "dispose" };
     GeneratorInput<int32_t> gain0{ "gain0" };
     GeneratorInput<int32_t> gain1{ "gain1" };
     GeneratorInput<int32_t> exposure0{ "exposure0" };
@@ -656,7 +658,7 @@ public:
         std::memcpy(pixel_format_buf_cpy.data(), pixel_format.c_str(), pixel_format.size());
 
         Func camera_frame_count;
-        camera_frame_count.define_extern("camera_frame_count", { 2, static_cast<bool>(frame_sync), pixel_format_buf_cpy}, type_of<uint32_t>(), 1);
+        camera_frame_count.define_extern("camera_frame_count", { dispose, 2, static_cast<bool>(frame_sync), pixel_format_buf_cpy}, type_of<uint32_t>(), 1);
         camera_frame_count.compute_root();
         frame_count(_) = camera_frame_count(_);
     }

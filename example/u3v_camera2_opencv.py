@@ -24,6 +24,8 @@ if __name__ == "__main__":
 
     # Define Input Port
     #    Port class would be  used to define dynamic O/O for each node.
+    t = Type(TypeCode.Uint, 1, 1)
+    dispose_p = Port('dispose', t, 0)
     t = Type(TypeCode.Int, 32, 1)
     gain0_p = Port('gain0', t, 0)
     gain1_p = Port('gain1', t, 0)
@@ -39,7 +41,7 @@ if __name__ == "__main__":
 
     #    Add node and connect the input port to the node instance
     node = builder.add('u3v_camera2_u16x2')\
-        .set_port([gain0_p, gain1_p, exposure0_p, exposure1_p, ])\
+        .set_port([dispose_p, gain0_p, gain1_p, exposure0_p, exposure1_p, ])\
         .set_param([pixel_format_ptr, frame_sync, gain_key, exposure_key, ])
 
 
@@ -71,7 +73,11 @@ if __name__ == "__main__":
 
     buf_size_opencv = (height, width)
 
-    for x in range(100):
+    loop_num = 100
+
+    for x in range(loop_num):
+        port_map.set_u1(dispose_p, x==loop_num)
+
         # running the builder
         builder.run(port_map)
 
