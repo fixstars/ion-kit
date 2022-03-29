@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
   int loop_num = 100;
   for (int i = 0; i < loop_num; ++i)
   {
-    pm.set(dispose_p, i == loop_num);
+    pm.set(dispose_p, i == loop_num-1);
     // JIT compilation and execution of pipelines with Builder.
     b.run(pm);
 

@@ -129,16 +129,12 @@ class U3V {
     static U3V & get_instance(std::string pixel_format, int32_t num_sensor, bool frame_sync)
     {
         if (instance_ == nullptr){
-            instance_ = new U3V(pixel_format, num_sensor, frame_sync);
+            instance_ = std::unique_ptr<U3V>(new U3V(pixel_format, num_sensor, frame_sync));
         }
         return *instance_;
     }
 
-    void release(){
-        delete instance_;
-    }
-
-    ~U3V() {
+    void dispose(){
 
         for (auto i=0; i<devices_.size(); ++i) {
             auto d = devices_[i];
@@ -154,6 +150,7 @@ class U3V {
         }
 
         arv_shutdown();
+        instance_.reset(nullptr);
     }
 
     void SetGain(int32_t sensor_idx, const std::string key, int32_t v) {
@@ -468,7 +465,7 @@ class U3V {
 
     arv_shutdown_t arv_shutdown;
 
-    static U3V* instance_;
+    static std::unique_ptr<U3V> instance_;
     int32_t num_sensor_;
 
     DynamicModule gobject_;
@@ -485,7 +482,7 @@ class U3V {
 
 }; // class U3V
 
-U3V* U3V::instance_;
+std::unique_ptr<U3V> U3V::instance_;
 
 }  // namespace image_io
 }  // namespace bb
@@ -578,7 +575,7 @@ int ION_EXPORT camera_frame_count(
         else {
             * reinterpret_cast<uint32_t*>(out->host) = u3v.get_frame_count();
             if(dispose){
-                u3v.release();  
+                u3v.dispose();  
             }
         }
     } catch (const std::exception &e) {
