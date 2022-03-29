@@ -613,7 +613,7 @@ public:
     GeneratorParam<std::string> gain_key_ptr{"gain_key", "Gain"};
     GeneratorParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
 
-    GeneratorInput<bool> dispose{ "dispose" };GeneratorInput<bool> dispose{ "dispose" };
+    GeneratorInput<bool> dispose{ "dispose" };
     GeneratorInput<int32_t> gain0{ "gain0" };
     GeneratorInput<int32_t> gain1{ "gain1" };
     GeneratorInput<int32_t> exposure0{ "exposure0" };
