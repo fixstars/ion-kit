@@ -7,6 +7,14 @@
 
 #include <HalideBuffer.h>
 
+#ifdef _WIN32
+    #define GOBJECT_FILE "libgobject-2.0-0"
+    #define ARAVIS_FILE "libaravis-0.8-0"
+#else
+    #define GOBJECT_FILE "object-2.0"
+    #define ARAVIS_FILE "aravis-0.8"
+#endif
+
 namespace ion {
 namespace bb {
 namespace image_io {
@@ -230,7 +238,7 @@ class U3V {
 
     private:
     U3V(std::string pixel_format, int32_t num_sensor, bool frame_sync, char* dev_id = nullptr)
-    : gobject_("gobject-2.0", false), aravis_("aravis-0.8", false), pixel_format_(pixel_format), num_sensor_(num_sensor), frame_sync_(frame_sync), devices_(num_sensor), buffers_(num_sensor)
+    : gobject_(GOBJECT_FILE, true), aravis_(ARAVIS_FILE, true), pixel_format_(pixel_format), num_sensor_(num_sensor), frame_sync_(frame_sync), devices_(num_sensor), buffers_(num_sensor)
     {
         init_symbols();
 
