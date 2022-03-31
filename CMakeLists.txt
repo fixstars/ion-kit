@@ -197,3 +197,11 @@ string(STRIP "${GIT_DESCRIBE_RESULT}" ION_KIT_VERSION_S)
 string(REPLACE "v" "" ION_KIT_VERSION ${ION_KIT_VERSION_S})
 set(CPACK_PACKAGE_VERSION ${ION_KIT_VERSION})
 include(CPack)
+
+#
+# Allow big object
+#
+if (MSVC)
+    add_definitions(/bigobj)
+    message(STATUS "Allow big object")
+endif (MSVC)

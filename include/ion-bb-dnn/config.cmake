@@ -17,8 +17,7 @@ if (UNIX)
         pthread
         m
         z
-        ${OpenCV_LIBS})
+        ${OpenCV_LIBRARIES})
 else()
-    set(LIBRARIES
-        ${OpenCV_LIBS})
+    set(LIBRARIES ${OpenCV_LIBRARIES})
 endif()
