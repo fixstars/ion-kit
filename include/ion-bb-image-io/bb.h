@@ -60,6 +60,7 @@ const int BayerMap::bayer_map[4][4]{
     {1, 2, 0, 1}   // GBRG
 };
 
+#ifndef _WIN32
 uint32_t make_pixel_format(BayerMap::Pattern bayer_pattern, int32_t bit_width)
 {
     uint32_t pix_format;
@@ -341,6 +342,7 @@ public:
         output = camera;
     }
 };
+#endif
 
 class GUIDisplay : public ion::BuildingBlock<GUIDisplay> {
 public:
@@ -384,6 +386,7 @@ public:
     }
 };
 
+#ifndef _WIN32
 class FBDisplay : public ion::BuildingBlock<FBDisplay> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "FBDisplay"};
@@ -499,6 +502,7 @@ public:
         output = color_data_loader;
     }
 };
+#endif
 
 class ImageSaver : public ion::BuildingBlock<ImageSaver> {
 public:
@@ -778,12 +782,13 @@ ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::IMX219, image_io_imx219);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::D435, image_io_d435);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::Camera, image_io_camera);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::GenericV4L2Bayer, image_io_generic_v4l2_bayer);
-#endif
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::CameraSimulation, image_io_camera_simulation);
-ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::GUIDisplay, image_io_gui_display);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::FBDisplay, image_io_fb_display);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::ColorDataLoader, image_io_color_data_loader);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::GrayscaleDataLoader, image_io_grayscale_data_loader);
+#endif
+
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::GUIDisplay, image_io_gui_display);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::ImageSaver, image_io_image_saver);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera1_U8x3, u3v_camera1_u8x3);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera1_U16x2, u3v_camera1_u16x2);
