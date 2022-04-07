@@ -103,7 +103,6 @@ class U3V {
     using arv_device_execute_command_t = void(*)(ArvDevice*, const char*, GError**);
     using arv_stream_timeout_pop_buffer_t = ArvBuffer*(*)(ArvStream*, uint64_t);
     using arv_buffer_get_status_t = ArvBufferStatus(*)(ArvBuffer*);
-    // using arv_device_get_status_t = ArvDeviceStatus(*)(ArvDevice*);
     using arv_buffer_get_payload_type_t = ArvBufferPayloadType(*)(ArvBuffer*);
     using arv_buffer_get_data_t = void*(*)(ArvBuffer*, size_t*);
     using arv_buffer_get_timestamp_t = uint64(*)(ArvBuffer*);
@@ -129,11 +128,13 @@ class U3V {
     public:
     static U3V & get_instance(std::string pixel_format, int32_t num_sensor, bool frame_sync)
     {
-        static U3V instance(pixel_format, num_sensor, frame_sync);
-        return instance;
+        if (instance_ == nullptr){
+            instance_ = std::unique_ptr<U3V>(new U3V(pixel_format, num_sensor, frame_sync));
+        }
+        return *instance_;
     }
 
-    ~U3V() {
+    void dispose(){
 
         for (auto i=0; i<devices_.size(); ++i) {
             auto d = devices_[i];
@@ -149,6 +150,7 @@ class U3V {
         }
 
         arv_shutdown();
+        instance_.reset(nullptr);
     }
 
     void SetGain(int32_t sensor_idx, const std::string key, int32_t v) {
@@ -376,7 +378,6 @@ class U3V {
         GET_SYMBOL(arv_device_execute_command, "arv_device_execute_command");
         GET_SYMBOL(arv_stream_timeout_pop_buffer, "arv_stream_timeout_pop_buffer");
         GET_SYMBOL(arv_buffer_get_status, "arv_buffer_get_status");
-        //GET_SYMBOL(arv_device_get_status, "arv_device_get_status");
         GET_SYMBOL(arv_buffer_get_payload_type, "arv_buffer_get_payload_type");
         GET_SYMBOL(arv_buffer_get_data, "arv_buffer_get_data");
         GET_SYMBOL(arv_buffer_get_timestamp, "arv_buffer_get_timestamp");
@@ -388,8 +389,8 @@ class U3V {
     }
 
     void init_symbols(){
-	init_symbols_gobject();
-	init_symbols_aravis();
+        init_symbols_gobject();
+        init_symbols_aravis();
     }
 
 
@@ -457,7 +458,6 @@ class U3V {
     arv_device_execute_command_t arv_device_execute_command;
     arv_stream_timeout_pop_buffer_t arv_stream_timeout_pop_buffer;
     arv_buffer_get_status_t arv_buffer_get_status;
-    // arv_device_get_status_t arv_device_get_status;
     arv_buffer_get_payload_type_t arv_buffer_get_payload_type;
     arv_buffer_get_data_t arv_buffer_get_data;
     arv_buffer_get_timestamp_t arv_buffer_get_timestamp;
@@ -465,7 +465,7 @@ class U3V {
 
     arv_shutdown_t arv_shutdown;
 
-    static std::unordered_map<::std::string, std::shared_ptr<U3V>> instances_;
+    static std::unique_ptr<U3V> instance_;
     int32_t num_sensor_;
 
     DynamicModule gobject_;
@@ -481,6 +481,8 @@ class U3V {
     std::vector<std::vector<ArvBuffer*> > buffers_;
 
 }; // class U3V
+
+std::unique_ptr<U3V> U3V::instance_;
 
 }  // namespace image_io
 }  // namespace bb
@@ -560,7 +562,7 @@ ION_REGISTER_EXTERN(u3v_camera2);
 
 extern "C"
 int ION_EXPORT camera_frame_count(
-    int32_t num_sensor, bool frame_sync, halide_buffer_t * pixel_format_buf,
+    bool dispose, int32_t num_sensor, bool frame_sync, halide_buffer_t * pixel_format_buf,
     halide_buffer_t* out)
 {
     try {
@@ -572,6 +574,9 @@ int ION_EXPORT camera_frame_count(
         }
         else {
             * reinterpret_cast<uint32_t*>(out->host) = u3v.get_frame_count();
+            if(dispose){
+                u3v.dispose();  
+            }
         }
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
