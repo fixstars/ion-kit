@@ -1,7 +1,14 @@
 import ctypes
 
+import os
+
+if os.name == 'nt':
+    ion_core_module = 'ion-core.dll'
+elif os.name == 'posix':
+    ion_core_module = 'libion-core.so'
+
 # libion-core.so must be in a directory listed in $LD_LIBRARY_PATH.
-ion_core = ctypes.cdll.LoadLibrary('libion-core.so')
+ion_core = ctypes.cdll.LoadLibrary(ion_core_module)
 
 class c_ion_type_t(ctypes.Structure):
     _fields_ = [

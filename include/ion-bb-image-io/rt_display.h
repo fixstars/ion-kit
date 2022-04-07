@@ -3,10 +3,12 @@
 
 #include <stdexcept>
 
+#ifndef _WIN32
 #include <fcntl.h>
 #include <linux/fb.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#endif
 
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
@@ -15,6 +17,7 @@
 
 #include "rt_common.h"
 
+#ifndef _WIN32
 namespace {
 
 class FBDev {
@@ -108,6 +111,7 @@ extern "C" int ION_EXPORT ion_bb_image_io_fb_display(int32_t width, int32_t heig
         return -1;
     }
 }
+#endif
 
 extern "C" ION_EXPORT int ion_bb_image_io_gui_display(halide_buffer_t *in, int width, int height, int idx, halide_buffer_t *out) {
     if (in->is_bounds_query()) {

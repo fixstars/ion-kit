@@ -2,9 +2,16 @@ from ionpy import Node, Builder, Buffer, PortMap, Port, Param, Type, TypeCode
 import numpy as np
 import cv2
 
+import os
+
 feature_gain_key = 'Gain'
 feature_exposure_key = 'Exposure'
 num_bit_shift = 0
+
+if os.name == 'nt':
+    module_name = 'ion-bb.dll'
+elif os.name == 'posix':
+    module_name = 'libion-bb.so'
 
 if __name__ == "__main__":
 
@@ -19,7 +26,7 @@ if __name__ == "__main__":
     #   Set the target hardware, The default is CPU.
     builder.set_target('host')
     #   Load building block module from the library
-    builder.with_bb_module('libion-bb.so')
+    builder.with_bb_module(module_name)
 
 
     # Define Input Port

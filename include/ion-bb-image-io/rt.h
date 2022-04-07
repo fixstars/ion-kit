@@ -34,8 +34,12 @@ class RegisterExtern {
 #include "rt_display.h"
 #include "rt_file.h"
 #include "rt_realsense.h"
-#include "rt_v4l2.h"
 #include "rt_u3v.h"
+
+#ifndef _WIN32
+#include "rt_v4l2.h"
+#endif
+
 
 #undef ION_REGISTER_EXTERN
 

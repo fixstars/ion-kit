@@ -211,7 +211,7 @@ class ImageSequence {
 
         if (fs::path(url).extension() == ".zip") {
             miniz_cpp::zip_file zf(data);
-            zf.extractall(dir_path);
+            zf.extractall(dir_path.string());
         } else {
             std::ofstream ofs(dir_path / fs::path(url).filename(), std::ios::binary);
             ofs.write(reinterpret_cast<const char*>(data.data()), data.size());
