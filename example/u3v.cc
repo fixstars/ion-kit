@@ -18,14 +18,20 @@
 
 #include "ion-bb-image-io/ghc/filesystem.hpp"
 
+#define FEATURE_GAIN_KEY "Gain"
+#define FEATURE_EXPOSURE_KEY "Exposure"
+#define PIXEL_FORMAT "Mono12"
+
 using namespace ion;
 
-void display_and_save(int32_t width, int32_t height, std::string directory_path, rawHeader header_info){
+void display_and_save(int32_t width, int32_t height, std::string directory_path, rawHeader header_info, bool last_run){
 
     Builder b;
     b.set_target(Halide::get_host_target());
 
-    Port dispose{ "dispose", Halide::type_of<bool>() };
+    Port dispose_camera{ "dispose_camera", Halide::type_of<bool>() };
+    Port dispose_writer{ "dispose_writer", Halide::type_of<bool>() };
+
     Port gain0_p{ "gain0", Halide::type_of<int32_t>() };
     Port gain1_p{ "gain1", Halide::type_of<int32_t>() };
     Port exposure0_p{ "exposure0", Halide::type_of<int32_t>() };
@@ -43,19 +49,18 @@ void display_and_save(int32_t width, int32_t height, std::string directory_path,
 
 
     // obtain sensor images
-    auto n = b.add("u3v_camera")(gain0_p, gain1_p, exposure0_p, exposure1_p)
+    auto n = b.add("u3v_camera2_u16x2")(dispose_camera, gain0_p, gain1_p, exposure0_p, exposure1_p)
         .set_param(
-            Param{"pixel_format_ptr", "Mono12"},
-            Param{"num_sensor", "2"},
+            Param{"pixel_format_ptr", PIXEL_FORMAT},
             Param{"frame_sync", "true"},
-            Param{"gain_key", "SensorGain"},
-            Param{"exposure_key", "SensorShutter"}
+            Param{"gain_key", FEATURE_GAIN_KEY},
+            Param{"exposure_key", FEATURE_EXPOSURE_KEY}
         );
     Port lp = n["output0"];
     Port rp = n["output1"];
     Port fcp = n["frame_count"];
 
-    n = b.add("image_io_binarysaver")(rp, lp, fcp, dispose, wp, hp).set_param(
+    n = b.add("image_io_binarysaver")(rp, lp, fcp, dispose_writer, wp, hp).set_param(
             Param{"output_directory", directory_path},
             Param{"fps", "60.0"});
     Port terminator = n["output"];
@@ -119,7 +124,6 @@ void display_and_save(int32_t width, int32_t height, std::string directory_path,
 
     PortMap pm;
     /* input */
-    pm.set(dispose, false);
     pm.set(wp, width);
     pm.set(hp, height);
 
@@ -146,16 +150,17 @@ void display_and_save(int32_t width, int32_t height, std::string directory_path,
     int32_t exposure0 = 1000;
     int32_t exposure1 = 1000;
 
-    for (int i=0; i< 400; ++i) {
+    int loop_num = 400;
+
+    for (int i=0; i< loop_num; ++i) {
+        pm.set(dispose_camera, last_run && i == loop_num - 1);
+        pm.set(dispose_writer, i == loop_num - 1);
         pm.set(gain0_p, gain0++);
         pm.set(gain1_p, gain1--);
         pm.set(exposure0_p, exposure0);
         pm.set(exposure1_p, exposure1);
         b.run(pm);
     }
-
-    pm.set(dispose, true);
-    b.run(pm);
 
     cv::destroyAllWindows();
 }
@@ -260,12 +265,14 @@ int main() {
         0.5f, 1.0f, 1.5f, 2.2f, 1.2f, 0.2f,
         0, 0, 0, 0, width, height, width, height, fps};
 
-    for (int i = 0; i < 50; ++i){
+    int num_run = 50;
+
+    for (int i = 0; i < num_run; ++i){
         ghc::filesystem::path output_directory = test_directory / (output_directory_prefix + std::to_string(i));
         if(! ghc::filesystem::is_directory(output_directory)){
             bool ret = ghc::filesystem::create_directory(output_directory);
         }
-        display_and_save(width, height, output_directory, header_info);
+        display_and_save(width, height, output_directory.string(), header_info, i == num_run - 1);
         bool ret = load_header_file(output_directory, header_info);
 
         if (!ret){
