@@ -58,6 +58,15 @@ public:
 #ifdef _WIN32
         auto file_name = module_name + ".dll";
         handle_ = LoadLibraryA(file_name.c_str());
+
+        if (handle_ != nullptr){
+            //successfully loaded the module without the prefix of "lib".
+            return;
+        }
+
+        file_name = "lib" + file_name;
+        handle_ = LoadLibraryA(file_name.c_str());
+
 #else
         auto file_name = "lib" + module_name + ".so";
         handle_ = dlopen(file_name.c_str(), RTLD_NOW);

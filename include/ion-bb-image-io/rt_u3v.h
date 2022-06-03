@@ -8,8 +8,8 @@
 #include <HalideBuffer.h>
 
 #ifdef _WIN32
-    #define GOBJECT_FILE "libgobject-2.0-0"
-    #define ARAVIS_FILE "libaravis-0.8-0"
+    #define GOBJECT_FILE "gobject-2.0-0"
+    #define ARAVIS_FILE "aravis-0.8-0"
 #else
     #define GOBJECT_FILE "object-2.0"
     #define ARAVIS_FILE "aravis-0.8"
