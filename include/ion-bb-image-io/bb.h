@@ -589,19 +589,19 @@ public:
             gain_key_buf, exposure_key_buf
          };
 
-        Func camera("u3vcamera_func");
-        camera.define_extern("u3v_camera1", params, Halide::type_of<T>(), D);
-        camera.compute_root();
-        output0(_) = camera(_);
+        Func camera1("u3v_camera1");
+        camera1.define_extern("ion_bb_image_io_u3v_camera1", params, Halide::type_of<T>(), D);
+        camera1.compute_root();
+        output0(_) = camera1(_);
 
         Buffer<uint8_t> pixel_format_buf_cpy(static_cast<int>(pixel_format.size() + 1));
         pixel_format_buf_cpy.fill(0);
         std::memcpy(pixel_format_buf_cpy.data(), pixel_format.c_str(), pixel_format.size());
 
-        Func camera_frame_count;
-        camera_frame_count.define_extern("camera_frame_count", { dispose, 1, static_cast<bool>(frame_sync), pixel_format_buf_cpy}, type_of<uint32_t>(), 1);
-        camera_frame_count.compute_root();
-        frame_count(_) = camera_frame_count(_);
+        Func camera1_frame_count;
+        camera1_frame_count.define_extern("ion_bb_image_io_u3v_camera1_frame_count", { camera1, dispose, 1, static_cast<bool>(frame_sync), pixel_format_buf_cpy}, type_of<uint32_t>(), 1);
+        camera1_frame_count.compute_root();
+        frame_count(_) = camera1_frame_count(_);
     }
 };
 
@@ -651,20 +651,20 @@ public:
             gain_key_buf, exposure_key_buf
          };
 
-        Func camera("u3vcamera_func");
-        camera.define_extern("u3v_camera2", params, { Halide::type_of<T>(), Halide::type_of<T>() }, D);
-        camera.compute_root();
-        output0(_) = camera(_)[0];
-        output1(_) = camera(_)[1];
+        Func camera2("u3v_camera2");
+        camera2.define_extern("ion_bb_image_io_u3v_camera2", params, { Halide::type_of<T>(), Halide::type_of<T>() }, D);
+        camera2.compute_root();
+        output0(_) = camera2(_)[0];
+        output1(_) = camera2(_)[1];
 
         Buffer<uint8_t> pixel_format_buf_cpy(static_cast<int>(pixel_format.size() + 1));
         pixel_format_buf_cpy.fill(0);
         std::memcpy(pixel_format_buf_cpy.data(), pixel_format.c_str(), pixel_format.size());
 
-        Func camera_frame_count;
-        camera_frame_count.define_extern("camera_frame_count", { dispose, 2, static_cast<bool>(frame_sync), pixel_format_buf_cpy}, type_of<uint32_t>(), 1);
-        camera_frame_count.compute_root();
-        frame_count(_) = camera_frame_count(_);
+        Func camera2_frame_count;
+        camera2_frame_count.define_extern("ion_bb_image_io_u3v_camera2_frame_count", { camera2, dispose, 2, static_cast<bool>(frame_sync), pixel_format_buf_cpy}, type_of<uint32_t>(), 1);
+        camera2_frame_count.compute_root();
+        frame_count(_) = camera2_frame_count(_);
     }
 };
 

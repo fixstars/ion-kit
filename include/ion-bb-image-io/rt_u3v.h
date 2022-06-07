@@ -484,12 +484,39 @@ class U3V {
 
 std::unique_ptr<U3V> U3V::instance_;
 
+int u3v_camera_frame_count(
+    bool dispose, int32_t num_sensor, bool frame_sync, halide_buffer_t * pixel_format_buf,
+    halide_buffer_t* out)
+{
+    try {
+        const ::std::string pixel_format(reinterpret_cast<const char*>(pixel_format_buf->host));
+        auto &u3v(ion::bb::image_io::U3V::get_instance(pixel_format, num_sensor, frame_sync));
+        if (out->is_bounds_query()) {
+            out->dim[0].min = 0;
+            out->dim[0].extent = 1;
+        }
+        else {
+            * reinterpret_cast<uint32_t*>(out->host) = u3v.get_frame_count();
+            if(dispose){
+                u3v.dispose();
+            }
+        }
+    } catch (const std::exception &e) {
+        std::cerr << e.what() << std::endl;
+        return -1;
+    } catch (...) {
+        std::cerr << "Unknown error" << std::endl;
+        return -1;
+    }
+    return 0;
+}
+
 }  // namespace image_io
 }  // namespace bb
 }  // namespace ion
 
 extern "C"
-int ION_EXPORT u3v_camera1(
+int ION_EXPORT ion_bb_image_io_u3v_camera1(
     bool frame_sync, int32_t gain0, int32_t exposure0,
     halide_buffer_t* pixel_format_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
     halide_buffer_t * out0)
@@ -521,10 +548,10 @@ int ION_EXPORT u3v_camera1(
         return -1;
     }
 }
-ION_REGISTER_EXTERN(u3v_camera1);
+ION_REGISTER_EXTERN(ion_bb_image_io_u3v_camera1);
 
 extern "C"
-int ION_EXPORT u3v_camera2(
+int ION_EXPORT ion_bb_image_io_u3v_camera2(
     bool frame_sync, int32_t gain0, int32_t gain1, int32_t exposure0, int32_t exposure1,
     halide_buffer_t* pixel_format_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
     halide_buffer_t * out0, halide_buffer_t * out1)
@@ -558,35 +585,27 @@ int ION_EXPORT u3v_camera2(
         return -1;
     }
 }
-ION_REGISTER_EXTERN(u3v_camera2);
+ION_REGISTER_EXTERN(ion_bb_image_io_u3v_camera2);
 
 extern "C"
-int ION_EXPORT camera_frame_count(
+int ION_EXPORT ion_bb_image_io_u3v_camera1_frame_count(
+    halide_buffer_t *,
     bool dispose, int32_t num_sensor, bool frame_sync, halide_buffer_t * pixel_format_buf,
     halide_buffer_t* out)
 {
-    try {
-        const ::std::string pixel_format(reinterpret_cast<const char*>(pixel_format_buf->host));
-        auto &u3v(ion::bb::image_io::U3V::get_instance(pixel_format, num_sensor, frame_sync));
-        if (out->is_bounds_query()) {
-            out->dim[0].min = 0;
-            out->dim[0].extent = 1;
-        }
-        else {
-            * reinterpret_cast<uint32_t*>(out->host) = u3v.get_frame_count();
-            if(dispose){
-                u3v.dispose();  
-            }
-        }
-    } catch (const std::exception &e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
-    } catch (...) {
-        std::cerr << "Unknown error" << std::endl;
-        return -1;
-    }
-    return 0;
+    return ion::bb::image_io::u3v_camera_frame_count(dispose, num_sensor, frame_sync, pixel_format_buf, out);
 }
-ION_REGISTER_EXTERN(camera_frame_count);
+ION_REGISTER_EXTERN(ion_bb_image_io_u3v_camera1_frame_count);
+
+extern "C"
+int ION_EXPORT ion_bb_image_io_u3v_camera2_frame_count(
+    halide_buffer_t *,
+    halide_buffer_t *,
+    bool dispose, int32_t num_sensor, bool frame_sync, halide_buffer_t * pixel_format_buf,
+    halide_buffer_t* out)
+{
+    return ion::bb::image_io::u3v_camera_frame_count(dispose, num_sensor, frame_sync, pixel_format_buf, out);
+}
+ION_REGISTER_EXTERN(ion_bb_image_io_u3v_camera2_frame_count);
 
 #endif
