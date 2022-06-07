@@ -11,7 +11,7 @@
     #define GOBJECT_FILE "gobject-2.0-0"
     #define ARAVIS_FILE "aravis-0.8-0"
 #else
-    #define GOBJECT_FILE "object-2.0"
+    #define GOBJECT_FILE "gobject-2.0"
     #define ARAVIS_FILE "aravis-0.8"
 #endif
 
