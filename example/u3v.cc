@@ -49,7 +49,7 @@ void display_and_save(int32_t width, int32_t height, std::string directory_path,
 
 
     // obtain sensor images
-    auto n = b.add("u3v_camera2_u16x2")(dispose_camera, gain0_p, gain1_p, exposure0_p, exposure1_p)
+    auto n = b.add("image_io_u3v_camera2_u16x2")(dispose_camera, gain0_p, gain1_p, exposure0_p, exposure1_p)
         .set_param(
             Param{"pixel_format_ptr", PIXEL_FORMAT},
             Param{"frame_sync", "true"},

@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
   Port exposure1_p{ "exposure1", Halide::type_of<int32_t>() };
 
   //  Connect the input port to the Node instance created by b.add().
-  Node n = b.add("u3v_camera2_u16x2")(dispose_p, gain0_p, gain1_p, exposure0_p, exposure1_p)
+  Node n = b.add("image_io_u3v_camera2_u16x2")(dispose_p, gain0_p, gain1_p, exposure0_p, exposure1_p)
     .set_param(
       Param{"pixel_format_ptr", "Mono12"},
       Param{"frame_sync", "true"},
