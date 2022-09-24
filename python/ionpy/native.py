@@ -5,7 +5,7 @@ import os
 if os.name == 'nt':
     ion_core_module = 'ion-core.dll'
     try:
-        BIN_DIR = os.environ['ION_KIT_PATH']
+        BIN_PATH = os.environ['ION_KIT_PATH']
     except KeyError:
         print('To load ' + ion_core_module + ', please set ION_KIT_PATH=<ion-kit-root-directory>')
     ion_core_module = os.path.join(BIN_PATH, 'bin', ion_core_module)
