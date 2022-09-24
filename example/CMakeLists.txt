@@ -49,3 +49,8 @@ if(WITH_CUDA)
     # Temporaly disabled
     # ion_register_test(isp_and_sgm_gpu isp_and_sgm_jit RUNTIME_ARGS ${CMAKE_SOURCE_DIR}/data/image/OV5647x2-5184x1944-GB10.raw 5184 1944 10 6 TARGET_STRING "host-cuda-cuda_capability_50-profile")
 endif()
+
+if (MSVC)
+    add_definitions(/bigobj)
+    message(STATUS "Allow big object for example/")
+endif (MSVC)
