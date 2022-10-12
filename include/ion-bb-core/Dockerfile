@@ -15,5 +15,5 @@ RUN apt-get update && apt-get install -y \
 # Halide
 #
 RUN cd /usr/include \
-        && curl -fsSL -O https://ion-archives.s3-us-west-2.amazonaws.com/Halide-Headers-v12.0.1-9a99bee06/HalideRuntime.h  \
-                      -O https://ion-archives.s3-us-west-2.amazonaws.com/Halide-Headers-v12.0.1-9a99bee06/HalideBuffer.h
+        && curl -fsSL -O https://ion-kit.s3.us-west-2.amazonaws.com/dependencies/Halide-Headers-v12.0.1-9a99bee06/HalideRuntime.h  \
+                      -O https://ion-kit.s3.us-west-2.amazonaws.com/dependencies/Halide-Headers-v12.0.1-9a99bee06/HalideBuffer.h

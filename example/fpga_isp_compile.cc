@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
     Node imx219 = b.add("image_io_imx219")
                       .set_param(
                           Param{"force_sim_mode", "true"},
-                          Param{"url", "http://ion-archives.s3-us-west-2.amazonaws.com/pedestrian.jpg"});
+                          Param{"url", "http://ion-kit.s3.us-west-2.amazonaws.com/images/pedestrian.jpg"});
 
     Node downscale = b.add("image_processing_bayer_downscale_uint16")
                          .set_param(

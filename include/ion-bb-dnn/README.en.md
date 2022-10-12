@@ -16,9 +16,9 @@ Execution on the device is done by using one of the following runtime libraries.
 
 As shown below, the model file itself uses a model that has been converted for each platform in advance.
 
-- ONNXRuntime: [ssd_mobilenet_v2_coco_2018_03_29.onnx](http://ion-archives.s3-us-west-2.amazonaws.com/models/ssd_mobilenet_v2_coco_2018_03_29.onnx)
-- TensorFlow Lite: [ssd_mobilenet_v2_coco_quant_postprocess.tflite](http://ion-archives.s3-us-west-2.amazonaws.com/models/ssd_mobilenet_v2_coco_quant_postprocess.tflite)
-- TensorFlow Lite (EdgeTPU): [ssd_mobilenet_v2_coco_quant_postprocess_edgetpu.tflite](http://ion-archives.s3-us-west-2.amazonaws.com/models/ssd_mobilenet_v2_coco_quant_postprocess_edgetpu.tflite)
+- ONNXRuntime: [ssd_mobilenet_v2_coco_2018_03_29.onnx](http://ion-kit.s3.us-west-2.amazonaws.com/models/ssd_mobilenet_v2_coco_2018_03_29.onnx)
+- TensorFlow Lite: [ssd_mobilenet_v2_coco_quant_postprocess.tflite](http://ion-kit.s3.us-west-2.amazonaws.com/models/ssd_mobilenet_v2_coco_quant_postprocess.tflite)
+- TensorFlow Lite (EdgeTPU): [ssd_mobilenet_v2_coco_quant_postprocess_edgetpu.tflite](http://ion-kit.s3.us-west-2.amazonaws.com/models/ssd_mobilenet_v2_coco_quant_postprocess_edgetpu.tflite)
 
 The training dataset is MS COCO, and the detection targets are the following 80 classes of objects.
 

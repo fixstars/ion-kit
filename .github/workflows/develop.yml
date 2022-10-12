@@ -33,14 +33,14 @@ jobs:
       - name: Install OpenCV 4
         shell: bash
         run: |
-          curl -L https://ion-archives.s3-us-west-2.amazonaws.com/genesis-runtime/OpenCV-4.5.2-x86_64-gcc75.sh -o $HOME/opencv_installer.sh
+          curl -L https://ion-kit.s3.us-west-2.amazonaws.com/dependencies/OpenCV-4.5.2-x86_64-gcc75.sh -o $HOME/opencv_installer.sh
           sudo sh $HOME/opencv_installer.sh --prefix=/usr/ --skip-license
 
       - name: Download Halide package
         shell: bash
         run: |
             mkdir ${HOME}/halide
-            curl -L http://ion-archives.s3-us-west-2.amazonaws.com/genesis-runtime/Halide-12.0.1-x86-64-ubuntu-18.04.tar.gz | tar zx -C ${HOME}/halide --strip-components 1
+            curl -L https://ion-kit.s3.us-west-2.amazonaws.com/dependencies/Halide-12.0.1-x86-64-ubuntu-18.04.tar.gz | tar zx -C ${HOME}/halide --strip-components 1
             find ${HOME}/halide -type d | xargs chmod 755
             sudo cp -r ${HOME}/halide/* /usr/
 
