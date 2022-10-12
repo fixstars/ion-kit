@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
         // b.set_target(Halide::Target("arm-64-linux"));
 
         Node n;
-        n = b.add("image_io_color_data_loader").set_param(Param{"url", "https://ion-kit.s3.us-west-2.amazonaws.com/images/pedestrian.jpg"});
+        n = b.add("image_io_color_data_loader").set_param(Param{"url", "http://ion-kit.s3.us-west-2.amazonaws.com/images/pedestrian.jpg"});
         n = b.add("fpga_normalize_3d_chw_uint8")
             .set_param(
                 Param{"width", "512"},

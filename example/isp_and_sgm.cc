@@ -161,7 +161,7 @@ int main(int argc, char *argv[]) {
             .set_param(
                 Param{"width", std::to_string(raw_width)},
                 Param{"height", std::to_string(raw_height)},
-                Param{"url", "https://ion-kit.s3.us-west-2.amazonaws.com/images/OV5647x2-5184x1944-GB10.raw"});
+                Param{"url", "http://ion-kit.s3.us-west-2.amazonaws.com/images/OV5647x2-5184x1944-GB10.raw"});
 
         normalize = b.add("image_processing_normalize_raw_image")
             .set_param(

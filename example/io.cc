@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
         b.set_target(Halide::get_target_from_environment());
 
         Node n;
-        n = b.add("image_io_grayscale_data_loader").set_param(Param{"width", std::to_string(width)}, Param{"height", std::to_string(height)}, Param{"url", "https://ion-kit.s3.us-west-2.amazonaws.com/models/20210623_genesis_bayer_image_raw.zip"}, Param{"dynamic_range", "255"});
+        n = b.add("image_io_grayscale_data_loader").set_param(Param{"width", std::to_string(width)}, Param{"height", std::to_string(height)}, Param{"url", "http://ion-kit.s3.us-west-2.amazonaws.com/models/20210623_genesis_bayer_image_raw.zip"}, Param{"dynamic_range", "255"});
 
         Halide::Buffer<uint16_t> out_buf(width, height);
 
