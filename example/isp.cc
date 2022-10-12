@@ -120,7 +120,7 @@ int main(int argc, char *argv[]) {
                  .set_param(
                      Param{"width", "3264"},
                      Param{"height", "2464"},
-                     Param{"url", "http://ion-archives.s3-us-west-2.amazonaws.com/images/IMX219-3264x2464-RG10.raw"});
+                     Param{"url", "http://ion-kit.s3.us-west-2.amazonaws.com/images/IMX219-3264x2464-RG10.raw"});
 
     normalize = b.add("image_processing_normalize_raw_image")
                  .set_param(

@@ -56,7 +56,7 @@ public:
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
 
-    GeneratorParam<std::string> model_root_url_{"model_base_url", "http://ion-archives.s3-us-west-2.amazonaws.com/models/"};
+    GeneratorParam<std::string> model_root_url_{"model_base_url", "http://ion-kit.s3.us-west-2.amazonaws.com/models/"};
     GeneratorParam<std::string> cache_root_{"cache_root", "/tmp/"};
 
     // TODO: Embed model at compilation time
@@ -155,7 +155,7 @@ public:
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
     GeneratorParam<std::string> gc_required_features{"gc_required_features", "cuda"};
 
-    GeneratorParam<std::string> model_root_url_{"model_base_url", "http://ion-archives.s3-us-west-2.amazonaws.com/models/tlt_object_detection_ssd_resnet18/"};
+    GeneratorParam<std::string> model_root_url_{"model_base_url", "http://ion-kit.s3.us-west-2.amazonaws.com/models/tlt_object_detection_ssd_resnet18/"};
     GeneratorParam<std::string> cache_root_{"cache_root", "/tmp/"};
 
     GeneratorInput<Halide::Func> input_{"input", Halide::type_of<float>(), 3};
@@ -232,7 +232,7 @@ public:
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
     GeneratorParam<std::string> gc_required_features{"gc_required_features", "cuda"};
 
-    GeneratorParam<std::string> model_root_url_{"model_base_url", "http://ion-archives.s3-us-west-2.amazonaws.com/models/tlt_peoplenet_detectnet_v2_resnet18/"};
+    GeneratorParam<std::string> model_root_url_{"model_base_url", "http://ion-kit.s3.us-west-2.amazonaws.com/models/tlt_peoplenet_detectnet_v2_resnet18/"};
     GeneratorParam<std::string> cache_root_{"cache_root", "/tmp/"};
 
     GeneratorInput<Halide::Func> input_{"input", Halide::type_of<float>(), 3};
@@ -309,7 +309,7 @@ public:
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
     GeneratorParam<std::string> gc_required_features{"gc_required_features", "cuda"};
 
-    GeneratorParam<std::string> model_root_url_{"model_base_url", "http://ion-archives.s3-us-west-2.amazonaws.com/models/tlt_peoplenet_detectnet_v2_resnet18/"};
+    GeneratorParam<std::string> model_root_url_{"model_base_url", "http://ion-kit.s3.us-west-2.amazonaws.com/models/tlt_peoplenet_detectnet_v2_resnet18/"};
     GeneratorParam<std::string> cache_root_{"cache_root", "/tmp/"};
     GeneratorParam<int> input_width{"width", 640};
     GeneratorParam<int> input_height{"height", 480};
@@ -388,7 +388,7 @@ public:
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
 
-    GeneratorParam<std::string> model_root_url_{"model_base_url", "http://ion-archives.s3-us-west-2.amazonaws.com/models/classify_gender/"};
+    GeneratorParam<std::string> model_root_url_{"model_base_url", "http://ion-kit.s3.us-west-2.amazonaws.com/models/classify_gender/"};
     GeneratorParam<std::string> cache_root_{"cache_root", "/tmp/"};
     GeneratorParam<int> input_img_width{"width", 0};
     GeneratorParam<int> input_img_height{"height", 0};

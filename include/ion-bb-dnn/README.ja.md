@@ -16,9 +16,9 @@
 
 以下の通り、モデルファイル自体は事前にプラットフォームごとに変換されたモデルを利用します。
 
-- ONNXRuntime: [ssd_mobilenet_v2_coco_2018_03_29.onnx](http://ion-archives.s3-us-west-2.amazonaws.com/models/ssd_mobilenet_v2_coco_2018_03_29.onnx)
-- TensorFlow Lite: [ssd_mobilenet_v2_coco_quant_postprocess.tflite](http://ion-archives.s3-us-west-2.amazonaws.com/models/ssd_mobilenet_v2_coco_quant_postprocess.tflite)
-- TensorFlow Lite (EdgeTPU): [ssd_mobilenet_v2_coco_quant_postprocess_edgetpu.tflite](http://ion-archives.s3-us-west-2.amazonaws.com/models/ssd_mobilenet_v2_coco_quant_postprocess_edgetpu.tflite)
+- ONNXRuntime: [ssd_mobilenet_v2_coco_2018_03_29.onnx](http://ion-kit.s3.us-west-2.amazonaws.com/models/ssd_mobilenet_v2_coco_2018_03_29.onnx)
+- TensorFlow Lite: [ssd_mobilenet_v2_coco_quant_postprocess.tflite](http://ion-kit.s3.us-west-2.amazonaws.com/models/ssd_mobilenet_v2_coco_quant_postprocess.tflite)
+- TensorFlow Lite (EdgeTPU): [ssd_mobilenet_v2_coco_quant_postprocess_edgetpu.tflite](http://ion-kit.s3.us-west-2.amazonaws.com/models/ssd_mobilenet_v2_coco_quant_postprocess_edgetpu.tflite)
 
 学習データセットはMS COCOであり、検出対象は以下の80クラスのオブジェクトです。
 
