@@ -1,3 +1,4 @@
+if (UNIX)
 find_package(OpenCV REQUIRED)
 
 set(INCLUDE_DIRS
@@ -6,14 +7,13 @@ set(INCLUDE_DIRS
 set(LINK_DIRS
     ${OpenCV_DIR}/lib)
 
-if (UNIX)
-    set(LIBRARIES
-        rt
-        dl
-        pthread
-        m
-        z
-        ${OpenCV_LIBRARIES})
+set(LIBRARIES
+    rt
+    dl
+    pthread
+    m
+    z
+    ${OpenCV_LIBRARIES})
 else()
-    set(LIBRARIES ${OpenCV_LIBRARIES})
+    # NOTE: Tentatively OpenCV is not supported in Windows release
 endif()
