@@ -8,7 +8,7 @@
 #include <unordered_map>
 #include <vector>
 
-#ifdef _WIN32
+#ifndef _WIN32
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 #endif
@@ -147,7 +147,7 @@ std::tuple<std::string, std::string> parse_url(const std::string &url) {
     return std::tuple<std::string, std::string>(host_name, path_name);
 }
 
-#ifdef _WIN32
+#ifndef _WIN32
 cv::Mat get_image(const std::string &url) {
     if (url.empty()) {
         return {};
@@ -195,7 +195,7 @@ class ImageSequence {
         std::string host_name;
         std::string path_name;
         std::tie(host_name, path_name) = ion::bb::image_io::parse_url(url);
-
+git 
         std::vector<unsigned char> data;
         if (host_name.empty() || path_name.empty()) {
             // fallback to local file
