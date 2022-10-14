@@ -1,5 +1,7 @@
 import ctypes
 from typing import Optional
+from ctypes.util import find_library
+import os
 
 from .native import (
     c_ion_builder_t,
@@ -46,7 +48,10 @@ class Builder:
         return self
 
     def with_bb_module(self, path: str) -> 'Builder':
-        ret = ion_builder_with_bb_module(self.obj, path.encode())
+        if os.name == 'nt':
+            ret = ion_builder_with_bb_module(self.obj, str(find_library(path)).encode())
+        else:
+            ret = ion_builder_with_bb_module(self.obj, path.encode())
         if ret != 0:
             raise Exception('Invalid operation')
 

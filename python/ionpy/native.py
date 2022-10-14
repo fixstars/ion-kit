@@ -1,18 +1,15 @@
 import ctypes
+from ctypes.util import find_library
 
 import os
 
 if os.name == 'nt':
-    ion_core_module = 'ion-core.dll'
-    try:
-        BIN_PATH = os.environ['ION_KIT_PATH']
-    except KeyError:
-        print('To load ' + ion_core_module + ', please set ION_KIT_PATH=<ion-kit-root-directory>')
-    ion_core_module = os.path.join(BIN_PATH, 'bin', ion_core_module)
+    ion_core_module = find_library('ion-core.dll')
 elif os.name == 'posix':
     ion_core_module = 'libion-core.so'
 
 # libion-core.so must be in a directory listed in $LD_LIBRARY_PATH.
+# ion-core.dll must be in a directory listed in %PATH%.
 ion_core = ctypes.cdll.LoadLibrary(ion_core_module)
 
 class c_ion_type_t(ctypes.Structure):
