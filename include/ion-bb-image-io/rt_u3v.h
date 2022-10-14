@@ -86,7 +86,7 @@ class U3V {
 
     using arv_device_set_string_feature_value_t = void(*)(ArvDevice*, const char*, const char*, GError**);
     using arv_device_set_float_feature_value_t = void(*)(ArvDevice*, const char*, float, GError**);
-    using arv_device_set_integer_feature_value_t = void(*)(ArvDevice*, const char*, int, GError**);
+    using arv_device_set_integer_feature_value_t = void(*)(ArvDevice*, const char*, int64_t, GError**);
 
     using arv_device_get_string_feature_value_t = const char *(*)(ArvDevice*, const char*, GError**);
     using arv_device_get_integer_feature_value_t = int(*)(ArvDevice*, const char*, GError**);
@@ -105,7 +105,7 @@ class U3V {
     using arv_buffer_get_status_t = ArvBufferStatus(*)(ArvBuffer*);
     using arv_buffer_get_payload_type_t = ArvBufferPayloadType(*)(ArvBuffer*);
     using arv_buffer_get_data_t = void*(*)(ArvBuffer*, size_t*);
-    using arv_buffer_get_timestamp_t = uint64(*)(ArvBuffer*);
+    using arv_buffer_get_timestamp_t = uint64_t(*)(ArvBuffer*);
     using arv_device_get_feature_t = ArvGcNode*(*)(ArvDevice*, const char*);
 
     using arv_shutdown_t = void(*)(void);
@@ -115,7 +115,7 @@ class U3V {
         ArvDevice* device_;
 
         int32_t payload_size_;
-        uint64 frame_count_;
+        uint64_t frame_count_;
 
         float gain_;
         float exposure_;
@@ -189,7 +189,7 @@ class U3V {
             if (bufs[i] == nullptr){
                 throw ::std::runtime_error("buffer is null");
             }
-            devices_[i].frame_count_ = static_cast<uint64>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
+            devices_[i].frame_count_ = static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
         }
 
         if (frame_sync_) {
@@ -221,7 +221,7 @@ class U3V {
                         if (bufs[i] == nullptr){
                             throw ::std::runtime_error("buffer is null");
                         }
-                        devices_[i].frame_count_ = static_cast<uint64>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
+                        devices_[i].frame_count_ = static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
                     }
                 }
             }
