@@ -49,8 +49,6 @@ class Builder:
 
     def with_bb_module(self, path: str) -> 'Builder':
         if os.name == 'nt':
-            print(path)
-            print(find_library(path))
             ret = ion_builder_with_bb_module(self.obj, str(find_library(path)).encode())
         else:
             ret = ion_builder_with_bb_module(self.obj, path.encode())
