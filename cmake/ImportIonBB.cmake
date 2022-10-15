@@ -75,5 +75,10 @@ macro(ion_import_building_block)
             PUBLIC -fno-rtti  # For Halide::Generator
             PUBLIC -rdynamic) # For JIT compiling
     endif()
-    install(TARGETS ion-bb DESTINATION lib)
+    if (UNIX)
+        install(TARGETS ion-bb DESTINATION lib)
+    else()
+        install(FILES ${CMAKE_BINARY_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>/ion-bb.dll DESTINATION bin)
+        install(FILES ${CMAKE_BINARY_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>/ion-bb.lib DESTINATION lib)
+    endif()
 endmacro()
