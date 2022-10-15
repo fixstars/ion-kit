@@ -1,9 +1,10 @@
 import ctypes
+from ctypes.util import find_library
 
 import os
 
 if os.name == 'nt':
-    ion_core_module = 'ion-core.dll'
+    ion_core_module = find_library('ion-core.dll')
 elif os.name == 'posix':
     ion_core_module = 'libion-core.so'
 
