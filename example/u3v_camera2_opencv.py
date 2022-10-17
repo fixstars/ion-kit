@@ -83,7 +83,7 @@ if __name__ == "__main__":
     loop_num = 100
 
     for x in range(loop_num):
-        port_map.set_u1(dispose_p, x==loop_num)
+        port_map.set_u1(dispose_p, x==loop_num-1)
 
         # running the builder
         builder.run(port_map)
@@ -106,5 +106,4 @@ if __name__ == "__main__":
         cv2.imshow("D", median_output1_np_HxW)
         cv2.waitKey(0)
 
-    builder.run(port_map)
     cv2.destroyAllWindows()

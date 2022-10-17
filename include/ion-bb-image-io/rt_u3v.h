@@ -126,6 +126,12 @@ class U3V {
     } DeviceInfo;
 
     public:
+    ~U3V(){
+        if (!disposed_){
+            dispose();
+        }
+    }
+
     static U3V & get_instance(std::string pixel_format, int32_t num_sensor, bool frame_sync)
     {
         if (instance_ == nullptr){
@@ -151,6 +157,7 @@ class U3V {
 
         arv_shutdown();
         instance_.reset(nullptr);
+        disposed_ = true;
     }
 
     void SetGain(int32_t sensor_idx, const std::string key, int32_t v) {
@@ -235,7 +242,7 @@ class U3V {
 
     private:
     U3V(std::string pixel_format, int32_t num_sensor, bool frame_sync, char* dev_id = nullptr)
-    : gobject_(GOBJECT_FILE, true), aravis_(ARAVIS_FILE, true), pixel_format_(pixel_format), num_sensor_(num_sensor), frame_sync_(frame_sync), devices_(num_sensor), buffers_(num_sensor)
+    : gobject_(GOBJECT_FILE, true), aravis_(ARAVIS_FILE, true), pixel_format_(pixel_format), num_sensor_(num_sensor), frame_sync_(frame_sync), devices_(num_sensor), buffers_(num_sensor), disposed_(false)
     {
         init_symbols();
 
@@ -479,6 +486,8 @@ class U3V {
     std::vector<DeviceInfo> devices_;
 
     std::vector<std::vector<ArvBuffer*> > buffers_;
+
+    bool disposed_;
 
 }; // class U3V
 
