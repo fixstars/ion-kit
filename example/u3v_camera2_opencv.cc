@@ -20,6 +20,12 @@ const int32_t height = 1080;
 int32_t gain = 400;
 int32_t exposure = 400;
 
+#ifdef _WIN32
+    #define MODULE_NAME "ion-bb.dll"
+#else
+    #define MODULE_NAME "libion-bb.so"
+#endif
+
 int positive_pow(int base, int expo){
   if (expo <= 0){
       return 1;
@@ -41,7 +47,7 @@ int main(int argc, char *argv[])
   b.set_target(Halide::get_host_target());
 
   // Load standard building block
-  b.with_bb_module("libion-bb.so");
+  b.with_bb_module(MODULE_NAME);
 
   // Define the input port
   //  Port class is used to define dynamic I/O for each node.
