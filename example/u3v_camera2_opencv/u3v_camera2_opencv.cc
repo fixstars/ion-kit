@@ -4,6 +4,8 @@
 
 #include <ion/ion.h>
 
+#include <exception>
+
 using namespace ion;
 
 #define FEATURE_GAIN_KEY "Gain"
@@ -100,7 +102,15 @@ int main(int argc, char *argv[])
   {
     pm.set(dispose_p, i == loop_num-1);
     // JIT compilation and execution of pipelines with Builder.
-    b.run(pm);
+    try {
+        b.run(pm);
+    }catch(std::exception& e){
+        // e.what() shows the error message if pipeline build was failed.
+        std::cerr << "Failed to build pipeline" << std::endl;
+        std::cerr << e.what() << std::endl;
+        exit(1);
+    }
+
 
     // Convert the retrieved buffer object to OpenCV buffer format.
     //  C and D are objects that store the result after smoothing.
