@@ -142,35 +142,27 @@ class U3V {
     }
 
     void dispose(){
+        for (auto i=0; i<devices_.size(); ++i) {
+            auto d = devices_[i];
+            arv_device_execute_command(d.device_, "AcquisitionStop", nullptr);
 
-        std::cout << "dispose()" << std::endl;
-
-
-        try{
-            for (auto i=0; i<devices_.size(); ++i) {
-                auto d = devices_[i];
-                arv_device_execute_command(d.device_, "AcquisitionStop", nullptr);
-
-                /*
-                Note:
-                unref stream also unref the buffers pushed to stream
-                all buffers are in stream so do not undef buffres separately
-                */
-                g_object_unref(reinterpret_cast<gpointer>(d.stream_));
-                g_object_unref(reinterpret_cast<gpointer>(d.device_));
-            }
-
-            devices_.clear();
-
-            arv_shutdown();
-            instance_.reset(nullptr);
-        }catch(std::exception& e){
-            throw e;
+            /*
+            Note:
+            unref stream also unref the buffers pushed to stream
+            all buffers are in stream so do not undef buffres separately
+            */
+            g_object_unref(reinterpret_cast<gpointer>(d.stream_));
+            g_object_unref(reinterpret_cast<gpointer>(d.device_));
         }
 
-        std::cout << "disposed_ = " << disposed_ << std::endl;
+        devices_.clear();
+
+        arv_shutdown();
         disposed_ = true;
-        std::cout << "disposed_ = " << disposed_ << std::endl;
+        //------------------------------------------------------------------------------------------
+        // TODO: get rid of the following code; no call destructor from the member function.
+        //------------------------------------------------------------------------------------------
+        instance_.reset(nullptr);
     }
 
     void SetGain(int32_t sensor_idx, const std::string key, int32_t v) {
