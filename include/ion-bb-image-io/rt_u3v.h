@@ -128,6 +128,7 @@ class U3V {
     public:
     ~U3V(){
         if (!disposed_){
+            std::cout << "trying to call dispose from distructor since disposed_ is " << disposed_ << std::endl;
             dispose();
         }
     }
@@ -142,22 +143,34 @@ class U3V {
 
     void dispose(){
 
-        for (auto i=0; i<devices_.size(); ++i) {
-            auto d = devices_[i];
-            arv_device_execute_command(d.device_, "AcquisitionStop", nullptr);
+        std::cout << "dispose()" << std::endl;
 
-            /*
+
+        try{
+            for (auto i=0; i<devices_.size(); ++i) {
+                auto d = devices_[i];
+                arv_device_execute_command(d.device_, "AcquisitionStop", nullptr);
+
+                /*
                 Note:
                 unref stream also unref the buffers pushed to stream
                 all buffers are in stream so do not undef buffres separately
-            */
-            g_object_unref(reinterpret_cast<gpointer>(d.stream_));
-            g_object_unref(reinterpret_cast<gpointer>(d.device_));
+                */
+                g_object_unref(reinterpret_cast<gpointer>(d.stream_));
+                g_object_unref(reinterpret_cast<gpointer>(d.device_));
+            }
+
+            devices_.clear();
+
+            arv_shutdown();
+            instance_.reset(nullptr);
+        }catch(std::exception& e){
+            throw e;
         }
 
-        arv_shutdown();
-        instance_.reset(nullptr);
+        std::cout << "disposed_ = " << disposed_ << std::endl;
         disposed_ = true;
+        std::cout << "disposed_ = " << disposed_ << std::endl;
     }
 
     void SetGain(int32_t sensor_idx, const std::string key, int32_t v) {
