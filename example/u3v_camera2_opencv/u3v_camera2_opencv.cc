@@ -105,12 +105,11 @@ int main(int argc, char *argv[])
     try {
         b.run(pm);
     }catch(std::exception& e){
-        // e.what() shows the error message if pipeline build was failed.
+        // e.what() shows the error message if pipeline build/run was failed.
         std::cerr << "Failed to build pipeline" << std::endl;
         std::cerr << e.what() << std::endl;
         exit(1);
     }
-
 
     // Convert the retrieved buffer object to OpenCV buffer format.
     //  C and D are objects that store the result after smoothing.
