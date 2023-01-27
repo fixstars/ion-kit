@@ -136,7 +136,7 @@ class U3V {
     static U3V & get_instance(std::string pixel_format, int32_t num_sensor, bool frame_sync, bool frame_buffer_mode)
     {
         if (instance_ == nullptr){
-            instance_ = std::unique_ptr<U3V>(new U3V(pixel_format, num_sensor, frame_sync));
+            instance_ = std::unique_ptr<U3V>(new U3V(pixel_format, num_sensor, frame_sync, frame_buffer_mode));
         }
         return *instance_;
     }
@@ -246,8 +246,10 @@ class U3V {
     }
 
     private:
-    U3V(std::string pixel_format, int32_t num_sensor, bool frame_sync, char* dev_id = nullptr)
-    : gobject_(GOBJECT_FILE, true), aravis_(ARAVIS_FILE, true), pixel_format_(pixel_format), num_sensor_(num_sensor), frame_sync_(frame_sync), devices_(num_sensor), buffers_(num_sensor), disposed_(false)
+    U3V(std::string pixel_format, int32_t num_sensor, bool frame_sync, bool frame_buffer_mode, char* dev_id = nullptr)
+    : gobject_(GOBJECT_FILE, true), aravis_(ARAVIS_FILE, true), 
+        pixel_format_(pixel_format), num_sensor_(num_sensor), 
+        frame_sync_(frame_sync), frame_buffer_mode_(frame_buffer_mode), devices_(num_sensor), buffers_(num_sensor), disposed_(false)
     {
         init_symbols();
 
@@ -485,6 +487,7 @@ class U3V {
     GError *err_ = nullptr;
 
     bool frame_sync_;
+    bool frame_buffer_mode_;
 
     std::string pixel_format_;
 
