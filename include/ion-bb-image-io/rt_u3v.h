@@ -209,19 +209,15 @@ class U3V {
             devices_[i].frame_count_ = static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
         }
 
-        // if (!frame_buffer_mode_){
+        if (!frame_buffer_mode_){
             // get output buffer for each stream
-            // if all stream has N output buffers, discard N-1 of them
             int32_t min_num_output_buffer = std::numeric_limits<int>::max();
             for (auto i = 0; i < num_device; ++i){
                 int32_t num_input_buffer, num_output_buffer;
                 arv_stream_get_n_buffers(devices_[i].stream_, &num_input_buffer, &num_output_buffer);
                 min_num_output_buffer = num_output_buffer < min_num_output_buffer ? num_output_buffer : min_num_output_buffer;
-                std::string comp = i == 0 ? "" : " vs ";
-                std::cout << comp << num_output_buffer;
             }
-            std::cout << "\t=> will discard " << min_num_output_buffer-1 << " frames" << std::endl;
-        if (!frame_buffer_mode_){
+            // if all stream has N output buffers, discard N-1 of them
             if (min_num_output_buffer > 1){
                 for(auto i = 0; i < num_device; ++i){
                     for (auto j = 0; j < min_num_output_buffer-1; ++j){
