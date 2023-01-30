@@ -102,6 +102,7 @@ class U3V {
     using arv_acquisition_mode_to_string_t = const char*(*)(ArvAcquisitionMode);
     using arv_device_execute_command_t = void(*)(ArvDevice*, const char*, GError**);
     using arv_stream_timeout_pop_buffer_t = ArvBuffer*(*)(ArvStream*, uint64_t);
+    using arv_stream_get_n_buffers_t = void(*)(ArvStream*, int32_t*, int32_t*);
     using arv_buffer_get_status_t = ArvBufferStatus(*)(ArvBuffer*);
     using arv_buffer_get_payload_type_t = ArvBufferPayloadType(*)(ArvBuffer*);
     using arv_buffer_get_data_t = void*(*)(ArvBuffer*, size_t*);
@@ -195,13 +196,44 @@ class U3V {
     }
 
     void get(std::vector<void *>& outs) {
-        std::vector<ArvBuffer *> bufs(devices_.size());
+
+        int32_t num_device = devices_.size();
+        std::vector<ArvBuffer *> bufs(num_device);
+
+        // get the first buffer for each stream
         for (auto i = 0; i< devices_.size(); ++i) {
             bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, 3 * 1000 * 1000);
             if (bufs[i] == nullptr){
                 throw ::std::runtime_error("buffer is null");
             }
             devices_[i].frame_count_ = static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
+        }
+
+        // if (!frame_buffer_mode_){
+            // get output buffer for each stream
+            // if all stream has N output buffers, discard N-1 of them
+            int32_t min_num_output_buffer = std::numeric_limits<int>::max();
+            for (auto i = 0; i < num_device; ++i){
+                int32_t num_input_buffer, num_output_buffer;
+                arv_stream_get_n_buffers(devices_[i].stream_, &num_input_buffer, &num_output_buffer);
+                min_num_output_buffer = num_output_buffer < min_num_output_buffer ? num_output_buffer : min_num_output_buffer;
+                std::string comp = i == 0 ? "" : " vs ";
+                std::cout << comp << num_output_buffer;
+            }
+            std::cout << "\t=> will discard " << min_num_output_buffer-1 << " frames" << std::endl;
+        if (!frame_buffer_mode_){
+            if (min_num_output_buffer > 1){
+                for(auto i = 0; i < num_device; ++i){
+                    for (auto j = 0; j < min_num_output_buffer-1; ++j){
+                        arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
+                        bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, 3 * 1000 * 1000);
+                        if (bufs[i] == nullptr){
+                            throw ::std::runtime_error("buffer is null");
+                        }
+                        devices_[i].frame_count_ = static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
+                    }
+                }
+            }
         }
 
         if (frame_sync_) {
@@ -388,6 +420,7 @@ class U3V {
         GET_SYMBOL(arv_device_create_stream, "arv_device_create_stream");
         GET_SYMBOL(arv_buffer_new_allocate, "arv_buffer_new_allocate");
         GET_SYMBOL(arv_stream_push_buffer, "arv_stream_push_buffer");
+        GET_SYMBOL(arv_stream_get_n_buffers, "arv_stream_get_n_buffers");
         GET_SYMBOL(arv_acquisition_mode_to_string, "arv_acquisition_mode_to_string");
         GET_SYMBOL(arv_device_execute_command, "arv_device_execute_command");
         GET_SYMBOL(arv_stream_timeout_pop_buffer, "arv_stream_timeout_pop_buffer");
@@ -468,6 +501,7 @@ class U3V {
 
     arv_buffer_new_allocate_t arv_buffer_new_allocate;
     arv_stream_push_buffer_t arv_stream_push_buffer;
+    arv_stream_get_n_buffers_t arv_stream_get_n_buffers;
     arv_acquisition_mode_to_string_t arv_acquisition_mode_to_string;
     arv_device_execute_command_t arv_device_execute_command;
     arv_stream_timeout_pop_buffer_t arv_stream_timeout_pop_buffer;
