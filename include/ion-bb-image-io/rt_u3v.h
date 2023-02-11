@@ -102,6 +102,7 @@ class U3V {
     using arv_acquisition_mode_to_string_t = const char*(*)(ArvAcquisitionMode);
     using arv_device_execute_command_t = void(*)(ArvDevice*, const char*, GError**);
     using arv_stream_timeout_pop_buffer_t = ArvBuffer*(*)(ArvStream*, uint64_t);
+    using arv_stream_get_n_buffers_t = void(*)(ArvStream*, int32_t*, int32_t*);
     using arv_buffer_get_status_t = ArvBufferStatus(*)(ArvBuffer*);
     using arv_buffer_get_payload_type_t = ArvBufferPayloadType(*)(ArvBuffer*);
     using arv_buffer_get_data_t = void*(*)(ArvBuffer*, size_t*);
@@ -133,10 +134,10 @@ class U3V {
         }
     }
 
-    static U3V & get_instance(std::string pixel_format, int32_t num_sensor, bool frame_sync)
+    static U3V & get_instance(std::string pixel_format, int32_t num_sensor, bool frame_sync, bool realtime_diaplay_mode)
     {
         if (instance_ == nullptr){
-            instance_ = std::unique_ptr<U3V>(new U3V(pixel_format, num_sensor, frame_sync));
+            instance_ = std::unique_ptr<U3V>(new U3V(pixel_format, num_sensor, frame_sync, realtime_diaplay_mode));
         }
         return *instance_;
     }
@@ -195,13 +196,40 @@ class U3V {
     }
 
     void get(std::vector<void *>& outs) {
-        std::vector<ArvBuffer *> bufs(devices_.size());
+
+        int32_t num_device = devices_.size();
+        std::vector<ArvBuffer *> bufs(num_device);
+
+        // get the first buffer for each stream
         for (auto i = 0; i< devices_.size(); ++i) {
             bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, 3 * 1000 * 1000);
             if (bufs[i] == nullptr){
                 throw ::std::runtime_error("buffer is null");
             }
             devices_[i].frame_count_ = static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
+        }
+
+        if (realtime_diaplay_mode_){
+            // get output buffer for each stream
+            int32_t min_num_output_buffer = std::numeric_limits<int>::max();
+            for (auto i = 0; i < num_device; ++i){
+                int32_t num_input_buffer, num_output_buffer;
+                arv_stream_get_n_buffers(devices_[i].stream_, &num_input_buffer, &num_output_buffer);
+                min_num_output_buffer = num_output_buffer < min_num_output_buffer ? num_output_buffer : min_num_output_buffer;
+            }
+            // if all stream has N output buffers, discard N-1 of them
+            if (min_num_output_buffer > 1){
+                for(auto i = 0; i < num_device; ++i){
+                    for (auto j = 0; j < min_num_output_buffer-1; ++j){
+                        arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
+                        bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, 3 * 1000 * 1000);
+                        if (bufs[i] == nullptr){
+                            throw ::std::runtime_error("buffer is null");
+                        }
+                        devices_[i].frame_count_ = static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
+                    }
+                }
+            }
         }
 
         if (frame_sync_) {
@@ -246,8 +274,10 @@ class U3V {
     }
 
     private:
-    U3V(std::string pixel_format, int32_t num_sensor, bool frame_sync, char* dev_id = nullptr)
-    : gobject_(GOBJECT_FILE, true), aravis_(ARAVIS_FILE, true), pixel_format_(pixel_format), num_sensor_(num_sensor), frame_sync_(frame_sync), devices_(num_sensor), buffers_(num_sensor), disposed_(false)
+    U3V(std::string pixel_format, int32_t num_sensor, bool frame_sync, bool realtime_diaplay_mode, char* dev_id = nullptr)
+    : gobject_(GOBJECT_FILE, true), aravis_(ARAVIS_FILE, true), 
+        pixel_format_(pixel_format), num_sensor_(num_sensor), 
+        frame_sync_(frame_sync), realtime_diaplay_mode_(realtime_diaplay_mode), devices_(num_sensor), buffers_(num_sensor), disposed_(false)
     {
         init_symbols();
 
@@ -386,6 +416,7 @@ class U3V {
         GET_SYMBOL(arv_device_create_stream, "arv_device_create_stream");
         GET_SYMBOL(arv_buffer_new_allocate, "arv_buffer_new_allocate");
         GET_SYMBOL(arv_stream_push_buffer, "arv_stream_push_buffer");
+        GET_SYMBOL(arv_stream_get_n_buffers, "arv_stream_get_n_buffers");
         GET_SYMBOL(arv_acquisition_mode_to_string, "arv_acquisition_mode_to_string");
         GET_SYMBOL(arv_device_execute_command, "arv_device_execute_command");
         GET_SYMBOL(arv_stream_timeout_pop_buffer, "arv_stream_timeout_pop_buffer");
@@ -466,6 +497,7 @@ class U3V {
 
     arv_buffer_new_allocate_t arv_buffer_new_allocate;
     arv_stream_push_buffer_t arv_stream_push_buffer;
+    arv_stream_get_n_buffers_t arv_stream_get_n_buffers;
     arv_acquisition_mode_to_string_t arv_acquisition_mode_to_string;
     arv_device_execute_command_t arv_device_execute_command;
     arv_stream_timeout_pop_buffer_t arv_stream_timeout_pop_buffer;
@@ -485,6 +517,7 @@ class U3V {
     GError *err_ = nullptr;
 
     bool frame_sync_;
+    bool realtime_diaplay_mode_;
 
     std::string pixel_format_;
 
@@ -499,12 +532,12 @@ class U3V {
 std::unique_ptr<U3V> U3V::instance_;
 
 int u3v_camera_frame_count(
-    bool dispose, int32_t num_sensor, bool frame_sync, halide_buffer_t * pixel_format_buf,
+    bool dispose, int32_t num_sensor, bool frame_sync, bool realtime_diaplay_mode, halide_buffer_t * pixel_format_buf,
     halide_buffer_t* out)
 {
     try {
         const ::std::string pixel_format(reinterpret_cast<const char*>(pixel_format_buf->host));
-        auto &u3v(ion::bb::image_io::U3V::get_instance(pixel_format, num_sensor, frame_sync));
+        auto &u3v(ion::bb::image_io::U3V::get_instance(pixel_format, num_sensor, frame_sync, realtime_diaplay_mode));
         if (out->is_bounds_query()) {
             out->dim[0].min = 0;
             out->dim[0].extent = 1;
@@ -531,7 +564,7 @@ int u3v_camera_frame_count(
 
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_camera1(
-    bool frame_sync, int32_t gain0, int32_t exposure0,
+    bool frame_sync, bool realtime_diaplay_mode, int32_t gain0, int32_t exposure0,
     halide_buffer_t* pixel_format_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
     halide_buffer_t * out0)
 {
@@ -540,7 +573,7 @@ int ION_EXPORT ion_bb_image_io_u3v_camera1(
         const ::std::string gain_key(reinterpret_cast<const char*>(gain_key_buf->host));
         const ::std::string exposure_key(reinterpret_cast<const char*>(exposure_key_buf->host));
         const ::std::string pixel_format(reinterpret_cast<const char*>(pixel_format_buf->host));
-        auto &u3v(ion::bb::image_io::U3V::get_instance(pixel_format, 1, frame_sync));
+        auto &u3v(ion::bb::image_io::U3V::get_instance(pixel_format, 1, frame_sync, realtime_diaplay_mode));
         if (out0->is_bounds_query()) {
             //bounds query
             return 0;
@@ -566,7 +599,7 @@ ION_REGISTER_EXTERN(ion_bb_image_io_u3v_camera1);
 
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_camera2(
-    bool frame_sync, int32_t gain0, int32_t gain1, int32_t exposure0, int32_t exposure1,
+    bool frame_sync, bool realtime_diaplay_mode, int32_t gain0, int32_t gain1, int32_t exposure0, int32_t exposure1,
     halide_buffer_t* pixel_format_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
     halide_buffer_t * out0, halide_buffer_t * out1)
 {
@@ -575,7 +608,7 @@ int ION_EXPORT ion_bb_image_io_u3v_camera2(
         const ::std::string gain_key(reinterpret_cast<const char*>(gain_key_buf->host));
         const ::std::string exposure_key(reinterpret_cast<const char*>(exposure_key_buf->host));
         const ::std::string pixel_format(reinterpret_cast<const char*>(pixel_format_buf->host));
-        auto &u3v(ion::bb::image_io::U3V::get_instance(pixel_format, 2, frame_sync));
+        auto &u3v(ion::bb::image_io::U3V::get_instance(pixel_format, 2, frame_sync, realtime_diaplay_mode));
         if (out0->is_bounds_query() || out1->is_bounds_query()) {
             //bounds query
             return 0;
@@ -604,10 +637,10 @@ ION_REGISTER_EXTERN(ion_bb_image_io_u3v_camera2);
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_camera1_frame_count(
     halide_buffer_t *,
-    bool dispose, int32_t num_sensor, bool frame_sync, halide_buffer_t * pixel_format_buf,
+    bool dispose, int32_t num_sensor, bool frame_sync, bool realtime_diaplay_mode, halide_buffer_t * pixel_format_buf,
     halide_buffer_t* out)
 {
-    return ion::bb::image_io::u3v_camera_frame_count(dispose, num_sensor, frame_sync, pixel_format_buf, out);
+    return ion::bb::image_io::u3v_camera_frame_count(dispose, num_sensor, frame_sync, realtime_diaplay_mode, pixel_format_buf, out);
 }
 ION_REGISTER_EXTERN(ion_bb_image_io_u3v_camera1_frame_count);
 
@@ -615,10 +648,10 @@ extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_camera2_frame_count(
     halide_buffer_t *,
     halide_buffer_t *,
-    bool dispose, int32_t num_sensor, bool frame_sync, halide_buffer_t * pixel_format_buf,
+    bool dispose, int32_t num_sensor, bool frame_sync, bool realtime_diaplay_mode, halide_buffer_t * pixel_format_buf,
     halide_buffer_t* out)
 {
-    return ion::bb::image_io::u3v_camera_frame_count(dispose, num_sensor, frame_sync, pixel_format_buf, out);
+    return ion::bb::image_io::u3v_camera_frame_count(dispose, num_sensor, frame_sync, realtime_diaplay_mode, pixel_format_buf, out);
 }
 ION_REGISTER_EXTERN(ion_bb_image_io_u3v_camera2_frame_count);
 

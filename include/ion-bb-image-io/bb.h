@@ -557,7 +557,8 @@ public:
     GeneratorParam<std::string> pixel_format_ptr{"pixel_format_ptr", "RGB8"};
     GeneratorParam<std::string> gain_key_ptr{"gain_key", "Gain"};
     GeneratorParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
-
+    GeneratorParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
+    
     GeneratorInput<bool> dispose{ "dispose" };
     GeneratorInput<int32_t> gain0{ "gain0" };
     GeneratorInput<int32_t> exposure0{ "exposure0" };
@@ -584,7 +585,7 @@ public:
         std::memcpy(exposure_key_buf.data(), exposure_key.c_str(), exposure_key.size());
 
         std::vector<ExternFuncArgument> params{
-            static_cast<bool>(frame_sync),
+            static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
             gain0, exposure0, pixel_format_buf,
             gain_key_buf, exposure_key_buf
          };
@@ -599,7 +600,7 @@ public:
         std::memcpy(pixel_format_buf_cpy.data(), pixel_format.c_str(), pixel_format.size());
 
         Func camera1_frame_count;
-        camera1_frame_count.define_extern("ion_bb_image_io_u3v_camera1_frame_count", { camera1, dispose, 1, static_cast<bool>(frame_sync), pixel_format_buf_cpy}, type_of<uint32_t>(), 1);
+        camera1_frame_count.define_extern("ion_bb_image_io_u3v_camera1_frame_count", { camera1, dispose, 1, static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode), pixel_format_buf_cpy}, type_of<uint32_t>(), 1);
         camera1_frame_count.compute_root();
         frame_count(_) = camera1_frame_count(_);
     }
@@ -616,6 +617,7 @@ public:
     GeneratorParam<std::string> pixel_format_ptr{"pixel_format_ptr", "RGB8"};
     GeneratorParam<std::string> gain_key_ptr{"gain_key", "Gain"};
     GeneratorParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
+    GeneratorParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
 
     GeneratorInput<bool> dispose{ "dispose" };
     GeneratorInput<int32_t> gain0{ "gain0" };
@@ -646,7 +648,7 @@ public:
         std::memcpy(exposure_key_buf.data(), exposure_key.c_str(), exposure_key.size());
 
         std::vector<ExternFuncArgument> params{
-            static_cast<bool>(frame_sync),
+            static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
             gain0, gain1, exposure0, exposure1, pixel_format_buf,
             gain_key_buf, exposure_key_buf
          };
@@ -662,7 +664,7 @@ public:
         std::memcpy(pixel_format_buf_cpy.data(), pixel_format.c_str(), pixel_format.size());
 
         Func camera2_frame_count;
-        camera2_frame_count.define_extern("ion_bb_image_io_u3v_camera2_frame_count", { camera2, dispose, 2, static_cast<bool>(frame_sync), pixel_format_buf_cpy}, type_of<uint32_t>(), 1);
+        camera2_frame_count.define_extern("ion_bb_image_io_u3v_camera2_frame_count", { camera2, dispose, 2, static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode), pixel_format_buf_cpy}, type_of<uint32_t>(), 1);
         camera2_frame_count.compute_root();
         frame_count(_) = camera2_frame_count(_);
     }

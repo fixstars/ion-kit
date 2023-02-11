@@ -65,7 +65,8 @@ int main(int argc, char *argv[])
       Param{"pixel_format_ptr", "Mono12"},
       Param{"frame_sync", "true"},
       Param{"gain_key", FEATURE_GAIN_KEY},
-      Param{"exposure_key", FEATURE_EXPOSURE_KEY}
+      Param{"exposure_key", FEATURE_EXPOSURE_KEY},
+      Param{"realtime_diaplay_mode", "true"}
     );
 
   // Define output ports and pass each object from Node instance.
