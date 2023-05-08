@@ -106,6 +106,7 @@ class U3V {
     using arv_stream_get_n_buffers_t = void(*)(ArvStream*, int32_t*, int32_t*);
     using arv_buffer_get_status_t = ArvBufferStatus(*)(ArvBuffer*);
     using arv_buffer_get_payload_type_t = ArvBufferPayloadType(*)(ArvBuffer*);
+    using arv_buffer_get_data_t = void*(*)(ArvBuffer*, size_t*);
     using arv_buffer_get_part_data_t = void*(*)(ArvBuffer*, uint_fast32_t, size_t*);
     using arv_buffer_get_timestamp_t = uint64_t(*)(ArvBuffer*);
     using arv_device_get_feature_t = ArvGcNode*(*)(ArvDevice*, const char*);
@@ -205,7 +206,7 @@ class U3V {
         int32_t frame_count = 0;;
 
         int64_t container_dataoffset;
-        memcpy (&frame_count, ((char *) arv_buffer_get_part_data(buf, 0, nullptr) + offset), 4);
+        memcpy (&frame_count, ((char *) arv_buffer_get_data(buf, nullptr) + offset), 4);
         return frame_count;
     }
 
@@ -437,6 +438,7 @@ class U3V {
         GET_SYMBOL(arv_stream_timeout_pop_buffer, "arv_stream_timeout_pop_buffer");
         GET_SYMBOL(arv_buffer_get_status, "arv_buffer_get_status");
         GET_SYMBOL(arv_buffer_get_payload_type, "arv_buffer_get_payload_type");
+        GET_SYMBOL(arv_buffer_get_data, "arv_buffer_get_data");
         GET_SYMBOL(arv_buffer_get_part_data, "arv_buffer_get_part_data");
         GET_SYMBOL(arv_buffer_get_timestamp, "arv_buffer_get_timestamp");
         GET_SYMBOL(arv_device_get_feature, "arv_device_get_feature");
@@ -535,6 +537,7 @@ class U3V {
     arv_stream_timeout_pop_buffer_t arv_stream_timeout_pop_buffer;
     arv_buffer_get_status_t arv_buffer_get_status;
     arv_buffer_get_payload_type_t arv_buffer_get_payload_type;
+    arv_buffer_get_data_t arv_buffer_get_data;
     arv_buffer_get_part_data_t arv_buffer_get_part_data;
     arv_buffer_get_timestamp_t arv_buffer_get_timestamp;
     arv_device_get_feature_t arv_device_get_feature;
