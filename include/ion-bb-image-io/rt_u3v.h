@@ -85,12 +85,12 @@ class U3V {
     using arv_open_device_t = ArvDevice*(*)(const char*, GError**);
 
     using arv_device_set_string_feature_value_t = void(*)(ArvDevice*, const char*, const char*, GError**);
-    using arv_device_set_float_feature_value_t = void(*)(ArvDevice*, const char*, float, GError**);
+    using arv_device_set_float_feature_value_t = void(*)(ArvDevice*, const char*, double, GError**);
     using arv_device_set_integer_feature_value_t = void(*)(ArvDevice*, const char*, int64_t, GError**);
 
     using arv_device_get_string_feature_value_t = const char *(*)(ArvDevice*, const char*, GError**);
     using arv_device_get_integer_feature_value_t = int(*)(ArvDevice*, const char*, GError**);
-    using arv_device_get_float_feature_value_t = float(*)(ArvDevice*, const char*, GError**);
+    using arv_device_get_float_feature_value_t = double(*)(ArvDevice*, const char*, GError**);
 
     using arv_device_get_integer_feature_bounds_t = void(*)(ArvDevice*, const char*, int64_t*, int64_t*, GError**);
     using arv_device_get_float_feature_bounds_t = void(*)(ArvDevice*, const char*, double*, double*, GError**);
@@ -477,14 +477,20 @@ class U3V {
 
     GError* SetFeatureValue(ArvDevice *device, const char *feature, double value){
         double min_v, max_v;
+        std::cout << "[LOG][ion-kit] SetFeatureValue double " << feature << " = " << value << std::endl;
         arv_device_get_float_feature_bounds (device, feature, &min_v, &max_v, &err_);
+        std::cout << "[LOG][ion-kit] SetFeatureValue constraints = (" << min_v << ", " << max_v  << ")" << std::endl;
         if (err_ != nullptr) {
             return err_;
         }
         value = (std::max)(min_v, value);
         value = (std::min)(max_v, value);
+        std::cout << "[LOG][ion-kit] SetFeatureValue updated value  = " << value << std::endl;
+
+        printf("[LOG][ion-kit] new line value=%lf\n", value);
 
         arv_device_set_float_feature_value (device, feature, value, &err_);
+
         return err_;
     }
 
