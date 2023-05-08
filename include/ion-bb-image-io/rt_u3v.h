@@ -477,17 +477,12 @@ class U3V {
 
     GError* SetFeatureValue(ArvDevice *device, const char *feature, double value){
         double min_v, max_v;
-        std::cout << "[LOG][ion-kit] SetFeatureValue double " << feature << " = " << value << std::endl;
         arv_device_get_float_feature_bounds (device, feature, &min_v, &max_v, &err_);
-        std::cout << "[LOG][ion-kit] SetFeatureValue constraints = (" << min_v << ", " << max_v  << ")" << std::endl;
         if (err_ != nullptr) {
             return err_;
         }
         value = (std::max)(min_v, value);
         value = (std::min)(max_v, value);
-        std::cout << "[LOG][ion-kit] SetFeatureValue updated value  = " << value << std::endl;
-
-        printf("[LOG][ion-kit] new line value=%lf\n", value);
 
         arv_device_set_float_feature_value (device, feature, value, &err_);
 
