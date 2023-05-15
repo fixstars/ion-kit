@@ -95,6 +95,12 @@ class U3V {
     using arv_device_get_integer_feature_bounds_t = void(*)(ArvDevice*, const char*, int64_t*, int64_t*, GError**);
     using arv_device_get_float_feature_bounds_t = void(*)(ArvDevice*, const char*, double*, double*, GError**);
 
+    // using arv_device_is_gendc_available_t = bool(*)(ArvDevice*,  GError**);
+
+    using arv_device_get_register_feature_length_t = uint64_t(*)(ArvDevice*, const char*, GError**);
+    using arv_device_set_register_feature_value_t = void(*)(ArvDevice*, const char*, uint64_t, void*, GError**);
+    using arv_device_get_register_feature_value_t =	void*(*)(ArvDevice*, const char*, uint64_t, GError**);
+
     using arv_device_create_stream_t = ArvStream*(*)(ArvDevice*, ArvStreamCallback*, void*, GError**);
 
     using arv_buffer_new_allocate_t = ArvBuffer*(*)(size_t);
@@ -150,8 +156,7 @@ class U3V {
     void dispose(){
         for (auto i=0; i<devices_.size(); ++i) {
             auto d = devices_[i];
-            arv_device_execute_command(d.device_, "AcquisitionStop", nullptr);
-
+            arv_device_execute_command(d.device_, "AcquisitionStop", &err_);
             /*
             Note:
             unref stream also unref the buffers pushed to stream
@@ -347,6 +352,12 @@ class U3V {
                 if (err_) {
                     throw std::runtime_error(err_->message);
                 }
+
+                uint64_t test_desc_size = arv_device_get_register_feature_length(devices_[i].device_, "GenDCDescriptor", &err_);
+                if (err_) {
+                    throw std::runtime_error(err_->message);
+                }
+                printf("the size of descriptor is %llu", test_desc_size);
             }
         } else {
             throw std::runtime_error("Multiple devices are found; please set the right Device ID");
@@ -429,6 +440,12 @@ class U3V {
         GET_SYMBOL(arv_device_get_float_feature_value, "arv_device_get_float_feature_value");
         GET_SYMBOL(arv_device_get_integer_feature_bounds, "arv_device_get_integer_feature_bounds");
         GET_SYMBOL(arv_device_get_float_feature_bounds, "arv_device_get_float_feature_bounds");
+
+        // GET_SYMBOL(arv_device_is_gendc_available, "arv_device_is_gendc_available");
+        GET_SYMBOL(arv_device_get_register_feature_length, "arv_device_get_register_feature_length");
+        GET_SYMBOL(arv_device_set_register_feature_value, "arv_device_set_register_feature_value");
+        GET_SYMBOL(arv_device_get_register_feature_value, "arv_device_get_register_feature_value");
+
         GET_SYMBOL(arv_device_create_stream, "arv_device_create_stream");
         GET_SYMBOL(arv_buffer_new_allocate, "arv_buffer_new_allocate");
         GET_SYMBOL(arv_stream_push_buffer, "arv_stream_push_buffer");
@@ -527,6 +544,11 @@ class U3V {
 
     arv_device_get_integer_feature_bounds_t arv_device_get_integer_feature_bounds;
     arv_device_get_float_feature_bounds_t arv_device_get_float_feature_bounds;
+
+    // arv_device_is_gendc_available_t arv_device_is_gendc_available;
+    arv_device_get_register_feature_length_t arv_device_get_register_feature_length;
+    arv_device_set_register_feature_value_t arv_device_set_register_feature_value;
+    arv_device_get_register_feature_value_t arv_device_get_register_feature_value;
 
     arv_device_create_stream_t arv_device_create_stream;
 
