@@ -5,6 +5,10 @@
 #include <iostream>
 #include "rt_common.h"
 
+
+#include "gendc_separator/ContainerHeader.h"
+#include "gendc_separator/tools.h"
+
 #include <HalideBuffer.h>
 
 #ifdef _WIN32
@@ -69,7 +73,6 @@ class U3V {
         ARV_DEVICE_STATUS_WRITE_ERROR
     }ArvDeviceStatus_t;
 
-    using ArvInterface_t = struct ArvInterface*;
     using ArvDevice_t = struct ArvDevice*;
     using ArvStream_t = struct ArvStream*;
     using ArvStreamCallback_t = struct ArvStreamCallback*;
@@ -95,10 +98,9 @@ class U3V {
     using arv_device_get_integer_feature_bounds_t = void(*)(ArvDevice*, const char*, int64_t*, int64_t*, GError**);
     using arv_device_get_float_feature_bounds_t = void(*)(ArvDevice*, const char*, double*, double*, GError**);
 
-    // using arv_device_is_gendc_available_t = bool(*)(ArvDevice*,  GError**);
+    using arv_device_is_feature_available_t = bool(*)(ArvDevice*, const char*, GError**);
 
     using arv_device_get_register_feature_length_t = uint64_t(*)(ArvDevice*, const char*, GError**);
-    using arv_device_set_register_feature_value_t = void(*)(ArvDevice*, const char*, uint64_t, void*, GError**);
     using arv_device_get_register_feature_value_t =	void*(*)(ArvDevice*, const char*, uint64_t, GError**);
 
     using arv_device_create_stream_t = ArvStream*(*)(ArvDevice*, ArvStreamCallback*, void*, GError**);
@@ -297,7 +299,8 @@ class U3V {
     U3V(std::string pixel_format, int32_t num_sensor, bool frame_sync, bool realtime_diaplay_mode, char* dev_id = nullptr)
     : gobject_(GOBJECT_FILE, true), aravis_(ARAVIS_FILE, true), 
         pixel_format_(pixel_format), num_sensor_(num_sensor), 
-        frame_sync_(frame_sync), realtime_diaplay_mode_(realtime_diaplay_mode), devices_(num_sensor), buffers_(num_sensor), disposed_(false)
+        frame_sync_(frame_sync), realtime_diaplay_mode_(realtime_diaplay_mode), is_gendc_(false),
+        devices_(num_sensor), buffers_(num_sensor), disposed_(false)
     {
         init_symbols();
 
@@ -353,11 +356,34 @@ class U3V {
                     throw std::runtime_error(err_->message);
                 }
 
-                uint64_t test_desc_size = arv_device_get_register_feature_length(devices_[i].device_, "GenDCDescriptor", &err_);
+                // check it the device is gendc mode
+                is_gendc_ = arv_device_is_feature_available(devices_[i].device_, "GenDCDescriptor", &err_);
                 if (err_) {
                     throw std::runtime_error(err_->message);
                 }
-                printf("the size of descriptor is %llu", test_desc_size);
+                is_gendc_ &= arv_device_is_feature_available(devices_[i].device_, "GenDCStreamingMode", &err_);
+                if (err_) {
+                    throw std::runtime_error(err_->message);
+                }
+                const char * streaming_mode;
+                streaming_mode = arv_device_get_string_feature_value(devices_[i].device_, "GenDCStreamingMode", &err_);
+                if (err_) {
+                    throw std::runtime_error(err_->message);
+                }
+                is_gendc_ &= (strcmp(streaming_mode, "On")==0);
+
+                if (is_gendc_){
+                    uint64_t gendc_desc_size = arv_device_get_register_feature_length(devices_[i].device_, "GenDCDescriptor", &err_);
+                    if (err_) {
+                        throw std::runtime_error(err_->message);
+                    }
+                    printf("the size of descriptor is %llu\n", gendc_desc_size);
+
+                    // void* buffer = arv_device_get_register_feature_value(devices_[i].device_, "GenDCDescriptor", gendc_desc_size,  &err_);
+                    // printf("%s\n", isGenDC((char*)(buffer)) ? "true" : "false");
+                }else{
+                    printf("[LOG] the device is not GenDC supported\n");
+                }
             }
         } else {
             throw std::runtime_error("Multiple devices are found; please set the right Device ID");
@@ -443,7 +469,6 @@ class U3V {
 
         // GET_SYMBOL(arv_device_is_gendc_available, "arv_device_is_gendc_available");
         GET_SYMBOL(arv_device_get_register_feature_length, "arv_device_get_register_feature_length");
-        GET_SYMBOL(arv_device_set_register_feature_value, "arv_device_set_register_feature_value");
         GET_SYMBOL(arv_device_get_register_feature_value, "arv_device_get_register_feature_value");
 
         GET_SYMBOL(arv_device_create_stream, "arv_device_create_stream");
@@ -451,6 +476,7 @@ class U3V {
         GET_SYMBOL(arv_stream_push_buffer, "arv_stream_push_buffer");
         GET_SYMBOL(arv_stream_get_n_buffers, "arv_stream_get_n_buffers");
         GET_SYMBOL(arv_acquisition_mode_to_string, "arv_acquisition_mode_to_string");
+        GET_SYMBOL(arv_device_is_feature_available, "arv_device_is_feature_available");
         GET_SYMBOL(arv_device_execute_command, "arv_device_execute_command");
         GET_SYMBOL(arv_stream_timeout_pop_buffer, "arv_stream_timeout_pop_buffer");
         GET_SYMBOL(arv_buffer_get_status, "arv_buffer_get_status");
@@ -545,9 +571,9 @@ class U3V {
     arv_device_get_integer_feature_bounds_t arv_device_get_integer_feature_bounds;
     arv_device_get_float_feature_bounds_t arv_device_get_float_feature_bounds;
 
-    // arv_device_is_gendc_available_t arv_device_is_gendc_available;
+    arv_device_is_feature_available_t arv_device_is_feature_available;
+
     arv_device_get_register_feature_length_t arv_device_get_register_feature_length;
-    arv_device_set_register_feature_value_t arv_device_set_register_feature_value;
     arv_device_get_register_feature_value_t arv_device_get_register_feature_value;
 
     arv_device_create_stream_t arv_device_create_stream;
@@ -579,6 +605,7 @@ class U3V {
 
     bool frame_sync_;
     bool realtime_diaplay_mode_;
+    bool is_gendc_;
 
     std::string pixel_format_;
 
