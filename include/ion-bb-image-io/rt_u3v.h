@@ -101,7 +101,7 @@ class U3V {
     using arv_device_is_feature_available_t = bool(*)(ArvDevice*, const char*, GError**);
 
     using arv_device_get_register_feature_length_t = uint64_t(*)(ArvDevice*, const char*, GError**);
-    using arv_device_get_register_feature_value_t =	void*(*)(ArvDevice*, const char*, uint64_t, GError**);
+    using arv_device_get_register_feature_value_t =	void(*)(ArvDevice*, const char*, uint64_t, void*, GError**);
 
     using arv_device_create_stream_t = ArvStream*(*)(ArvDevice*, ArvStreamCallback*, void*, GError**);
 
@@ -377,12 +377,19 @@ class U3V {
                     if (err_) {
                         throw std::runtime_error(err_->message);
                     }
-                    printf("the size of descriptor is %llu\n", gendc_desc_size);
+                    printf("[LOG ion-kit] the size of descriptor is %llu\n", gendc_desc_size);
 
-                    // void* buffer = arv_device_get_register_feature_value(devices_[i].device_, "GenDCDescriptor", gendc_desc_size,  &err_);
-                    // printf("%s\n", isGenDC((char*)(buffer)) ? "true" : "false");
+                    char* buffer;
+                    buffer = (char*) malloc(gendc_desc_size);
+                    arv_device_get_register_feature_value(devices_[i].device_, "GenDCDescriptor", gendc_desc_size, (void*)buffer, &err_);
+                    if(isGenDC(buffer)){
+                        ContainerHeader ch(buffer);
+                        ch.DisplayHeaderInfo();
+                    }
+                    free(buffer);
                 }else{
-                    printf("[LOG] the device is not GenDC supported\n");
+                    printf("[LOG ion-kit] The device is not GenDC supported\n");
+                    // throw std::runtime_error("The device is not GenDC supported");
                 }
             }
         } else {

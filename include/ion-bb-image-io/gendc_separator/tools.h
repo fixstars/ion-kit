@@ -16,7 +16,7 @@ bool isGenDC(char* buf){
     std::memcpy(&signature, buf + SIGNATURE_OFFSET, sizeof(int32_t));
 
     if (signature != GENDC_SIGNATURE){
-        std::cout << "The data is not genDC format" << std::endl;
+        std::cout << "[LOG ion-kit(gendc-separator)] The data is not genDC format" << std::endl;
         return false;
     }
     return true;
