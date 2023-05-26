@@ -98,6 +98,10 @@ public:
         return partheader_.at(jth_part).getDataSize();
     }
 
+    int32_t getOffsetFromTypeSpecific(int32_t jth_part, int32_t kth_typespecific, int32_t typespecific_offset = 0){
+        return PartOffset_.at(jth_part) + partheader_.at(jth_part).getOffsetFromTypeSpecific(kth_typespecific, typespecific_offset);
+    }
+
     void DisplayHeaderInfo(){
         int total_size = 0;
         std::cout << "\nCOMPONENT HEADER" << std::endl;

@@ -122,6 +122,12 @@ public:
         return component_header_.at(ith_component).getDataSize(jth_part);
     }
 
+    int32_t getOffsetFromTypeSpecific(int32_t ith_component, int32_t jth_part, 
+        int32_t kth_typespecific, int32_t typespecific_offset = 0){
+        
+        return component_header_.at(ith_component).getOffsetFromTypeSpecific(jth_part, kth_typespecific, typespecific_offset);
+    }
+
     void DisplayHeaderInfo(){
         int total_size = 0;
         std::cout << "\nCONTAINER HEADER" << std::endl;

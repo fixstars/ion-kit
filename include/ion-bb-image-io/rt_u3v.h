@@ -142,6 +142,8 @@ class U3V {
 
         // genDC
         int64_t data_offset_;
+        std::tuple<int32_t, int32_t> available_comp_part;
+        int32_t framecount_offset_;
         bool is_data_image_;
     } DeviceInfo;
 
@@ -213,13 +215,9 @@ class U3V {
         return devices_[0].frame_count_;
     }
 
-    int32_t get_frame_count_from_genDC_descriptor(ArvBuffer * buf){
-        int32_t offset = 184 + 56;//tentatively fixed
-
+    int32_t get_frame_count_from_genDC_descriptor(ArvBuffer * buf, DeviceInfo& d){
         int32_t frame_count = 0;;
-
-        int64_t container_dataoffset;
-        memcpy (&frame_count, ((char *) arv_buffer_get_data(buf, nullptr) + offset), 4);
+        memcpy (&frame_count, ((char *) arv_buffer_get_data(buf, nullptr) + d.framecount_offset_), sizeof(int32_t));
         return frame_count;
     }
 
@@ -234,7 +232,9 @@ class U3V {
             if (bufs[i] == nullptr){
                 throw ::std::runtime_error("buffer is null");
             }
-            devices_[i].frame_count_ = get_frame_count_from_genDC_descriptor(bufs[i]);
+            devices_[i].frame_count_ = is_gendc_
+                ? static_cast<uint64_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
+                : static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
         }
 
         if (realtime_diaplay_mode_){
@@ -254,7 +254,9 @@ class U3V {
                         if (bufs[i] == nullptr){
                             throw ::std::runtime_error("buffer is null");
                         }
-                        devices_[i].frame_count_ = get_frame_count_from_genDC_descriptor(bufs[i]);
+                        devices_[i].frame_count_ = is_gendc_
+                            ? static_cast<uint64_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
+                            : static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
                     }
                 }
             }
@@ -289,7 +291,9 @@ class U3V {
                         if (bufs[i] == nullptr){
                             throw ::std::runtime_error("buffer is null");
                         }
-                        devices_[i].frame_count_ = get_frame_count_from_genDC_descriptor(bufs[i]);
+                        devices_[i].frame_count_ = is_gendc_
+                            ? static_cast<uint64_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
+                            : static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
                     }
                 }
             }
@@ -411,6 +415,7 @@ class U3V {
                         }
                         devices_[i].data_offset_ = gendc_descriptor_.getDataOffset(std::get<0>(data_comp_and_part), std::get<1>(data_comp_and_part));
                         devices_[i].payload_size_ = gendc_descriptor_.getDataSize(std::get<0>(data_comp_and_part), std::get<1>(data_comp_and_part));
+                        devices_[i].framecount_offset_ = gendc_descriptor_.getOffsetFromTypeSpecific(std::get<0>(data_comp_and_part), std::get<1>(data_comp_and_part), 3, 0);
                     }
                     free(buffer);
                 }else{

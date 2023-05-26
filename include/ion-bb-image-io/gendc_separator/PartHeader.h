@@ -99,6 +99,10 @@ public:
         return DataSize_;
     }
 
+    int32_t getOffsetFromTypeSpecific(int32_t kth_typespecific, int32_t typespecific_offset = 0){
+        return offset_for_version[GENDC_V10].at(2) + 8 * (kth_typespecific - 1) + typespecific_offset;
+    }
+
     void DisplayHeaderInfo(){
         int total_size = 0;
         std::cout << "\nPART HEADER" << std::endl;
