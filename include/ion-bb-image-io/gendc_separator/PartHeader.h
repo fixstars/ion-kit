@@ -29,6 +29,7 @@ int getByteInFormat(int format){
 
 class PartHeader : public Header{
 public: 
+    PartHeader(){}
     // constructor with existing header info
     PartHeader(char* header_info, size_t offset = 0){
 
@@ -64,9 +65,38 @@ public:
         }
     }
 
+    PartHeader& operator=(PartHeader& src) {
+        HeaderType_ = src.HeaderType_;
+        Flags_= src.Flags_;
+        HeaderSize_= src.HeaderSize_;
+        Format_= src.Format_;
+        // Reserved_ = 0;
+        FlowId_= src.FlowId_;
+        FlowOffset_= src.FlowOffset_;
+        DataSize_= src.DataSize_;
+        DataOffset_= src.DataOffset_;
+
+        Dimension_= src.Dimension_;
+        Padding_= src.Padding_;
+        TypeSpecific_= src.TypeSpecific_;
+        return *this;
+    }
+
     size_t GenerateDescriptor(char* ptr, size_t offset=0){
         offset = GenerateHeader(ptr, offset);
         return offset;
+    }
+
+    bool isData2DImage(){
+        return HeaderType_ == 0x4200;
+    }
+
+    int64_t getDataOffset(){
+        return DataOffset_;
+    }
+
+    int64_t getDataSize(){
+        return DataSize_;
     }
 
     void DisplayHeaderInfo(){
@@ -91,7 +121,6 @@ public:
 
 private:
     // you need parameters to create the object
-    PartHeader(){}
 
     int getNumTypeSpecific(size_t header_size){
         return static_cast<int>(( header_size - 40 ) / 8);

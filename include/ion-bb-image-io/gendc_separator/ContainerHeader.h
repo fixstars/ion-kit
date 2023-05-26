@@ -7,6 +7,8 @@ namespace {
 class ContainerHeader : public Header{
 public: 
 
+    ContainerHeader(){}
+
     ContainerHeader(char* descriptor){
         size_t offset = 0;
         int32_t signature;
@@ -49,6 +51,26 @@ public:
             component_header_.push_back(ComponentHeader(descriptor, co));
         }
     }
+  
+    ContainerHeader& operator=(ContainerHeader& src) {
+        component_header_ = src.component_header_;
+
+        // Signature_ = 0x43444E47;
+        Version_ = src.Version_;
+        // Reserved_ = 0;
+        // HeaderType_ = 0x1000;
+        Flags_ = src.Flags_;
+        HeaderSize_ = src.HeaderSize_;
+        Id_ = src.Id_;
+        VariableFields_ = src.VariableFields_;
+        DataSize_ = src.DataSize_;
+        DataOffset_ = src.DataOffset_;
+        DescriptorSize_ = src.DescriptorSize_;
+        ComponentCount_ = src.ComponentCount_;
+        ComponentOffset_ = src.ComponentOffset_;
+
+        return *this;
+    }
 
     int32_t getDescriptorSize(){
         return DescriptorSize_;
@@ -66,6 +88,38 @@ public:
             std::cerr << "Descriptor size is wrong" << DescriptorSize_ << " != " << offset << std::endl;
         }
         return offset;
+    }
+
+    std::tuple<int32_t, int32_t> getFirstAvailableDataOffset(bool image){
+        // returns the component and part header index where
+        // - component is valid
+        // - part header type is 0x4200 (GDC_2D) if image is true
+        int32_t ith_comp = 0;
+        for (ComponentHeader &ch : component_header_){
+            if (ch.isComponentValid()){
+                int32_t jth_part = ch.getFirstAvailableDataOffset(image);
+                if (jth_part != -1){
+                    return std::make_tuple(ith_comp, jth_part);
+                }
+                ++ith_comp;
+            }
+        }
+        return std::make_tuple(-1, -1);
+    }
+
+    int64_t getDataOffset(int32_t ith_component = 0, int32_t jth_part = 0){
+        if (ith_component == 0 && jth_part == 0){
+            return DataOffset_;
+        }
+        return component_header_.at(ith_component).getDataOffset(jth_part);
+    }
+
+    int64_t getDataSize(){
+        return DataSize_;
+    }
+
+    int64_t getDataSize(int32_t ith_component = 0, int32_t jth_part = 0){
+        return component_header_.at(ith_component).getDataSize(jth_part);
     }
 
     void DisplayHeaderInfo(){

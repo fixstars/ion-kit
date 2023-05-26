@@ -5,6 +5,8 @@
 
 class ComponentHeader : public Header{
 public:
+    ComponentHeader(){}
+
     ComponentHeader(char* header_info, size_t offset = 0){
         int16_t header_type;
         offset += Read(header_info, offset, header_type);
@@ -38,6 +40,27 @@ public:
 
     }
 
+    ComponentHeader& operator=(ComponentHeader& src) {
+        partheader_ = src.partheader_;
+    
+        // HeaderType_ = 0x2000;
+        Flags_ = src.Flags_;
+        HeaderSize_ = src.HeaderSize_;
+        // Reserved_ = 0;
+        GroupId_ = src.GroupId_;
+        SourceId_ = src.SourceId_;
+        RegionId_ = src.RegionId_;
+        RegionOffsetX_ = src.RegionOffsetX_;
+        RegionOffsetY_ = src.RegionOffsetY_;
+        Timestamp_ = src.Timestamp_;
+        TypeId_ = src.TypeId_;
+        Format_ = src.Format_;
+        // Reserved2_ = 0;
+        PartCount_ = src.PartCount_;
+        PartOffset_ = src.PartOffset_;
+        return *this;
+    }
+
     size_t GenerateDescriptor(char* ptr, size_t offset=0){
         offset = GenerateHeader(ptr, offset);
 
@@ -45,6 +68,34 @@ public:
             offset = ph.GenerateDescriptor(ptr, offset);
         }
         return offset;
+    }
+
+    bool isComponentValid(){
+        return Flags_ == 0;
+    }
+
+    int32_t getFirstAvailableDataOffset(bool image){
+        // returns the part header index where
+        // - component is valid
+        // - part header type is 0x4200 (GDC_2D) if image is true
+        int32_t jth_part = 0;
+        for (PartHeader &ph : partheader_){
+            if (image && ph.isData2DImage()){
+                return jth_part;
+            }else if (!image && !ph.isData2DImage()){
+                return jth_part;
+            }
+            ++jth_part;
+        }
+        return -1;
+    }
+
+    int64_t getDataOffset(int32_t jth_part){
+        return partheader_.at(jth_part).getDataOffset();
+    }
+
+    int64_t getDataSize(int32_t jth_part){
+        return partheader_.at(jth_part).getDataSize();
     }
 
     void DisplayHeaderInfo(){

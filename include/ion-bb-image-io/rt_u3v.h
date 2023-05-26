@@ -19,6 +19,8 @@
     #define ARAVIS_FILE "aravis-0.8"
 #endif
 
+#include <chrono>
+
 namespace ion {
 namespace bb {
 namespace image_io {
@@ -137,6 +139,10 @@ class U3V {
         float exposure_range_[2];
 
         ArvStream* stream_;
+
+        // genDC
+        int64_t data_offset_;
+        bool is_data_image_;
     } DeviceInfo;
 
     public:
@@ -351,11 +357,20 @@ class U3V {
                     throw std::runtime_error("stream is null");
                 }
 
-                devices_[i].payload_size_ = arv_device_get_integer_feature_value(devices_[i].device_, "PayloadSize", &err_);
-                if (err_) {
-                    throw std::runtime_error(err_->message);
-                }
-
+                // // Note:
+                // // PayloadSize in the definition of GenICam is U3V/GigE payload
+                // // which may include Chunk or GenDCDescriptor (Metadata)
+                // std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
+                // devices_[i].payload_size_
+                //     = arv_device_get_integer_feature_value(devices_[i].device_, "Width", &err_)
+                //     * arv_device_get_integer_feature_value(devices_[i].device_, "Height", &err_)
+                //     * getDepth(pixel_format_.c_str());
+                // std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
+                // printf("1: %lld ns\n", std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
+                // if (err_) {
+                //     throw std::runtime_error(err_->message);
+                // }
+                
                 // check it the device is gendc mode
                 is_gendc_ = arv_device_is_feature_available(devices_[i].device_, "GenDCDescriptor", &err_);
                 if (err_) {
@@ -383,11 +398,27 @@ class U3V {
                     buffer = (char*) malloc(gendc_desc_size);
                     arv_device_get_register_feature_value(devices_[i].device_, "GenDCDescriptor", gendc_desc_size, (void*)buffer, &err_);
                     if(isGenDC(buffer)){
-                        ContainerHeader ch(buffer);
-                        ch.DisplayHeaderInfo();
+                        gendc_descriptor_= ContainerHeader(buffer);
+                        std::tuple<int32_t, int32_t> data_comp_and_part = gendc_descriptor_.getFirstAvailableDataOffset(true);
+                        if (std::get<0>(data_comp_and_part) == -1){
+                            devices_[i].is_data_image_ = false;
+                            data_comp_and_part = gendc_descriptor_.getFirstAvailableDataOffset(false);
+                            if (std::get<0>(data_comp_and_part) == -1){
+                                throw std::runtime_error("None of the data in GenDC is available\n");
+                            }
+                        }else{
+                            devices_[i].is_data_image_ = true;
+                        }
+                        devices_[i].data_offset_ = gendc_descriptor_.getDataOffset(std::get<0>(data_comp_and_part), std::get<1>(data_comp_and_part));
+                        devices_[i].payload_size_ = gendc_descriptor_.getDataSize(std::get<0>(data_comp_and_part), std::get<1>(data_comp_and_part));
                     }
                     free(buffer);
                 }else{
+                    devices_[i].data_offset_ = 0;
+                    devices_[i].payload_size_ = arv_device_get_integer_feature_value(devices_[i].device_, "PayloadSize", &err_);
+                    if (err_) {
+                        throw std::runtime_error(err_->message);
+                    }
                     printf("[LOG ion-kit] The device is not GenDC supported\n");
                     // throw std::runtime_error("The device is not GenDC supported");
                 }
@@ -426,6 +457,18 @@ class U3V {
                 throw std::runtime_error(err_->message);
             }
         }
+    }
+
+    int getDepth(std::string format){
+        if (format == "Mono8"){
+            return 1;
+        }else if (format == "Mono12" || format == "Mono10"){
+            return 2;
+        }else{
+            throw std::invalid_argument("Pixelformat is not supported\n");
+        }
+        
+        return 1;
     }
 
     void init_symbols_gobject() {
@@ -613,6 +656,9 @@ class U3V {
     bool frame_sync_;
     bool realtime_diaplay_mode_;
     bool is_gendc_;
+
+    // genDC
+    ContainerHeader gendc_descriptor_;
 
     std::string pixel_format_;
 
