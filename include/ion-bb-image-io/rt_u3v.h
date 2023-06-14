@@ -312,6 +312,7 @@ class U3V {
         frame_sync_(frame_sync), realtime_diaplay_mode_(realtime_diaplay_mode), is_gendc_(false),
         devices_(num_sensor), buffers_(num_sensor), disposed_(false)
     {
+        printf("[LOG ion-kit] This is ion-kit with debug-log; updated 23/06/08\n");
         init_symbols();
 
         arv_update_device_list();
@@ -353,6 +354,16 @@ class U3V {
                 if (err_ ) {
                     throw std::runtime_error(err_->message);
                 }
+
+            // printf("[LOG ion-kit] U3V():: %d FramePreset=%s, framerate=%lf, Gain=%lf, and ExposureTime=%lf\n", 
+            //     i,
+            //     arv_device_get_string_feature_value(devices_[i].device_, "FramePreset", &err_),
+            //     arv_device_get_float_feature_value(devices_[i].device_, "AcquisitionFrameRate", &err_),
+            //     arv_device_get_float_feature_value(devices_[i].device_, "Gain", &err_),
+            //     arv_device_get_float_feature_value(devices_[i].device_, "ExposureTime", &err_));
+                
+
+                // printf("[LOG ion-kit] for camera %d arv_device_create_stream is going to be called\n", i);
                 devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, nullptr, nullptr, &err_);
                 if (err_ ) {
                     throw std::runtime_error(err_->message);
@@ -360,7 +371,7 @@ class U3V {
                 if (devices_[i].stream_ == nullptr) {
                     throw std::runtime_error("stream is null");
                 }
-
+                // printf("[LOG ion-kit] for camera %d arv_device_create_stream was called\n", i);
                 // // Note:
                 // // PayloadSize in the definition of GenICam is U3V/GigE payload
                 // // which may include Chunk or GenDCDescriptor (Metadata)
@@ -384,19 +395,22 @@ class U3V {
                 if (err_) {
                     throw std::runtime_error(err_->message);
                 }
-                const char * streaming_mode;
-                streaming_mode = arv_device_get_string_feature_value(devices_[i].device_, "GenDCStreamingMode", &err_);
-                if (err_) {
-                    throw std::runtime_error(err_->message);
+                
+                if (is_gendc_){
+                    const char * streaming_mode;
+                    streaming_mode = arv_device_get_string_feature_value(devices_[i].device_, "GenDCStreamingMode", &err_);
+                    if (err_) {
+                        throw std::runtime_error(err_->message);
+                    }
+                    is_gendc_ &= (strcmp(streaming_mode, "On")==0);
                 }
-                is_gendc_ &= (strcmp(streaming_mode, "On")==0);
 
                 if (is_gendc_){
                     uint64_t gendc_desc_size = arv_device_get_register_feature_length(devices_[i].device_, "GenDCDescriptor", &err_);
                     if (err_) {
                         throw std::runtime_error(err_->message);
                     }
-                    printf("[LOG ion-kit] the size of descriptor is %llu\n", gendc_desc_size);
+                    // printf("[LOG ion-kit] the size of descriptor is %llu\n", gendc_desc_size);
 
                     char* buffer;
                     buffer = (char*) malloc(gendc_desc_size);
@@ -726,7 +740,7 @@ int ION_EXPORT ion_bb_image_io_u3v_camera1(
         }else{
             // set gain & exposure
             u3v.SetGain(0, gain_key, gain0);
-            u3v.SetExposure(0, exposure_key, exposure0);
+            // u3v.SetExposure(0, exposure_key, exposure0);
 
             std::vector<void *> obufs{out0->host};
             u3v.get(obufs);
@@ -762,8 +776,8 @@ int ION_EXPORT ion_bb_image_io_u3v_camera2(
             // set gain & exposure
             u3v.SetGain(0, gain_key, gain0);
             u3v.SetGain(1, gain_key, gain1);
-            u3v.SetExposure(0, exposure_key, exposure0);
-            u3v.SetExposure(1, exposure_key, exposure1);
+            // u3v.SetExposure(0, exposure_key, exposure0);
+            // u3v.SetExposure(1, exposure_key, exposure1);
 
             std::vector<void *> obufs{out0->host, out1->host};
             u3v.get(obufs);
