@@ -702,8 +702,8 @@ public:
     GeneratorOutput<Halide::Func> output0{ "output0", Halide::type_of<T>(), D};
     GeneratorOutput<Halide::Func> output1{ "output1", Halide::type_of<T>(), D};
 
-    GeneratorOutput<Halide::Func> gendc0{ "gendc0", Halide::type_of<char>(), 1};
-    GeneratorOutput<Halide::Func> gendc1{ "gendc1", Halide::type_of<char>(), 1};
+    GeneratorOutput<Halide::Func> gendc0{ "gendc0", Halide::type_of<T>(), D};
+    GeneratorOutput<Halide::Func> gendc1{ "gendc1", Halide::type_of<T>(), D};
 
     void generate() {
         using namespace Halide;
@@ -730,7 +730,7 @@ public:
          };
 
         Func camera2("u3v_gendc_camera2");
-        camera2.define_extern("ion_bb_image_io_u3v_gendc_camera2", params, { Halide::type_of<T>(), Halide::type_of<T>() }, D);
+        camera2.define_extern("ion_bb_image_io_u3v_gendc_camera2", params, { Halide::type_of<T>(), Halide::type_of<T>(), Halide::type_of<T>(), Halide::type_of<T>() }, D);
         camera2.compute_root();
         output0(_) = camera2(_)[0];
         output1(_) = camera2(_)[1];
