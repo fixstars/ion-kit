@@ -702,6 +702,9 @@ public:
     GeneratorOutput<Halide::Func> output0{ "output0", Halide::type_of<T>(), D};
     GeneratorOutput<Halide::Func> output1{ "output1", Halide::type_of<T>(), D};
 
+    GeneratorOutput<Halide::Func> gendc0{ "gendc0", Halide::type_of<char>(), 1};
+    GeneratorOutput<Halide::Func> gendc1{ "gendc1", Halide::type_of<char>(), 1};
+
     void generate() {
         using namespace Halide;
 
@@ -731,10 +734,8 @@ public:
         camera2.compute_root();
         output0(_) = camera2(_)[0];
         output1(_) = camera2(_)[1];
-
-        Buffer<uint8_t> pixel_format_buf_cpy(static_cast<int>(pixel_format.size() + 1));
-        pixel_format_buf_cpy.fill(0);
-        std::memcpy(pixel_format_buf_cpy.data(), pixel_format.c_str(), pixel_format.size());
+        gendc0(_) = camera2(_)[2];
+        gendc1(_) = camera2(_)[3];
     }
 };
 
