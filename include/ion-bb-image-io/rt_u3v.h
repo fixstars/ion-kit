@@ -384,8 +384,9 @@ class U3V {
         }
 
         for (int i = 0; i < num_sensor_; ++i){
-            ::memcpy(outs[i], arv_buffer_get_part_data(bufs[i], 0, nullptr), devices_[i].payload_size_);
-            ::memcpy(outs[i+num_sensor_], arv_buffer_get_data(bufs[i], nullptr),devices_[i].payload_size_ + 1280);
+            // ::memcpy(outs[i], arv_buffer_get_part_data(bufs[i], 0, nullptr), devices_[i].payload_size_);
+            // ::memcpy(outs[i+2], arv_buffer_get_part_data(bufs[i], 0, nullptr), devices_[i].payload_size_ +);
+            ::memcpy(outs[i], arv_buffer_get_data(bufs[i], nullptr),devices_[i].payload_size_ + 1280);
             arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
         }
     }
@@ -440,14 +441,6 @@ class U3V {
                     throw std::runtime_error(err_->message);
                 }
 
-            // printf("[LOG ion-kit] U3V():: %d FramePreset=%s, framerate=%lf, Gain=%lf, and ExposureTime=%lf\n", 
-            //     i,
-            //     arv_device_get_string_feature_value(devices_[i].device_, "FramePreset", &err_),
-            //     arv_device_get_float_feature_value(devices_[i].device_, "AcquisitionFrameRate", &err_),
-            //     arv_device_get_float_feature_value(devices_[i].device_, "Gain", &err_),
-            //     arv_device_get_float_feature_value(devices_[i].device_, "ExposureTime", &err_));
-                
-
                 // printf("[LOG ion-kit] for camera %d arv_device_create_stream is going to be called\n", i);
                 devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, nullptr, nullptr, &err_);
                 if (err_ ) {
@@ -456,20 +449,6 @@ class U3V {
                 if (devices_[i].stream_ == nullptr) {
                     throw std::runtime_error("stream is null");
                 }
-                // printf("[LOG ion-kit] for camera %d arv_device_create_stream was called\n", i);
-                // // Note:
-                // // PayloadSize in the definition of GenICam is U3V/GigE payload
-                // // which may include Chunk or GenDCDescriptor (Metadata)
-                // std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
-                // devices_[i].payload_size_
-                //     = arv_device_get_integer_feature_value(devices_[i].device_, "Width", &err_)
-                //     * arv_device_get_integer_feature_value(devices_[i].device_, "Height", &err_)
-                //     * getDepth(pixel_format_.c_str());
-                // std::chrono::system_clock::time_point end = std::chrono::system_clock::now();
-                // printf("1: %lld ns\n", std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count());
-                // if (err_) {
-                //     throw std::runtime_error(err_->message);
-                // }
                 
                 // check it the device is gendc mode
                 is_gendc_ = arv_device_is_feature_available(devices_[i].device_, "GenDCDescriptor", &err_);
@@ -825,7 +804,7 @@ int ION_EXPORT ion_bb_image_io_u3v_camera1(
         }else{
             // set gain & exposure
             u3v.SetGain(0, gain_key, gain0);
-            // u3v.SetExposure(0, exposure_key, exposure0);
+            u3v.SetExposure(0, exposure_key, exposure0);
 
             std::vector<void *> obufs{out0->host};
             u3v.get(obufs);
@@ -861,8 +840,8 @@ int ION_EXPORT ion_bb_image_io_u3v_camera2(
             // set gain & exposure
             u3v.SetGain(0, gain_key, gain0);
             u3v.SetGain(1, gain_key, gain1);
-            // u3v.SetExposure(0, exposure_key, exposure0);
-            // u3v.SetExposure(1, exposure_key, exposure1);
+            u3v.SetExposure(0, exposure_key, exposure0);
+            u3v.SetExposure(1, exposure_key, exposure1);
 
             std::vector<void *> obufs{out0->host, out1->host};
             u3v.get(obufs);
@@ -906,8 +885,7 @@ int ION_EXPORT ion_bb_image_io_u3v_gendc_camera2(
     bool frame_sync, bool realtime_diaplay_mode, 
     double gain0, double gain1, double exposure0, double exposure1,
     halide_buffer_t* pixel_format_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
-    halide_buffer_t * out0, halide_buffer_t * out1,
-    halide_buffer_t * gendc0, halide_buffer_t * gendc1)
+    halide_buffer_t * out0, halide_buffer_t * out1)
 {
     using namespace Halide;
     try {
@@ -922,10 +900,10 @@ int ION_EXPORT ion_bb_image_io_u3v_gendc_camera2(
             // set gain & exposure
             u3v.SetGain(0, gain_key, gain0);
             u3v.SetGain(1, gain_key, gain1);
-            // u3v.SetExposure(0, exposure_key, exposure0);
-            // u3v.SetExposure(1, exposure_key, exposure1);
+            u3v.SetExposure(0, exposure_key, exposure0);
+            u3v.SetExposure(1, exposure_key, exposure1);
 
-            std::vector<void *> obufs{out0->host, out1->host, gendc0->host, gendc1->host};
+            std::vector<void *> obufs{out0->host, out1->host};
             u3v.get_with_gendc(obufs);
             if(dispose){
                 u3v.dispose();
