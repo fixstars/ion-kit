@@ -170,6 +170,15 @@ public:
         return *instances[output_directory];
     }
 
+    static Writer& get_instance(int payloadsize0, int payloadsize1, const ::std::string& output_directory)
+    {
+        auto itr = instances.find(output_directory);
+        if (itr == instances.end()) {
+            instances[output_directory] = std::unique_ptr<Writer>(new Writer(payloadsize0, payloadsize1, output_directory));
+        }
+        return *instances[output_directory];
+    }
+
     ~Writer() {
         dispose();
     }
@@ -186,6 +195,22 @@ public:
         ::std::memcpy(buffer, ptr0, size);
         ::std::memcpy(buffer + size, ptr1, size);
         task_queue_.push(::std::make_tuple(frame_count, buffer, 2 * size));
+        task_cv_.notify_one();
+    }
+
+
+    void post_gendc(const uint8_t* ptr0, const uint8_t* ptr1, size_t size0, size_t size1)
+    {
+        ::std::unique_lock<::std::mutex> lock(mutex_);
+        buf_cv_.wait(lock, [&] { return !buf_queue_.empty() || ep_; });
+        if (ep_) {
+            ::std::rethrow_exception(ep_);
+        }
+        uint8_t* buffer = buf_queue_.front();
+        buf_queue_.pop();
+        ::std::memcpy(buffer, ptr0, size0);
+        ::std::memcpy(buffer + size0, ptr1, size1);
+        task_queue_.push(::std::make_tuple(0, buffer, size0 + size1));
         task_cv_.notify_one();
     }
 
@@ -207,7 +232,7 @@ private:
     Writer(int width, int height, const ::std::string& output_directory,
         rawHeader header_info)
         : keep_running_(true), width_(width), height_(height), output_directory_(output_directory),
-        header_info_(header_info)
+        header_info_(header_info), with_header_(true), with_framecount_(true)
     {
         int buffer_num = get_buffer_num(width, height);
         for (int i = 0; i < buffer_num; ++i) {
@@ -225,12 +250,28 @@ private:
         }
     }
 
-    int get_buffer_num(int width, int height) {
+    Writer(int payloadsize0, int payloadsize1, const ::std::string& output_directory)
+        : keep_running_(true), output_directory_(output_directory), with_header_(false), with_framecount_(false)
+    {
+        int buffer_num = get_buffer_num(payloadsize0 + payloadsize1);
+        for (int i = 0; i < buffer_num; ++i) {
+            buffers_.emplace_back(payloadsize0 + payloadsize1);
+            buf_queue_.push(buffers_[i].data());
+        }
+        thread_ = ::std::make_shared<::std::thread>(entry_point, this);
+        ofs_ = ::std::ofstream(output_directory_ / "raw-0.bin", ::std::ios::binary);
+    }
+
+    int get_buffer_num(int width, int height, int num_sensor = 2, int data_in_byte = 2) {
         // fix the memory size 2GB
         const double memory_size_in_MB = 2048.0;
-        const int num_sensor = 2;
-        const int data_in_byte = 2;
         return static_cast<int>( memory_size_in_MB * 1024 * 1024 / width / height / num_sensor / data_in_byte);
+    }
+
+    int get_buffer_num(int32_t payloadsize) {
+        // fix the memory size 2GB
+        const double memory_size_in_MB = 2048.0;
+        return static_cast<int>( memory_size_in_MB * 1024 * 1024 / payloadsize);
     }
 
     static void entry_point(Writer* obj) {
@@ -268,15 +309,19 @@ private:
                 i = 0;
                 ofs_ = ::std::ofstream(output_directory_ / ("raw-" + ::std::to_string(file_idx++) + ".bin"), ::std::ios::binary);
 
-                // write header (size is 512)
-                ofs_.write(reinterpret_cast<const char*>(&header_info_), sizeof(header_info_));
-                char padding_item = '0';
-                for (int i = 0; i < 512 - sizeof(header_info_); ++i) {
-                    ofs_.write(reinterpret_cast<const char*>(&padding_item), sizeof(padding_item));
+                if (with_header_){
+                    // write header (size is 512)
+                    ofs_.write(reinterpret_cast<const char*>(&header_info_), sizeof(header_info_));
+                    char padding_item = '0';
+                    for (int i = 0; i < 512 - sizeof(header_info_); ++i) {
+                        ofs_.write(reinterpret_cast<const char*>(&padding_item), sizeof(padding_item));
+                    }
                 }
             }
 
-            ofs_.write(reinterpret_cast<const char*>(&frame_count), sizeof(frame_count));
+            if (with_framecount_){
+              ofs_.write(reinterpret_cast<const char*>(&frame_count), sizeof(frame_count));
+            }
             ofs_.write(reinterpret_cast<const char*>(buffer), size);
 
             {
@@ -303,15 +348,19 @@ private:
                 i = 0;
                 ofs_ = ::std::ofstream(output_directory_ / ("raw-" + ::std::to_string(file_idx++) + ".bin"), ::std::ios::binary);
 
-                // write header (size is 512)
-                ofs_.write(reinterpret_cast<const char*>(&header_info_), sizeof(header_info_));
-                char padding_item = '0';
-                for (int i = 0; i < 512 - sizeof(header_info_); ++i) {
-                    ofs_.write(reinterpret_cast<const char*>(&padding_item), sizeof(padding_item));
+                if (with_header_){
+                    // write header (size is 512)
+                    ofs_.write(reinterpret_cast<const char*>(&header_info_), sizeof(header_info_));
+                    char padding_item = '0';
+                    for (int i = 0; i < 512 - sizeof(header_info_); ++i) {
+                        ofs_.write(reinterpret_cast<const char*>(&padding_item), sizeof(padding_item));
+                    }
                 }
             }
 
-            ofs_.write(reinterpret_cast<const char*>(&frame_count), sizeof(frame_count));
+            if (with_framecount_){
+              ofs_.write(reinterpret_cast<const char*>(&frame_count), sizeof(frame_count));
+            }
             ofs_.write(reinterpret_cast<const char*>(buffer), size);
 
             {
@@ -342,6 +391,8 @@ private:
     ghc::filesystem::path output_directory_;
 
     rawHeader header_info_;
+    bool with_header_;
+    bool with_framecount_;
 };
 
 ::std::unordered_map< ::std::string, std::unique_ptr<Writer>> Writer::instances; // defines Writer::instance
@@ -410,6 +461,48 @@ int binarysaver(halide_buffer_t * in0, halide_buffer_t * in1, halide_buffer_t * 
 
 ION_REGISTER_EXTERN(binarysaver);
 
+extern "C" ION_EXPORT
+int ion_bb_image_io_binary_gendc_saver(halide_buffer_t * in0, halide_buffer_t * in1, 
+    bool dispose, int payloadsize0, int payloadsize1, halide_buffer_t*  output_directory_buf,
+    halide_buffer_t * out)
+    {
+    try {
+        const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
+        auto& w(Writer::get_instance(payloadsize0, payloadsize1, output_directory));
+        if (in0->is_bounds_query() || in1->is_bounds_query()) {
+            if (in0->is_bounds_query()) {
+                in0->dim[0].min = 0;
+                in0->dim[0].extent = payloadsize0;
+            }
+            if (in1->is_bounds_query()) {
+                in1->dim[0].min = 0;
+                in1->dim[0].extent = payloadsize1;
+            }
+        }
+        else {
+            w.post_gendc(in0->host, in1->host, in0->size_in_bytes(), in1->size_in_bytes());
+
+            if (dispose) {
+                w.dispose();
+                w.release_instance(output_directory);
+                return 0;
+            }
+        }
+
+        return 0;
+    }
+    catch (const ::std::exception& e) {
+        ::std::cerr << e.what() << ::std::endl;
+        return -1;
+    }
+    catch (...) {
+        ::std::cerr << "Unknown error" << ::std::endl;
+        return -1;
+    }
+}
+
+ION_REGISTER_EXTERN(ion_bb_image_io_binary_gendc_saver);
+
 namespace {
 
     class Reader {
@@ -472,7 +565,7 @@ namespace {
             return finished_;
         }
 
-        uint get_index() {
+        uint32_t get_index() {
             return current_idx_;
         }
 
@@ -623,7 +716,7 @@ int binaryloader_finished(halide_buffer_t* in0, halide_buffer_t* in1, halide_buf
             auto& r(Reader::get_instance(session_id, width, height, output_directory));
             auto finished_flag = r.get_finished();
            *reinterpret_cast<bool*>(finished->host) = finished_flag;
-           *reinterpret_cast<uint*>(bin_idx->host) = r.get_index();
+           *reinterpret_cast<uint8_t*>(bin_idx->host) = r.get_index();
            if (finished_flag) {
                r.close();
                r.release_instance(session_id);

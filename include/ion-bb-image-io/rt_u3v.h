@@ -384,9 +384,7 @@ class U3V {
         }
 
         for (int i = 0; i < num_sensor_; ++i){
-            // ::memcpy(outs[i], arv_buffer_get_part_data(bufs[i], 0, nullptr), devices_[i].payload_size_);
-            // ::memcpy(outs[i+2], arv_buffer_get_part_data(bufs[i], 0, nullptr), devices_[i].payload_size_ +);
-            ::memcpy(outs[i], arv_buffer_get_data(bufs[i], nullptr),devices_[i].payload_size_ + 1280);
+            ::memcpy(outs[i], arv_buffer_get_data(bufs[i], nullptr), devices_[i].payload_size_ + 1280);
             arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
         }
     }

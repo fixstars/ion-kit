@@ -799,6 +799,42 @@ public:
     }
 };
 
+class BinaryGenDCSaver : public ion::BuildingBlock<BinaryGenDCSaver> {
+public:
+    GeneratorParam<std::string> output_directory_ptr{ "output_directory", "." };
+
+    Input<Halide::Func> input0{ "input0", UInt(8), 1 };
+    Input<Halide::Func> input1{ "input1", UInt(8), 1 };
+
+    Input<bool> dispose{ "dispose" };
+    Input<int32_t> payloadsize0{ "payloadsize0", 0 };
+    Input<int32_t> payloadsize1{ "payloadsize1", 0 };
+
+    Output<int> output{ "output" };
+
+    void generate() {
+        using namespace Halide;
+        Func in0;
+        in0(_) = input0(_);
+        in0.compute_root();
+
+        Func in1;
+        in1(_) = input1(_);
+        in1.compute_root();
+
+        const std::string output_directory(output_directory_ptr);
+        Halide::Buffer<uint8_t> output_directory_buf(static_cast<int>(output_directory.size() + 1));
+        output_directory_buf.fill(0);
+        std::memcpy(output_directory_buf.data(), output_directory.c_str(), output_directory.size());
+
+        std::vector<ExternFuncArgument> params = { in0, in1, dispose, payloadsize0, payloadsize1, output_directory_buf };
+        Func image_io_binary_gendc_saver;
+        image_io_binary_gendc_saver.define_extern("ion_bb_image_io_binary_gendc_saver", params, Int(32), 0);
+        image_io_binary_gendc_saver.compute_root();
+        output() = image_io_binary_gendc_saver();
+    }
+};
+
 class BinaryLoader : public ion::BuildingBlock<BinaryLoader> {
 public:
     GeneratorParam<std::string> output_directory_ptr{ "output_directory_ptr", "" };
@@ -879,6 +915,8 @@ ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera2_gendc, image_io_u3v_ca
 
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinarySaver, image_io_binarysaver);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinaryLoader, image_io_binaryloader);
+
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinaryGenDCSaver, image_io_binary_gendc_saver);
 
 //backward compatability
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera1_U8x3, u3v_camera1_u8x3);
