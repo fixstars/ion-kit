@@ -170,11 +170,11 @@ public:
         return *instances[output_directory];
     }
 
-    static Writer& get_instance(int payloadsize0, int payloadsize1, const ::std::string& output_directory)
+    static Writer& get_instance(int total_payload_size, const ::std::string& output_directory)
     {
         auto itr = instances.find(output_directory);
         if (itr == instances.end()) {
-            instances[output_directory] = std::unique_ptr<Writer>(new Writer(payloadsize0, payloadsize1, output_directory));
+            instances[output_directory] = std::unique_ptr<Writer>(new Writer(total_payload_size, output_directory));
         }
         return *instances[output_directory];
     }
@@ -199,7 +199,7 @@ public:
     }
 
 
-    void post_gendc(const uint8_t* ptr0, const uint8_t* ptr1, size_t size0, size_t size1)
+    void post_gendc(std::vector<void *>& outs, std::vector<size_t> size)
     {
         ::std::unique_lock<::std::mutex> lock(mutex_);
         buf_cv_.wait(lock, [&] { return !buf_queue_.empty() || ep_; });
@@ -208,9 +208,12 @@ public:
         }
         uint8_t* buffer = buf_queue_.front();
         buf_queue_.pop();
-        ::std::memcpy(buffer, ptr0, size0);
-        ::std::memcpy(buffer + size0, ptr1, size1);
-        task_queue_.push(::std::make_tuple(0, buffer, size0 + size1));
+        size_t offset = 0;
+        for (int i = 0; i < outs.size(); ++i){
+            ::std::memcpy(buffer + offset, outs[i], size[i]);
+            offset += size[i];
+        }
+        task_queue_.push(::std::make_tuple(0, buffer, offset));
         task_cv_.notify_one();
     }
 
@@ -250,12 +253,12 @@ private:
         }
     }
 
-    Writer(int payloadsize0, int payloadsize1, const ::std::string& output_directory)
+    Writer(int total_payload_size, const ::std::string& output_directory)
         : keep_running_(true), output_directory_(output_directory), with_header_(false), with_framecount_(false)
     {
-        int buffer_num = get_buffer_num(payloadsize0 + payloadsize1);
+        int buffer_num = get_buffer_num(total_payload_size);
         for (int i = 0; i < buffer_num; ++i) {
-            buffers_.emplace_back(payloadsize0 + payloadsize1);
+            buffers_.emplace_back(total_payload_size);
             buf_queue_.push(buffers_[i].data());
         }
         thread_ = ::std::make_shared<::std::thread>(entry_point, this);
@@ -462,13 +465,13 @@ int binarysaver(halide_buffer_t * in0, halide_buffer_t * in1, halide_buffer_t * 
 ION_REGISTER_EXTERN(binarysaver);
 
 extern "C" ION_EXPORT
-int ion_bb_image_io_binary_gendc_saver(halide_buffer_t * in0, halide_buffer_t * in1, 
+int ion_bb_image_io_binary_2gendc_saver(halide_buffer_t * in0, halide_buffer_t * in1, 
     bool dispose, int payloadsize0, int payloadsize1, halide_buffer_t*  output_directory_buf,
     halide_buffer_t * out)
     {
     try {
         const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
-        auto& w(Writer::get_instance(payloadsize0, payloadsize1, output_directory));
+        auto& w(Writer::get_instance(payloadsize0 + payloadsize1, output_directory));
         if (in0->is_bounds_query() || in1->is_bounds_query()) {
             if (in0->is_bounds_query()) {
                 in0->dim[0].min = 0;
@@ -480,7 +483,9 @@ int ion_bb_image_io_binary_gendc_saver(halide_buffer_t * in0, halide_buffer_t * 
             }
         }
         else {
-            w.post_gendc(in0->host, in1->host, in0->size_in_bytes(), in1->size_in_bytes());
+            std::vector<void *> obufs{in0->host, in1->host};
+            std::vector<size_t> size_in_bytes{in0->size_in_bytes(), in1->size_in_bytes()};
+            w.post_gendc(obufs, size_in_bytes);
 
             if (dispose) {
                 w.dispose();
@@ -501,7 +506,7 @@ int ion_bb_image_io_binary_gendc_saver(halide_buffer_t * in0, halide_buffer_t * 
     }
 }
 
-ION_REGISTER_EXTERN(ion_bb_image_io_binary_gendc_saver);
+ION_REGISTER_EXTERN(ion_bb_image_io_binary_2gendc_saver);
 
 namespace {
 

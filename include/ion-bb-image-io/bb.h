@@ -799,7 +799,7 @@ public:
     }
 };
 
-class BinaryGenDCSaver : public ion::BuildingBlock<BinaryGenDCSaver> {
+class Binary2GenDCSaver : public ion::BuildingBlock<Binary2GenDCSaver> {
 public:
     GeneratorParam<std::string> output_directory_ptr{ "output_directory", "." };
 
@@ -829,7 +829,7 @@ public:
 
         std::vector<ExternFuncArgument> params = { in0, in1, dispose, payloadsize0, payloadsize1, output_directory_buf };
         Func image_io_binary_gendc_saver;
-        image_io_binary_gendc_saver.define_extern("ion_bb_image_io_binary_gendc_saver", params, Int(32), 0);
+        image_io_binary_gendc_saver.define_extern("ion_bb_image_io_binary_2gendc_saver", params, Int(32), 0);
         image_io_binary_gendc_saver.compute_root();
         output() = image_io_binary_gendc_saver();
     }
@@ -916,7 +916,7 @@ ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera2_gendc, image_io_u3v_ca
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinarySaver, image_io_binarysaver);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinaryLoader, image_io_binaryloader);
 
-ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinaryGenDCSaver, image_io_binary_gendc_saver);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::Binary2GenDCSaver, image_io_binary_2gendc_saver);
 
 //backward compatability
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera1_U8x3, u3v_camera1_u8x3);

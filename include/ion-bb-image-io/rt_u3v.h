@@ -130,7 +130,8 @@ class U3V {
         const char* dev_id_;
         ArvDevice* device_;
 
-        int32_t payload_size_;
+        int32_t u3v_payload_size_;
+        int32_t image_payload_size_;
         uint64_t frame_count_;
 
         float gain_;
@@ -300,7 +301,7 @@ class U3V {
         }
 
         for (int i = 0; i < num_sensor_; ++i){
-            ::memcpy(outs[i], arv_buffer_get_part_data(bufs[i], 0, nullptr), devices_[i].payload_size_);
+            ::memcpy(outs[i], arv_buffer_get_part_data(bufs[i], 0, nullptr), devices_[i].image_payload_size_);
             arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
         }
     }
@@ -384,7 +385,7 @@ class U3V {
         }
 
         for (int i = 0; i < num_sensor_; ++i){
-            ::memcpy(outs[i], arv_buffer_get_data(bufs[i], nullptr), devices_[i].payload_size_ + 1280);
+            ::memcpy(outs[i], arv_buffer_get_data(bufs[i], nullptr), devices_[i].u3v_payload_size_);
             arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
         }
     }
@@ -435,6 +436,11 @@ class U3V {
                 }
 
                 arv_device_set_string_feature_value(devices_[i].device_, "PixelFormat", pixel_format_.c_str(), &err_);
+                if (err_ ) {
+                    throw std::runtime_error(err_->message);
+                }
+
+                devices_[i].u3v_payload_size_ = arv_device_get_integer_feature_value(devices_[i].device_, "PayloadSize", &err_);
                 if (err_ ) {
                     throw std::runtime_error(err_->message);
                 }
@@ -490,13 +496,13 @@ class U3V {
                             devices_[i].is_data_image_ = true;
                         }
                         devices_[i].data_offset_ = gendc_descriptor_.getDataOffset(std::get<0>(data_comp_and_part), std::get<1>(data_comp_and_part));
-                        devices_[i].payload_size_ = gendc_descriptor_.getDataSize(std::get<0>(data_comp_and_part), std::get<1>(data_comp_and_part));
+                        devices_[i].image_payload_size_ = gendc_descriptor_.getDataSize(std::get<0>(data_comp_and_part), std::get<1>(data_comp_and_part));
                         devices_[i].framecount_offset_ = gendc_descriptor_.getOffsetFromTypeSpecific(std::get<0>(data_comp_and_part), std::get<1>(data_comp_and_part), 3, 0);
                     }
                     free(buffer);
                 }else{
                     devices_[i].data_offset_ = 0;
-                    devices_[i].payload_size_ = arv_device_get_integer_feature_value(devices_[i].device_, "PayloadSize", &err_);
+                    devices_[i].image_payload_size_ = devices_[i].u3v_payload_size_;
                     if (err_) {
                         throw std::runtime_error(err_->message);
                     }
@@ -510,9 +516,9 @@ class U3V {
 
         for (auto i=0; i<devices_.size(); ++i) {
             const size_t buffer_size = 1 * 1024 * 1024 * 1024; // 1GiB for each
-            auto n = (buffer_size + devices_[i].payload_size_ - 1) / devices_[i].payload_size_;
+            auto n = (buffer_size + devices_[i].u3v_payload_size_ - 1) / devices_[i].u3v_payload_size_;
             for (auto j=0; j<n; ++j) {
-                auto b = arv_buffer_new_allocate(devices_[i].payload_size_);
+                auto b = arv_buffer_new_allocate(devices_[i].u3v_payload_size_);
                 buffers_[i].push_back(b);
                 arv_stream_push_buffer(devices_[i].stream_, b);
             }
