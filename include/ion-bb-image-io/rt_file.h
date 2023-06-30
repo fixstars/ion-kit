@@ -11,6 +11,7 @@
 
 #include "rt_common.h"
 #include "ghc/filesystem.hpp"
+#include "nlohmann/json.hpp"
 
 #include "httplib.h"
 
@@ -170,11 +171,11 @@ public:
         return *instances[output_directory];
     }
 
-    static Writer& get_instance(int total_payload_size, const ::std::string& output_directory)
+    static Writer& get_instance(int total_payload_size, const ::std::string& output_directory, std::vector<rawHeader>& header_infos, bool config_file)
     {
         auto itr = instances.find(output_directory);
         if (itr == instances.end()) {
-            instances[output_directory] = std::unique_ptr<Writer>(new Writer(total_payload_size, output_directory));
+            instances[output_directory] = std::unique_ptr<Writer>(new Writer(total_payload_size, output_directory, header_infos, config_file));
         }
         return *instances[output_directory];
     }
@@ -253,8 +254,8 @@ private:
         }
     }
 
-    Writer(int total_payload_size, const ::std::string& output_directory)
-        : keep_running_(true), output_directory_(output_directory), with_header_(false), with_framecount_(false)
+    Writer(int total_payload_size, const ::std::string& output_directory, std::vector<rawHeader>& header_infos, bool config_file)
+        : keep_running_(true), output_directory_(output_directory), with_header_(!config_file), with_framecount_(false)
     {
         int buffer_num = get_buffer_num(total_payload_size);
         for (int i = 0; i < buffer_num; ++i) {
@@ -262,6 +263,20 @@ private:
             buf_queue_.push(buffers_[i].data());
         }
         thread_ = ::std::make_shared<::std::thread>(entry_point, this);
+
+        nlohmann::json j;
+        j["num_device"] = header_infos.size();
+        for (int i = 0; i < header_infos.size(); ++i){
+            nlohmann::json j_ith_sensor;
+            j_ith_sensor["framerate"] = header_infos[i].fps_;
+            j_ith_sensor["width"] = header_infos[i].width_;
+            j_ith_sensor["height"] = header_infos[i].height_;
+            j["sensor" + std::to_string(i+1)] = j_ith_sensor;
+        }
+
+        ::std::ofstream config(output_directory_ / "config.json");
+        config << std::setw(4) << j << std::endl;
+        config.close();
         ofs_ = ::std::ofstream(output_directory_ / "raw-0.bin", ::std::ios::binary);
     }
 
@@ -470,8 +485,17 @@ int ion_bb_image_io_binary_2gendc_saver(halide_buffer_t * in0, halide_buffer_t *
     halide_buffer_t * out)
     {
     try {
+        int wi = 1920;
+        int hi = 1080;
+        rawHeader header_info0 = {
+            1, wi, hi, 1, 1, 1, 1, 1, 1,
+            0, 0, 0, 0, wi, hi, wi, hi, 60 };
+        rawHeader header_info1 = {
+            1, wi, hi, 1, 1, 1, 1, 1, 1,
+            0, 0, 0, 0,  wi, hi, wi, hi, 60 };
+        std::vector<rawHeader> header_infos{header_info0, header_info1};
         const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
-        auto& w(Writer::get_instance(payloadsize0 + payloadsize1, output_directory));
+        auto& w(Writer::get_instance(payloadsize0 + payloadsize1, output_directory, header_infos, false));
         if (in0->is_bounds_query() || in1->is_bounds_query()) {
             if (in0->is_bounds_query()) {
                 in0->dim[0].min = 0;
