@@ -130,39 +130,9 @@ ION_REGISTER_EXTERN(ion_bb_image_io_saver);
 
 namespace {
 
-struct rawHeader {
-
-    // ---------- 0
-    int version_;
-    // ---------- 4
-    int width_;
-    int height_;
-    // ---------- 12
-    float r_gain0_;
-    float g_gain0_;
-    float b_gain0_;
-    // ---------- 24
-    float r_gain1_;
-    float g_gain1_;
-    float b_gain1_;
-    // ---------- 36
-    int offset0_x_;
-    int offset0_y_;
-    int offset1_x_;
-    int offset1_y_;
-    // ---------- 52
-    int outputsize0_x_;
-    int outputsize0_y_;
-    int outputsize1_x_;
-    int outputsize1_y_;
-    // ---------- 68
-    float fps_;
-    // ---------- 72
-};
-
 class Writer {
 public:
-    static Writer& get_instance(int width, int height, const ::std::string& output_directory, rawHeader header_info)
+    static Writer& get_instance(int width, int height, const ::std::string& output_directory, ion::bb::image_io::rawHeader header_info)
     {
         auto itr = instances.find(output_directory);
         if (itr == instances.end()) {
@@ -171,7 +141,7 @@ public:
         return *instances[output_directory];
     }
 
-    static Writer& get_instance(int total_payload_size, const ::std::string& output_directory, std::vector<rawHeader>& header_infos, bool config_file)
+    static Writer& get_instance(int total_payload_size, const ::std::string& output_directory, std::vector<ion::bb::image_io::rawHeader>& header_infos, bool config_file)
     {
         auto itr = instances.find(output_directory);
         if (itr == instances.end()) {
@@ -234,7 +204,7 @@ public:
 
 private:
     Writer(int width, int height, const ::std::string& output_directory,
-        rawHeader header_info)
+        ion::bb::image_io::rawHeader header_info)
         : keep_running_(true), width_(width), height_(height), output_directory_(output_directory),
         header_info_(header_info), with_header_(true), with_framecount_(true)
     {
@@ -254,7 +224,7 @@ private:
         }
     }
 
-    Writer(int total_payload_size, const ::std::string& output_directory, std::vector<rawHeader>& header_infos, bool config_file)
+    Writer(int total_payload_size, const ::std::string& output_directory, std::vector<ion::bb::image_io::rawHeader>& header_infos, bool config_file)
         : keep_running_(true), output_directory_(output_directory), with_header_(!config_file), with_framecount_(false)
     {
         int buffer_num = get_buffer_num(total_payload_size);
@@ -271,6 +241,7 @@ private:
             j_ith_sensor["framerate"] = header_infos[i].fps_;
             j_ith_sensor["width"] = header_infos[i].width_;
             j_ith_sensor["height"] = header_infos[i].height_;
+            j_ith_sensor["pfnc_picelformat"] = header_infos[i].pfnc_picelformat;
             j["sensor" + std::to_string(i+1)] = j_ith_sensor;
         }
 
@@ -408,7 +379,7 @@ private:
     uint32_t height_;
     ghc::filesystem::path output_directory_;
 
-    rawHeader header_info_;
+    ion::bb::image_io::rawHeader header_info_;
     bool with_header_;
     bool with_framecount_;
 };
@@ -427,10 +398,10 @@ int binarysaver(halide_buffer_t * in0, halide_buffer_t * in1, halide_buffer_t * 
     {
     try {
         const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
-        rawHeader header_info = {
-            0, width, height, r_gain0, g_gain0, b_gain0, r_gain1, g_gain1, b_gain1,
+        ion::bb::image_io::rawHeader header_info = {
+            1, width, height, r_gain0, g_gain0, b_gain0, r_gain1, g_gain1, b_gain1,
             offset0_x, offset0_y, offset1_x, offset1_y,
-            outputsize0_x, outputsize0_y, outputsize1_x, outputsize1_y, fps };
+            outputsize0_x, outputsize0_y, outputsize1_x, outputsize1_y, fps, PFNC_Mono12};
 
         auto& w(Writer::get_instance(width, height, output_directory, header_info));
         if (in0->is_bounds_query() || in1->is_bounds_query()) {
@@ -487,13 +458,13 @@ int ion_bb_image_io_binary_2gendc_saver(halide_buffer_t * in0, halide_buffer_t *
     try {
         int wi = 1920;
         int hi = 1080;
-        rawHeader header_info0 = {
+        ion::bb::image_io::rawHeader header_info0 = {
             1, wi, hi, 1, 1, 1, 1, 1, 1,
-            0, 0, 0, 0, wi, hi, wi, hi, 60 };
-        rawHeader header_info1 = {
+            0, 0, 0, 0, wi, hi, wi, hi, 60, PFNC_Mono12 };
+        ion::bb::image_io::rawHeader header_info1 = {
             1, wi, hi, 1, 1, 1, 1, 1, 1,
-            0, 0, 0, 0,  wi, hi, wi, hi, 60 };
-        std::vector<rawHeader> header_infos{header_info0, header_info1};
+            0, 0, 0, 0,  wi, hi, wi, hi, 60, PFNC_Mono12 };
+        std::vector<ion::bb::image_io::rawHeader> header_infos{header_info0, header_info1};
         const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
         auto& w(Writer::get_instance(payloadsize0 + payloadsize1, output_directory, header_infos, false));
         if (in0->is_bounds_query() || in1->is_bounds_query()) {
