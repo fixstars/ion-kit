@@ -701,6 +701,8 @@ public:
 
     GeneratorOutput<Halide::Func> output0{ "output0", Halide::type_of<uint8_t>(), 1};
     GeneratorOutput<Halide::Func> output1{ "output1", Halide::type_of<uint8_t>(), 1};
+    GeneratorOutput<Halide::Func> output2{ "output2", Halide::type_of<uint8_t>(), 1};
+    GeneratorOutput<Halide::Func> output3{ "output3", Halide::type_of<uint8_t>(), 1};
 
     void generate() {
         using namespace Halide;
@@ -727,10 +729,12 @@ public:
          };
 
         Func camera2("u3v_gendc_camera2");
-        camera2.define_extern("ion_bb_image_io_u3v_gendc_camera2", params, { Halide::type_of<uint8_t>(), Halide::type_of<uint8_t>()}, 1);
+        camera2.define_extern("ion_bb_image_io_u3v_gendc_camera2", params, { Halide::type_of<uint8_t>(), Halide::type_of<uint8_t>(), Halide::type_of<uint8_t>(), Halide::type_of<uint8_t>()}, 1);
         camera2.compute_root();
         output0(_) = camera2(_)[0];
         output1(_) = camera2(_)[1];
+        output2(_) = camera2(_)[2];
+        output3(_) = camera2(_)[3];
     }
 };
 
@@ -806,6 +810,9 @@ public:
     Input<Halide::Func> input0{ "input0", UInt(8), 1 };
     Input<Halide::Func> input1{ "input1", UInt(8), 1 };
 
+    Input<Halide::Func> input2{ "input2", UInt(8), 1 };
+    Input<Halide::Func> input3{ "input3", UInt(8), 1 };
+
     Input<bool> dispose{ "dispose" };
     Input<int32_t> payloadsize0{ "payloadsize0", 0 };
     Input<int32_t> payloadsize1{ "payloadsize1", 0 };
@@ -822,12 +829,20 @@ public:
         in1(_) = input1(_);
         in1.compute_root();
 
+        Func in2;
+        in2(_) = input2(_);
+        in2.compute_root();
+
+        Func in3;
+        in3(_) = input3(_);
+        in3.compute_root();
+
         const std::string output_directory(output_directory_ptr);
         Halide::Buffer<uint8_t> output_directory_buf(static_cast<int>(output_directory.size() + 1));
         output_directory_buf.fill(0);
         std::memcpy(output_directory_buf.data(), output_directory.c_str(), output_directory.size());
 
-        std::vector<ExternFuncArgument> params = { in0, in1, dispose, payloadsize0, payloadsize1, output_directory_buf };
+        std::vector<ExternFuncArgument> params = { in0, in1, in2, in3, dispose, payloadsize0, payloadsize1, output_directory_buf };
         Func image_io_binary_gendc_saver;
         image_io_binary_gendc_saver.define_extern("ion_bb_image_io_binary_2gendc_saver", params, Int(32), 0);
         image_io_binary_gendc_saver.compute_root();

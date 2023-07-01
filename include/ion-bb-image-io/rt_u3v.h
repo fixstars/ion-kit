@@ -146,6 +146,8 @@ class U3V {
         std::tuple<int32_t, int32_t> available_comp_part;
         int32_t framecount_offset_;
         bool is_data_image_;
+
+        rawHeader header_info_;
     } DeviceInfo;
 
     public:
@@ -390,6 +392,13 @@ class U3V {
         }
     }
 
+   
+    void get_header_info(std::vector<void *>& outs) {
+        for (int i = 0; i < num_sensor_; ++i){
+            ::memcpy(outs[i], &(devices_[i].header_info_), sizeof(ion::bb::image_io::rawHeader));
+        }
+    }
+
     private:
     U3V(std::string pixel_format, int32_t num_sensor, bool frame_sync, bool realtime_diaplay_mode, char* dev_id = nullptr)
     : gobject_(GOBJECT_FILE, true), aravis_(ARAVIS_FILE, true), 
@@ -509,6 +518,21 @@ class U3V {
                     printf("[LOG ion-kit] The device is not GenDC supported\n");
                     // throw std::runtime_error("The device is not GenDC supported");
                 }
+
+                int32_t wi = arv_device_get_integer_feature_value(devices_[i].device_, "Width", &err_);
+                int32_t hi = arv_device_get_integer_feature_value(devices_[i].device_, "Width", &err_);
+                double fps = arv_device_get_float_feature_value(devices_[i].device_, "AcquisitionFrameRate", &err_);
+
+                int32_t px =
+                    pixel_format_.c_str() == "Mono8" ? PFNC_Mono8 :
+                    pixel_format_.c_str() == "Mono10" ? PFNC_Mono10 : PFNC_Mono12;
+
+
+                devices_[i].header_info_ = { 1, wi, hi,
+                    1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+                    wi, hi, wi, hi, static_cast<float>(fps), px
+                };
+                printf("%f\n", devices_[i].header_info_.fps_);
             }
         } else {
             throw std::runtime_error("Multiple devices are found; please set the right Device ID");
@@ -889,7 +913,10 @@ int ION_EXPORT ion_bb_image_io_u3v_gendc_camera2(
     bool frame_sync, bool realtime_diaplay_mode, 
     double gain0, double gain1, double exposure0, double exposure1,
     halide_buffer_t* pixel_format_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
-    halide_buffer_t * out0, halide_buffer_t * out1)
+    halide_buffer_t * out0, halide_buffer_t * out1,
+    
+    halide_buffer_t * out2, halide_buffer_t * out3
+    )
 {
     using namespace Halide;
     try {
@@ -909,6 +936,9 @@ int ION_EXPORT ion_bb_image_io_u3v_gendc_camera2(
 
             std::vector<void *> obufs{out0->host, out1->host};
             u3v.get_with_gendc(obufs);
+            
+            std::vector<void *> test{out2->host, out3->host};
+            u3v.get_header_info(test);
             if(dispose){
                 u3v.dispose();
             }
