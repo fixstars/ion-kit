@@ -388,14 +388,8 @@ class U3V {
 
         for (int i = 0; i < num_sensor_; ++i){
             ::memcpy(outs[i], arv_buffer_get_data(bufs[i], nullptr), devices_[i].u3v_payload_size_);
+            ::memcpy(outs[i+num_sensor_], &(devices_[i].header_info_), sizeof(ion::bb::image_io::rawHeader));
             arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
-        }
-    }
-
-   
-    void get_header_info(std::vector<void *>& outs) {
-        for (int i = 0; i < num_sensor_; ++i){
-            ::memcpy(outs[i], &(devices_[i].header_info_), sizeof(ion::bb::image_io::rawHeader));
         }
     }
 
@@ -532,7 +526,6 @@ class U3V {
                     1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
                     wi, hi, wi, hi, static_cast<float>(fps), px
                 };
-                printf("%f\n", devices_[i].header_info_.fps_);
             }
         } else {
             throw std::runtime_error("Multiple devices are found; please set the right Device ID");
@@ -934,11 +927,9 @@ int ION_EXPORT ion_bb_image_io_u3v_gendc_camera2(
             u3v.SetExposure(0, exposure_key, exposure0);
             u3v.SetExposure(1, exposure_key, exposure1);
 
-            std::vector<void *> obufs{out0->host, out1->host};
+            std::vector<void *> obufs{out0->host, out1->host, out2->host, out3->host};
             u3v.get_with_gendc(obufs);
             
-            std::vector<void *> test{out2->host, out3->host};
-            u3v.get_header_info(test);
             if(dispose){
                 u3v.dispose();
             }
