@@ -400,7 +400,7 @@ class U3V {
         frame_sync_(frame_sync), realtime_diaplay_mode_(realtime_diaplay_mode), is_gendc_(false),
         devices_(num_sensor), buffers_(num_sensor), disposed_(false)
     {
-        printf("[LOG ion-kit] This is ion-kit with debug-log; feature/add-write-gendc-bin\n");
+        printf("[LOG ion-kit] This is ion-kit with debug-log; feature/add-write-gendc-bin 230630\n");
         init_symbols();
 
         arv_update_device_list();
@@ -514,7 +514,7 @@ class U3V {
                 }
 
                 int32_t wi = arv_device_get_integer_feature_value(devices_[i].device_, "Width", &err_);
-                int32_t hi = arv_device_get_integer_feature_value(devices_[i].device_, "Width", &err_);
+                int32_t hi = arv_device_get_integer_feature_value(devices_[i].device_, "Height", &err_);
                 double fps = arv_device_get_float_feature_value(devices_[i].device_, "AcquisitionFrameRate", &err_);
 
                 int32_t px =
