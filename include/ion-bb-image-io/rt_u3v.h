@@ -400,7 +400,7 @@ class U3V {
         frame_sync_(frame_sync), realtime_diaplay_mode_(realtime_diaplay_mode), is_gendc_(false),
         devices_(num_sensor), buffers_(num_sensor), disposed_(false)
     {
-        printf("[LOG ion-kit] This is ion-kit with debug-log; feature/add-write-gendc-bin 230630\n");
+        printf("[LOG ion-kit] This is ion-kit with debug-log; feature/add-write-gendc-bin 230708\n");
         init_symbols();
 
         arv_update_device_list();
@@ -408,128 +408,129 @@ class U3V {
         unsigned int n_devices = arv_get_n_devices ();
 
         if (n_devices < num_sensor_){
-            throw std::runtime_error("Device not found");
+            throw std::runtime_error("[LOG ion-kit] Device not found\n");
         }
         frame_sync_ = num_sensor_ > 1 ? frame_sync_ : false;
 
         unsigned int target_device_idx;
 
         if (n_devices == num_sensor_ || dev_id != nullptr) {
-            for (int i = 0; i < n_devices; ++i){
-                if (dev_id == arv_get_device_id (i) && dev_id != nullptr){
-                    /* if device id is specified
-                    TODO: dev_id may be more than 1
-                    */
-                    devices_[i].dev_id_ = dev_id;
-                }
-                else{
-                    /* if device id is not specified */
-                    devices_[i].dev_id_ = arv_get_device_id (i);
-                }
-
-                devices_[i].device_ = arv_open_device(devices_[i].dev_id_, &err_);
-
-                // TODO: checking the device status here
-
-                if (err_ ) {
-                    throw std::runtime_error(err_->message);
-                }
-                if (devices_[i].device_ == nullptr) {
-                    throw std::runtime_error("device is null");
-                }
-
-                arv_device_set_string_feature_value(devices_[i].device_, "PixelFormat", pixel_format_.c_str(), &err_);
-                if (err_ ) {
-                    throw std::runtime_error(err_->message);
-                }
-
-                devices_[i].u3v_payload_size_ = arv_device_get_integer_feature_value(devices_[i].device_, "PayloadSize", &err_);
-                if (err_ ) {
-                    throw std::runtime_error(err_->message);
-                }
-
-                // printf("[LOG ion-kit] for camera %d arv_device_create_stream is going to be called\n", i);
-                devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, nullptr, nullptr, &err_);
-                if (err_ ) {
-                    throw std::runtime_error(err_->message);
-                }
-                if (devices_[i].stream_ == nullptr) {
-                    throw std::runtime_error("stream is null");
-                }
-                
-                // check it the device is gendc mode
-                is_gendc_ = arv_device_is_feature_available(devices_[i].device_, "GenDCDescriptor", &err_);
-                if (err_) {
-                    throw std::runtime_error(err_->message);
-                }
-                is_gendc_ &= arv_device_is_feature_available(devices_[i].device_, "GenDCStreamingMode", &err_);
-                if (err_) {
-                    throw std::runtime_error(err_->message);
-                }
-                
-                if (is_gendc_){
-                    const char * streaming_mode;
-                    streaming_mode = arv_device_get_string_feature_value(devices_[i].device_, "GenDCStreamingMode", &err_);
-                    if (err_) {
-                        throw std::runtime_error(err_->message);
-                    }
-                    is_gendc_ &= (strcmp(streaming_mode, "On")==0);
-                }
-
-                if (is_gendc_){
-                    uint64_t gendc_desc_size = arv_device_get_register_feature_length(devices_[i].device_, "GenDCDescriptor", &err_);
-                    if (err_) {
-                        throw std::runtime_error(err_->message);
-                    }
-                    // printf("[LOG ion-kit] the size of descriptor is %llu\n", gendc_desc_size);
-
-                    char* buffer;
-                    buffer = (char*) malloc(gendc_desc_size);
-                    arv_device_get_register_feature_value(devices_[i].device_, "GenDCDescriptor", gendc_desc_size, (void*)buffer, &err_);
-                    if(isGenDC(buffer)){
-                        gendc_descriptor_= ContainerHeader(buffer);
-                        std::tuple<int32_t, int32_t> data_comp_and_part = gendc_descriptor_.getFirstAvailableDataOffset(true);
-                        if (std::get<0>(data_comp_and_part) == -1){
-                            devices_[i].is_data_image_ = false;
-                            data_comp_and_part = gendc_descriptor_.getFirstAvailableDataOffset(false);
-                            if (std::get<0>(data_comp_and_part) == -1){
-                                throw std::runtime_error("None of the data in GenDC is available\n");
-                            }
-                        }else{
-                            devices_[i].is_data_image_ = true;
-                        }
-                        devices_[i].data_offset_ = gendc_descriptor_.getDataOffset(std::get<0>(data_comp_and_part), std::get<1>(data_comp_and_part));
-                        devices_[i].image_payload_size_ = gendc_descriptor_.getDataSize(std::get<0>(data_comp_and_part), std::get<1>(data_comp_and_part));
-                        devices_[i].framecount_offset_ = gendc_descriptor_.getOffsetFromTypeSpecific(std::get<0>(data_comp_and_part), std::get<1>(data_comp_and_part), 3, 0);
-                    }
-                    free(buffer);
-                }else{
-                    devices_[i].data_offset_ = 0;
-                    devices_[i].image_payload_size_ = devices_[i].u3v_payload_size_;
-                    if (err_) {
-                        throw std::runtime_error(err_->message);
-                    }
-                    printf("[LOG ion-kit] The device is not GenDC supported\n");
-                    // throw std::runtime_error("The device is not GenDC supported");
-                }
-
-                int32_t wi = arv_device_get_integer_feature_value(devices_[i].device_, "Width", &err_);
-                int32_t hi = arv_device_get_integer_feature_value(devices_[i].device_, "Height", &err_);
-                double fps = arv_device_get_float_feature_value(devices_[i].device_, "AcquisitionFrameRate", &err_);
-
-                int32_t px =
-                    pixel_format_.c_str() == "Mono8" ? PFNC_Mono8 :
-                    pixel_format_.c_str() == "Mono10" ? PFNC_Mono10 : PFNC_Mono12;
-
-
-                devices_[i].header_info_ = { 1, wi, hi,
-                    1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
-                    wi, hi, wi, hi, static_cast<float>(fps), px
-                };
-            }
-        } else {
-            throw std::runtime_error("Multiple devices are found; please set the right Device ID");
+            printf("[LOG ion-kit] Multiple devices are found; The first device is selected\n");
         }
+
+        for (int i = 0; i < n_devices; ++i){
+            if (dev_id == arv_get_device_id (i) && dev_id != nullptr){
+                /* if device id is specified
+                TODO: dev_id may be more than 1
+                */
+                devices_[i].dev_id_ = dev_id;
+            }
+            else{
+                /* if device id is not specified */
+                devices_[i].dev_id_ = arv_get_device_id (i);
+            }
+
+            devices_[i].device_ = arv_open_device(devices_[i].dev_id_, &err_);
+
+            // TODO: checking the device status here
+
+            if (err_ ) {
+                throw std::runtime_error(err_->message);
+            }
+            if (devices_[i].device_ == nullptr) {
+                throw std::runtime_error("device is null");
+            }
+
+            arv_device_set_string_feature_value(devices_[i].device_, "PixelFormat", pixel_format_.c_str(), &err_);
+            if (err_ ) {
+                throw std::runtime_error(err_->message);
+            }
+
+            devices_[i].u3v_payload_size_ = arv_device_get_integer_feature_value(devices_[i].device_, "PayloadSize", &err_);
+            if (err_ ) {
+                throw std::runtime_error(err_->message);
+            }
+
+            // printf("[LOG ion-kit] for camera %d arv_device_create_stream is going to be called\n", i);
+            devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, nullptr, nullptr, &err_);
+            if (err_ ) {
+                throw std::runtime_error(err_->message);
+            }
+            if (devices_[i].stream_ == nullptr) {
+                throw std::runtime_error("stream is null");
+            }
+            
+            // check it the device is gendc mode
+            is_gendc_ = arv_device_is_feature_available(devices_[i].device_, "GenDCDescriptor", &err_);
+            if (err_) {
+                throw std::runtime_error(err_->message);
+            }
+            is_gendc_ &= arv_device_is_feature_available(devices_[i].device_, "GenDCStreamingMode", &err_);
+            if (err_) {
+                throw std::runtime_error(err_->message);
+            }
+            
+            if (is_gendc_){
+                const char * streaming_mode;
+                streaming_mode = arv_device_get_string_feature_value(devices_[i].device_, "GenDCStreamingMode", &err_);
+                if (err_) {
+                    throw std::runtime_error(err_->message);
+                }
+                is_gendc_ &= (strcmp(streaming_mode, "On")==0);
+            }
+
+            if (is_gendc_){
+                uint64_t gendc_desc_size = arv_device_get_register_feature_length(devices_[i].device_, "GenDCDescriptor", &err_);
+                if (err_) {
+                    throw std::runtime_error(err_->message);
+                }
+                // printf("[LOG ion-kit] the size of descriptor is %llu\n", gendc_desc_size);
+
+                char* buffer;
+                buffer = (char*) malloc(gendc_desc_size);
+                arv_device_get_register_feature_value(devices_[i].device_, "GenDCDescriptor", gendc_desc_size, (void*)buffer, &err_);
+                if(isGenDC(buffer)){
+                    gendc_descriptor_= ContainerHeader(buffer);
+                    std::tuple<int32_t, int32_t> data_comp_and_part = gendc_descriptor_.getFirstAvailableDataOffset(true);
+                    if (std::get<0>(data_comp_and_part) == -1){
+                        devices_[i].is_data_image_ = false;
+                        data_comp_and_part = gendc_descriptor_.getFirstAvailableDataOffset(false);
+                        if (std::get<0>(data_comp_and_part) == -1){
+                            throw std::runtime_error("None of the data in GenDC is available\n");
+                        }
+                    }else{
+                        devices_[i].is_data_image_ = true;
+                    }
+                    devices_[i].data_offset_ = gendc_descriptor_.getDataOffset(std::get<0>(data_comp_and_part), std::get<1>(data_comp_and_part));
+                    devices_[i].image_payload_size_ = gendc_descriptor_.getDataSize(std::get<0>(data_comp_and_part), std::get<1>(data_comp_and_part));
+                    devices_[i].framecount_offset_ = gendc_descriptor_.getOffsetFromTypeSpecific(std::get<0>(data_comp_and_part), std::get<1>(data_comp_and_part), 3, 0);
+                }
+                free(buffer);
+            }else{
+                devices_[i].data_offset_ = 0;
+                devices_[i].image_payload_size_ = devices_[i].u3v_payload_size_;
+                if (err_) {
+                    throw std::runtime_error(err_->message);
+                }
+                printf("[LOG ion-kit] The device is not GenDC supported\n");
+                // throw std::runtime_error("The device is not GenDC supported");
+            }
+
+            int32_t wi = arv_device_get_integer_feature_value(devices_[i].device_, "Width", &err_);
+            int32_t hi = arv_device_get_integer_feature_value(devices_[i].device_, "Height", &err_);
+            double fps = arv_device_get_float_feature_value(devices_[i].device_, "AcquisitionFrameRate", &err_);
+
+            int32_t px =
+                pixel_format_.c_str() == "Mono8" ? PFNC_Mono8 :
+                pixel_format_.c_str() == "Mono10" ? PFNC_Mono10 : PFNC_Mono12;
+
+
+            devices_[i].header_info_ = { 1, wi, hi,
+                1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+                wi, hi, wi, hi, static_cast<float>(fps), px
+            };
+        }
+        
 
         for (auto i=0; i<devices_.size(); ++i) {
             const size_t buffer_size = 1 * 1024 * 1024 * 1024; // 1GiB for each
