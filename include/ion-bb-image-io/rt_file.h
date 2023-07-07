@@ -529,6 +529,54 @@ int ion_bb_image_io_binary_2gendc_saver(halide_buffer_t * in0, halide_buffer_t *
 
 ION_REGISTER_EXTERN(ion_bb_image_io_binary_2gendc_saver);
 
+extern "C" ION_EXPORT
+int ion_bb_image_io_binary_1gendc_saver(halide_buffer_t * in0, halide_buffer_t * in1,
+    bool dispose, int payloadsize0, halide_buffer_t*  output_directory_buf,
+    halide_buffer_t * out)
+    {
+    try {
+        const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
+        auto& w(Writer::get_instance(payloadsize0, output_directory, false));
+        if (in0->is_bounds_query() || in1->is_bounds_query()) {
+            if (in0->is_bounds_query()) {
+                in0->dim[0].min = 0;
+                in0->dim[0].extent = payloadsize0;
+            }
+            if (in1->is_bounds_query()) {
+                in1->dim[0].min = 0;
+                in1->dim[0].extent = 76;
+            }
+        }
+        else {
+            ion::bb::image_io::rawHeader header_info0;
+            ::memcpy(&header_info0, in1->host, sizeof(ion::bb::image_io::rawHeader));
+            std::vector<ion::bb::image_io::rawHeader> header_infos{header_info0};
+
+            std::vector<void *> obufs{in0->host};
+            std::vector<size_t> size_in_bytes{in0->size_in_bytes()};
+            w.post_gendc(obufs, size_in_bytes, header_infos);
+
+            if (dispose) {
+                w.dispose();
+                w.release_instance(output_directory);
+                return 0;
+            }
+        }
+
+        return 0;
+    }
+    catch (const ::std::exception& e) {
+        ::std::cerr << e.what() << ::std::endl;
+        return -1;
+    }
+    catch (...) {
+        ::std::cerr << "Unknown error" << ::std::endl;
+        return -1;
+    }
+}
+
+ION_REGISTER_EXTERN(ion_bb_image_io_binary_1gendc_saver);
+
 namespace {
 
     class Reader {

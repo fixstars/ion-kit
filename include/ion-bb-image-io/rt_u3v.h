@@ -414,7 +414,7 @@ class U3V {
 
         unsigned int target_device_idx;
 
-        if (n_devices == num_sensor_ || dev_id != nullptr) {
+        if (n_devices != num_sensor_ && dev_id == nullptr) {
             printf("[LOG ion-kit] Multiple devices are found; The first device is selected\n");
         }
 
@@ -521,8 +521,12 @@ class U3V {
             double fps = arv_device_get_float_feature_value(devices_[i].device_, "AcquisitionFrameRate", &err_);
 
             int32_t px =
-                pixel_format_.c_str() == "Mono8" ? PFNC_Mono8 :
-                pixel_format_.c_str() == "Mono10" ? PFNC_Mono10 : PFNC_Mono12;
+                pixel_format_ == "Mono8" ? PFNC_Mono8 :
+                pixel_format_ == "Mono10" ? PFNC_Mono10 : 
+                pixel_format_ == "Mono12" ? PFNC_Mono12 : 0;
+            if (px == 0){
+                printf("[LOG ion-kit] The pixel format is not supported for header info\n");
+            }
 
 
             devices_[i].header_info_ = { 1, wi, hi,
@@ -902,6 +906,48 @@ int ION_EXPORT ion_bb_image_io_u3v_camera2_frame_count(
 ION_REGISTER_EXTERN(ion_bb_image_io_u3v_camera2_frame_count);
 
 extern "C"
+int ION_EXPORT ion_bb_image_io_u3v_gendc_camera1(
+    bool dispose, 
+    bool frame_sync, bool realtime_diaplay_mode, 
+    double gain0, double exposure0,
+    halide_buffer_t* pixel_format_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
+    halide_buffer_t * out0, halide_buffer_t * out1
+    )
+{
+    using namespace Halide;
+    try {
+        const ::std::string gain_key(reinterpret_cast<const char*>(gain_key_buf->host));
+        const ::std::string exposure_key(reinterpret_cast<const char*>(exposure_key_buf->host));
+        const ::std::string pixel_format(reinterpret_cast<const char*>(pixel_format_buf->host));
+        auto &u3v(ion::bb::image_io::U3V::get_instance(pixel_format, 1, false, realtime_diaplay_mode));
+        if (out0->is_bounds_query()) {
+            //bounds query
+            return 0;
+        }else{
+            // set gain & exposure
+            u3v.SetGain(0, gain_key, gain0);
+            u3v.SetExposure(0, exposure_key, exposure0);
+
+            std::vector<void *> obufs{out0->host, out1->host};
+            u3v.get_with_gendc(obufs);
+            
+            if(dispose){
+                u3v.dispose();
+            }
+        }
+
+        return 0;
+    } catch (const std::exception &e) {
+        std::cerr << e.what() << std::endl;
+        return -1;
+    } catch (...) {
+        std::cerr << "Unknown error" << std::endl;
+        return -1;
+    }
+}
+ION_REGISTER_EXTERN(ion_bb_image_io_u3v_gendc_camera1);
+
+extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_gendc_camera2(
     bool dispose, 
     bool frame_sync, bool realtime_diaplay_mode, 
@@ -946,8 +992,6 @@ int ION_EXPORT ion_bb_image_io_u3v_gendc_camera2(
     }
 }
 ION_REGISTER_EXTERN(ion_bb_image_io_u3v_gendc_camera2);
-
-
 
 
 
