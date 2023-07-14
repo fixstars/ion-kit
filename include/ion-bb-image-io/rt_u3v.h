@@ -518,7 +518,10 @@ class U3V {
 
             int32_t wi = arv_device_get_integer_feature_value(devices_[i].device_, "Width", &err_);
             int32_t hi = arv_device_get_integer_feature_value(devices_[i].device_, "Height", &err_);
-            double fps = arv_device_get_float_feature_value(devices_[i].device_, "AcquisitionFrameRate", &err_);
+            double fps = 0.0;
+            if (arv_device_is_feature_available(devices_[i].device_, "AcquisitionFrameRate", &err_)){
+                fps = arv_device_get_float_feature_value(devices_[i].device_, "AcquisitionFrameRate", &err_);
+            }
 
             int32_t px =
                 pixel_format_ == "Mono8" ? PFNC_Mono8 :
