@@ -617,7 +617,7 @@ using U3VCamera1_float_U16x2 = U3VCamera1<uint16_t, double, 2>;
 template<typename T, typename T1, int D>
 class U3VCamera2 : public ion::BuildingBlock<U3VCamera2<T, T1, D>> {
 public:
-
+    GeneratorParam<int32_t> levels{"levels", 2};
     GeneratorParam<bool> frame_sync{"frame_sync", false};
     GeneratorParam<std::string> pixel_format_ptr{"pixel_format_ptr", "RGB8"};
     GeneratorParam<std::string> gain_key_ptr{"gain_key", "Gain"};
@@ -630,8 +630,7 @@ public:
     GeneratorInput<T1> exposure0{ "exposure0" };
     GeneratorInput<T1> exposure1{ "exposure1" };
 
-    GeneratorOutput<Halide::Func> output0{ "output0", Halide::type_of<T>(), D};
-    GeneratorOutput<Halide::Func> output1{ "output1", Halide::type_of<T>(), D};
+    GeneratorOutput<Halide::Func[]> output{ "output", Halide::type_of<T>(), D};
     GeneratorOutput<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
 
     void generate() {
@@ -659,11 +658,17 @@ public:
          };
 
         Func camera2("u3v_camera2");
-        camera2.define_extern("ion_bb_image_io_u3v_camera2", params, { Halide::type_of<T>(), Halide::type_of<T>() }, D);
+        output.resize(levels);
+        std::vector<Halide::Type> output_type;
+        for (int i = 0; i < output.size(); i++) {
+            output_type.push_back(Halide::type_of<T>());
+        }
+        camera2.define_extern("ion_bb_image_io_u3v_camera2", params, output_type, D);
         camera2.compute_root();
-        output0(_) = camera2(_)[0];
-        output1(_) = camera2(_)[1];
-
+        for (int i = 0; i < output.size(); i++) {
+            output[i](_) = camera2(_)[i];
+        }
+        
         Buffer<uint8_t> pixel_format_buf_cpy(static_cast<int>(pixel_format.size() + 1));
         pixel_format_buf_cpy.fill(0);
         std::memcpy(pixel_format_buf_cpy.data(), pixel_format.c_str(), pixel_format.size());
