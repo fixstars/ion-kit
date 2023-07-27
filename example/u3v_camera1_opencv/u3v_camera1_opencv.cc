@@ -10,15 +10,15 @@ using namespace ion;
 
 #define FEATURE_GAIN_KEY "Gain"
 #define FEATURE_EXPOSURE_KEY "ExposureTime"
-#define NUM_BIT_SHIFT 0
+#define NUM_BIT_SHIFT 4
 
 // In this tutorial, we will create a simple application that obtains image data from a pair of usb3 vision sensors,
 // and adds smoothing processing using OpenCV, and displays the data on the screen.
 
 // Define parameters
 //  Resize it according to the resolution of the sensor.
-const int32_t width = 1920;
-const int32_t height = 1080;
+const int32_t width = 640;
+const int32_t height = 480;
 int32_t gain = 400;
 int32_t exposure = 400;
 
@@ -60,10 +60,10 @@ int main(int argc, char *argv[])
   Port exposure1_p{ "exposure1", Halide::type_of<int32_t>() };
 
   //  Connect the input port to the Node instance created by b.add().
-  Node n = b.add("image_io_u3v_camera2_u16x2")(dispose_p, gain0_p, gain1_p, exposure0_p, exposure1_p)
+  Node n = b.add("image_io_u3v_camera1_u16x2")(dispose_p, gain0_p, exposure0_p)
     .set_param(
       Param{"pixel_format_ptr", "Mono12"},
-      Param{"frame_sync", "true"},
+      Param{"frame_sync", "false"},
       Param{"gain_key", FEATURE_GAIN_KEY},
       Param{"exposure_key", FEATURE_EXPOSURE_KEY},
       Param{"realtime_diaplay_mode", "true"}
@@ -71,7 +71,6 @@ int main(int argc, char *argv[])
 
   // Define output ports and pass each object from Node instance.
   Port rp = n["output0"];
-  Port lp = n["output1"];
   Port frame_count_p = n["frame_count"];
 
   // Using PortMap, define output ports that map data to input ports and pass each object from a Node instance.
@@ -79,22 +78,18 @@ int main(int argc, char *argv[])
 
   // In this sample, the gain value and exposure time of both sensors are set statically.
   pm.set(gain0_p, gain);
-  pm.set(gain1_p, gain);
   pm.set(exposure0_p, exposure);
-  pm.set(exposure1_p, exposure);
 
   // Map data from output ports by using PortMap.
-  // Of the output of "u3v_camera2_u16x2",
-  // - rp and lp (output of the obtained video data) to output0 and 1 respectively,
+  // Of the output of "u3v_camera1_u16x2",
+  // - rp (output of the obtained video data) to output0,
   // - frame_count_p (output of the frame number of the obtained video) to frame_count,
   // each stored in the buffer.
   std::vector< int > buf_size = std::vector < int >{ width, height };
   Halide::Buffer<uint16_t> output0(buf_size);
-  Halide::Buffer<uint16_t> output1(buf_size);
   Halide::Buffer<uint32_t> frame_count(1);
 
   pm.set(rp, output0);
-  pm.set(lp, output1);
   pm.set(frame_count_p, frame_count);
 
   // Obtain image data continuously for 100 frames to facilitate operation check.
@@ -113,32 +108,19 @@ int main(int argc, char *argv[])
     }
 
     // Convert the retrieved buffer object to OpenCV buffer format.
-    //  C and D are objects that store the result after smoothing.
     cv::Mat A(height, width, CV_16UC1);
-    cv::Mat B(height, width, CV_16UC1);
-    cv::Mat C(height, width, CV_16UC1);
-    cv::Mat D(height, width, CV_16UC1);
 
     std::memcpy(A.ptr(), output0.data(), output0.size_in_bytes());
-    std::memcpy(B.ptr(), output1.data(), output1.size_in_bytes());
 
     // Depends on sensor image pixel format, apply bit shift on images
     A = A * positive_pow(2, NUM_BIT_SHIFT);
-    B = B * positive_pow(2, NUM_BIT_SHIFT);
-
-    // Perform smoothing
-    cv::medianBlur(A, C, 5);
-    cv::medianBlur(B, D, 5);
 
     // Display the image
     cv::imshow("A", A);
-    cv::imshow("B", B);
-    cv::imshow("C", C);
-    cv::imshow("D", D);
 
     // Wait for key input
     //   When any key is pressed, close the currently displayed image and proceed to the next frame.
-    cv::waitKey(0);
+    cv::waitKey(1);
   }
 
   return 0;
