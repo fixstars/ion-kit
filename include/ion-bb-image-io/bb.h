@@ -625,16 +625,26 @@ public:
     GeneratorParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
 
     GeneratorInput<bool> dispose{ "dispose" };
-    GeneratorInput<T1> gain0{ "gain0" };
-    GeneratorInput<T1> gain1{ "gain1" };
-    GeneratorInput<T1> exposure0{ "exposure0" };
-    GeneratorInput<T1> exposure1{ "exposure1" };
+    GeneratorInput<Halide::Func> gain{ "gain", Halide::type_of<T1>(), 1};
+    GeneratorInput<Halide::Func> exposure{ "exposure", Halide::type_of<T1>(), 1};
+    // GeneratorInput<T1> gain0{ "gain0" };
+    // GeneratorInput<T1> gain1{ "gain1" };
+    // GeneratorInput<T1> exposure0{ "exposure0" };
+    // GeneratorInput<T1> exposure1{ "exposure1" };
 
     GeneratorOutput<Halide::Func[]> output{ "output", Halide::type_of<T>(), D};
     GeneratorOutput<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
 
     void generate() {
         using namespace Halide;
+
+        Func gain_func;
+        gain_func(_) = gain(_);
+        gain_func.compute_root();
+
+        Func exposure_func;
+        exposure_func(_) = exposure(_);
+        exposure_func.compute_root();
 
         const std::string pixel_format(pixel_format_ptr);
         Buffer<uint8_t> pixel_format_buf(static_cast<int>(pixel_format.size() + 1));
@@ -653,7 +663,7 @@ public:
 
         std::vector<ExternFuncArgument> params{
             static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
-            gain0, gain1, exposure0, exposure1, pixel_format_buf,
+            gain_func, exposure_func, pixel_format_buf,
             gain_key_buf, exposure_key_buf
          };
 
