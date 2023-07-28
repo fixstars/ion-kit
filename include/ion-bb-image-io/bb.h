@@ -735,22 +735,31 @@ public:
 
         Func cameraN("u3v_cameraN");
         output.resize(levels);
-        std::vector<Halide::Type> output_type;
-        for (int i = 0; i < output.size(); i++) {
-            output_type.push_back(Halide::type_of<T>());
-        }
-        cameraN.define_extern("ion_bb_image_io_u3v_multiple_camera" + std::to_string(output.size()), params, output_type, D);
-        cameraN.compute_root();
-        for (int i = 0; i < output.size(); i++) {
-            output[i](_) = cameraN(_)[i];
-        }
+        if (output.size() == 1){
+            cameraN.define_extern("ion_bb_image_io_u3v_multiple_camera" + std::to_string(output.size()), params, Halide::type_of<T>(), D);
+        }else{
+            std::vector<Halide::Type> output_type;
+            for (int i = 0; i < output.size(); i++) {
+                output_type.push_back(Halide::type_of<T>());
+            }
+            cameraN.define_extern("ion_bb_image_io_u3v_multiple_camera" + std::to_string(output.size()), params, output_type, D);
         
+        }
+        cameraN.compute_root();
+        if (output.size() == 1){
+            output[0](_) = cameraN(_);
+        }else{
+            for (int i = 0; i < output.size(); i++) {
+                output[i](_) = cameraN(_)[i];
+            }
+        }
+ 
         Buffer<uint8_t> pixel_format_buf_cpy(static_cast<int>(pixel_format.size() + 1));
         pixel_format_buf_cpy.fill(0);
         std::memcpy(pixel_format_buf_cpy.data(), pixel_format.c_str(), pixel_format.size());
 
         Func cameraN_frame_count("cameraN_frame_count");
-        cameraN_frame_count.define_extern("ion_bb_image_io_u3v_camera" + std::to_string(output.size()) +  "_frame_count", { cameraN, dispose, 2, static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode), pixel_format_buf_cpy}, type_of<uint32_t>(), 1);
+        cameraN_frame_count.define_extern("ion_bb_image_io_u3v_camera" + std::to_string(output.size()) +  "_frame_count", { cameraN, dispose, static_cast<int32_t>(levels), static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode), pixel_format_buf_cpy}, type_of<uint32_t>(), 1);
         cameraN_frame_count.compute_root();
         frame_count(_) = cameraN_frame_count(_);
     }
