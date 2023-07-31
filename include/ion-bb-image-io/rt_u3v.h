@@ -169,14 +169,22 @@ class U3V {
     void dispose(){
         for (auto i=0; i<devices_.size(); ++i) {
             auto d = devices_[i];
-            arv_device_execute_command(d.device_, "AcquisitionStop", &err_);
+            try{
+                arv_device_execute_command(d.device_, "AcquisitionStop", &err_);
+            }catch(std::exception& e){
+            std::cout << e.what() << std::endl;
+           }
             /*
             Note:
             unref stream also unref the buffers pushed to stream
             all buffers are in stream so do not undef buffres separately
             */
+           try{
             g_object_unref(reinterpret_cast<gpointer>(d.stream_));
             g_object_unref(reinterpret_cast<gpointer>(d.device_));
+           }catch(std::exception& e){
+            std::cout << e.what() << std::endl;
+           }
         }
 
         devices_.clear();
@@ -1008,6 +1016,7 @@ ION_REGISTER_EXTERN(ion_bb_image_io_u3v_gendc_camera2);
 
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_multiple_camera1(
+    bool dispose,
     bool frame_sync, bool realtime_diaplay_mode, halide_buffer_t * gain, halide_buffer_t * exposure,
     halide_buffer_t* pixel_format_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
     halide_buffer_t * out0)
@@ -1034,6 +1043,9 @@ int ION_EXPORT ion_bb_image_io_u3v_multiple_camera1(
 
             std::vector<void *> obufs{out0->host};
             u3v.get(obufs);
+            if(dispose){
+                u3v.dispose();
+            }
         }
 
         return 0;
@@ -1049,6 +1061,7 @@ ION_REGISTER_EXTERN(ion_bb_image_io_u3v_multiple_camera1);
 
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_multiple_camera2(
+    bool dispose,
     bool frame_sync, bool realtime_diaplay_mode, halide_buffer_t * gain, halide_buffer_t * exposure,
     halide_buffer_t* pixel_format_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
     halide_buffer_t * out0, halide_buffer_t * out1)
@@ -1075,6 +1088,9 @@ int ION_EXPORT ion_bb_image_io_u3v_multiple_camera2(
 
             std::vector<void *> obufs{out0->host, out1->host};
             u3v.get(obufs);
+            if(dispose){
+                u3v.dispose();
+            }
         }
 
         return 0;

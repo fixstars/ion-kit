@@ -694,12 +694,11 @@ public:
     GeneratorParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
     GeneratorParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
 
-    GeneratorInput<bool> dispose{ "dispose" };
+    GeneratorInput<bool> dispose{ "dispose", false };
     GeneratorInput<Halide::Func> gain{ "gain", Halide::type_of<double>(), 1};
     GeneratorInput<Halide::Func> exposure{ "exposure", Halide::type_of<double>(), 1};
 
     GeneratorOutput<Halide::Func[]> output{ "output", Halide::type_of<T>(), D};
-    GeneratorOutput<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
 
     void generate() {
         using namespace Halide;
@@ -728,7 +727,7 @@ public:
         std::memcpy(exposure_key_buf.data(), exposure_key.c_str(), exposure_key.size());
 
         std::vector<ExternFuncArgument> params{
-            static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
+            dispose, static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
             gain_func, exposure_func, pixel_format_buf,
             gain_key_buf, exposure_key_buf
          };
@@ -753,15 +752,6 @@ public:
                 output[i](_) = cameraN(_)[i];
             }
         }
- 
-        Buffer<uint8_t> pixel_format_buf_cpy(static_cast<int>(pixel_format.size() + 1));
-        pixel_format_buf_cpy.fill(0);
-        std::memcpy(pixel_format_buf_cpy.data(), pixel_format.c_str(), pixel_format.size());
-
-        Func cameraN_frame_count("cameraN_frame_count");
-        cameraN_frame_count.define_extern("ion_bb_image_io_u3v_camera" + std::to_string(output.size()) +  "_frame_count", { cameraN, dispose, static_cast<int32_t>(levels), static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode), pixel_format_buf_cpy}, type_of<uint32_t>(), 1);
-        cameraN_frame_count.compute_root();
-        frame_count(_) = cameraN_frame_count(_);
     }
 };
 
