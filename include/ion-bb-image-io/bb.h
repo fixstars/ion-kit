@@ -907,7 +907,7 @@ public:
     Input<Halide::Func[]> input_deviceinfo{ "input_deviceinfo", Halide::type_of<uint8_t>(), 1 };
 
     Input<bool> dispose{ "dispose" };
-    Input<int32_t> payloadsize0{ "payloadsize0" };
+    Input<int32_t> payloadsize{ "payloadsize" };
 
     Output<int> output{ "output" };
 
@@ -933,7 +933,7 @@ public:
         std::memcpy(output_directory_buf.data(), output_directory.c_str(), output_directory.size());
 
         if (num_device==1){
-            std::vector<ExternFuncArgument> params = { gendc, deviceinfo, dispose, payloadsize0, output_directory_buf };
+            std::vector<ExternFuncArgument> params = { gendc, deviceinfo, dispose, payloadsize, output_directory_buf };
             Func image_io_binary_gendc_saver;
             image_io_binary_gendc_saver.define_extern("ion_bb_image_io_binary_1gendc_saver", params, Int(32), 0);
             image_io_binary_gendc_saver.compute_root();

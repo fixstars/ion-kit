@@ -531,16 +531,16 @@ ION_REGISTER_EXTERN(ion_bb_image_io_binary_2gendc_saver);
 
 extern "C" ION_EXPORT
 int ion_bb_image_io_binary_1gendc_saver(halide_buffer_t * in0, halide_buffer_t * in1,
-    bool dispose, int payloadsize0, halide_buffer_t*  output_directory_buf,
+    bool dispose, int payloadsize, halide_buffer_t*  output_directory_buf,
     halide_buffer_t * out)
     {
     try {
         const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
-        auto& w(Writer::get_instance(payloadsize0, output_directory, false));
+        auto& w(Writer::get_instance(payloadsize, output_directory, false));
         if (in0->is_bounds_query() || in1->is_bounds_query()) {
             if (in0->is_bounds_query()) {
                 in0->dim[0].min = 0;
-                in0->dim[0].extent = payloadsize0;
+                in0->dim[0].extent = payloadsize;
             }
             if (in1->is_bounds_query()) {
                 in1->dim[0].min = 0;
