@@ -913,18 +913,6 @@ public:
 
     void generate() {
         using namespace Halide;
-        Func gendc;
-        // input_gendc.resize(levels);
-        gendc(_) = input_gendc(_);
-
-        gendc.compute_root();
-
-        Func deviceinfo;
-        // input_deviceinfo.resize(levels);
-        deviceinfo(_) = input_deviceinfo(_);
-        deviceinfo.compute_root();
-        
-
         int32_t num_device = static_cast<int32_t>(levels);
 
         const std::string output_directory(output_directory_ptr);
@@ -933,13 +921,40 @@ public:
         std::memcpy(output_directory_buf.data(), output_directory.c_str(), output_directory.size());
 
         if (num_device==1){
+            Func gendc;
+            gendc(_) = input_gendc(_);
+            gendc.compute_root();
+
+            Func deviceinfo;
+            deviceinfo(_) = input_deviceinfo(_);
+            deviceinfo.compute_root();
+
             std::vector<ExternFuncArgument> params = { gendc, deviceinfo, dispose, payloadsize, output_directory_buf };
             Func image_io_binary_gendc_saver;
             image_io_binary_gendc_saver.define_extern("ion_bb_image_io_binary_1gendc_saver", params, Int(32), 0);
             image_io_binary_gendc_saver.compute_root();
             output() = image_io_binary_gendc_saver();
+        }else if (num_device ==2){
+            Func gendc0, gendc1;
+            Var x, y;
+            gendc0(_) = input_gendc[0](_);
+            gendc1(_) = input_gendc[1](_);
+            gendc0.compute_root();
+            gendc1.compute_root();
+
+            Func deviceinfo0, deviceinfo1;
+            deviceinfo0(_) = input_deviceinfo[0](_);
+            deviceinfo1(_) = input_deviceinfo[1](_);
+            deviceinfo0.compute_root();
+            deviceinfo1.compute_root();
+            
+            std::vector<ExternFuncArgument> params = { gendc0, gendc1, deviceinfo0, deviceinfo1, dispose, payloadsize, output_directory_buf };
+            Func image_io_binary_gendc_saver;
+            image_io_binary_gendc_saver.define_extern("ion_bb_image_io_binary_2gendc_saver", params, Int(32), 0);
+            image_io_binary_gendc_saver.compute_root();
+            output() = image_io_binary_gendc_saver();
         }else{
-            throw std::runtime_error("Unsupported");
+            std::runtime_error("device number > 2 is not supported");
         }
 
 

@@ -474,20 +474,21 @@ ION_REGISTER_EXTERN(binarysaver);
 
 extern "C" ION_EXPORT
 int ion_bb_image_io_binary_2gendc_saver(halide_buffer_t * in0, halide_buffer_t * in1, halide_buffer_t * in2, halide_buffer_t * in3,
-    bool dispose, int payloadsize0, int payloadsize1, halide_buffer_t*  output_directory_buf,
+    bool dispose, int payloadsize, halide_buffer_t*  output_directory_buf,
     halide_buffer_t * out)
     {
     try {
         const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
-        auto& w(Writer::get_instance(payloadsize0 + payloadsize1, output_directory, false));
+        auto& w(Writer::get_instance(payloadsize + payloadsize, output_directory, false));
         if (in0->is_bounds_query() || in1->is_bounds_query() || in2->is_bounds_query() || in3->is_bounds_query()) {
+            int i = 1;
             if (in0->is_bounds_query()) {
                 in0->dim[0].min = 0;
-                in0->dim[0].extent = payloadsize0;
+                in0->dim[0].extent = payloadsize;
             }
             if (in1->is_bounds_query()) {
                 in1->dim[0].min = 0;
-                in1->dim[0].extent = payloadsize1;
+                in1->dim[0].extent = payloadsize;
             }
             if (in2->is_bounds_query()) {
                 in2->dim[0].min = 0;
@@ -497,6 +498,7 @@ int ion_bb_image_io_binary_2gendc_saver(halide_buffer_t * in0, halide_buffer_t *
                 in3->dim[0].min = 0;
                 in3->dim[0].extent = 76;
             }
+            return 0;
         }
         else {
             ion::bb::image_io::rawHeader header_info0, header_info1;
