@@ -414,8 +414,8 @@ class U3V {
         }
 
         for (int i = 0; i < num_sensor_; ++i){
-            ::memcpy(outs[i], arv_buffer_get_data(bufs[i], nullptr), devices_[i].u3v_payload_size_);
-            ::memcpy(outs[i+num_sensor_], &(devices_[i].header_info_), sizeof(ion::bb::image_io::rawHeader));
+            ::memcpy(outs[i*num_sensor_], arv_buffer_get_data(bufs[i], nullptr), devices_[i].u3v_payload_size_);
+            ::memcpy(outs[i*num_sensor_+1], &(devices_[i].header_info_), sizeof(ion::bb::image_io::rawHeader));
             arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
         }
     }
@@ -976,8 +976,8 @@ int ION_EXPORT ion_bb_image_io_u3v_gendc_camera2(
     bool frame_sync, bool realtime_diaplay_mode, 
     halide_buffer_t* gain, halide_buffer_t* exposure,
     halide_buffer_t* pixel_format_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
-    halide_buffer_t * out0, halide_buffer_t * out1,
-    halide_buffer_t * out2, halide_buffer_t * out3
+    halide_buffer_t * gendc0, halide_buffer_t * gendc1,
+    halide_buffer_t * deviceinfo0, halide_buffer_t * deviceinfo1
     )
 {
     using namespace Halide;
@@ -987,7 +987,7 @@ int ION_EXPORT ion_bb_image_io_u3v_gendc_camera2(
         const ::std::string exposure_key(reinterpret_cast<const char*>(exposure_key_buf->host));
         const ::std::string pixel_format(reinterpret_cast<const char*>(pixel_format_buf->host));
         auto &u3v(ion::bb::image_io::U3V::get_instance(pixel_format, 2, frame_sync, realtime_diaplay_mode));
-        if (out0->is_bounds_query() || out1->is_bounds_query() || gain->is_bounds_query() || exposure->is_bounds_query()) {
+        if (gendc0->is_bounds_query() || gendc1->is_bounds_query() || gain->is_bounds_query() || exposure->is_bounds_query()) {
             gain->dim[0].min = 0;
             gain->dim[0].extent = num_output;
             exposure->dim[0].min = 0;
@@ -1000,7 +1000,7 @@ int ION_EXPORT ion_bb_image_io_u3v_gendc_camera2(
                 u3v.SetExposure(i, exposure_key, (reinterpret_cast<double*>(exposure->host))[i]);
             }
 
-            std::vector<void *> obufs{out0->host, out1->host, out2->host, out3->host};
+            std::vector<void *> obufs{gendc0->host, gendc1->host,deviceinfo0->host, deviceinfo1->host};
             u3v.get_with_gendc(obufs);
             
             if(dispose){
