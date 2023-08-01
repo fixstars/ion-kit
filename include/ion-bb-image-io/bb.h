@@ -549,8 +549,8 @@ public:
     }
 };
 
-template<typename T, typename T1, int D>
-class U3VCamera1 : public ion::BuildingBlock<U3VCamera1<T, T1, D>> {
+template<typename T, int D>
+class U3VCamera1 : public ion::BuildingBlock<U3VCamera1<T, D>> {
 public:
 
     GeneratorParam<bool> frame_sync{"frame_sync", false};
@@ -560,8 +560,8 @@ public:
     GeneratorParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
     
     GeneratorInput<bool> dispose{ "dispose" };
-    GeneratorInput<T1> gain0{ "gain0" };
-    GeneratorInput<T1> exposure0{ "exposure0" };
+    GeneratorInput<int32_t> gain0{ "gain0" };
+    GeneratorInput<int32_t> exposure0{ "exposure0" };
 
     GeneratorOutput<Halide::Func> output0{ "output0", Halide::type_of<T>(), D};
     GeneratorOutput<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
@@ -606,16 +606,12 @@ public:
     }
 };
 
-using U3VCamera1_U8x3 = U3VCamera1<uint8_t, int32_t, 3>;
-using U3VCamera1_U8x2 = U3VCamera1<uint8_t, int32_t, 2>;
-using U3VCamera1_U16x2 = U3VCamera1<uint16_t, int32_t, 2>;
+using U3VCamera1_U8x3 = U3VCamera1<uint8_t, 3>;
+using U3VCamera1_U8x2 = U3VCamera1<uint8_t, 2>;
+using U3VCamera1_U16x2 = U3VCamera1<uint16_t, 2>;
 
-using U3VCamera1_float_U8x3 = U3VCamera1<uint8_t, double, 3>;
-using U3VCamera1_float_U8x2 = U3VCamera1<uint8_t, double, 2>;
-using U3VCamera1_float_U16x2 = U3VCamera1<uint16_t, double, 2>;
-
-template<typename T, typename T1, int D>
-class U3VCamera2 : public ion::BuildingBlock<U3VCamera2<T, T1, D>> {
+template<typename T, int D>
+class U3VCamera2 : public ion::BuildingBlock<U3VCamera2<T, D>> {
 public:
 
     GeneratorParam<bool> frame_sync{"frame_sync", false};
@@ -625,10 +621,10 @@ public:
     GeneratorParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
 
     GeneratorInput<bool> dispose{ "dispose" };
-    GeneratorInput<T1> gain0{ "gain0" };
-    GeneratorInput<T1> gain1{ "gain1" };
-    GeneratorInput<T1> exposure0{ "exposure0" };
-    GeneratorInput<T1> exposure1{ "exposure1" };
+    GeneratorInput<int32_t> gain0{ "gain0" };
+    GeneratorInput<int32_t> gain1{ "gain1" };
+    GeneratorInput<int32_t> exposure0{ "exposure0" };
+    GeneratorInput<int32_t> exposure1{ "exposure1" };
 
     GeneratorOutput<Halide::Func> output0{ "output0", Halide::type_of<T>(), D};
     GeneratorOutput<Halide::Func> output1{ "output1", Halide::type_of<T>(), D};
@@ -675,13 +671,9 @@ public:
     }
 };
 
-using U3VCamera2_U8x3 = U3VCamera2<uint8_t, int32_t, 3>;
-using U3VCamera2_U8x2 = U3VCamera2<uint8_t, int32_t, 2>;
-using U3VCamera2_U16x2 = U3VCamera2<uint16_t, int32_t, 2>;
-
-using U3VCamera2_float_U8x3 = U3VCamera2<uint8_t, double, 3>;
-using U3VCamera2_float_U8x2 = U3VCamera2<uint8_t, double, 2>;
-using U3VCamera2_float_U16x2 = U3VCamera2<uint16_t, double, 2>;
+using U3VCamera2_U8x3 = U3VCamera2<uint8_t, 3>;
+using U3VCamera2_U8x2 = U3VCamera2<uint8_t, 2>;
+using U3VCamera2_U16x2 = U3VCamera2<uint16_t, 2>;
 
 template<typename T, int D>
 class U3VCameraN : public ion::BuildingBlock<U3VCameraN<T, D>> {
@@ -951,53 +943,6 @@ public:
     }
 };
 
-class Binary2GenDCSaver : public ion::BuildingBlock<Binary2GenDCSaver> {
-public:
-    GeneratorParam<std::string> output_directory_ptr{ "output_directory", "." };
-
-    Input<Halide::Func> input0{ "input0", UInt(8), 1 };
-    Input<Halide::Func> input1{ "input1", UInt(8), 1 };
-
-    Input<Halide::Func> input2{ "input2", UInt(8), 1 };
-    Input<Halide::Func> input3{ "input3", UInt(8), 1 };
-
-    Input<bool> dispose{ "dispose" };
-    Input<int32_t> payloadsize0{ "payloadsize0", 0 };
-    Input<int32_t> payloadsize1{ "payloadsize1", 0 };
-
-    Output<int> output{ "output" };
-
-    void generate() {
-        using namespace Halide;
-        Func in0;
-        in0(_) = input0(_);
-        in0.compute_root();
-
-        Func in1;
-        in1(_) = input1(_);
-        in1.compute_root();
-
-        Func in2;
-        in2(_) = input2(_);
-        in2.compute_root();
-
-        Func in3;
-        in3(_) = input3(_);
-        in3.compute_root();
-
-        const std::string output_directory(output_directory_ptr);
-        Halide::Buffer<uint8_t> output_directory_buf(static_cast<int>(output_directory.size() + 1));
-        output_directory_buf.fill(0);
-        std::memcpy(output_directory_buf.data(), output_directory.c_str(), output_directory.size());
-
-        std::vector<ExternFuncArgument> params = { in0, in1, in2, in3, dispose, payloadsize0, payloadsize1, output_directory_buf };
-        Func image_io_binary_gendc_saver;
-        image_io_binary_gendc_saver.define_extern("ion_bb_image_io_binary_2gendc_saver", params, Int(32), 0);
-        image_io_binary_gendc_saver.compute_root();
-        output() = image_io_binary_gendc_saver();
-    }
-};
-
 class BinaryLoader : public ion::BuildingBlock<BinaryLoader> {
 public:
     GeneratorParam<std::string> output_directory_ptr{ "output_directory_ptr", "" };
@@ -1064,27 +1009,16 @@ ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera2_U8x3, image_io_u3v_cam
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera2_U8x2, image_io_u3v_camera2_u8x2);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera2_U16x2, image_io_u3v_camera2_u16x2);
 
-ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera1_float_U8x3, image_io_u3v_camera1_float_u8x3);
-ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera1_float_U16x2, image_io_u3v_camera1_float_u16x2);
-ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera1_float_U8x2, image_io_u3v_camera1_float_u8x2);
-ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera2_float_U8x3, image_io_u3v_camera2_float_u8x3);
-ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera2_float_U8x2, image_io_u3v_camera2_float_u8x2);
-ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera2_float_U16x2, image_io_u3v_camera2_float_u16x2);
-
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCameraN_U8x3, image_io_u3v_cameraN_u8x3);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCameraN_U8x2, image_io_u3v_cameraN_u8x2);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCameraN_U16x2, image_io_u3v_cameraN_u16x2);
 
-// ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera1_gendc_U8x3, image_io_u3v_camera1_gendc_u8x3);
-// ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera1_gendc_U16x2, image_io_u3v_camera1_gendc_u16x2);
-// ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera1_gendc_U8x2, image_io_u3v_camera1_gendc_u8x2);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VGenDC, image_io_u3v_gendc);
 
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinarySaver, image_io_binarysaver);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinaryLoader, image_io_binaryloader);
 
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinaryGenDCSaver, image_io_binary_1gendc_saver);
-ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::Binary2GenDCSaver, image_io_binary_2gendc_saver);
 
 //backward compatability
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera1_U8x3, u3v_camera1_u8x3);

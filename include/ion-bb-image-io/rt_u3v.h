@@ -137,6 +137,9 @@ class U3V {
         float gain_;
         float exposure_;
 
+        int32_t int_gain_;
+        int32_t int_exposure_;
+
         float exposure_range_[2];
 
         ArvStream* stream_;
@@ -169,22 +172,14 @@ class U3V {
     void dispose(){
         for (auto i=0; i<devices_.size(); ++i) {
             auto d = devices_[i];
-            try{
-                arv_device_execute_command(d.device_, "AcquisitionStop", &err_);
-            }catch(std::exception& e){
-            std::cout << e.what() << std::endl;
-           }
+            arv_device_execute_command(d.device_, "AcquisitionStop", &err_);
             /*
             Note:
             unref stream also unref the buffers pushed to stream
             all buffers are in stream so do not undef buffres separately
             */
-           try{
             g_object_unref(reinterpret_cast<gpointer>(d.stream_));
             g_object_unref(reinterpret_cast<gpointer>(d.device_));
-           }catch(std::exception& e){
-            std::cout << e.what() << std::endl;
-           }
         }
 
         devices_.clear();
@@ -209,11 +204,35 @@ class U3V {
         }
     }
 
+    void SetGain(int32_t sensor_idx, const std::string key, int32_t v) {
+        if (sensor_idx < num_sensor_ ){
+            if(devices_[sensor_idx].int_gain_ != v){
+                err_ =  Set(devices_[sensor_idx].device_, key.c_str(), static_cast<int64_t>(v));
+                devices_[sensor_idx].int_gain_ = v;
+            }
+            return;
+        }else{
+            throw std::runtime_error("the index number " + std::to_string(sensor_idx) + " exceeds the number of sensor " + std::to_string(num_sensor_));
+        }
+    }
+
     void SetExposure(int32_t sensor_idx, const std::string key, double v) {
         if (sensor_idx < num_sensor_ ){
             if(devices_[sensor_idx].exposure_ != v){
                 err_ = Set(devices_[sensor_idx].device_, key.c_str(), v);
                 devices_[sensor_idx].exposure_ = v;
+            }
+            return;
+        }else{
+            throw std::runtime_error("the index number " + std::to_string(sensor_idx) + " exceeds the number of sensor " + std::to_string(num_sensor_));
+        }
+    }
+
+    void SetExposure(int32_t sensor_idx, const std::string key, int32_t v) {
+        if (sensor_idx < num_sensor_ ){
+            if(devices_[sensor_idx].int_exposure_ != v){
+                err_ = Set(devices_[sensor_idx].device_, key.c_str(), static_cast<int64_t>(v));
+                devices_[sensor_idx].int_exposure_ = v;
             }
             return;
         }else{
@@ -408,7 +427,7 @@ class U3V {
         frame_sync_(frame_sync), realtime_diaplay_mode_(realtime_diaplay_mode), is_gendc_(false),
         devices_(num_sensor), buffers_(num_sensor), disposed_(false)
     {
-        printf("[LOG ion-kit] This is ion-kit with debug-log; feature/add-write-gendc-bin 230708\n");
+        printf("[LOG ion-kit] This is ion-kit with debug-log; feature/optinoal-number-of-input 230802\n");
         init_symbols();
 
         arv_update_device_list();
@@ -546,7 +565,6 @@ class U3V {
             };
         }
         
-
         for (auto i=0; i<devices_.size(); ++i) {
             const size_t buffer_size = 1 * 1024 * 1024 * 1024; // 1GiB for each
             auto n = (buffer_size + devices_[i].u3v_payload_size_ - 1) / devices_[i].u3v_payload_size_;
@@ -577,18 +595,6 @@ class U3V {
                 throw std::runtime_error(err_->message);
             }
         }
-    }
-
-    int getDepth(std::string format){
-        if (format == "Mono8"){
-            return 1;
-        }else if (format == "Mono12" || format == "Mono10"){
-            return 2;
-        }else{
-            throw std::invalid_argument("Pixelformat is not supported\n");
-        }
-        
-        return 1;
     }
 
     void init_symbols_gobject() {
@@ -637,7 +643,6 @@ class U3V {
         GET_SYMBOL(arv_device_get_integer_feature_bounds, "arv_device_get_integer_feature_bounds");
         GET_SYMBOL(arv_device_get_float_feature_bounds, "arv_device_get_float_feature_bounds");
 
-        // GET_SYMBOL(arv_device_is_gendc_available, "arv_device_is_gendc_available");
         GET_SYMBOL(arv_device_get_register_feature_length, "arv_device_get_register_feature_length");
         GET_SYMBOL(arv_device_get_register_feature_value, "arv_device_get_register_feature_value");
 
@@ -825,7 +830,7 @@ int u3v_camera_frame_count(
 
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_camera1(
-    bool frame_sync, bool realtime_diaplay_mode, double gain0, double exposure0,
+    bool frame_sync, bool realtime_diaplay_mode, int32_t gain0, int32_t exposure0,
     halide_buffer_t* pixel_format_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
     halide_buffer_t * out0)
 {
@@ -860,7 +865,7 @@ ION_REGISTER_EXTERN(ion_bb_image_io_u3v_camera1);
 
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_camera2(
-    bool frame_sync, bool realtime_diaplay_mode, double gain0, double gain1, double exposure0, double exposure1,
+    bool frame_sync, bool realtime_diaplay_mode, int32_t gain0, int32_t gain1, int32_t exposure0, int32_t exposure1,
     halide_buffer_t* pixel_format_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
     halide_buffer_t * out0, halide_buffer_t * out1)
 {
