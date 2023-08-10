@@ -678,7 +678,7 @@ using U3VCamera2_U16x2 = U3VCamera2<uint16_t, 2>;
 template<typename T, int D>
 class U3VCameraN : public ion::BuildingBlock<U3VCameraN<T, D>> {
 public:
-    GeneratorParam<int32_t> levels{"levels", 2};
+    GeneratorParam<int32_t> num_devices{"num_devices", 2};
 
     GeneratorParam<bool> frame_sync{"frame_sync", false};
     GeneratorParam<std::string> pixel_format_ptr{"pixel_format_ptr", "RGB8"};
@@ -725,7 +725,7 @@ public:
          };
 
         Func cameraN("u3v_cameraN");
-        output.resize(levels);
+        output.resize(num_devices);
         if (output.size() == 1){
             cameraN.define_extern("ion_bb_image_io_u3v_multiple_camera" + std::to_string(output.size()), params, Halide::type_of<T>(), D);
         }else{
@@ -753,7 +753,7 @@ using U3VCameraN_U16x2 = U3VCameraN<uint16_t, 2>;
 
 class U3VGenDC : public ion::BuildingBlock<U3VGenDC> {
 public:
-    GeneratorParam<int32_t> levels{"levels", 2};
+    GeneratorParam<int32_t> num_devices{"num_devices", 2};
 
     GeneratorParam<bool> frame_sync{"frame_sync", false};
     GeneratorParam<std::string> pixel_format_ptr{"pixel_format_ptr", "RGB8"};
@@ -801,8 +801,8 @@ public:
          };
 
         Func u3v_gendc("u3v_gendc");
-        gendc.resize(levels);
-        device_info.resize(levels);
+        gendc.resize(num_devices);
+        device_info.resize(num_devices);
         std::vector<Halide::Type> output_type;
         for (int i = 0; i < gendc.size() * 2; i++) {
             output_type.push_back(Halide::type_of<uint8_t>());
@@ -883,7 +883,7 @@ class BinaryGenDCSaver : public ion::BuildingBlock<BinaryGenDCSaver> {
 public:
     GeneratorParam<std::string> output_directory_ptr{ "output_directory", "." };
 
-    GeneratorParam<int32_t> levels{"levels", 2};
+    GeneratorParam<int32_t> num_devices{"num_devices", 2};
 
     Input<Halide::Func[]> input_gendc{ "input_gendc", Halide::type_of<uint8_t>(), 1 };
     Input<Halide::Func[]> input_deviceinfo{ "input_deviceinfo", Halide::type_of<uint8_t>(), 1 };
@@ -895,14 +895,14 @@ public:
 
     void generate() {
         using namespace Halide;
-        int32_t num_device = static_cast<int32_t>(levels);
+        int32_t num_gendc = static_cast<int32_t>(num_devices);
 
         const std::string output_directory(output_directory_ptr);
         Halide::Buffer<uint8_t> output_directory_buf(static_cast<int>(output_directory.size() + 1));
         output_directory_buf.fill(0);
         std::memcpy(output_directory_buf.data(), output_directory.c_str(), output_directory.size());
 
-        if (num_device==1){
+        if (num_gendc==1){
             Func gendc;
             gendc(_) = input_gendc(_);
             gendc.compute_root();
@@ -916,7 +916,7 @@ public:
             image_io_binary_gendc_saver.define_extern("ion_bb_image_io_binary_1gendc_saver", params, Int(32), 0);
             image_io_binary_gendc_saver.compute_root();
             output() = image_io_binary_gendc_saver();
-        }else if (num_device ==2){
+        }else if (num_gendc ==2){
             Func gendc0, gendc1;
             Var x, y;
             gendc0(_) = input_gendc[0](_);
