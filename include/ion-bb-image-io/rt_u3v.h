@@ -427,7 +427,7 @@ class U3V {
         frame_sync_(frame_sync), realtime_diaplay_mode_(realtime_diaplay_mode), is_gendc_(false),
         devices_(num_sensor), buffers_(num_sensor), disposed_(false)
     {
-        printf("[LOG ion-kit] This is ion-kit with debug-log; feature/optinoal-number-of-input 230810\n");
+        printf("[LOG ion-kit] This is ion-kit with debug-log; feature/add-whitebalance 230817\n");
         init_symbols();
 
         arv_update_device_list();
