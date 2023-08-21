@@ -85,7 +85,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SENSING_DEV_ROOT)/include;$(SENSING_DEV_ROOT)/include/glib-2.0/;$(SENSING_DEV_ROOT)/lib/glib-2.0/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SENSING_DEV_ROOT)/include;$(SENSING_DEV_ROOT)/include/glib-2.0/;$(SENSING_DEV_ROOT)/include/aravis-0.8/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4267</DisableSpecificWarnings>
     </ClCompile>
     <Link>
