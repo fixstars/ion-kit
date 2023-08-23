@@ -202,7 +202,7 @@ class U3V {
 
         // get the first buffer for each stream
         for (auto i = 0; i< devices_.size(); ++i) {
-            bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, 3 * 1000 * 1000);
+            bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, 30 * 1000 * 1000);
             if (bufs[i] == nullptr){
                 throw ::std::runtime_error("buffer is null");
             }
@@ -222,7 +222,7 @@ class U3V {
                 for(auto i = 0; i < num_device; ++i){
                     for (auto j = 0; j < min_num_output_buffer-1; ++j){
                         arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
-                        bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, 3 * 1000 * 1000);
+                        bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, 30 * 1000 * 1000);
                         if (bufs[i] == nullptr){
                             throw ::std::runtime_error("buffer is null");
                         }
@@ -257,7 +257,7 @@ class U3V {
                 for (int i=0; i<devices_.size(); ++i) {
                     while (devices_[i].frame_count_ < max_cnt) {
                         arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
-                        bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, 3 * 1000 * 1000);
+                        bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, 30 * 1000 * 1000);
                         if (bufs[i] == nullptr){
                             throw ::std::runtime_error("buffer is null");
                         }
