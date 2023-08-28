@@ -70,7 +70,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SENSING_DEV_ROOT)/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>gobject-2.0.lib;aravis-0.8.lib;opencv_world452.lib;halide.lib;ion-core.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>gobject-2.0.lib;aravis-0.8.lib;opencv_world455.lib;halide.lib;ion-core.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProfileGuidedDatabase />
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <LinkTimeCodeGenerationObjectFile />
@@ -94,7 +94,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SENSING_DEV_ROOT)/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>gobject-2.0.lib;aravis-0.8.lib;opencv_world452.lib;halide.lib;ion-core.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>gobject-2.0.lib;aravis-0.8.lib;opencv_world455.lib;halide.lib;ion-core.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProfileGuidedDatabase />
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <LinkTimeCodeGenerationObjectFile />
