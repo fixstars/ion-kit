@@ -792,7 +792,7 @@ int binaryloader_finished(halide_buffer_t* in0, halide_buffer_t* in1, halide_buf
             auto& r(Reader::get_instance(session_id, width, height, output_directory));
             auto finished_flag = r.get_finished();
            *reinterpret_cast<bool*>(finished->host) = finished_flag;
-           *reinterpret_cast<uint8_t*>(bin_idx->host) = r.get_index();
+           *reinterpret_cast<uint32_t*>(bin_idx->host) = r.get_index();
            if (finished_flag) {
                r.close();
                r.release_instance(session_id);
