@@ -34,6 +34,13 @@ class U3V {
         const char     *message;
     };
 
+    enum OperationMode 
+    {   Came2USB1, 
+        Came1USB1, 
+        Came2USB2,
+        Came1USB2
+    };
+
     using gpointer = struct gpointer_*;
 
     using g_object_unref_t = void (*)(gpointer);
@@ -256,83 +263,107 @@ class U3V {
         int32_t num_device = devices_.size();
         std::vector<ArvBuffer *> bufs(num_device);
 
-        // get the first buffer for each stream
-        for (auto i = 0; i< devices_.size(); ++i) {
-            bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, 30 * 1000 * 1000);
-            if (bufs[i] == nullptr){
-                throw ::std::runtime_error("buffer is null");
+        if (operation_mode_ == OperationMode::Came2USB2){
+            // get the first buffer for each stream
+            for (auto i = 0; i< devices_.size(); ++i) {
+                bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, 30 * 1000 * 1000);
+                if (bufs[i] == nullptr){
+                    throw ::std::runtime_error("buffer is null");
+                }
+                devices_[i].frame_count_ = is_gendc_
+                    ? static_cast<uint64_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
+                    : static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
             }
-            devices_[i].frame_count_ = is_gendc_
-                ? static_cast<uint64_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
-                : static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
-        }
 
-        if (realtime_diaplay_mode_){
-            // get output buffer for each stream
-            int32_t min_num_output_buffer = std::numeric_limits<int>::max();
-            for (auto i = 0; i < num_device; ++i){
-                int32_t num_input_buffer, num_output_buffer;
-                arv_stream_get_n_buffers(devices_[i].stream_, &num_input_buffer, &num_output_buffer);
-                min_num_output_buffer = num_output_buffer < min_num_output_buffer ? num_output_buffer : min_num_output_buffer;
-            }
-            // if all stream has N output buffers, discard N-1 of them
-            if (min_num_output_buffer > 1){
-                for(auto i = 0; i < num_device; ++i){
-                    for (auto j = 0; j < min_num_output_buffer-1; ++j){
-                        arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
-                        bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, 30 * 1000 * 1000);
-                        if (bufs[i] == nullptr){
-                            throw ::std::runtime_error("buffer is null");
+            if (realtime_diaplay_mode_){
+                // get output buffer for each stream
+                int32_t min_num_output_buffer = std::numeric_limits<int>::max();
+                for (auto i = 0; i < num_device; ++i){
+                    int32_t num_input_buffer, num_output_buffer;
+                    arv_stream_get_n_buffers(devices_[i].stream_, &num_input_buffer, &num_output_buffer);
+                    min_num_output_buffer = num_output_buffer < min_num_output_buffer ? num_output_buffer : min_num_output_buffer;
+                }
+                // if all stream has N output buffers, discard N-1 of them
+                if (min_num_output_buffer > 1){
+                    for(auto i = 0; i < num_device; ++i){
+                        for (auto j = 0; j < min_num_output_buffer-1; ++j){
+                            arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
+                            bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, 30 * 1000 * 1000);
+                            if (bufs[i] == nullptr){
+                                throw ::std::runtime_error("buffer is null");
+                            }
+                            devices_[i].frame_count_ = is_gendc_
+                                ? static_cast<uint64_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
+                                : static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
                         }
-                        devices_[i].frame_count_ = is_gendc_
-                            ? static_cast<uint64_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
-                            : static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
                     }
                 }
             }
-        }
 
-        if (frame_sync_) {
-            uint32_t max_cnt = 0;
-            while (true) {
-                // Update max_cnt
-                for (int i=0; i<num_sensor_; ++i) {
-                    if (max_cnt < devices_[i].frame_count_) {
-                        max_cnt = devices_[i].frame_count_;
-                    }
-                }
-
-                // Check all count is same as max_cnt;
-                bool synchronized = true;
-                for (int i=0; i<num_sensor_; ++i) {
-                    synchronized &= devices_[i].frame_count_ == max_cnt;
-                }
-
-                // If it is synchronized, break the loop
-                if (synchronized) {
-                    break;
-                }
-
-                // Acquire buffer until cnt is at least max_cnt
-                for (int i=0; i<devices_.size(); ++i) {
-                    while (devices_[i].frame_count_ < max_cnt) {
-                        arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
-                        bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, 30 * 1000 * 1000);
-                        if (bufs[i] == nullptr){
-                            throw ::std::runtime_error("buffer is null");
+            if (frame_sync_) {
+                uint32_t max_cnt = 0;
+                while (true) {
+                    // Update max_cnt
+                    for (int i=0; i<num_sensor_; ++i) {
+                        if (max_cnt < devices_[i].frame_count_) {
+                            max_cnt = devices_[i].frame_count_;
                         }
-                        devices_[i].frame_count_ = is_gendc_
-                            ? static_cast<uint64_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
-                            : static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
+                    }
+
+                    // Check all count is same as max_cnt;
+                    bool synchronized = true;
+                    for (int i=0; i<num_sensor_; ++i) {
+                        synchronized &= devices_[i].frame_count_ == max_cnt;
+                    }
+
+                    // If it is synchronized, break the loop
+                    if (synchronized) {
+                        break;
+                    }
+
+                    // Acquire buffer until cnt is at least max_cnt
+                    for (int i=0; i<devices_.size(); ++i) {
+                        while (devices_[i].frame_count_ < max_cnt) {
+                            arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
+                            bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, 30 * 1000 * 1000);
+                            if (bufs[i] == nullptr){
+                                throw ::std::runtime_error("buffer is null");
+                            }
+                            devices_[i].frame_count_ = is_gendc_
+                                ? static_cast<uint64_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
+                                : static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
+                        }
                     }
                 }
             }
+
+            for (int i = 0; i < num_sensor_; ++i){
+                ::memcpy(outs[i], arv_buffer_get_part_data(bufs[i], 0, nullptr), devices_[i].image_payload_size_);
+                arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
+            }
+        }else if (operation_mode_ == OperationMode::Came1USB2) {
+            
+            uint64_t latest_cnt = 0;
+            int32_t min_frame_device_idx = 0;
+
+            while (frame_cnt_ > latest_cnt){
+                cameN_idx_ = ++cameN_idx_ > num_device-1 ? 0 : cameN_idx_;
+                bufs[cameN_idx_] = arv_stream_timeout_pop_buffer (devices_[cameN_idx_].stream_, 30 * 1000 * 1000);
+                if (bufs[cameN_idx_] == nullptr){
+                        throw ::std::runtime_error("buffer is null");
+                    }
+                devices_[cameN_idx_].frame_count_ = is_gendc_
+                        ? static_cast<uint64_t>(get_frame_count_from_genDC_descriptor(bufs[cameN_idx_], devices_[cameN_idx_]))
+                        : static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[cameN_idx_]) & 0x00000000FFFFFFFF);
+                latest_cnt = devices_[cameN_idx_].frame_count_;
+            }
+
+            frame_cnt_ = latest_cnt;
+            ::memcpy(outs[0], arv_buffer_get_part_data(bufs[cameN_idx_], 0, nullptr), devices_[cameN_idx_].image_payload_size_);
+            arv_stream_push_buffer(devices_[cameN_idx_].stream_, bufs[cameN_idx_]);
         }
 
-        for (int i = 0; i < num_sensor_; ++i){
-            ::memcpy(outs[i], arv_buffer_get_part_data(bufs[i], 0, nullptr), devices_[i].image_payload_size_);
-            arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
-        }
+
     }
 
     void get_with_gendc(std::vector<void *>& outs) {
@@ -425,13 +456,12 @@ class U3V {
     : gobject_(GOBJECT_FILE, true), aravis_(ARAVIS_FILE, true), 
         pixel_format_(pixel_format), num_sensor_(num_sensor), 
         frame_sync_(frame_sync), realtime_diaplay_mode_(realtime_diaplay_mode), is_gendc_(false),
-        devices_(num_sensor), buffers_(num_sensor), disposed_(false)
+        devices_(num_sensor), buffers_(num_sensor), operation_mode_(OperationMode::Came1USB1), frame_cnt_(0), cameN_idx_(-1), disposed_(false)
     {
-        printf("[LOG ion-kit] This is ion-kit with debug-log; feature/optinoal-number-of-input 230810\n");
+        printf("[LOG ion-kit] This is ion-kit with debug-log; feature/add-1-cam-2usb 230913\n");
         init_symbols();
 
         arv_update_device_list();
-
         unsigned int n_devices = arv_get_n_devices ();
 
         if (n_devices < num_sensor_){
@@ -440,7 +470,6 @@ class U3V {
         frame_sync_ = num_sensor_ > 1 ? frame_sync_ : false;
 
         unsigned int target_device_idx;
-
         if (n_devices != num_sensor_ && dev_id == nullptr) {
             printf("[LOG ion-kit] Multiple devices are found; The first device is selected\n");
         }
@@ -458,12 +487,10 @@ class U3V {
             }
 
             devices_[i].device_ = arv_open_device(devices_[i].dev_id_, &err_);
-
-            // TODO: checking the device status here
-
             if (err_ ) {
                 throw std::runtime_error(err_->message);
             }
+
             if (devices_[i].device_ == nullptr) {
                 throw std::runtime_error("device is null");
             }
@@ -473,12 +500,12 @@ class U3V {
                 throw std::runtime_error(err_->message);
             }
 
+            // Here PayloadSize is the one for U3V data 
             devices_[i].u3v_payload_size_ = arv_device_get_integer_feature_value(devices_[i].device_, "PayloadSize", &err_);
             if (err_ ) {
                 throw std::runtime_error(err_->message);
             }
 
-            // printf("[LOG ion-kit] for camera %d arv_device_create_stream is going to be called\n", i);
             devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, nullptr, nullptr, &err_);
             if (err_ ) {
                 throw std::runtime_error(err_->message);
@@ -487,7 +514,7 @@ class U3V {
                 throw std::runtime_error("stream is null");
             }
             
-            // check it the device is gendc mode
+            // check it the device has gendc mode ==============================
             is_gendc_ = arv_device_is_feature_available(devices_[i].device_, "GenDCDescriptor", &err_);
             if (err_) {
                 throw std::runtime_error(err_->message);
@@ -497,6 +524,7 @@ class U3V {
                 throw std::runtime_error(err_->message);
             }
             
+            // check it the device is gendc mode ===============================
             if (is_gendc_){
                 const char * streaming_mode;
                 streaming_mode = arv_device_get_string_feature_value(devices_[i].device_, "GenDCStreamingMode", &err_);
@@ -506,16 +534,19 @@ class U3V {
                 is_gendc_ &= (strcmp(streaming_mode, "On")==0);
             }
 
+            // Check each parameters for GenDC device ==========================
             if (is_gendc_){
                 uint64_t gendc_desc_size = arv_device_get_register_feature_length(devices_[i].device_, "GenDCDescriptor", &err_);
                 if (err_) {
                     throw std::runtime_error(err_->message);
                 }
-                // printf("[LOG ion-kit] the size of descriptor is %llu\n", gendc_desc_size);
 
                 char* buffer;
                 buffer = (char*) malloc(gendc_desc_size);
                 arv_device_get_register_feature_value(devices_[i].device_, "GenDCDescriptor", gendc_desc_size, (void*)buffer, &err_);
+                if (err_) {
+                    throw std::runtime_error(err_->message);
+                }
                 if(isGenDC(buffer)){
                     gendc_descriptor_= ContainerHeader(buffer);
                     std::tuple<int32_t, int32_t> data_comp_and_part = gendc_descriptor_.getFirstAvailableDataOffset(true);
@@ -536,13 +567,11 @@ class U3V {
             }else{
                 devices_[i].data_offset_ = 0;
                 devices_[i].image_payload_size_ = devices_[i].u3v_payload_size_;
-                if (err_) {
-                    throw std::runtime_error(err_->message);
-                }
                 printf("[LOG ion-kit] The device is not GenDC supported\n");
-                // throw std::runtime_error("The device is not GenDC supported");
             }
-
+            
+            
+            // Set Device Info =================================================
             int32_t wi = arv_device_get_integer_feature_value(devices_[i].device_, "Width", &err_);
             int32_t hi = arv_device_get_integer_feature_value(devices_[i].device_, "Height", &err_);
             double fps = 0.0;
@@ -558,11 +587,24 @@ class U3V {
                 printf("[LOG ion-kit] The pixel format is not supported for header info\n");
             }
 
-
             devices_[i].header_info_ = { 1, wi, hi,
                 1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
                 wi, hi, wi, hi, static_cast<float>(fps), px
             };
+        }
+
+        if (arv_device_is_feature_available(devices_[0].device_, "OperationMode", &err_)){
+            const char* operation_mode_in_string;
+            operation_mode_in_string = arv_device_get_string_feature_value(devices_[0].device_, "OperationMode", &err_);
+            if (strcmp(operation_mode_in_string, "Came2USB1")==0){
+                operation_mode_ = OperationMode::Came2USB1;
+            }else if (strcmp(operation_mode_in_string, "Came1USB1")==0){
+                operation_mode_ = OperationMode::Came1USB1;
+            }else if (strcmp(operation_mode_in_string, "Came2USB2")==0){
+                operation_mode_ = OperationMode::Came2USB2;
+            }else if (strcmp(operation_mode_in_string, "Came1USB2")==0){
+                operation_mode_ = OperationMode::Came1USB2;
+            }
         }
         
         for (auto i=0; i<devices_.size(); ++i) {
@@ -781,6 +823,10 @@ class U3V {
     bool frame_sync_;
     bool realtime_diaplay_mode_;
     bool is_gendc_;
+    int32_t operation_mode_;
+
+    uint64_t frame_cnt_;
+    int32_t cameN_idx_;
 
     // genDC
     ContainerHeader gendc_descriptor_;
