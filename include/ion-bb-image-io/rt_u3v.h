@@ -263,7 +263,9 @@ class U3V {
         int32_t num_device = devices_.size();
         std::vector<ArvBuffer *> bufs(num_device);
 
-        if (operation_mode_ == OperationMode::Came2USB2){
+
+        if (operation_mode_ == OperationMode::Came2USB2 || operation_mode_ == OperationMode::Came1USB1){
+            
             // get the first buffer for each stream
             for (auto i = 0; i< devices_.size(); ++i) {
                 bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, 30 * 1000 * 1000);
@@ -346,8 +348,8 @@ class U3V {
             uint64_t latest_cnt = 0;
             int32_t min_frame_device_idx = 0;
 
-            while (frame_cnt_ > latest_cnt){
-                cameN_idx_ = ++cameN_idx_ > num_device-1 ? 0 : cameN_idx_;
+            while (frame_cnt_ >= latest_cnt){
+                cameN_idx_ = (cameN_idx_+1) >= num_device ? 0 : cameN_idx_+1;
                 bufs[cameN_idx_] = arv_stream_timeout_pop_buffer (devices_[cameN_idx_].stream_, 30 * 1000 * 1000);
                 if (bufs[cameN_idx_] == nullptr){
                         throw ::std::runtime_error("buffer is null");
@@ -356,11 +358,13 @@ class U3V {
                         ? static_cast<uint64_t>(get_frame_count_from_genDC_descriptor(bufs[cameN_idx_], devices_[cameN_idx_]))
                         : static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[cameN_idx_]) & 0x00000000FFFFFFFF);
                 latest_cnt = devices_[cameN_idx_].frame_count_;
+                std::cout << "[LOG ion-kit]" <<  latest_cnt  << std::endl;
             }
 
             frame_cnt_ = latest_cnt;
             ::memcpy(outs[0], arv_buffer_get_part_data(bufs[cameN_idx_], 0, nullptr), devices_[cameN_idx_].image_payload_size_);
             arv_stream_push_buffer(devices_[cameN_idx_].stream_, bufs[cameN_idx_]);
+
         }
 
 
@@ -591,19 +595,22 @@ class U3V {
                 1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
                 wi, hi, wi, hi, static_cast<float>(fps), px
             };
-        }
 
-        if (arv_device_is_feature_available(devices_[0].device_, "OperationMode", &err_)){
-            const char* operation_mode_in_string;
-            operation_mode_in_string = arv_device_get_string_feature_value(devices_[0].device_, "OperationMode", &err_);
-            if (strcmp(operation_mode_in_string, "Came2USB1")==0){
-                operation_mode_ = OperationMode::Came2USB1;
-            }else if (strcmp(operation_mode_in_string, "Came1USB1")==0){
-                operation_mode_ = OperationMode::Came1USB1;
-            }else if (strcmp(operation_mode_in_string, "Came2USB2")==0){
-                operation_mode_ = OperationMode::Came2USB2;
-            }else if (strcmp(operation_mode_in_string, "Came1USB2")==0){
-                operation_mode_ = OperationMode::Came1USB2;
+            if (arv_device_is_feature_available(devices_[0].device_, "OperationMode", &err_)){
+                const char* operation_mode_in_string;
+                operation_mode_in_string = arv_device_get_string_feature_value(devices_[0].device_, "OperationMode", &err_);
+                if (strcmp(operation_mode_in_string, "Came2USB1")==0){
+                    operation_mode_ = OperationMode::Came2USB1;
+                }else if (strcmp(operation_mode_in_string, "Came1USB1")==0){
+                    operation_mode_ = OperationMode::Came1USB1;
+                }else if (strcmp(operation_mode_in_string, "Came2USB2")==0){
+                    operation_mode_ = OperationMode::Came2USB2;
+                }else if (strcmp(operation_mode_in_string, "Came1USB2")==0){
+                    operation_mode_ = OperationMode::Came1USB2;
+                    n_devices = 2;
+                    devices_.resize(n_devices);
+                    buffers_.resize(n_devices);
+                }
             }
         }
         
