@@ -358,8 +358,8 @@ class U3V {
                         ? static_cast<uint64_t>(get_frame_count_from_genDC_descriptor(bufs[cameN_idx_], devices_[cameN_idx_]))
                         : static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[cameN_idx_]) & 0x00000000FFFFFFFF);
                 latest_cnt = devices_[cameN_idx_].frame_count_;
-                std::cout << "[LOG ion-kit]" <<  latest_cnt  << std::endl;
             }
+            std::cout << "[LOG ion-kit]" <<  latest_cnt << std::endl;
 
             frame_cnt_ = latest_cnt;
             ::memcpy(outs[0], arv_buffer_get_part_data(bufs[cameN_idx_], 0, nullptr), devices_[cameN_idx_].image_payload_size_);
