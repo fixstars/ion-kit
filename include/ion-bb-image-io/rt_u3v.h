@@ -263,7 +263,6 @@ class U3V {
         int32_t num_device = devices_.size();
         std::vector<ArvBuffer *> bufs(num_device);
 
-
         if (operation_mode_ == OperationMode::Came2USB2 || operation_mode_ == OperationMode::Came1USB1){
             
             // get the first buffer for each stream
@@ -359,15 +358,11 @@ class U3V {
                         : static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[cameN_idx_]) & 0x00000000FFFFFFFF);
                 latest_cnt = devices_[cameN_idx_].frame_count_;
             }
-            std::cout << "[LOG ion-kit]" <<  latest_cnt << std::endl;
 
             frame_cnt_ = latest_cnt;
             ::memcpy(outs[0], arv_buffer_get_part_data(bufs[cameN_idx_], 0, nullptr), devices_[cameN_idx_].image_payload_size_);
             arv_stream_push_buffer(devices_[cameN_idx_].stream_, bufs[cameN_idx_]);
-
         }
-
-
     }
 
     void get_with_gendc(std::vector<void *>& outs) {
@@ -375,83 +370,106 @@ class U3V {
         int32_t num_device = devices_.size();
         std::vector<ArvBuffer *> bufs(num_device);
 
-        // get the first buffer for each stream
-        for (auto i = 0; i< devices_.size(); ++i) {
-            bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, 3 * 1000 * 1000);
-            if (bufs[i] == nullptr){
-                throw ::std::runtime_error("buffer is null");
-            }
-            devices_[i].frame_count_ = is_gendc_
-                ? static_cast<uint64_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
-                : static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
-        }
+        if (operation_mode_ == OperationMode::Came2USB2 || operation_mode_ == OperationMode::Came1USB1){
 
-        if (realtime_diaplay_mode_){
-            // get output buffer for each stream
-            int32_t min_num_output_buffer = std::numeric_limits<int>::max();
-            for (auto i = 0; i < num_device; ++i){
-                int32_t num_input_buffer, num_output_buffer;
-                arv_stream_get_n_buffers(devices_[i].stream_, &num_input_buffer, &num_output_buffer);
-                min_num_output_buffer = num_output_buffer < min_num_output_buffer ? num_output_buffer : min_num_output_buffer;
+            // get the first buffer for each stream
+            for (auto i = 0; i< devices_.size(); ++i) {
+                bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, 3 * 1000 * 1000);
+                if (bufs[i] == nullptr){
+                    throw ::std::runtime_error("buffer is null");
+                }
+                devices_[i].frame_count_ = is_gendc_
+                    ? static_cast<uint64_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
+                    : static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
             }
-            // if all stream has N output buffers, discard N-1 of them
-            if (min_num_output_buffer > 1){
-                for(auto i = 0; i < num_device; ++i){
-                    for (auto j = 0; j < min_num_output_buffer-1; ++j){
-                        arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
-                        bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, 3 * 1000 * 1000);
-                        if (bufs[i] == nullptr){
+
+            if (realtime_diaplay_mode_){
+                // get output buffer for each stream
+                int32_t min_num_output_buffer = std::numeric_limits<int>::max();
+                for (auto i = 0; i < num_device; ++i){
+                    int32_t num_input_buffer, num_output_buffer;
+                    arv_stream_get_n_buffers(devices_[i].stream_, &num_input_buffer, &num_output_buffer);
+                    min_num_output_buffer = num_output_buffer < min_num_output_buffer ? num_output_buffer : min_num_output_buffer;
+                }
+                // if all stream has N output buffers, discard N-1 of them
+                if (min_num_output_buffer > 1){
+                    for(auto i = 0; i < num_device; ++i){
+                        for (auto j = 0; j < min_num_output_buffer-1; ++j){
+                            arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
+                            bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, 3 * 1000 * 1000);
+                            if (bufs[i] == nullptr){
+                                throw ::std::runtime_error("buffer is null");
+                            }
+                            devices_[i].frame_count_ = is_gendc_
+                                ? static_cast<uint64_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
+                                : static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
+                        }
+                    }
+                }
+            }
+
+            if (frame_sync_) {
+                uint32_t max_cnt = 0;
+                while (true) {
+                    // Update max_cnt
+                    for (int i=0; i<num_sensor_; ++i) {
+                        if (max_cnt < devices_[i].frame_count_) {
+                            max_cnt = devices_[i].frame_count_;
+                        }
+                    }
+
+                    // Check all count is same as max_cnt;
+                    bool synchronized = true;
+                    for (int i=0; i<num_sensor_; ++i) {
+                        synchronized &= devices_[i].frame_count_ == max_cnt;
+                    }
+
+                    // If it is synchronized, break the loop
+                    if (synchronized) {
+                        break;
+                    }
+
+                    // Acquire buffer until cnt is at least max_cnt
+                    for (int i=0; i<devices_.size(); ++i) {
+                        while (devices_[i].frame_count_ < max_cnt) {
+                            arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
+                            bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, 3 * 1000 * 1000);
+                            if (bufs[i] == nullptr){
+                                throw ::std::runtime_error("buffer is null");
+                            }
+                            devices_[i].frame_count_ = is_gendc_
+                                ? static_cast<uint64_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
+                                : static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
+                        }
+                    }
+                }
+            }
+
+            for (int i = 0; i < num_sensor_; ++i){
+                ::memcpy(outs[i*num_sensor_], arv_buffer_get_data(bufs[i], nullptr), devices_[i].u3v_payload_size_);
+                ::memcpy(outs[i*num_sensor_+1], &(devices_[i].header_info_), sizeof(ion::bb::image_io::rawHeader));
+                arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
+            }
+        }else if (operation_mode_ == OperationMode::Came1USB2) {
+                uint64_t latest_cnt = 0;
+                int32_t min_frame_device_idx = 0;
+
+                while (frame_cnt_ >= latest_cnt){
+                    cameN_idx_ = (cameN_idx_+1) >= num_device ? 0 : cameN_idx_+1;
+                    bufs[cameN_idx_] = arv_stream_timeout_pop_buffer (devices_[cameN_idx_].stream_, 30 * 1000 * 1000);
+                    if (bufs[cameN_idx_] == nullptr){
                             throw ::std::runtime_error("buffer is null");
                         }
-                        devices_[i].frame_count_ = is_gendc_
-                            ? static_cast<uint64_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
-                            : static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
-                    }
-                }
-            }
-        }
-
-        if (frame_sync_) {
-            uint32_t max_cnt = 0;
-            while (true) {
-                // Update max_cnt
-                for (int i=0; i<num_sensor_; ++i) {
-                    if (max_cnt < devices_[i].frame_count_) {
-                        max_cnt = devices_[i].frame_count_;
-                    }
+                    devices_[cameN_idx_].frame_count_ = is_gendc_
+                            ? static_cast<uint64_t>(get_frame_count_from_genDC_descriptor(bufs[cameN_idx_], devices_[cameN_idx_]))
+                            : static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[cameN_idx_]) & 0x00000000FFFFFFFF);
+                    latest_cnt = devices_[cameN_idx_].frame_count_;
                 }
 
-                // Check all count is same as max_cnt;
-                bool synchronized = true;
-                for (int i=0; i<num_sensor_; ++i) {
-                    synchronized &= devices_[i].frame_count_ == max_cnt;
-                }
-
-                // If it is synchronized, break the loop
-                if (synchronized) {
-                    break;
-                }
-
-                // Acquire buffer until cnt is at least max_cnt
-                for (int i=0; i<devices_.size(); ++i) {
-                    while (devices_[i].frame_count_ < max_cnt) {
-                        arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
-                        bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, 3 * 1000 * 1000);
-                        if (bufs[i] == nullptr){
-                            throw ::std::runtime_error("buffer is null");
-                        }
-                        devices_[i].frame_count_ = is_gendc_
-                            ? static_cast<uint64_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
-                            : static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
-                    }
-                }
-            }
-        }
-
-        for (int i = 0; i < num_sensor_; ++i){
-            ::memcpy(outs[i*num_sensor_], arv_buffer_get_data(bufs[i], nullptr), devices_[i].u3v_payload_size_);
-            ::memcpy(outs[i*num_sensor_+1], &(devices_[i].header_info_), sizeof(ion::bb::image_io::rawHeader));
-            arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
+                frame_cnt_ = latest_cnt;
+                ::memcpy(outs[0], arv_buffer_get_data(bufs[cameN_idx_], nullptr), devices_[cameN_idx_].u3v_payload_size_);
+                ::memcpy(outs[1], &(devices_[cameN_idx_].header_info_), sizeof(ion::bb::image_io::rawHeader));
+                arv_stream_push_buffer(devices_[cameN_idx_].stream_, bufs[cameN_idx_]);
         }
     }
 

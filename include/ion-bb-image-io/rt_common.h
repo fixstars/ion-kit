@@ -314,7 +314,7 @@ struct rawHeader {
     // ---------- 68
     float fps_;
     // ---------- 72
-    int pfnc_picelformat;
+    int pfnc_pixelformat;
 };
 
 // PFNC

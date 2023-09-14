@@ -213,7 +213,7 @@ public:
             j_ith_sensor["framerate"] = header_infos[i].fps_;
             j_ith_sensor["width"] = header_infos[i].width_;
             j_ith_sensor["height"] = header_infos[i].height_;
-            j_ith_sensor["pfnc_picelformat"] = header_infos[i].pfnc_picelformat;
+            j_ith_sensor["pfnc_pixelformat"] = header_infos[i].pfnc_pixelformat;
             j["sensor" + std::to_string(i+1)] = j_ith_sensor;
         }
 
@@ -263,7 +263,7 @@ private:
         //     j_ith_sensor["framerate"] = header_infos[i].fps_;
         //     j_ith_sensor["width"] = header_infos[i].width_;
         //     j_ith_sensor["height"] = header_infos[i].height_;
-        //     j_ith_sensor["pfnc_picelformat"] = header_infos[i].pfnc_picelformat;
+        //     j_ith_sensor["pfnc_pixelformat"] = header_infos[i].pfnc_pixelformat;
         //     j["sensor" + std::to_string(i+1)] = j_ith_sensor;
         // }
 
