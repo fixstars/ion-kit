@@ -200,6 +200,12 @@ class U3V {
     }
 
     void SetGain(int32_t sensor_idx, const std::string key, double v) {
+
+        if (is_param_integer_){
+            SetGain(sensor_idx, key, static_cast<int32_t>(v));
+            return;
+        }
+
         if (sensor_idx < num_sensor_ ){
             if(devices_[sensor_idx].gain_ != v){
                 err_ =  Set(devices_[sensor_idx].device_, key.c_str(), v);
@@ -224,6 +230,12 @@ class U3V {
     }
 
     void SetExposure(int32_t sensor_idx, const std::string key, double v) {
+
+        if (is_param_integer_){
+            SetExposure(sensor_idx, key, static_cast<int32_t>(v));
+            return;
+        }
+
         if (sensor_idx < num_sensor_ ){
             if(devices_[sensor_idx].exposure_ != v){
                 err_ = Set(devices_[sensor_idx].device_, key.c_str(), v);
@@ -520,6 +532,19 @@ class U3V {
             arv_device_set_string_feature_value(devices_[i].device_, "PixelFormat", pixel_format_.c_str(), &err_);
             if (err_ ) {
                 throw std::runtime_error(err_->message);
+            }
+
+            const char* device_vender_name;
+            device_vender_name = arv_device_get_string_feature_value(devices_[i].device_, "DeviceVendorName", &err_);
+            std::cout << device_vender_name << std::endl;
+            if (strcmp(device_vender_name, "Sony Semiconductor Solutions Corporation")==0){
+                const char* device_model_name;
+                device_model_name = arv_device_get_string_feature_value(devices_[i].device_, "DeviceModelName", &err_);
+                std::cout << device_model_name << "==" << std::endl;
+                if (strcmp(device_model_name, "    ")==0){
+                    std::cout << "none";
+                    is_param_integer_ = true;  
+                }
             }
 
             // Here PayloadSize is the one for U3V data 
@@ -848,6 +873,7 @@ class U3V {
     bool frame_sync_;
     bool realtime_diaplay_mode_;
     bool is_gendc_;
+    bool is_param_integer_;
     int32_t operation_mode_;
 
     uint64_t frame_cnt_;
