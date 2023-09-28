@@ -560,8 +560,8 @@ public:
     GeneratorParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
     
     GeneratorInput<bool> dispose{ "dispose" };
-    GeneratorInput<int32_t> gain0{ "gain0" };
-    GeneratorInput<int32_t> exposure0{ "exposure0" };
+    GeneratorInput<double> gain0{ "gain0" };
+    GeneratorInput<double> exposure0{ "exposure0" };
 
     GeneratorOutput<Halide::Func> output0{ "output0", Halide::type_of<T>(), D};
     GeneratorOutput<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
@@ -621,10 +621,10 @@ public:
     GeneratorParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
 
     GeneratorInput<bool> dispose{ "dispose" };
-    GeneratorInput<int32_t> gain0{ "gain0" };
-    GeneratorInput<int32_t> gain1{ "gain1" };
-    GeneratorInput<int32_t> exposure0{ "exposure0" };
-    GeneratorInput<int32_t> exposure1{ "exposure1" };
+    GeneratorInput<double> gain0{ "gain0" };
+    GeneratorInput<double> gain1{ "gain1" };
+    GeneratorInput<double> exposure0{ "exposure0" };
+    GeneratorInput<double> exposure1{ "exposure1" };
 
     GeneratorOutput<Halide::Func> output0{ "output0", Halide::type_of<T>(), D};
     GeneratorOutput<Halide::Func> output1{ "output1", Halide::type_of<T>(), D};

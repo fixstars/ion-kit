@@ -901,7 +901,7 @@ int u3v_camera_frame_count(
 
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_camera1(
-    bool frame_sync, bool realtime_diaplay_mode, int32_t gain0, int32_t exposure0,
+    bool frame_sync, bool realtime_diaplay_mode, double gain0, double exposure0,
     halide_buffer_t* pixel_format_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
     halide_buffer_t * out0)
 {
@@ -936,7 +936,7 @@ ION_REGISTER_EXTERN(ion_bb_image_io_u3v_camera1);
 
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_camera2(
-    bool frame_sync, bool realtime_diaplay_mode, int32_t gain0, int32_t gain1, int32_t exposure0, int32_t exposure1,
+    bool frame_sync, bool realtime_diaplay_mode, double gain0, double gain1, double exposure0, double exposure1,
     halide_buffer_t* pixel_format_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
     halide_buffer_t * out0, halide_buffer_t * out1)
 {
