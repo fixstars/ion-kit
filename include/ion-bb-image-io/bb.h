@@ -560,8 +560,8 @@ public:
     GeneratorParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
     
     GeneratorInput<bool> dispose{ "dispose" };
-    GeneratorInput<int32_t> gain0{ "gain0" };
-    GeneratorInput<int32_t> exposure0{ "exposure0" };
+    GeneratorInput<double> gain0{ "gain0" };
+    GeneratorInput<double> exposure0{ "exposure0" };
 
     GeneratorOutput<Halide::Func> output0{ "output0", Halide::type_of<T>(), D};
     GeneratorOutput<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
@@ -599,8 +599,17 @@ public:
         pixel_format_buf_cpy.fill(0);
         std::memcpy(pixel_format_buf_cpy.data(), pixel_format.c_str(), pixel_format.size());
 
+        Buffer<uint8_t> gain_key_buf_cpy(static_cast<int>(gain_key.size() + 1));
+        gain_key_buf_cpy.fill(0);
+        std::memcpy(gain_key_buf_cpy.data(), gain_key.c_str(), gain_key.size());
+
+        Buffer<uint8_t> exposure_key_buf_cpy(static_cast<int>(exposure_key.size() + 1));
+        exposure_key_buf_cpy.fill(0);
+        std::memcpy(exposure_key_buf_cpy.data(), exposure_key.c_str(), exposure_key.size());
+
+
         Func camera1_frame_count;
-        camera1_frame_count.define_extern("ion_bb_image_io_u3v_camera1_frame_count", { camera1, dispose, 1, static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode), pixel_format_buf_cpy}, type_of<uint32_t>(), 1);
+        camera1_frame_count.define_extern("ion_bb_image_io_u3v_camera1_frame_count", { camera1, dispose, 1, static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode), pixel_format_buf_cpy, gain_key_buf_cpy, exposure_key_buf_cpy}, type_of<uint32_t>(), 1);
         camera1_frame_count.compute_root();
         frame_count(_) = camera1_frame_count(_);
     }
@@ -621,10 +630,10 @@ public:
     GeneratorParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
 
     GeneratorInput<bool> dispose{ "dispose" };
-    GeneratorInput<int32_t> gain0{ "gain0" };
-    GeneratorInput<int32_t> gain1{ "gain1" };
-    GeneratorInput<int32_t> exposure0{ "exposure0" };
-    GeneratorInput<int32_t> exposure1{ "exposure1" };
+    GeneratorInput<double> gain0{ "gain0" };
+    GeneratorInput<double> gain1{ "gain1" };
+    GeneratorInput<double> exposure0{ "exposure0" };
+    GeneratorInput<double> exposure1{ "exposure1" };
 
     GeneratorOutput<Halide::Func> output0{ "output0", Halide::type_of<T>(), D};
     GeneratorOutput<Halide::Func> output1{ "output1", Halide::type_of<T>(), D};
@@ -664,8 +673,16 @@ public:
         pixel_format_buf_cpy.fill(0);
         std::memcpy(pixel_format_buf_cpy.data(), pixel_format.c_str(), pixel_format.size());
 
+        Buffer<uint8_t> gain_key_buf_cpy(static_cast<int>(gain_key.size() + 1));
+        gain_key_buf_cpy.fill(0);
+        std::memcpy(gain_key_buf_cpy.data(), gain_key.c_str(), gain_key.size());
+
+        Buffer<uint8_t> exposure_key_buf_cpy(static_cast<int>(exposure_key.size() + 1));
+        exposure_key_buf_cpy.fill(0);
+        std::memcpy(exposure_key_buf_cpy.data(), exposure_key.c_str(), exposure_key.size());
+
         Func camera2_frame_count;
-        camera2_frame_count.define_extern("ion_bb_image_io_u3v_camera2_frame_count", { camera2, dispose, 2, static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode), pixel_format_buf_cpy}, type_of<uint32_t>(), 1);
+        camera2_frame_count.define_extern("ion_bb_image_io_u3v_camera2_frame_count", { camera2, dispose, 2, static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode), pixel_format_buf_cpy, gain_key_buf_cpy, exposure_key_buf_cpy}, type_of<uint32_t>(), 1);
         camera2_frame_count.compute_root();
         frame_count(_) = camera2_frame_count(_);
     }

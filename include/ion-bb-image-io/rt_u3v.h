@@ -168,10 +168,10 @@ class U3V {
         }
     }
 
-    static U3V & get_instance(std::string pixel_format, int32_t num_sensor, bool frame_sync, bool realtime_diaplay_mode)
+    static U3V & get_instance(std::string pixel_format, int32_t num_sensor, bool frame_sync, bool realtime_diaplay_mode, const std::string gain_key, const std::string exposuretime_key)
     {
         if (instance_ == nullptr){
-            instance_ = std::unique_ptr<U3V>(new U3V(pixel_format, num_sensor, frame_sync, realtime_diaplay_mode));
+            instance_ = std::unique_ptr<U3V>(new U3V(pixel_format, num_sensor, realtime_diaplay_mode, frame_sync, gain_key, exposuretime_key));
         }
         return *instance_;
     }
@@ -474,13 +474,14 @@ class U3V {
     }
 
     private:
-    U3V(std::string pixel_format, int32_t num_sensor, bool frame_sync, bool realtime_diaplay_mode, char* dev_id = nullptr)
+    U3V(std::string pixel_format, int32_t num_sensor, bool frame_sync, bool realtime_diaplay_mode, const std::string gain_key, const std::string exposuretime_key, char* dev_id = nullptr)
     : gobject_(GOBJECT_FILE, true), aravis_(ARAVIS_FILE, true), 
         pixel_format_(pixel_format), num_sensor_(num_sensor), 
+        gain_key_(gain_key), exposuretime_key_(exposuretime_key),
         frame_sync_(frame_sync), realtime_diaplay_mode_(realtime_diaplay_mode), is_gendc_(false),
         devices_(num_sensor), buffers_(num_sensor), operation_mode_(OperationMode::Came1USB1), frame_cnt_(0), cameN_idx_(-1), disposed_(false)
     {
-        printf("[LOG ion-kit] This is ion-kit with debug-log; feature/add-1-cam-2usb 230913\n");
+        printf("[LOG ion-kit] This is ion-kit with debug-log; feature/float-int-camera-params 230929\n");
         init_symbols();
 
         arv_update_device_list();
@@ -853,6 +854,9 @@ class U3V {
     uint64_t frame_cnt_;
     int32_t cameN_idx_;
 
+    const std::string exposuretime_key_;
+    const std::string gain_key_;
+
     // genDC
     ContainerHeader gendc_descriptor_;
 
@@ -869,12 +873,14 @@ class U3V {
 std::unique_ptr<U3V> U3V::instance_;
 
 int u3v_camera_frame_count(
-    bool dispose, int32_t num_sensor, bool frame_sync, bool realtime_diaplay_mode, halide_buffer_t * pixel_format_buf,
+    bool dispose, int32_t num_sensor, bool frame_sync, bool realtime_diaplay_mode, halide_buffer_t * pixel_format_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
     halide_buffer_t* out)
 {
     try {
         const ::std::string pixel_format(reinterpret_cast<const char*>(pixel_format_buf->host));
-        auto &u3v(ion::bb::image_io::U3V::get_instance(pixel_format, num_sensor, frame_sync, realtime_diaplay_mode));
+        const ::std::string gain_key(reinterpret_cast<const char*>(gain_key_buf->host));
+        const ::std::string exposure_key(reinterpret_cast<const char*>(exposure_key_buf->host));
+        auto &u3v(ion::bb::image_io::U3V::get_instance(pixel_format, num_sensor, frame_sync, realtime_diaplay_mode, gain_key, exposure_key));
         if (out->is_bounds_query()) {
             out->dim[0].min = 0;
             out->dim[0].extent = 1;
@@ -901,7 +907,7 @@ int u3v_camera_frame_count(
 
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_camera1(
-    bool frame_sync, bool realtime_diaplay_mode, int32_t gain0, int32_t exposure0,
+    bool frame_sync, bool realtime_diaplay_mode, double gain0, double exposure0,
     halide_buffer_t* pixel_format_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
     halide_buffer_t * out0)
 {
@@ -910,7 +916,7 @@ int ION_EXPORT ion_bb_image_io_u3v_camera1(
         const ::std::string gain_key(reinterpret_cast<const char*>(gain_key_buf->host));
         const ::std::string exposure_key(reinterpret_cast<const char*>(exposure_key_buf->host));
         const ::std::string pixel_format(reinterpret_cast<const char*>(pixel_format_buf->host));
-        auto &u3v(ion::bb::image_io::U3V::get_instance(pixel_format, 1, frame_sync, realtime_diaplay_mode));
+        auto &u3v(ion::bb::image_io::U3V::get_instance(pixel_format, 1, frame_sync, realtime_diaplay_mode, gain_key, exposure_key));
         if (out0->is_bounds_query()) {
             //bounds query
             return 0;
@@ -936,7 +942,7 @@ ION_REGISTER_EXTERN(ion_bb_image_io_u3v_camera1);
 
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_camera2(
-    bool frame_sync, bool realtime_diaplay_mode, int32_t gain0, int32_t gain1, int32_t exposure0, int32_t exposure1,
+    bool frame_sync, bool realtime_diaplay_mode, double gain0, double gain1, double exposure0, double exposure1,
     halide_buffer_t* pixel_format_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
     halide_buffer_t * out0, halide_buffer_t * out1)
 {
@@ -945,7 +951,7 @@ int ION_EXPORT ion_bb_image_io_u3v_camera2(
         const ::std::string gain_key(reinterpret_cast<const char*>(gain_key_buf->host));
         const ::std::string exposure_key(reinterpret_cast<const char*>(exposure_key_buf->host));
         const ::std::string pixel_format(reinterpret_cast<const char*>(pixel_format_buf->host));
-        auto &u3v(ion::bb::image_io::U3V::get_instance(pixel_format, 2, frame_sync, realtime_diaplay_mode));
+        auto &u3v(ion::bb::image_io::U3V::get_instance(pixel_format, 2, frame_sync, realtime_diaplay_mode, gain_key, exposure_key));
         if (out0->is_bounds_query() || out1->is_bounds_query()) {
             //bounds query
             return 0;
@@ -975,10 +981,10 @@ ION_REGISTER_EXTERN(ion_bb_image_io_u3v_camera2);
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_camera1_frame_count(
     halide_buffer_t *,
-    bool dispose, int32_t num_sensor, bool frame_sync, bool realtime_diaplay_mode, halide_buffer_t * pixel_format_buf,
+    bool dispose, int32_t num_sensor, bool frame_sync, bool realtime_diaplay_mode, halide_buffer_t * pixel_format_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
     halide_buffer_t* out)
 {
-    return ion::bb::image_io::u3v_camera_frame_count(dispose, num_sensor, frame_sync, realtime_diaplay_mode, pixel_format_buf, out);
+    return ion::bb::image_io::u3v_camera_frame_count(dispose, num_sensor, frame_sync, realtime_diaplay_mode, pixel_format_buf, gain_key_buf, exposure_key_buf, out);
 }
 ION_REGISTER_EXTERN(ion_bb_image_io_u3v_camera1_frame_count);
 
@@ -986,10 +992,10 @@ extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_camera2_frame_count(
     halide_buffer_t *,
     halide_buffer_t *,
-    bool dispose, int32_t num_sensor, bool frame_sync, bool realtime_diaplay_mode, halide_buffer_t * pixel_format_buf,
+    bool dispose, int32_t num_sensor, bool frame_sync, bool realtime_diaplay_mode, halide_buffer_t * pixel_format_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
     halide_buffer_t* out)
 {
-    return ion::bb::image_io::u3v_camera_frame_count(dispose, num_sensor, frame_sync, realtime_diaplay_mode, pixel_format_buf, out);
+    return ion::bb::image_io::u3v_camera_frame_count(dispose, num_sensor, frame_sync, realtime_diaplay_mode, pixel_format_buf, gain_key_buf, exposure_key_buf, out);
 }
 ION_REGISTER_EXTERN(ion_bb_image_io_u3v_camera2_frame_count);
 
@@ -1008,7 +1014,7 @@ int ION_EXPORT ion_bb_image_io_u3v_gendc_camera1(
         const ::std::string gain_key(reinterpret_cast<const char*>(gain_key_buf->host));
         const ::std::string exposure_key(reinterpret_cast<const char*>(exposure_key_buf->host));
         const ::std::string pixel_format(reinterpret_cast<const char*>(pixel_format_buf->host));
-        auto &u3v(ion::bb::image_io::U3V::get_instance(pixel_format, num_output, false, realtime_diaplay_mode));
+        auto &u3v(ion::bb::image_io::U3V::get_instance(pixel_format, num_output, false, realtime_diaplay_mode, gain_key, exposure_key));
         if (out_gendc->is_bounds_query() || out_deviceinfo->is_bounds_query() || gain->is_bounds_query() || exposure->is_bounds_query()) {
             gain->dim[0].min = 0;
             gain->dim[0].extent = num_output;
@@ -1057,7 +1063,7 @@ int ION_EXPORT ion_bb_image_io_u3v_gendc_camera2(
         const ::std::string gain_key(reinterpret_cast<const char*>(gain_key_buf->host));
         const ::std::string exposure_key(reinterpret_cast<const char*>(exposure_key_buf->host));
         const ::std::string pixel_format(reinterpret_cast<const char*>(pixel_format_buf->host));
-        auto &u3v(ion::bb::image_io::U3V::get_instance(pixel_format, 2, frame_sync, realtime_diaplay_mode));
+        auto &u3v(ion::bb::image_io::U3V::get_instance(pixel_format, 2, frame_sync, realtime_diaplay_mode, gain_key, exposure_key));
         if (gendc0->is_bounds_query() || gendc1->is_bounds_query() || gain->is_bounds_query() || exposure->is_bounds_query()) {
             gain->dim[0].min = 0;
             gain->dim[0].extent = num_output;
@@ -1103,7 +1109,7 @@ int ION_EXPORT ion_bb_image_io_u3v_multiple_camera1(
         const ::std::string gain_key(reinterpret_cast<const char*>(gain_key_buf->host));
         const ::std::string exposure_key(reinterpret_cast<const char*>(exposure_key_buf->host));
         const ::std::string pixel_format(reinterpret_cast<const char*>(pixel_format_buf->host));
-        auto &u3v(ion::bb::image_io::U3V::get_instance(pixel_format, num_output, false, realtime_diaplay_mode));
+        auto &u3v(ion::bb::image_io::U3V::get_instance(pixel_format, num_output, false, realtime_diaplay_mode, gain_key, exposure_key));
         if (out0->is_bounds_query() || gain->is_bounds_query() || exposure->is_bounds_query()) {
             gain->dim[0].min = 0;
             gain->dim[0].extent = num_output;
@@ -1148,7 +1154,7 @@ int ION_EXPORT ion_bb_image_io_u3v_multiple_camera2(
         const ::std::string gain_key(reinterpret_cast<const char*>(gain_key_buf->host));
         const ::std::string exposure_key(reinterpret_cast<const char*>(exposure_key_buf->host));
         const ::std::string pixel_format(reinterpret_cast<const char*>(pixel_format_buf->host));
-        auto &u3v(ion::bb::image_io::U3V::get_instance(pixel_format, 2, frame_sync, realtime_diaplay_mode));
+        auto &u3v(ion::bb::image_io::U3V::get_instance(pixel_format, 2, frame_sync, realtime_diaplay_mode, gain_key, exposure_key));
         if (out0->is_bounds_query() || out1->is_bounds_query() || gain->is_bounds_query() || exposure->is_bounds_query()) {
             gain->dim[0].min = 0;
             gain->dim[0].extent = num_output;
