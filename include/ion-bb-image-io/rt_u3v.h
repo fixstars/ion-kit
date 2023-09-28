@@ -489,7 +489,7 @@ class U3V {
     U3V(std::string pixel_format, int32_t num_sensor, bool frame_sync, bool realtime_diaplay_mode, char* dev_id = nullptr)
     : gobject_(GOBJECT_FILE, true), aravis_(ARAVIS_FILE, true), 
         pixel_format_(pixel_format), num_sensor_(num_sensor), 
-        frame_sync_(frame_sync), realtime_diaplay_mode_(realtime_diaplay_mode), is_gendc_(false),
+        frame_sync_(frame_sync), realtime_diaplay_mode_(realtime_diaplay_mode), is_gendc_(false), is_param_integer_(false),
         devices_(num_sensor), buffers_(num_sensor), operation_mode_(OperationMode::Came1USB1), frame_cnt_(0), cameN_idx_(-1), disposed_(false)
     {
         printf("[LOG ion-kit] This is ion-kit with debug-log; feature/add-1-cam-2usb 230913\n");
@@ -534,15 +534,13 @@ class U3V {
                 throw std::runtime_error(err_->message);
             }
 
+            // Some type of U3V Camera has integer type on gain and exposure
             const char* device_vender_name;
             device_vender_name = arv_device_get_string_feature_value(devices_[i].device_, "DeviceVendorName", &err_);
-            std::cout << device_vender_name << std::endl;
             if (strcmp(device_vender_name, "Sony Semiconductor Solutions Corporation")==0){
                 const char* device_model_name;
                 device_model_name = arv_device_get_string_feature_value(devices_[i].device_, "DeviceModelName", &err_);
-                std::cout << device_model_name << "==" << std::endl;
                 if (strcmp(device_model_name, "    ")==0){
-                    std::cout << "none";
                     is_param_integer_ = true;  
                 }
             }
