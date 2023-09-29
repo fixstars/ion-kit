@@ -40,7 +40,7 @@ public:
 
     }
 
-    ComponentHeader& operator=(ComponentHeader& src) {
+    ComponentHeader& operator=(const ComponentHeader& src) {
         partheader_ = src.partheader_;
     
         // HeaderType_ = 0x2000;

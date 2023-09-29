@@ -52,7 +52,7 @@ public:
         }
     }
   
-    ContainerHeader& operator=(ContainerHeader& src) {
+    ContainerHeader& operator=(const ContainerHeader& src) {
         component_header_ = src.component_header_;
 
         // Signature_ = 0x43444E47;
