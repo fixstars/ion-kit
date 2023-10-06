@@ -104,5 +104,5 @@ class PortMap:
             c_buffers[i] = buffers[i].obj
 
 
-        if ion_port_map_set_buffer_array(self.obj, port.obj, c_buffers) != 0:
+        if ion_port_map_set_buffer_array(self.obj, port.obj, c_buffers, num_buffers) != 0:
             raise Exception('Invalid operation')
