@@ -492,7 +492,7 @@ class U3V {
         frame_sync_(frame_sync), realtime_diaplay_mode_(realtime_diaplay_mode), is_gendc_(false), is_param_integer_(false),
         devices_(num_sensor), buffers_(num_sensor), operation_mode_(OperationMode::Came1USB1), frame_cnt_(0), cameN_idx_(-1), disposed_(false)
     {
-        printf("[LOG ion-kit] This is ion-kit with debug-log; internal-develop 230929\n");
+        printf("[LOG ion-kit] This is ion-kit with debug-log; internal-develop 231011\n");
         init_symbols();
 
         arv_update_device_list();
