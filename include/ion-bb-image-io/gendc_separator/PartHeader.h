@@ -65,7 +65,7 @@ public:
         }
     }
 
-    PartHeader& operator=(PartHeader& src) {
+    PartHeader& operator=(const PartHeader& src) {
         HeaderType_ = src.HeaderType_;
         Flags_= src.Flags_;
         HeaderSize_= src.HeaderSize_;
