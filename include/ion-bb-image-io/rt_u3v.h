@@ -625,6 +625,8 @@ class U3V {
             }
 
             int32_t px =
+                pixel_format_ == "RGB8" ? PFNC_RGB8 :
+                pixel_format_ == "GBR8" ? PFNC_BGR8 :
                 pixel_format_ == "Mono8" ? PFNC_Mono8 :
                 pixel_format_ == "Mono10" ? PFNC_Mono10 : 
                 pixel_format_ == "Mono12" ? PFNC_Mono12 : 0;

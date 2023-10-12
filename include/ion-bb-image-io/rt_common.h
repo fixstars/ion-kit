@@ -318,9 +318,12 @@ struct rawHeader {
 };
 
 // PFNC
-#define PFNC_Mono8 0x01080001
-#define PFNC_Mono10 0x01100003
-#define PFNC_Mono12 0x01100005
+// https://www.emva.org/wp-content/uploads/GenICamPixelFormatValues.pdf
+#define PFNC_Mono8      0x01080001
+#define PFNC_Mono10     0x01100003
+#define PFNC_Mono12     0x01100005
+#define PFNC_RGB8       0x02180014
+#define PFNC_BGR8       0x02180015
 
 }  // namespace image_io
 }  // namespace bb
