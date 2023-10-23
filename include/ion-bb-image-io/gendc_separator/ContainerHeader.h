@@ -3,9 +3,8 @@
 
 #include "ComponentHeader.h"
 
-namespace {
 class ContainerHeader : public Header{
-public: 
+public:
 
     ContainerHeader(){}
 
@@ -26,14 +25,14 @@ public:
             Version_.at(i) = v;
         }
         offset += sizeof(Reserved_);
-        
+
         offset += Read(descriptor, offset, header_type);
         if (header_type != HeaderType_){
             std::cerr << "wrong header type in container header" << std::endl;
         }
         offset += Read(descriptor, offset, Flags_);
         offset += Read(descriptor, offset, HeaderSize_);
-        
+
         offset += Read(descriptor, offset, Id_);
         offset += Read(descriptor, offset, VariableFields_);
         offset += Read(descriptor, offset, DataSize_);
@@ -51,7 +50,7 @@ public:
             component_header_.push_back(ComponentHeader(descriptor, co));
         }
     }
-  
+
     ContainerHeader& operator=(const ContainerHeader& src) {
         component_header_ = src.component_header_;
 
@@ -122,9 +121,9 @@ public:
         return component_header_.at(ith_component).getDataSize(jth_part);
     }
 
-    int32_t getOffsetFromTypeSpecific(int32_t ith_component, int32_t jth_part, 
+    int32_t getOffsetFromTypeSpecific(int32_t ith_component, int32_t jth_part,
         int32_t kth_typespecific, int32_t typespecific_offset = 0){
-        
+
         return component_header_.at(ith_component).getOffsetFromTypeSpecific(jth_part, kth_typespecific, typespecific_offset);
     }
 
@@ -195,5 +194,4 @@ private:
     std::vector<int64_t> ComponentOffset_;
 };
 
-}
 #endif /*CONTAINERHEADER_H*/

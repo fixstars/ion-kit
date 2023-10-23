@@ -558,7 +558,7 @@ public:
     GeneratorParam<std::string> gain_key_ptr{"gain_key", "Gain"};
     GeneratorParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
     GeneratorParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
-    
+
     GeneratorInput<bool> dispose{ "dispose" };
     GeneratorInput<double> gain0{ "gain0" };
     GeneratorInput<double> exposure0{ "exposure0" };
@@ -691,6 +691,7 @@ public:
     GeneratorInput<Halide::Func> exposure{ "exposure", Halide::type_of<double>(), 1};
 
     GeneratorOutput<Halide::Func[]> output{ "output", Halide::type_of<T>(), D};
+    GeneratorOutput<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
 
     void generate() {
         using namespace Halide;
@@ -703,46 +704,63 @@ public:
         exposure_func(_) = exposure(_);
         exposure_func.compute_root();
 
-        const std::string pixel_format(pixel_format_ptr);
-        Buffer<uint8_t> pixel_format_buf(static_cast<int>(pixel_format.size() + 1));
-        pixel_format_buf.fill(0);
-        std::memcpy(pixel_format_buf.data(), pixel_format.c_str(), pixel_format.size());
-
-        const std::string gain_key(gain_key_ptr);
-        Buffer<uint8_t> gain_key_buf(static_cast<int>(gain_key.size() + 1));
-        gain_key_buf.fill(0);
-        std::memcpy(gain_key_buf.data(), gain_key.c_str(), gain_key.size());
-
-        const std::string exposure_key(exposure_key_ptr);
-        Buffer<uint8_t> exposure_key_buf(static_cast<int>(exposure_key.size() + 1));
-        exposure_key_buf.fill(0);
-        std::memcpy(exposure_key_buf.data(), exposure_key.c_str(), exposure_key.size());
-
-        std::vector<ExternFuncArgument> params{
-            dispose, static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
-            gain_func, exposure_func, pixel_format_buf,
-            gain_key_buf, exposure_key_buf
-         };
-
         Func cameraN("u3v_cameraN");
-        output.resize(num_devices);
-        if (output.size() == 1){
-            cameraN.define_extern("ion_bb_image_io_u3v_multiple_camera" + std::to_string(output.size()), params, Halide::type_of<T>(), D);
-        }else{
-            std::vector<Halide::Type> output_type;
-            for (int i = 0; i < output.size(); i++) {
-                output_type.push_back(Halide::type_of<T>());
+        {
+            const std::string pixel_format(pixel_format_ptr);
+            Buffer<uint8_t> pixel_format_buf(static_cast<int>(pixel_format.size() + 1));
+            pixel_format_buf.fill(0);
+            std::memcpy(pixel_format_buf.data(), pixel_format.c_str(), pixel_format.size());
+
+            const std::string gain_key(gain_key_ptr);
+            Buffer<uint8_t> gain_key_buf(static_cast<int>(gain_key.size() + 1));
+            gain_key_buf.fill(0);
+            std::memcpy(gain_key_buf.data(), gain_key.c_str(), gain_key.size());
+
+            const std::string exposure_key(exposure_key_ptr);
+            Buffer<uint8_t> exposure_key_buf(static_cast<int>(exposure_key.size() + 1));
+            exposure_key_buf.fill(0);
+            std::memcpy(exposure_key_buf.data(), exposure_key.c_str(), exposure_key.size());
+
+            std::vector<ExternFuncArgument> params{
+                dispose, static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
+                    gain_func, exposure_func, pixel_format_buf,
+                    gain_key_buf, exposure_key_buf
+            };
+
+            output.resize(num_devices);
+            if (output.size() == 1){
+                cameraN.define_extern("ion_bb_image_io_u3v_multiple_camera" + std::to_string(output.size()), params, Halide::type_of<T>(), D);
+            }else{
+                std::vector<Halide::Type> output_type;
+                for (int i = 0; i < output.size(); i++) {
+                    output_type.push_back(Halide::type_of<T>());
+                }
+                cameraN.define_extern("ion_bb_image_io_u3v_multiple_camera" + std::to_string(output.size()), params, output_type, D);
+
             }
-            cameraN.define_extern("ion_bb_image_io_u3v_multiple_camera" + std::to_string(output.size()), params, output_type, D);
-        
+            cameraN.compute_root();
+            if (output.size() == 1){
+                output[0](_) = cameraN(_);
+            }else{
+                for (int i = 0; i < output.size(); i++) {
+                    output[i](_) = cameraN(_)[i];
+                }
+            }
         }
-        cameraN.compute_root();
-        if (output.size() == 1){
-            output[0](_) = cameraN(_);
-        }else{
-            for (int i = 0; i < output.size(); i++) {
-                output[i](_) = cameraN(_)[i];
-            }
+
+        Func cameraN_fc("u3v_cameraN_fc");
+        {
+            const std::string pixel_format(pixel_format_ptr);
+            Buffer<uint8_t> pixel_format_buf(static_cast<int>(pixel_format.size() + 1));
+            pixel_format_buf.fill(0);
+            std::memcpy(pixel_format_buf.data(), pixel_format.c_str(), pixel_format.size());
+
+            std::vector<ExternFuncArgument> params{
+                cameraN, dispose, static_cast<int32_t>(output.size()), static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode), pixel_format_buf
+            };
+            cameraN_fc.define_extern("ion_bb_image_io_u3v_multiple_camera_frame_count" + std::to_string(output.size()), params, type_of<uint32_t>(), 1);
+            cameraN_fc.compute_root();
+            frame_count(_) = cameraN_fc(_);
         }
     }
 };
@@ -929,7 +947,7 @@ public:
             deviceinfo1(_) = input_deviceinfo[1](_);
             deviceinfo0.compute_root();
             deviceinfo1.compute_root();
-            
+
             std::vector<ExternFuncArgument> params = { gendc0, gendc1, deviceinfo0, deviceinfo1, dispose, payloadsize, output_directory_buf };
             Func image_io_binary_gendc_saver;
             image_io_binary_gendc_saver.define_extern("ion_bb_image_io_binary_2gendc_saver", params, Int(32), 0);
