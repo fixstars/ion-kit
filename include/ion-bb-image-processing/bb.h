@@ -1952,6 +1952,31 @@ public:
     }
 };
 
+class ColorDynamicAdjustment : public ion::BuildingBlock<ColorDynamicAdjustment> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "Color Dynamic Adjustment"};
+    GeneratorParam<std::string> gc_description{"gc_description", "This applies color dunamic adjustment."};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
+    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
+
+    GeneratorInput<float> gain_r{"gain_r"};
+    GeneratorInput<float> gain_g{"gain_g"};
+    GeneratorInput<float> gain_b{"gain_b"};
+    GeneratorInput<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 3};
+    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 3};
+
+    void generate() {
+        using namespace Halide;
+        Var x, y, c;
+        Expr rv = saturating_cast<uint8_t>(cast<float>(input(x, y, 0)) * gain_b);
+        Expr gv = saturating_cast<uint8_t>(cast<float>(input(x, y, 1)) * gain_g);
+        Expr bv = saturating_cast<uint8_t>(cast<float>(input(x, y, 2)) * gain_r);
+        output(x, y, c) = select(c == 0, rv, c == 1, gv, bv);
+    }
+
+};
+
 }  // namespace image_processing
 }  // namespace bb
 }  // namespace ion
@@ -2008,5 +2033,6 @@ ION_REGISTER_BUILDING_BLOCK(ion::bb::image_processing::CropImage3DFloat, image_p
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_processing::ColorSpaceConverterRGBToHSV, image_processing_color_space_converter_rgb_to_hsv);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_processing::ColorSpaceConverterHSVToRGB, image_processing_color_space_converter_hsv_to_rgb);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_processing::ColorAdjustment, image_processing_color_adjustment);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_processing::ColorDynamicAdjustment, image_processing_color_dynamic_adjustment);
 
 #endif

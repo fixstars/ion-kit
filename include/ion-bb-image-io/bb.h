@@ -558,10 +558,10 @@ public:
     GeneratorParam<std::string> gain_key_ptr{"gain_key", "Gain"};
     GeneratorParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
     GeneratorParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
-    
+
     GeneratorInput<bool> dispose{ "dispose" };
-    GeneratorInput<int32_t> gain0{ "gain0" };
-    GeneratorInput<int32_t> exposure0{ "exposure0" };
+    GeneratorInput<double> gain0{ "gain0" };
+    GeneratorInput<double> exposure0{ "exposure0" };
 
     GeneratorOutput<Halide::Func> output0{ "output0", Halide::type_of<T>(), D};
     GeneratorOutput<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
@@ -607,6 +607,7 @@ public:
 };
 
 using U3VCamera1_U8x3 = U3VCamera1<uint8_t, 3>;
+using U3VCamera1_U8x2 = U3VCamera1<uint8_t, 2>;
 using U3VCamera1_U16x2 = U3VCamera1<uint16_t, 2>;
 
 template<typename T, int D>
@@ -620,10 +621,10 @@ public:
     GeneratorParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
 
     GeneratorInput<bool> dispose{ "dispose" };
-    GeneratorInput<int32_t> gain0{ "gain0" };
-    GeneratorInput<int32_t> gain1{ "gain1" };
-    GeneratorInput<int32_t> exposure0{ "exposure0" };
-    GeneratorInput<int32_t> exposure1{ "exposure1" };
+    GeneratorInput<double> gain0{ "gain0" };
+    GeneratorInput<double> gain1{ "gain1" };
+    GeneratorInput<double> exposure0{ "exposure0" };
+    GeneratorInput<double> exposure1{ "exposure1" };
 
     GeneratorOutput<Halide::Func> output0{ "output0", Halide::type_of<T>(), D};
     GeneratorOutput<Halide::Func> output1{ "output1", Halide::type_of<T>(), D};
@@ -671,7 +672,167 @@ public:
 };
 
 using U3VCamera2_U8x3 = U3VCamera2<uint8_t, 3>;
+using U3VCamera2_U8x2 = U3VCamera2<uint8_t, 2>;
 using U3VCamera2_U16x2 = U3VCamera2<uint16_t, 2>;
+
+template<typename T, int D>
+class U3VCameraN : public ion::BuildingBlock<U3VCameraN<T, D>> {
+public:
+    GeneratorParam<int32_t> num_devices{"num_devices", 2};
+
+    GeneratorParam<bool> frame_sync{"frame_sync", false};
+    GeneratorParam<std::string> pixel_format_ptr{"pixel_format_ptr", "RGB8"};
+    GeneratorParam<std::string> gain_key_ptr{"gain_key", "Gain"};
+    GeneratorParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
+    GeneratorParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
+
+    GeneratorInput<bool> dispose{ "dispose", false };
+    GeneratorInput<Halide::Func> gain{ "gain", Halide::type_of<double>(), 1};
+    GeneratorInput<Halide::Func> exposure{ "exposure", Halide::type_of<double>(), 1};
+
+    GeneratorOutput<Halide::Func[]> output{ "output", Halide::type_of<T>(), D};
+    GeneratorOutput<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
+
+    void generate() {
+        using namespace Halide;
+
+        Func gain_func;
+        gain_func(_) = gain(_);
+        gain_func.compute_root();
+
+        Func exposure_func;
+        exposure_func(_) = exposure(_);
+        exposure_func.compute_root();
+
+        Func cameraN("u3v_cameraN");
+        {
+            const std::string pixel_format(pixel_format_ptr);
+            Buffer<uint8_t> pixel_format_buf(static_cast<int>(pixel_format.size() + 1));
+            pixel_format_buf.fill(0);
+            std::memcpy(pixel_format_buf.data(), pixel_format.c_str(), pixel_format.size());
+
+            const std::string gain_key(gain_key_ptr);
+            Buffer<uint8_t> gain_key_buf(static_cast<int>(gain_key.size() + 1));
+            gain_key_buf.fill(0);
+            std::memcpy(gain_key_buf.data(), gain_key.c_str(), gain_key.size());
+
+            const std::string exposure_key(exposure_key_ptr);
+            Buffer<uint8_t> exposure_key_buf(static_cast<int>(exposure_key.size() + 1));
+            exposure_key_buf.fill(0);
+            std::memcpy(exposure_key_buf.data(), exposure_key.c_str(), exposure_key.size());
+
+            std::vector<ExternFuncArgument> params{
+                dispose, static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
+                    gain_func, exposure_func, pixel_format_buf,
+                    gain_key_buf, exposure_key_buf
+            };
+
+            output.resize(num_devices);
+            if (output.size() == 1){
+                cameraN.define_extern("ion_bb_image_io_u3v_multiple_camera" + std::to_string(output.size()), params, Halide::type_of<T>(), D);
+            }else{
+                std::vector<Halide::Type> output_type;
+                for (int i = 0; i < output.size(); i++) {
+                    output_type.push_back(Halide::type_of<T>());
+                }
+                cameraN.define_extern("ion_bb_image_io_u3v_multiple_camera" + std::to_string(output.size()), params, output_type, D);
+
+            }
+            cameraN.compute_root();
+            if (output.size() == 1){
+                output[0](_) = cameraN(_);
+            }else{
+                for (int i = 0; i < output.size(); i++) {
+                    output[i](_) = cameraN(_)[i];
+                }
+            }
+        }
+
+        Func cameraN_fc("u3v_cameraN_fc");
+        {
+            const std::string pixel_format(pixel_format_ptr);
+            Buffer<uint8_t> pixel_format_buf(static_cast<int>(pixel_format.size() + 1));
+            pixel_format_buf.fill(0);
+            std::memcpy(pixel_format_buf.data(), pixel_format.c_str(), pixel_format.size());
+
+            std::vector<ExternFuncArgument> params{
+                cameraN, dispose, static_cast<int32_t>(output.size()), static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode), pixel_format_buf
+            };
+            cameraN_fc.define_extern("ion_bb_image_io_u3v_multiple_camera_frame_count" + std::to_string(output.size()), params, type_of<uint32_t>(), 1);
+            cameraN_fc.compute_root();
+            frame_count(_) = cameraN_fc(_);
+        }
+    }
+};
+
+using U3VCameraN_U8x3 = U3VCameraN<uint8_t, 3>;
+using U3VCameraN_U8x2 = U3VCameraN<uint8_t, 2>;
+using U3VCameraN_U16x2 = U3VCameraN<uint16_t, 2>;
+
+class U3VGenDC : public ion::BuildingBlock<U3VGenDC> {
+public:
+    GeneratorParam<int32_t> num_devices{"num_devices", 2};
+
+    GeneratorParam<bool> frame_sync{"frame_sync", false};
+    GeneratorParam<std::string> pixel_format_ptr{"pixel_format_ptr", "RGB8"};
+    GeneratorParam<std::string> gain_key_ptr{"gain_key", "Gain"};
+    GeneratorParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
+    GeneratorParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
+
+    GeneratorInput<bool> dispose{ "dispose" };
+    GeneratorInput<Halide::Func> gain{ "gain", Halide::type_of<double>(), 1};
+    GeneratorInput<Halide::Func> exposure{ "exposure", Halide::type_of<double>(), 1};
+
+    GeneratorOutput<Halide::Func[]> gendc{ "gendc", Halide::type_of<uint8_t>(), 1};
+    GeneratorOutput<Halide::Func[]> device_info{ "device_info", Halide::type_of<uint8_t>(), 1};
+
+    void generate() {
+        using namespace Halide;
+
+        Func gain_func;
+        gain_func(_) = gain(_);
+        gain_func.compute_root();
+
+        Func exposure_func;
+        exposure_func(_) = exposure(_);
+        exposure_func.compute_root();
+
+        const std::string pixel_format(pixel_format_ptr);
+        Buffer<uint8_t> pixel_format_buf(static_cast<int>(pixel_format.size() + 1));
+        pixel_format_buf.fill(0);
+        std::memcpy(pixel_format_buf.data(), pixel_format.c_str(), pixel_format.size());
+
+        const std::string gain_key(gain_key_ptr);
+        Buffer<uint8_t> gain_key_buf(static_cast<int>(gain_key.size() + 1));
+        gain_key_buf.fill(0);
+        std::memcpy(gain_key_buf.data(), gain_key.c_str(), gain_key.size());
+
+        const std::string exposure_key(exposure_key_ptr);
+        Buffer<uint8_t> exposure_key_buf(static_cast<int>(exposure_key.size() + 1));
+        exposure_key_buf.fill(0);
+        std::memcpy(exposure_key_buf.data(), exposure_key.c_str(), exposure_key.size());
+
+        std::vector<ExternFuncArgument> params{
+            dispose, static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
+            gain_func, exposure_func, pixel_format_buf,
+            gain_key_buf, exposure_key_buf
+         };
+
+        Func u3v_gendc("u3v_gendc");
+        gendc.resize(num_devices);
+        device_info.resize(num_devices);
+        std::vector<Halide::Type> output_type;
+        for (int i = 0; i < gendc.size() * 2; i++) {
+            output_type.push_back(Halide::type_of<uint8_t>());
+        }
+        u3v_gendc.define_extern("ion_bb_image_io_u3v_gendc_camera" + std::to_string(gendc.size()), params, output_type, 1);
+        u3v_gendc.compute_root();
+        for (int i = 0; i < gendc.size(); i++) {
+            gendc[i](_) = u3v_gendc(_)[2*i];
+            device_info[i](_) = u3v_gendc(_)[2*i+1];
+        }
+    }
+};
 
 class BinarySaver : public ion::BuildingBlock<BinarySaver> {
 public:
@@ -736,6 +897,70 @@ public:
     }
 };
 
+class BinaryGenDCSaver : public ion::BuildingBlock<BinaryGenDCSaver> {
+public:
+    GeneratorParam<std::string> output_directory_ptr{ "output_directory", "." };
+
+    GeneratorParam<int32_t> num_devices{"num_devices", 2};
+
+    Input<Halide::Func[]> input_gendc{ "input_gendc", Halide::type_of<uint8_t>(), 1 };
+    Input<Halide::Func[]> input_deviceinfo{ "input_deviceinfo", Halide::type_of<uint8_t>(), 1 };
+
+    Input<bool> dispose{ "dispose" };
+    Input<int32_t> payloadsize{ "payloadsize" };
+
+    Output<int> output{ "output" };
+
+    void generate() {
+        using namespace Halide;
+        int32_t num_gendc = static_cast<int32_t>(num_devices);
+
+        const std::string output_directory(output_directory_ptr);
+        Halide::Buffer<uint8_t> output_directory_buf(static_cast<int>(output_directory.size() + 1));
+        output_directory_buf.fill(0);
+        std::memcpy(output_directory_buf.data(), output_directory.c_str(), output_directory.size());
+
+        if (num_gendc==1){
+            Func gendc;
+            gendc(_) = input_gendc(_);
+            gendc.compute_root();
+
+            Func deviceinfo;
+            deviceinfo(_) = input_deviceinfo(_);
+            deviceinfo.compute_root();
+
+            std::vector<ExternFuncArgument> params = { gendc, deviceinfo, dispose, payloadsize, output_directory_buf };
+            Func image_io_binary_gendc_saver;
+            image_io_binary_gendc_saver.define_extern("ion_bb_image_io_binary_1gendc_saver", params, Int(32), 0);
+            image_io_binary_gendc_saver.compute_root();
+            output() = image_io_binary_gendc_saver();
+        }else if (num_gendc ==2){
+            Func gendc0, gendc1;
+            Var x, y;
+            gendc0(_) = input_gendc[0](_);
+            gendc1(_) = input_gendc[1](_);
+            gendc0.compute_root();
+            gendc1.compute_root();
+
+            Func deviceinfo0, deviceinfo1;
+            deviceinfo0(_) = input_deviceinfo[0](_);
+            deviceinfo1(_) = input_deviceinfo[1](_);
+            deviceinfo0.compute_root();
+            deviceinfo1.compute_root();
+
+            std::vector<ExternFuncArgument> params = { gendc0, gendc1, deviceinfo0, deviceinfo1, dispose, payloadsize, output_directory_buf };
+            Func image_io_binary_gendc_saver;
+            image_io_binary_gendc_saver.define_extern("ion_bb_image_io_binary_2gendc_saver", params, Int(32), 0);
+            image_io_binary_gendc_saver.compute_root();
+            output() = image_io_binary_gendc_saver();
+        }else{
+            std::runtime_error("device number > 2 is not supported");
+        }
+
+
+    }
+};
+
 class BinaryLoader : public ion::BuildingBlock<BinaryLoader> {
 public:
     GeneratorParam<std::string> output_directory_ptr{ "output_directory_ptr", "" };
@@ -794,12 +1019,24 @@ ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::GrayscaleDataLoader, image_io_gra
 
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::GUIDisplay, image_io_gui_display);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::ImageSaver, image_io_image_saver);
+
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera1_U8x3, image_io_u3v_camera1_u8x3);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera1_U16x2, image_io_u3v_camera1_u16x2);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera1_U8x2, image_io_u3v_camera1_u8x2);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera2_U8x3, image_io_u3v_camera2_u8x3);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera2_U8x2, image_io_u3v_camera2_u8x2);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera2_U16x2, image_io_u3v_camera2_u16x2);
+
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCameraN_U8x3, image_io_u3v_cameraN_u8x3);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCameraN_U8x2, image_io_u3v_cameraN_u8x2);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCameraN_U16x2, image_io_u3v_cameraN_u16x2);
+
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VGenDC, image_io_u3v_gendc);
+
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinarySaver, image_io_binarysaver);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinaryLoader, image_io_binaryloader);
+
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinaryGenDCSaver, image_io_binary_gendc_saver);
 
 //backward compatability
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera1_U8x3, u3v_camera1_u8x3);

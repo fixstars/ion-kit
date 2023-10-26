@@ -286,6 +286,45 @@ class ImageSequence {
 };
 #endif // _WIN32
 
+struct rawHeader {
+
+    // ---------- 0
+    int version_;
+    // ---------- 4
+    int width_;
+    int height_;
+    // ---------- 12
+    float r_gain0_;
+    float g_gain0_;
+    float b_gain0_;
+    // ---------- 24
+    float r_gain1_;
+    float g_gain1_;
+    float b_gain1_;
+    // ---------- 36
+    int offset0_x_;
+    int offset0_y_;
+    int offset1_x_;
+    int offset1_y_;
+    // ---------- 52
+    int outputsize0_x_;
+    int outputsize0_y_;
+    int outputsize1_x_;
+    int outputsize1_y_;
+    // ---------- 68
+    float fps_;
+    // ---------- 72
+    int pfnc_pixelformat;
+};
+
+// PFNC
+// https://www.emva.org/wp-content/uploads/GenICamPixelFormatValues.pdf
+#define PFNC_Mono8      0x01080001
+#define PFNC_Mono10     0x01100003
+#define PFNC_Mono12     0x01100005
+#define PFNC_RGB8       0x02180014
+#define PFNC_BGR8       0x02180015
+
 }  // namespace image_io
 }  // namespace bb
 }  // namespace ion
