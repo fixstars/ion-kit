@@ -16,8 +16,10 @@ do
     eval set envval=\${${envname}}
     if [ "${envval}" == "" ]; then
         eval export ${envname}=${envvar}
+        echo ${envname}=${envvar}
     else
         eval export ${envname}=${envvar}:\${${envname}}
+        echo ${envname}=${envvar}
     fi
 done
 

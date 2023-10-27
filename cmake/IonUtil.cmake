@@ -50,16 +50,16 @@ function(ion_run NAME COMPILE_NAME)
         add_custom_command(OUTPUT ${HEADER} ${STATIC_LIB}
             COMMAND ${CMAKE_SOURCE_DIR}/script/invoke.sh $<TARGET_FILE:${COMPILE_NAME}>
                 HL_TARGET ${IER_TARGET_STRING}
-                LD_LIBRARY_PATH ${HALIDE_ROOT}/bin
-                LD_LIBRARY_PATH ${CMAKE_BINARY_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>
+                LD_LIBRARY_PATH ${Halide_DIR}/../../../bin
+                LD_LIBRARY_PATH ${CMAKE_BINARY_DIR}/src/bb
             DEPENDS ${COMPILE_NAME} ${OUTPUT_PATH}
             WORKING_DIRECTORY ${OUTPUT_PATH})
     else()
         add_custom_command(OUTPUT ${HEADER} ${STATIC_LIB}
             COMMAND ${CMAKE_SOURCE_DIR}/script/invoke.bat $<TARGET_FILE:${COMPILE_NAME}>
                 HL_TARGET ${IER_TARGET_STRING}
-                PATH ${HALIDE_ROOT}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>
-                PATH ${CMAKE_BINARY_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>
+                PATH ${Halide_DIR}/../../../$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>
+                PATH ${CMAKE_BINARY_DIR}/src/bb/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>
             DEPENDS ${COMPILE_NAME} ${OUTPUT_PATH}
             WORKING_DIRECTORY ${OUTPUT_PATH})
     endif()
