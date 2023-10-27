@@ -1,10 +1,6 @@
 #include <ion/ion.h>
 #include <iostream>
 
-#include "ion-bb-core/bb.h"
-#include "ion-bb-dnn/bb.h"
-#include "ion-bb-image-io/bb.h"
-
 using namespace ion;
 
 int main(int argc, char *argv[]) {
@@ -14,6 +10,7 @@ int main(int argc, char *argv[]) {
 
         Builder b;
         b.set_target(Halide::get_target_from_environment());
+        b.with_bb_module("ion-bb");
 
         Node n;
         n = b.add("image_io_color_data_loader").set_param(Param{"url", "http://ion-kit.s3.us-west-2.amazonaws.com/images/pedestrian.jpg"}, Param{"width", std::to_string(input_width)}, Param{"height", std::to_string(input_height)});

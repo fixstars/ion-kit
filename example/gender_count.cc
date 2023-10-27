@@ -2,14 +2,6 @@
 #include <ion/json.hpp>
 #include <iostream>
 
-#include "ion-bb-core/bb.h"
-#include "ion-bb-dnn/bb.h"
-#include "ion-bb-image-io/bb.h"
-
-#include "ion-bb-core/rt.h"
-#include "ion-bb-dnn/rt.h"
-#include "ion-bb-image-io/rt.h"
-
 using namespace ion;
 
 using json = nlohmann::json;
@@ -28,6 +20,7 @@ int main(int argc, char *argv[]) {
 
         Builder b;
         b.set_target(Halide::get_target_from_environment());
+        b.with_bb_module("ion-bb");
 
         Node n;
         n = b.add("image_io_camera").set_param(wparam, hparam);

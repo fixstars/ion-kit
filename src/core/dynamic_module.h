@@ -1,6 +1,8 @@
 #ifndef ION_DYNAMIC_MODULE_H
 #define ION_DYNAMIC_MODULE_H
 
+#include <filesystem>
+
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -21,11 +23,13 @@ class DynamicModule {
   using Handle = void*;
 #endif
 
-     DynamicModule(const std::string& module_path) {
+     DynamicModule(const std::string& module_name_or_path) {
          if (module_path == "") {
              handle_ = nullptr;
              return;
          }
+
+         // TODO: WIP: test moduel_name_or_path using std::filesystem
 
 #ifdef _WIN32
          handle_ = LoadLibraryA(module_path.c_str());

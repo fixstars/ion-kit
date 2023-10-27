@@ -1,10 +1,5 @@
 #include "ion/ion.h"
 
-#include "ion-bb-internal/bb.h"
-
-#include "test-bb.h"
-#include "test-rt.h"
-
 using namespace ion;
 
 int main()
@@ -18,6 +13,8 @@ int main()
 
         Builder b;
         b.set_target(Halide::get_host_target().with_feature(Halide::Target::Profile)); // CPU
+        b.with_bb_module("ion-bb");
+        b.with_bb_module("ion-bb-test");
 
         Node n;
         Port ip{"input", Halide::type_of<int32_t>(), 2};

@@ -10,9 +10,6 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include "ion-bb-image-io/bb.h"
-#include "ion-bb-image-io/rt.h"
-
 #include "util.h"
 
 using namespace ion;
@@ -20,6 +17,7 @@ using namespace ion;
 int main(int argc, char *argv[]) {
     Builder b;
     b.set_target(Halide::Target{get_target_from_cmdline(argc, argv)});
+    b.with_bb_module("ion-bb");
 
     Node n = b.add("image_io_d435");
 

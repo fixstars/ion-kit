@@ -17,11 +17,10 @@
 #define ION_EXPORT
 #endif
 
-#if defined(ION_ENABLE_JIT_EXTERN)
 #include <Halide.h>
 namespace ion {
 namespace bb {
-namespace core {
+namespace base {
 
 std::map<std::string, Halide::ExternCFunction> extern_functions;
 
@@ -35,14 +34,11 @@ class RegisterExtern {
 } // image_io
 } // bb
 } // ion
-#define ION_REGISTER_EXTERN(NAME) static auto ion_register_extern_##NAME = ion::bb::core::RegisterExtern(#NAME, NAME);
-#else
-#define ION_REGISTER_EXTERN(NAME)
-#endif
+#define ION_REGISTER_EXTERN(NAME) static auto ion_register_extern_##NAME = ion::bb::base::RegisterExtern(#NAME, NAME);
 
 namespace ion {
 namespace bb {
-namespace core {
+namespace base {
 
 std::tuple<std::string, std::string> parse_url(const std::string &url) {
     if (url.rfind("http://", 0) != 0) {  // not starts_with
@@ -82,16 +78,16 @@ void fill_by_rng<int8_t>(std::mt19937 &rng, halide_buffer_t *range, halide_buffe
 std::unordered_map<std::string, std::vector<uint8_t>> buffer_cache;
 std::unordered_map<int32_t, std::mt19937> rng_map;
 
-}  // namespace core
+}  // namespace base
 }  // namespace bb
 }  // namespace ion
 
-extern "C" ION_EXPORT int ion_bb_core_buffer_loader(halide_buffer_t *url_buf, int32_t extent0, int32_t extent1, int32_t extent2, int32_t extent3, halide_buffer_t *out) {
+extern "C" ION_EXPORT int ion_bb_base_buffer_loader(halide_buffer_t *url_buf, int32_t extent0, int32_t extent1, int32_t extent2, int32_t extent3, halide_buffer_t *out) {
     std::string url = std::string(reinterpret_cast<const char *>(url_buf->host));
 
     if (!out->is_bounds_query()) {
-        auto it = ion::bb::core::buffer_cache.find(url);
-        if (it != ion::bb::core::buffer_cache.end() && it->second.size() == out->size_in_bytes()) {
+        auto it = ion::bb::base::buffer_cache.find(url);
+        if (it != ion::bb::base::buffer_cache.end() && it->second.size() == out->size_in_bytes()) {
             memcpy(out->host, it->second.data(), it->second.size());
             return 0;
         } else {
@@ -117,7 +113,7 @@ extern "C" ION_EXPORT int ion_bb_core_buffer_loader(halide_buffer_t *url_buf, in
 
     std::string host_name;
     std::string path_name;
-    std::tie(host_name, path_name) = ion::bb::core::parse_url(url);
+    std::tie(host_name, path_name) = ion::bb::base::parse_url(url);
 
     bool img_loaded = false;
     std::vector<uint8_t> data(size);
@@ -145,14 +141,14 @@ extern "C" ION_EXPORT int ion_bb_core_buffer_loader(halide_buffer_t *url_buf, in
     }
 
     if (img_loaded) {
-        ion::bb::core::buffer_cache[url] = data;
+        ion::bb::base::buffer_cache[url] = data;
         return 0;
     } else {
         return -1;
     }
 }
 
-extern "C" int ION_EXPORT ion_bb_core_buffer_saver(halide_buffer_t *in, halide_buffer_t *path_buf, int32_t extent0, int32_t extent1, int32_t extent2, int32_t extent3, halide_buffer_t *out) {
+extern "C" int ION_EXPORT ion_bb_base_buffer_saver(halide_buffer_t *in, halide_buffer_t *path_buf, int32_t extent0, int32_t extent1, int32_t extent2, int32_t extent3, halide_buffer_t *out) {
     std::string path = std::string(reinterpret_cast<const char *>(path_buf->host));
     if (in->is_bounds_query()) {
         in->dim[0].min = 0;
@@ -180,7 +176,7 @@ extern "C" int ION_EXPORT ion_bb_core_buffer_saver(halide_buffer_t *in, halide_b
     return 0;
 }
 
-extern "C" ION_EXPORT int ion_bb_core_random_buffer(int32_t instance_id, int32_t seed, halide_buffer_t *range, int32_t extent0, int32_t extent1, int32_t extent2, int32_t extent3, halide_buffer_t *out) {
+extern "C" ION_EXPORT int ion_bb_base_random_buffer(int32_t instance_id, int32_t seed, halide_buffer_t *range, int32_t extent0, int32_t extent1, int32_t extent2, int32_t extent3, halide_buffer_t *out) {
     if (out->is_bounds_query()) {
         out->dim[0].min = 0;
         out->dim[0].extent = extent0;
@@ -201,33 +197,33 @@ extern "C" ION_EXPORT int ion_bb_core_random_buffer(int32_t instance_id, int32_t
     }
 
     std::mt19937 rng;
-    auto it = ion::bb::core::rng_map.find(instance_id);
-    if (it != ion::bb::core::rng_map.end()) {
+    auto it = ion::bb::base::rng_map.find(instance_id);
+    if (it != ion::bb::base::rng_map.end()) {
         rng = it->second;
     } else {
         rng = std::mt19937(seed);
     }
 
     if (out->type == halide_type_t(halide_type_uint, 8)) {
-        ion::bb::core::fill_by_rng<uint8_t>(rng, range, out);
+        ion::bb::base::fill_by_rng<uint8_t>(rng, range, out);
     } else if (out->type == halide_type_t(halide_type_uint, 16)) {
-        ion::bb::core::fill_by_rng<uint16_t>(rng, range, out);
+        ion::bb::base::fill_by_rng<uint16_t>(rng, range, out);
     } else if (out->type == halide_type_t(halide_type_uint, 32)) {
-        ion::bb::core::fill_by_rng<uint32_t>(rng, range, out);
+        ion::bb::base::fill_by_rng<uint32_t>(rng, range, out);
     } else if (out->type == halide_type_t(halide_type_uint, 64)) {
-        ion::bb::core::fill_by_rng<uint64_t>(rng, range, out);
+        ion::bb::base::fill_by_rng<uint64_t>(rng, range, out);
     } else if (out->type == halide_type_t(halide_type_int, 8)) {
-        ion::bb::core::fill_by_rng<int8_t>(rng, range, out);
+        ion::bb::base::fill_by_rng<int8_t>(rng, range, out);
     } else if (out->type == halide_type_t(halide_type_int, 16)) {
-        ion::bb::core::fill_by_rng<int16_t>(rng, range, out);
+        ion::bb::base::fill_by_rng<int16_t>(rng, range, out);
     } else if (out->type == halide_type_t(halide_type_int, 32)) {
-        ion::bb::core::fill_by_rng<int32_t>(rng, range, out);
+        ion::bb::base::fill_by_rng<int32_t>(rng, range, out);
     } else if (out->type == halide_type_t(halide_type_int, 64)) {
-        ion::bb::core::fill_by_rng<int64_t>(rng, range, out);
+        ion::bb::base::fill_by_rng<int64_t>(rng, range, out);
     } else if (out->type == halide_type_t(halide_type_float, 32)) {
-        ion::bb::core::fill_by_rng<float>(rng, range, out);
+        ion::bb::base::fill_by_rng<float>(rng, range, out);
     } else if (out->type == halide_type_t(halide_type_float, 64)) {
-        ion::bb::core::fill_by_rng<double>(rng, range, out);
+        ion::bb::base::fill_by_rng<double>(rng, range, out);
     } else {
         return -1;
     }

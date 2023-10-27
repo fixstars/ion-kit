@@ -1,6 +1,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <filesystem>
 
 // to display
 #include <opencv2/core.hpp>
@@ -9,14 +10,6 @@
 
 // ion
 #include <ion/ion.h>
-#include "ion-bb-core/bb.h"
-#include "ion-bb-core/rt.h"
-#include "ion-bb-image-io/bb.h"
-#include "ion-bb-image-io/rt.h"
-#include "ion-bb-image-processing/bb.h"
-#include "ion-bb-image-processing/rt.h"
-
-#include "ion-bb-image-io/ghc/filesystem.hpp"
 
 #define FEATURE_GAIN_KEY "Gain"
 #define FEATURE_EXPOSURE_KEY "Exposure"
@@ -165,7 +158,7 @@ void display_and_save(int32_t width, int32_t height, std::string directory_path,
     cv::destroyAllWindows();
 }
 
-void open_and_check(int32_t& width, int32_t& height, const ghc::filesystem::path output_directory, uint32_t& file_idx, std::ifstream& ifs, bool *finished) {
+void open_and_check(int32_t& width, int32_t& height, const filesystem::path output_directory, uint32_t& file_idx, std::ifstream& ifs, bool *finished) {
     auto file_path = output_directory / ("raw-" + ::std::to_string(file_idx++) + ".bin");
 
     ifs = ::std::ifstream(file_path, ::std::ios::binary);
@@ -185,7 +178,7 @@ void open_and_check(int32_t& width, int32_t& height, const ghc::filesystem::path
     ifs.seekg(512, ::std::ios_base::beg);
 }
 
-bool load_header_file(ghc::filesystem::path output_directory, rawHeader header_info)
+bool load_header_file(std::filesystem::path output_directory, rawHeader header_info)
 {
     std::ifstream ifs;
     int  width_, height_;
@@ -253,11 +246,11 @@ int main() {
     int32_t height = 1080;
     float fps = 60.0f;
 
-    ghc::filesystem::path test_directory = "u3v_framerate_test";
+    std::filesystem::path test_directory = "u3v_framerate_test";
     std::string output_directory_prefix = "u3v_framerate_test";
 
-    if(! ghc::filesystem::is_directory(test_directory)){
-        bool ret = ghc::filesystem::create_directory(test_directory);
+    if(! std::filesystem::is_directory(test_directory)){
+        bool ret = std::filesystem::create_directory(test_directory);
     }
 
     rawHeader header_info = {
@@ -268,9 +261,9 @@ int main() {
     int num_run = 50;
 
     for (int i = 0; i < num_run; ++i){
-        ghc::filesystem::path output_directory = test_directory / (output_directory_prefix + std::to_string(i));
-        if(! ghc::filesystem::is_directory(output_directory)){
-            bool ret = ghc::filesystem::create_directory(output_directory);
+        std::filesystem::path output_directory = test_directory / (output_directory_prefix + std::to_string(i));
+        if(! std::filesystem::is_directory(output_directory)){
+            bool ret = std::filesystem::create_directory(output_directory);
         }
         display_and_save(width, height, output_directory.string(), header_info, i == num_run - 1);
         bool ret = load_header_file(output_directory, header_info);

@@ -1,11 +1,5 @@
 #include <ion/ion.h>
 
-#include "ion-bb-core/bb.h"
-#include "ion-bb-image-io/bb.h"
-#include "ion-bb-image-processing/bb.h"
-#include "ion-bb-internal/bb.h"
-#include "ion-bb-sgm/bb.h"
-
 using namespace ion;
 
 int main() {
@@ -19,6 +13,7 @@ int main() {
 
         Builder b;
         b.set_target(Halide::get_target_from_environment());
+        b.with_bb_module("ion-bb");
 
         Node ln = b.add("image_io_color_data_loader").set_param(Param{"url", "http://ion-kit.s3.us-west-2.amazonaws.com/images/aloe_left.jpg"}, Param{"width", std::to_string(input_width)}, Param{"height", std::to_string(input_height)});
         ln = b.add("core_normalize_3d_uint8")(ln["output"]);

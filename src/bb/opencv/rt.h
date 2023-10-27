@@ -12,7 +12,6 @@
 #define ION_EXPORT
 #endif
 
-#if defined(ION_ENABLE_JIT_EXTERN)
 #include <Halide.h>
 namespace ion {
 namespace bb {
@@ -31,9 +30,6 @@ class RegisterExtern {
 } // bb
 } // ion
 #define ION_REGISTER_EXTERN(NAME) static auto ion_register_extern_##NAME = ion::bb::opencv::RegisterExtern(#NAME, NAME);
-#else
-#define ION_REGISTER_EXTERN(NAME)
-#endif
 
 namespace {
 int hl2cv_type(halide_type_t hl_type, int channel) {

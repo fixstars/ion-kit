@@ -1,11 +1,5 @@
 #include "sgm.h"
 
-#include "ion-bb-core/rt.h"
-#include "ion-bb-image-io/rt.h"
-#include "ion-bb-image-processing/rt.h"
-#include "ion-bb-internal/rt.h"
-#include "ion-bb-sgm/rt.h"
-
 #include <HalideBuffer.h>
 
 #include <iostream>

@@ -6,14 +6,6 @@
 
 #include <ion/ion.h>
 
-#include "ion-bb-core/bb.h"
-#include "ion-bb-image-io/bb.h"
-#include "ion-bb-image-processing/bb.h"
-
-#include "ion-bb-core/rt.h"
-#include "ion-bb-image-io/rt.h"
-#include "ion-bb-image-processing/rt.h"
-
 #include "util.h"
 
 using namespace ion;
@@ -29,6 +21,7 @@ int main(int argc, char *argv[]) {
 
     Builder b;
     b.set_target(Halide::Target{get_target_from_cmdline(argc, argv)});
+    b.with_bb_module("ion-bb");
 
     constexpr int32_t num = 2;
     Node n;

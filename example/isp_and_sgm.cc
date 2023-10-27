@@ -8,16 +8,6 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include "ion-bb-core/bb.h"
-#include "ion-bb-image-processing/bb.h"
-#include "ion-bb-image-io/bb.h"
-#include "ion-bb-sgm/bb.h"
-
-#include "ion-bb-core/rt.h"
-#include "ion-bb-image-processing/rt.h"
-#include "ion-bb-image-io/rt.h"
-#include "ion-bb-sgm/rt.h"
-
 using namespace ion;
 
 int main(int argc, char *argv[]) {
@@ -148,6 +138,7 @@ int main(int argc, char *argv[]) {
 
         Builder b;
         b.set_target(Halide::get_target_from_environment());
+        b.with_bb_module("ion-bb");
 
         // ISP Nodes
         Node loader, normalize;

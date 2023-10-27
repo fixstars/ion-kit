@@ -8,7 +8,6 @@
 
 #include <HalideBuffer.h>
 
-#if defined(ION_ENABLE_JIT_EXTERN)
 #include <Halide.h>
 namespace ion {
 namespace bb {
@@ -27,9 +26,6 @@ class RegisterExtern {
 } // bb
 } // ion
 #define ION_REGISTER_EXTERN(NAME) static auto ion_register_extern_##NAME = ion::bb::image_io::RegisterExtern(#NAME, NAME);
-#else
-#define ION_REGISTER_EXTERN(NAME)
-#endif
 
 #include "rt_u3v.h"
 #include "rt_file.h"

@@ -22,8 +22,8 @@ function(ion_compile NAME)
             PUBLIC -fno-rtti  # For Halide::Generator
             PUBLIC -rdynamic) # For JIT compiling
     endif()
-    target_include_directories(${NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include;${ION_BB_INCLUDE_DIRS}")
-    target_link_libraries(${NAME} PRIVATE ion-core ${ION_BB_LIBRARIES} ${PLATFORM_LIBRARIES})
+    target_include_directories(${NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include")
+    target_link_libraries(${NAME} PRIVATE ion-core ${PLATFORM_LIBRARIES})
     set_target_properties(${NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY compile PIPELINE_NAME ${IEC_PIPELINE_NAME})
 endfunction()
 
@@ -93,8 +93,9 @@ function(ion_jit NAME)
         # For JIT compiling
         target_compile_options(${NAME} PUBLIC -rdynamic)
     endif()
-    target_include_directories(${NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include;${ION_BB_INCLUDE_DIRS}")
-    target_link_libraries(${NAME} PRIVATE ion-core ${ION_BB_LIBRARIES} ${PLATFORM_LIBRARIES})
+    find_package(OpenCV 4 REQUIRED)
+    target_include_directories(${NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include ${ION_BB_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
+    target_link_libraries(${NAME} PRIVATE ion-core ${ION_BB_LIBRARIES} ${PLATFORM_LIBRARIES} ${OpenCV_LIBS})
     set_target_properties(${NAME} PROPERTIES ENABLE_EXPORTS ON)
 endfunction()
 

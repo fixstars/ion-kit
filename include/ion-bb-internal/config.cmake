@@ -1,4 +1,0 @@
-set(INCLUDE_DIRS)
-set(LINK_DIRS)
-set(RUNTIME_ENVS)
-set(LIBRARIES)
