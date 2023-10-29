@@ -25,6 +25,7 @@ function(ion_compile NAME)
     target_include_directories(${NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include")
     target_link_libraries(${NAME} PRIVATE ion-core ${PLATFORM_LIBRARIES})
     set_target_properties(${NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY compile PIPELINE_NAME ${IEC_PIPELINE_NAME})
+    add_dependencies(${NAME} ion-bb)
 endfunction()
 
 function(ion_run NAME COMPILE_NAME)
@@ -65,9 +66,10 @@ function(ion_run NAME COMPILE_NAME)
     endif()
 
     # Build run
+    find_package(OpenCV 4 REQUIRED)
     add_executable(${NAME} ${IER_SRCS} ${HEADER})
-    target_include_directories(${NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include;${ION_BB_INCLUDE_DIRS};${OUTPUT_PATH}")
-    target_link_libraries(${NAME} PRIVATE ${STATIC_LIB} Halide::Halide Halide::Runtime ${ION_BB_LIBRARIES} ${PLATFORM_LIBRARIES})
+    target_include_directories(${NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include ${OpenCV_INCLUDE_DIRS} ${OUTPUT_PATH})
+    target_link_libraries(${NAME} PRIVATE ${STATIC_LIB} ion-bb Halide::Halide Halide::Runtime ${OpenCV_LIBS} ${PLATFORM_LIBRARIES})
 
     add_test(NAME ${NAME} COMMAND $<TARGET_FILE:${NAME}> ${IER_RUNTIME_ARGS})
 endfunction()

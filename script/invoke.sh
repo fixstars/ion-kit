@@ -13,13 +13,14 @@ do
     envvar=${1}
     shift
 
-    eval set envval=\${${envname}}
+    eval envval=\${${envname}}
+
     if [ "${envval}" == "" ]; then
         eval export ${envname}=${envvar}
-        echo ${envname}=${envvar}
+        eval echo ${envname}=${envvar}
     else
         eval export ${envname}=${envvar}:\${${envname}}
-        echo ${envname}=${envvar}
+        eval echo ${envname}=${envvar}:\${${envname}}
     fi
 done
 

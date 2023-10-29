@@ -11,10 +11,10 @@ int main() {
         b.set_target(Halide::get_target_from_environment());
         b.with_bb_module("ion-bb");
 
-        Node n = b.add("core_scalar_to_func_uint8")(input);
-        n = b.add("core_extend_dimension_0d_uint8")(n["output"]);
-        n = b.add("core_extend_dimension_1d_uint8")(n["output"]);
-        n = b.add("core_extend_dimension_2d_uint8")(n["output"]);
+        Node n = b.add("base_scalar_to_func_uint8")(input);
+        n = b.add("base_extend_dimension_0d_uint8")(n["output"]);
+        n = b.add("base_extend_dimension_1d_uint8")(n["output"]);
+        n = b.add("base_extend_dimension_2d_uint8")(n["output"]);
 
         b.compile("producerx3");
     } catch (const std::exception &e) {

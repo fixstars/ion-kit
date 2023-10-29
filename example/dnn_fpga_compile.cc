@@ -24,9 +24,9 @@ int main(int argc, char *argv[]) {
                 Param{"width", "512"},
                 Param{"height", "512"}
             )(n["output"]);
-        n = b.add("core_reorder_buffer_3d_float")(n["output"]).set_param(Param{"dim0", "2"}, Param{"dim1", "0"}, Param{"dim2", "1"});  // CHW -> HWC
+        n = b.add("base_reorder_buffer_3d_float")(n["output"]).set_param(Param{"dim0", "2"}, Param{"dim1", "0"}, Param{"dim2", "1"});  // CHW -> HWC
         n = b.add("dnn_object_detection")(n["output"]);
-        n = b.add("core_denormalize_3d_uint8")(n["output"]);
+        n = b.add("base_denormalize_3d_uint8")(n["output"]);
 
         b.compile("dnn_fpga");
     } catch (const std::exception &e) {

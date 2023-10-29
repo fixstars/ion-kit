@@ -24,13 +24,13 @@ int main(int argc, char *argv[]) {
 
         Node n;
         n = b.add("image_io_camera").set_param(wparam, hparam);
-        n = b.add("core_normalize_3d_uint8")(n["output"]);
-        n = b.add("core_reorder_buffer_3d_float")(n["output"]).set_param(Param{"dim0", "2"}, Param{"dim1", "0"}, Param{"dim2", "1"});  // CHW -> HWC
+        n = b.add("base_normalize_3d_uint8")(n["output"]);
+        n = b.add("base_reorder_buffer_3d_float")(n["output"]).set_param(Param{"dim0", "2"}, Param{"dim1", "0"}, Param{"dim2", "1"});  // CHW -> HWC
 
         auto img = n["output"];
         n = b.add("dnn_tlt_peoplenet")(img);
-        n = b.add("core_reorder_buffer_3d_float")(n["output"]).set_param(Param{"dim0", "1"}, Param{"dim1", "2"}, Param{"dim2", "0"});  // HWC -> CHW
-        n = b.add("core_denormalize_3d_uint8")(n["output"]);
+        n = b.add("base_reorder_buffer_3d_float")(n["output"]).set_param(Param{"dim0", "1"}, Param{"dim1", "2"}, Param{"dim2", "0"});  // HWC -> CHW
+        n = b.add("base_denormalize_3d_uint8")(n["output"]);
         n = b.add("image_io_gui_display")(n["output"]).set_param(wparam, hparam);
         Port out_p1 = n["output"];
 

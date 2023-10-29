@@ -1,10 +1,13 @@
-#include "sgm.h"
+#include <iostream>
+#include <vector>
+
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 
 #include <HalideBuffer.h>
 
-#include <iostream>
-
-// using namespace ion;
+#include "sgm.h"
 
 int main() {
     try {

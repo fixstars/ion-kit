@@ -157,7 +157,7 @@ int main(int argc, char *argv[]) {
                     .set_param(
                         Param{"luminance_method", "Average"})(
                         demosaic["output"]);
-    luminance_filter = b.add("core_constant_buffer_2d_float")
+    luminance_filter = b.add("base_constant_buffer_2d_float")
                            .set_param(
                                Param{"values", "0.04"},
                                Param{"extent0", "5"},
@@ -180,7 +180,7 @@ int main(int argc, char *argv[]) {
                               coef_space,
                               filtered_luminance["output"],
                               demosaic["output"]);
-    color_matrix = b.add("core_constant_buffer_2d_float")
+    color_matrix = b.add("base_constant_buffer_2d_float")
                        .set_param(
                            Param{"values", "2.20213000 -1.27425000 0.07212000 "
                                            "-0.25650000 1.45961000 -0.20311000 "

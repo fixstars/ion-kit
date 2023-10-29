@@ -71,7 +71,7 @@ void display_and_save(int32_t width, int32_t height, std::string directory_path,
         Param{"height", std::to_string(height)},
         Param{"scale", std::to_string(2.0f)}
     );
-    n = b.add("core_denormalize_3d_uint8")(n["output"]);
+    n = b.add("base_denormalize_3d_uint8")(n["output"]);
     n = b.add("image_processing_crop_image_3d_uint8")(n["output"]).set_param(
         Param{"input_width", std::to_string(width)},
         Param{"input_height", std::to_string(height)},
@@ -93,7 +93,7 @@ void display_and_save(int32_t width, int32_t height, std::string directory_path,
         Param{"height", std::to_string(height)},
         Param{"scale", std::to_string(2.0f)}
     );
-    n = b.add("core_denormalize_3d_uint8")(n["output"]);
+    n = b.add("base_denormalize_3d_uint8")(n["output"]);
     n = b.add("image_processing_crop_image_3d_uint8")(n["output"]).set_param(
         Param{"input_width", std::to_string(width)},
         Param{"input_height", std::to_string(height)},

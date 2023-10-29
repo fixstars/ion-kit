@@ -1,11 +1,13 @@
-#include "demo.h"
-
-#include <HalideBuffer.h>
-
 #include <iostream>
 #include <vector>
 
-using namespace ion;
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
+#include <HalideBuffer.h>
+
+#include "demo.h"
 
 int main() {
     try {

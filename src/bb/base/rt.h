@@ -1,5 +1,5 @@
-#ifndef ION_BB_CORE_RT_H
-#define ION_BB_CORE_RT_H
+#ifndef ION_BB_BASE_RT_H
+#define ION_BB_BASE_RT_H
 
 #include <fstream>
 #include <random>
@@ -31,7 +31,7 @@ class RegisterExtern {
      }
 };
 
-} // image_io
+} // base
 } // bb
 } // ion
 #define ION_REGISTER_EXTERN(NAME) static auto ion_register_extern_##NAME = ion::bb::base::RegisterExtern(#NAME, NAME);

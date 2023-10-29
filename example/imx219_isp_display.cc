@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
     }
 
     n = b.add("image_processing_tile_image_horizontal_3d_float")(ns[0]["output"], ns[1]["output"]).set_param(Param{"input0_width", std::to_string(quad_width_v)}, Param{"input0_height", std::to_string(quad_height_v)}, Param{"input1_width", std::to_string(quad_width_v)}, Param{"input1_height", std::to_string(quad_height_v)});
-    n = b.add("core_denormalize_3d_uint8")(n["output"]);
+    n = b.add("base_denormalize_3d_uint8")(n["output"]);
     n = b.add("image_io_gui_display")(n["output"]).set_param(Param{"width", std::to_string(half_width_v)}, Param{"height", std::to_string(quad_height_v)});
 
     PortMap pm;

@@ -54,3 +54,4 @@ if (MSVC)
     add_definitions(/bigobj)
     message(STATUS "Allow big object for example/")
 endif (MSVC)
+

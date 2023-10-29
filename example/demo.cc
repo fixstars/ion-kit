@@ -121,13 +121,13 @@ int main(int argc, char *argv[]) {
                                      gamma_correction["output"]);
             Node reorder_channel = b.add("image_processing_reorder_color_channel_3d_float")(
                 fit_image["output"]);
-            Node reorder_chw2hwc = b.add("core_reorder_buffer_3d_float")
+            Node reorder_chw2hwc = b.add("base_reorder_buffer_3d_float")
                                        .set_param(
                                            Param{"dim0", "2"},
                                            Param{"dim1", "0"},
                                            Param{"dim2", "1"})(
                                            reorder_channel["output"]);
-            Node extended = b.add("core_extend_dimension_3d_float")
+            Node extended = b.add("base_extend_dimension_3d_float")
                                 .set_param(
                                     Param{"new_dim", "3"})(
                                     reorder_chw2hwc["output"]);
@@ -137,7 +137,7 @@ int main(int argc, char *argv[]) {
 
         Port packed_dnn_input = dnn_inputs[0];
         for (int i = 1; i < 6; i++) {
-            packed_dnn_input = b.add("core_concat_buffer_4d_float")
+            packed_dnn_input = b.add("base_concat_buffer_4d_float")
                                    .set_param(
                                        Param{"dim", "3"},
                                        Param{"input0_extent", std::to_string(i)})(
@@ -149,7 +149,7 @@ int main(int argc, char *argv[]) {
 
         Port dnn_outputs[6];
         for (int i = 0; i < 6; i++) {
-            dnn_outputs[i] = b.add("core_extract_buffer_4d_float")
+            dnn_outputs[i] = b.add("base_extract_buffer_4d_float")
                                  .set_param(
                                      Param{"dim", "3"},
                                      Param{"index", std::to_string(i)})(
@@ -184,7 +184,7 @@ int main(int argc, char *argv[]) {
                                    horizontal_tiled_image[0],
                                    horizontal_tiled_image[1])["output"];
 
-        Node denormalized = b.add("core_denormalize_3d_uint8")(tiled_image);
+        Node denormalized = b.add("base_denormalize_3d_uint8")(tiled_image);
 
         // d435
         auto d435 = b.add("image_io_d435");
