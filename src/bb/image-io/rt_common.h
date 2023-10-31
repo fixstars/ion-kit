@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <filesystem>
 #include <string>
 #include <tuple>
 #include <unordered_map>
@@ -15,7 +16,6 @@
 
 #include "httplib.h"
 #include "zip_file.hpp"
-#include "ghc/filesystem.hpp"
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -190,12 +190,12 @@ class ImageSequence {
 
  public:
      ImageSequence(const std::string& session_id, const std::string& url) : idx_(0) {
-        namespace fs = ghc::filesystem;
+        namespace fs = std::filesystem;
 
         std::string host_name;
         std::string path_name;
         std::tie(host_name, path_name) = ion::bb::image_io::parse_url(url);
- 
+
         std::vector<unsigned char> data;
         if (host_name.empty() || path_name.empty()) {
             // fallback to local file
@@ -238,7 +238,7 @@ class ImageSequence {
      }
 
      cv::Mat get(int width, int height, int imread_flags) {
-        namespace fs = ghc::filesystem;
+        namespace fs = std::filesystem;
 
         cv::Mat frame;
 
@@ -282,7 +282,7 @@ class ImageSequence {
 
  private:
     int32_t idx_;
-    std::vector<ghc::filesystem::path> paths_;
+    std::vector<std::filesystem::path> paths_;
 };
 #endif // _WIN32
 

@@ -3,16 +3,16 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <filesystem>
+#include <queue>
 #include <string>
 #include <tuple>
 #include <unordered_map>
 #include <vector>
-#include <queue>
+
+#include "json/json.hpp"
 
 #include "rt_common.h"
-#include "ghc/filesystem.hpp"
-#include "nlohmann/json.hpp"
-
 #include "httplib.h"
 
 #ifndef _WIN32
@@ -399,7 +399,7 @@ private:
     ::std::ofstream ofs_;
     uint32_t width_;
     uint32_t height_;
-    ghc::filesystem::path output_directory_;
+    std::filesystem::path output_directory_;
 
     ion::bb::image_io::rawHeader header_info_;
     bool with_header_;
@@ -694,7 +694,7 @@ namespace {
             current_idx_ = file_idx_;
         }
 
-        void open_and_check(uint32_t width, uint32_t height, const ghc::filesystem::path output_directory, uint32_t& file_idx, ::std::ifstream& ifs, bool* finished) {
+        void open_and_check(uint32_t width, uint32_t height, const std::filesystem::path output_directory, uint32_t& file_idx, ::std::ifstream& ifs, bool* finished) {
             auto file_path = output_directory / ("raw-" + ::std::to_string(file_idx++) + ".bin");
 
             ifs = ::std::ifstream(file_path, ::std::ios::binary);
@@ -709,7 +709,7 @@ namespace {
 
         uint32_t width_;
         uint32_t height_;
-        ghc::filesystem::path output_directory_;
+        std::filesystem::path output_directory_;
         uint32_t file_idx_;
         ::std::vector<uint16_t> latest_frame0_;
         ::std::vector<uint16_t> latest_frame1_;

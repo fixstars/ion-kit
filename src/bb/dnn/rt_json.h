@@ -8,7 +8,7 @@
 #include <tuple>
 #include <queue>
 
-#include "json.hpp"
+#include "json/json.hpp"
 
 namespace ion {
 namespace bb {

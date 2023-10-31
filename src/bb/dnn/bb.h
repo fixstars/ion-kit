@@ -6,8 +6,9 @@
 #define UUID_STR_LEN 36
 #endif
 
-#include "sole.hpp"
 #include <ion/ion.h>
+
+#include "uuid/sole.hpp"
 
 namespace ion {
 namespace bb {

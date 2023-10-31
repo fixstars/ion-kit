@@ -6,7 +6,7 @@
 #include <linux/videodev2.h>
 #endif
 
-#include "sole.hpp"
+#include "uuid/sole.hpp"
 
 namespace ion {
 namespace bb {

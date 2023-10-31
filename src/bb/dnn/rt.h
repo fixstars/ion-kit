@@ -2,8 +2,10 @@
 #define ION_BB_DNN_RT_H
 
 #include <HalideBuffer.h>
-
 #include <Halide.h>
+
+#include "log.h"
+
 namespace ion {
 namespace bb {
 namespace dnn {
@@ -22,7 +24,7 @@ class RegisterExtern {
 } // ion
 #define ION_REGISTER_EXTERN(NAME) static auto ion_register_extern_##NAME = ion::bb::dnn::RegisterExtern(#NAME, NAME);
 
-#include "json.hpp"
+#include "json/json.hpp"
 #include "rt_dnndk.h"
 #include "rt_json.h"
 #include "rt_opencv.h"
@@ -64,16 +66,19 @@ extern "C" ION_EXPORT int ion_bb_dnn_generic_object_detection(halide_buffer_t *i
 
         if (is_tfl_available()) {
             // EdgeTPU
+            ion::log::info("TFlite runtime is available");
             return object_detection_tfl(in, model_root_url, cache_root, out);
         } else if (dnndk_enable && dnndk::is_dnndk_available()) {
             // DPU (FPGA)
+            ion::log::info("DNNDK runtime is available");
             return dnndk::object_detection(in, model_root_url, cache_root, out);
         } else if (is_ort_available()) {
             // CPU, GPU (CUDA)
+            ion::log::info("ONNX runtime is available");
             std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
             return object_detection_ort(in, session_id, model_root_url, cache_root, cuda_enable, out);
         } else {
-            std::cerr << "No available runtime" << std::endl;
+            ion::log::error("No available runtime");
             return -1;
         }
 
