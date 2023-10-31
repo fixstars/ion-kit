@@ -1,10 +1,11 @@
 #include <sstream>
 
 #include "ion/generator.h"
-#include "ion/json.hpp"
 #include "ion/port.h"
 
+#include "json.hpp"
 #include "metadata.h"
+#include "serializer.h"
 
 namespace {
 

@@ -3,20 +3,13 @@
 
 #include <string>
 
-#include "json.hpp"
-
 namespace ion {
-
-using json = nlohmann::json;
 
 /**
  * Param class is used to create static parameter for each node.
  */
 class Param {
  public:
-     friend void to_json(json&, const Param&);
-     friend void from_json(const json&, Param&);
-
      Param() {}
 
      /**
@@ -29,7 +22,10 @@ class Param {
      Param(const std::string& key, const std::string& val) : key_(key), val_(val) {}
 
      std::string key() const { return key_; }
+     std::string& key() { return key_; }
+
      std::string val() const { return val_; }
+     std::string& val() { return val_; }
 
  private:
     std::string key_;

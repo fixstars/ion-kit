@@ -6,12 +6,13 @@
 
 #include "ion/builder.h"
 #include "ion/generator.h"
-#include "ion/json.hpp"
 #include "ion/util.h"
 
 #include "dynamic_module.h"
+#include "json.hpp"
 #include "metadata.h"
 #include "sole.hpp"
+#include "serializer.h"
 
 namespace ion {
 
@@ -404,11 +405,6 @@ std::string Builder::bb_metadata(void) {
     json j(md);
 
     return j.dump();
-}
-
-
-const std::vector<Node>& Builder::get_nodes() const {
-    return nodes_;
 }
 
 } //namespace ion

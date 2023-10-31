@@ -108,9 +108,9 @@ function(ion_register_test TEST_NAME EXEC_NAME)
     cmake_parse_arguments(IERT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if (UNIX)
-        set(IERT_RUNTIME_ENVS "LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/src/bb")
+        set(IERT_RUNTIME_ENVS "LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/src/bb:${CMAKE_BINARY_DIR}/test")
     else()
-        set(IERT_RUNTIME_ENVS "PATH=${CMAKE_BINARY_DIR}/src/bb/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>")
+        set(IERT_RUNTIME_ENVS "PATH=${CMAKE_BINARY_DIR}/src/bb/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>\\\;${CMAKE_BINARY_DIR}/test/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>")
     endif()
 
     if (IERT_TARGET_STRING)

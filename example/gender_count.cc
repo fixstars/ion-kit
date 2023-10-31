@@ -1,10 +1,7 @@
-#include <ion/ion.h>
-#include <ion/json.hpp>
 #include <iostream>
+#include <ion/ion.h>
 
 using namespace ion;
-
-using json = nlohmann::json;
 
 int main(int argc, char *argv[]) {
     try {

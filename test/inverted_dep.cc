@@ -105,11 +105,7 @@ int main()
 
     b.set_target(Halide::get_host_target());
 
-    b.with_bb_module("libion-bb-test.so");
-
-    Node n;
-    n = b.add("test_producer");
-    n = b.add("test_consumer")(n["output"], min0, extent0, min1, extent1, v);
+    b.with_bb_module("ion-bb-test");
 
     b.load(file_name);
 
@@ -121,7 +117,12 @@ int main()
     pm.set(v, 1);
 
     Halide::Buffer<int32_t> r = Halide::Buffer<int32_t>::make_scalar();
-    pm.set(n["output"], r);
+    for (auto& n : b.nodes()) {
+        if (n.name() == "test_consumer") {
+            pm.set(n["output"], r);
+            break;
+        }
+    }
 
     b.run(pm);
     return 0;

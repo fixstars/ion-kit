@@ -9,13 +9,10 @@
 
 #include "def.h"
 #include "block.h"
-#include "json.hpp"
 #include "node.h"
 #include "port_map.h"
 
 namespace ion {
-
-using json = nlohmann::json;
 
 class DynamicModule;
 
@@ -100,7 +97,8 @@ public:
     /**
      * Get the node list.
      */
-    const std::vector<Node>& get_nodes() const;
+    const std::vector<Node>& nodes() const { return nodes_; }
+    std::vector<Node>& nodes() { return nodes_; }
 
     void set_jit_externs(const std::map<std::string, Halide::JITExtern> &externs) {
         pipeline_.set_jit_externs(externs);
