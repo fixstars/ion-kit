@@ -547,6 +547,7 @@ extern "C" ION_EXPORT int ion_bb_image_io_v4l2(
         return -1;
     }
 }
+ION_REGISTER_EXTERN(ion_bb_image_io_v4l2)
 
 extern "C" int ION_EXPORT ion_bb_image_io_camera(int32_t instance_id, int32_t index, int32_t fps, int32_t width, int32_t height, halide_buffer_t *url_buf, halide_buffer_t *out) {
     try {
@@ -572,5 +573,6 @@ extern "C" int ION_EXPORT ion_bb_image_io_camera(int32_t instance_id, int32_t in
         return -1;
     }
 }
+ION_REGISTER_EXTERN(ion_bb_image_io_camera)
 
 #endif

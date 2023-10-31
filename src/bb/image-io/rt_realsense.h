@@ -312,6 +312,7 @@ extern "C" int ION_EXPORT ion_bb_image_io_realsense_d435_infrared(halide_buffer_
         return -1;
     }
 }
+ION_REGISTER_EXTERN(ion_bb_image_io_realsense_d435_infrared)
 
 extern "C" int ION_EXPORT ion_bb_image_io_realsense_d435_depth(halide_buffer_t *in, halide_buffer_t *out_d) {
     try {
@@ -350,6 +351,7 @@ extern "C" int ION_EXPORT ion_bb_image_io_realsense_d435_depth(halide_buffer_t *
         return -1;
     }
 }
+ION_REGISTER_EXTERN(ion_bb_image_io_realsense_d435_depth)
 
 extern "C" int ION_EXPORT ion_bb_image_io_realsense_d435_frameset(halide_buffer_t *out) {
     try {
@@ -378,5 +380,6 @@ extern "C" int ION_EXPORT ion_bb_image_io_realsense_d435_frameset(halide_buffer_
         return -1;
     }
 }
+ION_REGISTER_EXTERN(ion_bb_image_io_realsense_d435_frameset)
 
 #endif
