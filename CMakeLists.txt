@@ -53,9 +53,9 @@ endif()
 #
 # Build main library
 #
-file(GLOB ION_CORE_SRC ${PROJECT_SOURCE_DIR}/src/core/*)
+file(GLOB ION_CORE_SRC LIST_DIRECTORIES false ${PROJECT_SOURCE_DIR}/src/*)
 add_library(ion-core SHARED ${ION_CORE_SRC})
-target_include_directories(ion-core PUBLIC ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/src/common ${PROJECT_SOURCE_DIR}/src/external)
+target_include_directories(ion-core PUBLIC ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/src)
 if (UNIX)
   target_link_libraries(ion-core PUBLIC Halide::Halide Halide::Runtime dl pthread z)
 else()

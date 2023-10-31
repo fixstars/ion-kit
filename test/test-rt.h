@@ -7,6 +7,8 @@
 #include <Halide.h>
 #include <HalideBuffer.h>
 
+#include "log.h"
+
 #ifdef _WIN32
 #include <windows.h>
 #else
@@ -186,7 +188,7 @@ int inc(halide_buffer_t *in, int32_t width, int32_t height, int32_t v, bool use_
         }
     } else {
 
-        printf("in->host(0x%lx), in->device(0x%lx), out->host(0x%lx), out->device(0x%lx)\n", reinterpret_cast<uint64_t>(in->host), in->device, reinterpret_cast<uint64_t>(out->host), out->device);
+        ion::log::debug("in->host({:#x}), in->device({:#x}), out->host({:#x}), out->device({:#x})", reinterpret_cast<uint64_t>(in->host), in->device, reinterpret_cast<uint64_t>(out->host), out->device);
 
         Runtime::Buffer<int32_t> ibuf(*in);
         Runtime::Buffer<int32_t> obuf(*out);

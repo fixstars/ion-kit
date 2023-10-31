@@ -8,7 +8,7 @@
 
 namespace ion {
 
-static struct log {
+struct log {
 
     log() {
         static auto logger = spdlog::stderr_color_mt("ion");
@@ -26,7 +26,7 @@ static struct log {
     template<class... Types> static void info    (Types... args) { spdlog::get("ion")->info    (args...); }
     template<class... Types> static void debug   (Types... args) { spdlog::get("ion")->debug   (args...); }
 
-} _log;
+};
 
 } // ion
 

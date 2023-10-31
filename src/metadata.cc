@@ -3,7 +3,7 @@
 #include "ion/generator.h"
 #include "ion/port.h"
 
-#include "json.hpp"
+#include "json/json.hpp"
 #include "metadata.h"
 #include "serializer.h"
 

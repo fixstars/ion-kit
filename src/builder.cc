@@ -8,11 +8,10 @@
 #include "ion/generator.h"
 #include "ion/util.h"
 
-#include "json.hpp"
-#include "sole.hpp"
+#include "json/json.hpp"
+#include "uuid/sole.hpp"
 
 #include "log.h"
-
 #include "dynamic_module.h"
 #include "metadata.h"
 #include "serializer.h"
