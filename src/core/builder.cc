@@ -8,10 +8,13 @@
 #include "ion/generator.h"
 #include "ion/util.h"
 
-#include "dynamic_module.h"
 #include "json.hpp"
-#include "metadata.h"
 #include "sole.hpp"
+
+#include "log.h"
+
+#include "dynamic_module.h"
+#include "metadata.h"
 #include "serializer.h"
 
 namespace ion {
@@ -214,6 +217,8 @@ std::vector<std::tuple<std::string, Halide::Func>> collect_unbound_outputs(const
 }
 
 Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buffer<>> *outputs) {
+
+    log::info("building pipeline");
 
     if (pipeline_.defined()) {
         return pipeline_;

@@ -30,7 +30,7 @@ foreach(child ${childs})
 endforeach()
 
 add_library(ion-bb SHARED bb.cc)
-target_include_directories(ion-bb PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${ION_BB_INCLUDE_DIRS})
+target_include_directories(ion-bb PUBLIC $${PROJECT_SOURCE_DIR}/src/common {PROJECT_SOURCE_DIR}/src/external ${CMAKE_CURRENT_SOURCE_DIR} ${ION_BB_INCLUDE_DIRS})
 target_link_libraries(ion-bb PUBLIC ion-core ${ION_BB_LIBRARIES})
 if(UNIX)
     target_compile_options(ion-bb
