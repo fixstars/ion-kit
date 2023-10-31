@@ -11,7 +11,7 @@
 using namespace ion;
 
 int main(int argc, char *argv[]) {
-    assert(argc >= 6);
+
     try {
         int32_t raw_width = 5184;
         int32_t raw_height = 1944;
