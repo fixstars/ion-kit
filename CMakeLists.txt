@@ -116,8 +116,6 @@ endif()
 #
 # Install
 #
-install(FILES cmake/ion-bb-config.cmake DESTINATION share/cmake/)
-
 if (UNIX)
     install(TARGETS ion-core DESTINATION lib)
 else()
