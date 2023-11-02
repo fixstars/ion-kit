@@ -217,11 +217,11 @@ std::vector<std::tuple<std::string, Halide::Func>> collect_unbound_outputs(const
 
 Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buffer<>> *outputs) {
 
-    log::info("building pipeline");
-
     if (pipeline_.defined()) {
         return pipeline_;
     }
+
+    log::info("Start building pipeline");
 
     // Sort nodes prior to build.
     // This operation is required especially for the graph which is loaded from JSON definition.

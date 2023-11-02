@@ -314,13 +314,14 @@ extern "C" int ION_EXPORT ion_bb_image_io_realsense_d435_infrared(halide_buffer_
         }
         return 0;
     } catch (const std::exception &e) {
-        log::error("Exception was thrown: {}", e.what());
+        ion::log::error("Exception was thrown: {}", e.what());
         return 1;
     } catch (...) {
-        log::error("Unknown exception was thrown");
+        ion::log::error("Unknown exception was thrown");
         return 1;
     }
 }
+
 ION_REGISTER_EXTERN(ion_bb_image_io_realsense_d435_infrared)
 
 extern "C" int ION_EXPORT ion_bb_image_io_realsense_d435_depth(halide_buffer_t *in, halide_buffer_t *out_d) {
@@ -353,10 +354,10 @@ extern "C" int ION_EXPORT ion_bb_image_io_realsense_d435_depth(halide_buffer_t *
         }
         return 0;
     } catch (const std::exception &e) {
-        log::error("Exception was thrown: {}", e.what());
+        ion::log::error("Exception was thrown: {}", e.what());
         return 1;
     } catch (...) {
-        log::error("Unknown exception was thrown");
+        ion::log::error("Unknown exception was thrown");
         return 1;
     }
 }
@@ -382,10 +383,10 @@ extern "C" int ION_EXPORT ion_bb_image_io_realsense_d435_frameset(halide_buffer_
         }
         return 0;
     } catch (const std::exception &e) {
-        log::error("Exception was thrown: {}", e.what());
+        ion::log::error("Exception was thrown: {}", e.what());
         return 1;
     } catch (...) {
-        log::error("Unknown exception was thrown");
+        ion::log::error("Unknown exception was thrown");
         return 1;
     }
 }

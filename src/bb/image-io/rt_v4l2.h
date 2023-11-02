@@ -120,7 +120,7 @@ public:
             return;
         }
         if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
-            log::warn("Fallback to simulation mode: {} s does not support streaming i/o", dev_name) << std::endl;
+            log::warn("Fallback to simulation mode: {} s does not support streaming i/o", dev_name);
             sim_mode_ = true;;
             return;
         }
@@ -155,12 +155,12 @@ public:
                 }},
         };
         if (-1 == xioctl(fd_, VIDIOC_S_FMT, &fmt)) {
-            std::cerr << format("Fallback to simulation mode: %s error %d, %s\n", "VIDIOC_S_FMT", errno, strerror(errno)) << std::endl;
+            log::warn("Fallback to simulation mode: {} error {}, {}", "VIDIOC_S_FMT", errno, strerror(errno));
             sim_mode_ = true;;
             return;
         }
         if (width != fmt.fmt.pix.width || height != fmt.fmt.pix.height) {
-            std::cerr << format("Fallback to simulation mode: %s does not support desired resolution", dev_name) << std::endl;
+            log::warn("Fallback to simulation mode: {} does not support desired resolution", dev_name);
             sim_mode_ = true;;
             return;
         }
@@ -171,14 +171,14 @@ public:
 
         };
         if (-1 == xioctl(fd_, VIDIOC_G_PARM, &strmp)) {
-            std::cerr << format("Fallback to simulation mode: %s error %d, %s\n", "VIDIOC_G_PARM", errno, strerror(errno)) << std::endl;
+            log::warn("Fallback to simulation mode: {} error {}, {}", "VIDIOC_G_PARM", errno, strerror(errno));
             sim_mode_ = true;;
             return;
         }
         strmp.parm.capture.timeperframe.numerator = 1;
         strmp.parm.capture.timeperframe.denominator = fps;
         if (-1 == xioctl(fd_, VIDIOC_S_PARM, &strmp)) {
-            std::cerr << format("Fallback to simulation mode: %s error %d, %s\n", "VIDIOC_S_PARM", errno, strerror(errno)) << std::endl;
+            log::warn("Fallback to simulation mode: {} error {}, {}", "VIDIOC_S_PARM", errno, strerror(errno));
             sim_mode_ = true;;
             return;
         }
@@ -193,11 +193,11 @@ public:
 
         if (-1 == xioctl(fd_, VIDIOC_REQBUFS, &req)) {
             if (EINVAL == errno) {
-                std::cerr << format("Fallback to simulation mode: %s does not support memory mapping\n", dev_name) << std::endl;
+                log::warn("Fallback to simulation mode: {} does not support memory mapping", dev_name);
                 sim_mode_ = true;;
                 return;
             } else {
-                std::cerr << format("Fallback to simulation mode: %s error %d, %s\n", "VIDIOC_REQBUFS", errno, strerror(errno)) << std::endl;
+                log::warn("Fallback to simulation mode: {} error {}, {}", "VIDIOC_REQBUFS", errno, strerror(errno));
                 sim_mode_ = true;;
                 return;
             }
@@ -226,7 +226,7 @@ public:
 
             /* enqueue an empty (capturing) or filled (output) buffer in the driver's incoming queue */
             if (-1 == xioctl(fd_, VIDIOC_QBUF, &buf)) {
-                std::cerr << format("Fallback to simulation mode: %s error %d, %s\n", "VIDIOC_QBUF", errno, strerror(errno)) << std::endl;
+                log::warn("Fallback to simulation mode: {} error {}, {}", "VIDIOC_QBUF", errno, strerror(errno));
                 sim_mode_ = true;;
                 return;
             }
@@ -240,7 +240,7 @@ public:
         enum v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         /* Start streaming I/O */
         if (-1 == xioctl(fd_, VIDIOC_STREAMON, &type)) {
-            std::cerr << format("Fallback to simulation mode: %s error %d, %s\n", "VIDIOC_STREAMON", errno, strerror(errno)) << std::endl;
+            log::warn("Fallback to simulation mode: {} error {}, {}\n", "VIDIOC_STREAMON", errno, strerror(errno));
             sim_mode_ = true;;
             return;
         }
@@ -250,7 +250,7 @@ public:
         //
         efd_ = epoll_create1(0);
         if (-1 == efd_) {
-            std::cerr << format("Fallback to simulation mode: %s error %d, %s\n", "epoll_create1", errno, strerror(errno)) << std::endl;
+            log::warn("Fallback to simulation mode: {} error {}, {}", "epoll_create1", errno, strerror(errno));
             sim_mode_ = true;;
             return;
         }
@@ -260,7 +260,7 @@ public:
         event.data.fd = fd_;
 
         if (-1 == epoll_ctl(efd_, EPOLL_CTL_ADD, fd_, &event)) {
-            std::cerr << format("Fallback to simulation mode: %s error %d, %s\n", "epoll_ctl", errno, strerror(errno)) << std::endl;
+            log::warn("Fallback to simulation mode: {} error {}, {}", "epoll_ctl", errno, strerror(errno));
             sim_mode_ = true;;
             return;
         }
@@ -442,14 +442,14 @@ public:
 
         /* queue-in buffer */
         if (-1 == xioctl(fd_, VIDIOC_QBUF, &next_buffer_)) {
-            std::cerr << format("Fallback to simulation mode: %s error %d, %s\n", "VIDIOC_QBUF", errno, strerror(errno)) << std::endl;
+            log::warn("Fallback to simulation mode: {} error {}, {}", "VIDIOC_QBUF", errno, strerror(errno));
             sim_mode_ = true;
             return;
         }
 
         epoll_event event;
         if (-1 == epoll_wait(efd_, &event, 1, -1)) {
-            std::cerr << format("Fallback to simulation mode: %s error %d, %s\n", "epoll_wait", errno, strerror(errno)) << std::endl;
+            log::warn("Fallback to simulation mode: {} error {}, {}", "epoll_wait", errno, strerror(errno));
             sim_mode_ = true;
             return;
         }
@@ -466,7 +466,7 @@ public:
             if (EAGAIN == errno) {
                 return;
             } else {
-                std::cerr << format("Fallback to simulation mode: %s error %d, %s\n", "VIDIOC_DQBUF", errno, strerror(errno)) << std::endl;
+                log::warn("Fallback to simulation mode: {} error {}, {}", "VIDIOC_DQBUF", errno, strerror(errno));
                 sim_mode_ = true;
                 return;
             }
@@ -539,14 +539,15 @@ extern "C" ION_EXPORT int ion_bb_image_io_v4l2(
         auto &v4l2(ion::bb::image_io::V4L2::get_instance(instance_id, index, fps, width, height, pixel_format, gain_r, gain_g, gain_b, offset, bit_width, bit_shift, static_cast<bool>(force_sim_mode), reinterpret_cast<const char*>(url_buf->host)));
         Halide::Runtime::Buffer<uint16_t> obuf(*out);
         v4l2.get(obuf);
+
         return 0;
 
     } catch (const std::exception &e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        ion::log::error("Exception was thrown: {}", e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown error" << std::endl;
-        return -1;
+        ion::log::error("Unknown exception was thrown");
+        return 1;
     }
 }
 ION_REGISTER_EXTERN(ion_bb_image_io_v4l2)
@@ -568,11 +569,11 @@ extern "C" int ION_EXPORT ion_bb_image_io_camera(int32_t instance_id, int32_t in
         return 0;
 
     } catch (const std::exception &e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        ion::log::error("Exception was thrown: {}", e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown error" << std::endl;
-        return -1;
+        ion::log::error("Unknown exception was thrown");
+        return 1;
     }
 }
 ION_REGISTER_EXTERN(ion_bb_image_io_camera)
