@@ -88,6 +88,10 @@ class U3V {
     using ArvBuffer_t = struct ArvBuffer*;
     using ArvGcNode_t = struct ArvGcNode*;
 
+    using arv_get_major_version_t = uint32_t(*)();
+    using arv_get_minor_version_t = uint32_t(*)();
+    using arv_get_micro_version_t = uint32_t(*)();
+
     using arv_update_device_list_t = void(*)();
     using arv_get_n_devices_t = unsigned int(*)();
 
@@ -508,6 +512,8 @@ class U3V {
     {
         init_symbols();
 
+        log::info("Using aravis-{}.{}.{}", arv_get_major_version(), arv_get_minor_version(), arv_get_micro_version());
+
         arv_update_device_list();
         unsigned int n_devices = arv_get_n_devices ();
 
@@ -734,6 +740,10 @@ class U3V {
                     TARGET_SYMBOL " is unavailable on aravis-0.8");     \
             }
 
+        GET_SYMBOL(arv_get_major_version, "arv_get_major_version");
+        GET_SYMBOL(arv_get_minor_version, "arv_get_minor_version");
+        GET_SYMBOL(arv_get_micro_version, "arv_get_micro_version");
+
         GET_SYMBOL(arv_update_device_list, "arv_update_device_list");
         GET_SYMBOL(arv_get_n_devices, "arv_get_n_devices");
 
@@ -777,7 +787,7 @@ class U3V {
         #undef GET_SYMBOL
     }
 
-    void init_symbols(){
+    void init_symbols() {
         init_symbols_gobject();
         init_symbols_aravis();
     }
@@ -834,6 +844,10 @@ class U3V {
     }
 
     g_object_unref_t g_object_unref;
+
+    arv_get_major_version_t arv_get_major_version;
+    arv_get_minor_version_t arv_get_minor_version;
+    arv_get_micro_version_t arv_get_micro_version;
 
     arv_update_device_list_t arv_update_device_list;
     arv_get_n_devices_t arv_get_n_devices;
