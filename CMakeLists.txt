@@ -5,7 +5,12 @@ cmake_minimum_required(VERSION 3.6)
 #
 # Options
 #
-set(ION_TARGET_BB "base;dnn;image-io;image-processing;opencv;sgm" CACHE STRING "A List of building blocks to build (This overrides ION_BUILD_ALL_BB)")
+if (UNIX)
+  set(DEFAULT_TARGET_BB "base;dnn;image-io;image-processing;opencv;sgm")
+else()
+  set(DEFAULT_TARGET_BB "base;image-io;image-processing;opencv;sgm")
+endif()
+set(ION_TARGET_BB ${DEFAULT_TARGET_BB} CACHE STRING "A List of building blocks to build (This overrides ION_BUILD_ALL_BB)")
 option(ION_BUILD_DOC "Build documents." OFF)
 option(ION_BUILD_TEST "Enable to build tests" ON)
 option(ION_BUILD_EXAMPLE "Enable to build examples" ON)
@@ -188,11 +193,3 @@ string(STRIP "${GIT_DESCRIBE_RESULT}" ION_KIT_VERSION_S)
 string(REPLACE "v" "" ION_KIT_VERSION ${ION_KIT_VERSION_S})
 set(CPACK_PACKAGE_VERSION ${ION_KIT_VERSION})
 include(CPack)
-
-#
-# Allow big object
-#
-if (MSVC)
-    add_definitions(/bigobj)
-    message(STATUS "Allow big object")
-endif (MSVC)
