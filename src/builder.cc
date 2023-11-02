@@ -78,6 +78,7 @@ using json = nlohmann::json;
 
 Builder::Builder()
 {
+
 }
 
 Node Builder::add(const std::string& k)
