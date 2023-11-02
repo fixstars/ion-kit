@@ -21,11 +21,13 @@
 
 #include <HalideBuffer.h>
 
-#include "rt_common.h"
-
-#include "httplib.h"
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
+
+#include "log.h"
+
+#include "rt_common.h"
+#include "httplib.h"
 
 namespace ion {
 namespace bb {
@@ -83,19 +85,19 @@ public:
         const char *dev_name = dev_name_str.c_str();
         struct stat st;
         if (-1 == stat(dev_name, &st)) {
-            std::cerr << format("Fallback to simulation mode: Could not find %s", dev_name) << std::endl;
+            log::warn("Fallback to simulation mode: Could not find {}", dev_name);
             sim_mode_ = true;;
             return;
         }
         if (!S_ISCHR(st.st_mode)) {
-            std::cerr << format("Fallback to simulation mode: %s is no device", dev_name) << std::endl;
+            log::warn("Fallback to simulation mode: {} is not proper device", dev_name);
             sim_mode_ = true;;
             return;
         }
 
         fd_ = open(dev_name, O_RDWR | O_NONBLOCK, 0);
         if (-1 == fd_) {
-            std::cerr << format("Fallback to simulation mode: Cannot open '%s': %d, %s", dev_name, errno, strerror(errno)) << std::endl;
+            log::warn("Fallback to simulation mode: Cannot open {}: {}, {}", dev_name, errno, strerror(errno));
             sim_mode_ = true;;
             return;
         }
@@ -103,22 +105,22 @@ public:
         struct v4l2_capability cap;
         if (-1 == xioctl(fd_, VIDIOC_QUERYCAP, &cap)) {
             if (EINVAL == errno) {
-                std::cerr << format("Fallback to simulation mode: %s is no V4L2 device", dev_name) << std::endl;
+                log::warn("Fallback to simulation mode: {} is not V4L2 device", dev_name);
                 sim_mode_ = true;;
                 return;
             } else {
-                std::cerr << format("Fallback to simulation mode: %s error %d, %s\n", "VIDIOC_QUERYCAP", errno, strerror(errno)) << std::endl;
+                log::warn("Fallback to simulation mode: {} error {}, {}", "VIDIOC_QUERYCAP", errno, strerror(errno));
                 sim_mode_ = true;;
                 return;
             }
         }
         if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
-            std::cerr << format("Fallback to simulation mode: %s is no video capture device", dev_name) << std::endl;
+            log::warn("Fallback to simulation mode: {} is not video capture device", dev_name);
             sim_mode_ = true;;
             return;
         }
         if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
-            std::cerr << format("Fallback to simulation mode: %s does not support streaming i/o", dev_name) << std::endl;
+            log::warn("Fallback to simulation mode: {} s does not support streaming i/o", dev_name) << std::endl;
             sim_mode_ = true;;
             return;
         }
@@ -137,7 +139,7 @@ public:
             fmtdesc.index++;
         }
         if (!supported) {
-            std::cerr << format("Fallback to simulation mode: %s does not support desired pixel format", dev_name) << std::endl;
+            log::warn("Fallback to simulation mode: {} does not support desired pixel format", dev_name);
             sim_mode_ = true;;
             return;
         }

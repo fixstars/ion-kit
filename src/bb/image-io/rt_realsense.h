@@ -6,6 +6,8 @@
 
 #include <HalideBuffer.h>
 
+#include "log.h"
+
 #include "rt_common.h"
 
 namespace ion {
@@ -108,6 +110,7 @@ public:
         : dm_("realsense2", false), device_is_available_(false), ctx_(nullptr), devices_(nullptr), pipeline_(nullptr), config_(nullptr), frameset_(nullptr) {
 
         if (!init_symbols()) {
+            log::error("Failed to init realsense symbols");
             return;
         }
 
@@ -115,65 +118,71 @@ public:
 
         int version = rs2_get_api_version(&err);
         if (err) {
-            std::cerr << rs2_get_error_message(err) << std::endl;
+            log::error("Failed call realsense API: {}", rs2_get_error_message(err));
             return;
         }
 
         ctx_ = rs2_create_context(version, &err);
         if (err) {
-            std::cerr << rs2_get_error_message(err) << std::endl;
+            log::error("Failed call realsense API: {}", rs2_get_error_message(err));
             return;
         }
 
         devices_ = rs2_query_devices(ctx_, &err);
         if (err) {
-            std::cerr << rs2_get_error_message(err) << std::endl;
+            log::error("Failed call realsense API: {}", rs2_get_error_message(err));
             return;
         }
 
         int num_of_devices = rs2_get_device_count(devices_, &err);
         if (err) {
-            std::cerr << rs2_get_error_message(err) << std::endl;
+            log::error("Failed call realsense API: {}", rs2_get_error_message(err));
             return;
         }
         if (num_of_devices == 0) {
+            log::error("Cannot find realsense device");
             return;
         }
 
         int fps = 30;
         config_ = rs2_create_config(&err);
         if (err) {
-            std::cerr << rs2_get_error_message(err) << std::endl;
+            log::error("Failed call realsense API: {}", rs2_get_error_message(err));
             return;
         }
 
         rs2_config_enable_stream(config_, RS2_STREAM_INFRARED, 1, width, height, RS2_FORMAT_Y8, fps, &err);
         if (err) {
-            std::cerr << rs2_get_error_message(err) << std::endl;
+            log::error("Failed call realsense API: {}", rs2_get_error_message(err));
             return;
         }
 
         rs2_config_enable_stream(config_, RS2_STREAM_INFRARED, 2, width, height, RS2_FORMAT_Y8, fps, &err);
         if (err) {
-            std::cerr << rs2_get_error_message(err) << std::endl;
+            log::error("Failed call realsense API: {}", rs2_get_error_message(err));
             return;
         }
 
         rs2_config_enable_stream(config_, RS2_STREAM_DEPTH, 0, width, height, RS2_FORMAT_Z16, fps, &err);
         if (err) {
-            std::cerr << rs2_get_error_message(err) << std::endl;
+            log::error("Failed call realsense API: {}", rs2_get_error_message(err));
+            return;
+        }
+
+        rs2_config_enable_stream(config_, RS2_STREAM_DEPTH, 0, width, height, RS2_FORMAT_Z16, fps, &err);
+        if (err) {
             return;
         }
 
         pipeline_ = rs2_create_pipeline(ctx_, &err);
         if (err) {
-            std::cerr << rs2_get_error_message(err) << std::endl;
+            log::error("Failed call realsense API: {}", rs2_get_error_message(err));
             return;
         }
 
         rs2_pipeline_start_with_config(pipeline_, config_, &err);
         if (err) {
-            std::cerr << rs2_get_error_message(err) << std::endl;
+            log::error("Failed call realsense API: {}", rs2_get_error_message(err));
             return;
         }
 
@@ -305,11 +314,11 @@ extern "C" int ION_EXPORT ion_bb_image_io_realsense_d435_infrared(halide_buffer_
         }
         return 0;
     } catch (const std::exception &e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        log::error("Exception was thrown: {}", e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown" << std::endl;
-        return -1;
+        log::error("Unknown exception was thrown");
+        return 1;
     }
 }
 ION_REGISTER_EXTERN(ion_bb_image_io_realsense_d435_infrared)
@@ -344,11 +353,11 @@ extern "C" int ION_EXPORT ion_bb_image_io_realsense_d435_depth(halide_buffer_t *
         }
         return 0;
     } catch (const std::exception &e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        log::error("Exception was thrown: {}", e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown" << std::endl;
-        return -1;
+        log::error("Unknown exception was thrown");
+        return 1;
     }
 }
 ION_REGISTER_EXTERN(ion_bb_image_io_realsense_d435_depth)
@@ -373,11 +382,11 @@ extern "C" int ION_EXPORT ion_bb_image_io_realsense_d435_frameset(halide_buffer_
         }
         return 0;
     } catch (const std::exception &e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        log::error("Exception was thrown: {}", e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown" << std::endl;
-        return -1;
+        log::error("Unknown exception was thrown");
+        return 1;
     }
 }
 ION_REGISTER_EXTERN(ion_bb_image_io_realsense_d435_frameset)
