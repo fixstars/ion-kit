@@ -1,8 +1,8 @@
-#include <ion/ion.h>
+#include <fstream>
 #include <iostream>
+#include <string>
 
-#include "ion-bb-image-io/bb.h"
-#include "ion-bb-image-io/rt.h"
+#include <ion/ion.h>
 
 using namespace ion;
 
@@ -13,6 +13,7 @@ int main(int argc, char *argv[]) {
 
         Builder b;
         b.set_target(Halide::get_target_from_environment());
+        b.with_bb_module("ion-bb");
 
         Node n;
         n = b.add("image_io_grayscale_data_loader").set_param(Param{"width", std::to_string(width)}, Param{"height", std::to_string(height)}, Param{"url", "http://ion-kit.s3.us-west-2.amazonaws.com/models/20210623_genesis_bayer_image_raw.zip"}, Param{"dynamic_range", "255"});

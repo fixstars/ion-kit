@@ -8,20 +8,10 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include "ion-bb-core/bb.h"
-#include "ion-bb-image-processing/bb.h"
-#include "ion-bb-image-io/bb.h"
-#include "ion-bb-sgm/bb.h"
-
-#include "ion-bb-core/rt.h"
-#include "ion-bb-image-processing/rt.h"
-#include "ion-bb-image-io/rt.h"
-#include "ion-bb-sgm/rt.h"
-
 using namespace ion;
 
 int main(int argc, char *argv[]) {
-    assert(argc >= 6);
+
     try {
         int32_t raw_width = 5184;
         int32_t raw_height = 1944;
@@ -148,6 +138,7 @@ int main(int argc, char *argv[]) {
 
         Builder b;
         b.set_target(Halide::get_target_from_environment());
+        b.with_bb_module("ion-bb");
 
         // ISP Nodes
         Node loader, normalize;
@@ -216,7 +207,7 @@ int main(int argc, char *argv[]) {
                           .set_param(
                               Param{"luminance_method", "Average"})(
                               demosaic_l["output"]);
-        luminance_filter_l = b.add("core_constant_buffer_2d_float")
+        luminance_filter_l = b.add("base_constant_buffer_2d_float")
                                  .set_param(
                                      Param{"values", "0.04"},
                                      Param{"extent0", "5"},
@@ -239,7 +230,7 @@ int main(int argc, char *argv[]) {
                                     coef_space_l,
                                     filtered_luminance_l["output"],
                                     demosaic_l["output"]);
-        color_matrix_l = b.add("core_constant_buffer_2d_float")
+        color_matrix_l = b.add("base_constant_buffer_2d_float")
                              .set_param(
                                  Param{"values", "1.5 -0.25 -0.25 "
                                                  "-0.25 1.5 -0.25 "
@@ -325,7 +316,7 @@ int main(int argc, char *argv[]) {
                           .set_param(
                               Param{"luminance_method", "Average"})(
                               demosaic_r["output"]);
-        luminance_filter_r = b.add("core_constant_buffer_2d_float")
+        luminance_filter_r = b.add("base_constant_buffer_2d_float")
                                  .set_param(
                                      Param{"values", "0.04"},
                                      Param{"extent0", "5"},
@@ -348,7 +339,7 @@ int main(int argc, char *argv[]) {
                                     coef_space_r,
                                     filtered_luminance_r["output"],
                                     demosaic_r["output"]);
-        color_matrix_r = b.add("core_constant_buffer_2d_float")
+        color_matrix_r = b.add("base_constant_buffer_2d_float")
                              .set_param(
                                  Param{"values", "1.5 -0.25 -0.25 "
                                                  "-0.25 1.5 -0.25 "
@@ -387,10 +378,10 @@ int main(int argc, char *argv[]) {
             gamma_r,
             final_luminance_r["output"]);
 
-        Node ln = b.add("core_denormalize_2d_uint8")(gamma_correction_l["output"]);
+        Node ln = b.add("base_denormalize_2d_uint8")(gamma_correction_l["output"]);
         ln = b.add("sgm_census")(ln["output"]).set_param(Param{"width", std::to_string(output_width)}, Param{"height", std::to_string(output_height)});
 
-        Node rn = b.add("core_denormalize_2d_uint8")(gamma_correction_r["output"]);
+        Node rn = b.add("base_denormalize_2d_uint8")(gamma_correction_r["output"]);
         rn = b.add("sgm_census")(rn["output"]).set_param(Param{"width", std::to_string(output_width)}, Param{"height", std::to_string(output_height)});
 
         Node n = b.add("sgm_matching_cost")(ln["output"], rn["output"]).set_param(Param{"width", std::to_string(output_width)}, Param{"height", std::to_string(output_height)});

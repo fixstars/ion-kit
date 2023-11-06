@@ -1,14 +1,18 @@
 #ifndef ION_DYNAMIC_MODULE_H
 #define ION_DYNAMIC_MODULE_H
 
+#include <filesystem>
+
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#define ION_DYNAMIC_MODULE_PREFIX ""
+#define ION_DYNAMIC_MODULE_EXT ".dll"
 #else
 #include <dlfcn.h>
+#define ION_DYNAMIC_MODULE_PREFIX "lib"
+#define ION_DYNAMIC_MODULE_EXT ".so"
 #endif
-
-namespace {}
 
 namespace ion {
 
@@ -21,19 +25,28 @@ class DynamicModule {
   using Handle = void*;
 #endif
 
-     DynamicModule(const std::string& module_path) {
-         if (module_path == "") {
+     DynamicModule(const std::string& module_name_or_path) {
+         if (module_name_or_path == "") {
              handle_ = nullptr;
              return;
          }
 
+         std::string target;
+         if (std::filesystem::exists(module_name_or_path)) {
+             target = module_name_or_path;
+         } else {
+             target = std::string(ION_DYNAMIC_MODULE_PREFIX) + module_name_or_path + std::string(ION_DYNAMIC_MODULE_EXT);
+         }
+
+         // TODO: WIP: test moduel_name_or_path using std::filesystem
+
 #ifdef _WIN32
-         handle_ = LoadLibraryA(module_path.c_str());
+         handle_ = LoadLibraryA(target.c_str());
          if (handle_ == nullptr) {
              throw std::runtime_error(getErrorString());
          }
 #else
-         handle_ = dlopen(module_path.c_str(), RTLD_NOW);
+         handle_ = dlopen(target.c_str(), RTLD_NOW);
          if (handle_ == nullptr) {
              throw std::runtime_error(getErrorString());
          }
@@ -44,11 +57,6 @@ class DynamicModule {
          if (handle_ != nullptr) {
              // NOTE: DSO which is loaded by with_bb_module should not be unloaded even if Builder is destructed.
              // Loading more than twice does not have any side effects.
-#ifdef _WIN32
-//             FreeLibrary(handle_);
-#else
-//             dlclose(handle_);
-#endif
          }
      }
 

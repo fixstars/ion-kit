@@ -32,7 +32,7 @@ int main()
 
             Halide::Buffer<int32_t> out = Halide::Buffer<int32_t>::make_scalar();
 
-            auto nodes = b.get_nodes();
+            auto nodes = b.nodes();
             pm.set(nodes.back()["output"], out);
 
             b.run(pm);
@@ -76,7 +76,7 @@ int main()
 
         Halide::Buffer<int32_t> out(std::vector<int>{size, size});
 
-        auto nodes = b.get_nodes();
+        auto nodes = b.nodes();
         pm.set(nodes.back()["output"], out);
 
         b.run(pm);
@@ -136,7 +136,7 @@ int main()
 
             Halide::Buffer<int32_t> out(std::vector<int>{w, h});
 
-            auto nodes = b.get_nodes();
+            auto nodes = b.nodes();
             pm.set(nodes.back()["output"], out);
 
             if (out.dimensions() != 2) {

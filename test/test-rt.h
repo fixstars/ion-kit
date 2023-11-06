@@ -7,6 +7,8 @@
 #include <Halide.h>
 #include <HalideBuffer.h>
 
+#include "log.h"
+
 #ifdef _WIN32
 #include <windows.h>
 #else
@@ -171,22 +173,14 @@ extern "C" DLLEXPORT
 int inc(halide_buffer_t *in, int32_t width, int32_t height, int32_t v, bool use_gpu, halide_buffer_t *out) {
     using namespace Halide;
 
-    if (in->is_bounds_query() || out->is_bounds_query()) {
-        if (out->is_bounds_query()) {
-            out->dim[0].min = 0;
-            out->dim[0].extent = width;
-            out->dim[1].min = 0;
-            out->dim[1].extent = height;
-        }
-        if (in->is_bounds_query()) {
-            in->dim[0].min = 0;
-            in->dim[0].extent = width;
-            in->dim[1].min = 0;
-            in->dim[1].extent = height;
-        }
+    if (in->is_bounds_query()) {
+        in->dim[0].min = out->dim[0].min;
+        in->dim[0].extent = out->dim[0].extent;
+        in->dim[1].min = out->dim[1].min;
+        in->dim[1].extent = out->dim[1].extent;
     } else {
 
-        printf("in->host(0x%lx), in->device(0x%lx), out->host(0x%lx), out->device(0x%lx)\n", reinterpret_cast<uint64_t>(in->host), in->device, reinterpret_cast<uint64_t>(out->host), out->device);
+        ion::log::debug("in->host({:#x}), in->device({:#x}), out->host({:#x}), out->device({:#x})", reinterpret_cast<uint64_t>(in->host), in->device, reinterpret_cast<uint64_t>(out->host), out->device);
 
         Runtime::Buffer<int32_t> ibuf(*in);
         Runtime::Buffer<int32_t> obuf(*out);
@@ -207,7 +201,7 @@ int inc(halide_buffer_t *in, int32_t width, int32_t height, int32_t v, bool use_
 
             static DynamicModule dm("gpu-extern-lib");
             call_inc_kernel_t call_inc_kernel = dm.get_symbol<call_inc_kernel_t>("call_inc_kernel");
-            call_inc_kernel(reinterpret_cast<int32_t*>(ibuf.raw_buffer()->device), width, height, v,
+            call_inc_kernel(reinterpret_cast<int32_t*>(ibuf.raw_buffer()->device), obuf.extent(0), obuf.extent(1), v,
                             reinterpret_cast<int32_t*>(obuf.raw_buffer()->device));
 
             if (copy_to_host) {
@@ -216,8 +210,8 @@ int inc(halide_buffer_t *in, int32_t width, int32_t height, int32_t v, bool use_
                 obuf.copy_to_host();
             }
         } else {
-            for (int y=0; y<height; ++y) {
-                for (int x=0; x<width; ++x) {
+            for (int y=obuf.min(1); y<obuf.extent(1); ++y) {
+                for (int x=obuf.min(0); x<obuf.extent(0); ++x) {
                     obuf(x, y) = ibuf(x, y) + v;
                 }
             }

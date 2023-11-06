@@ -13,7 +13,7 @@ int main()
     b.set_target(Halide::get_target_from_environment());
 
     Node n;
-    n = b.add("test_branch")(n["output"], width, height);
+    n = b.add("test_branch")(input, width, height);
     n = b.add("test_merge")(n["output0"], n["output1"], height);
 
     b.compile("complex_graph");

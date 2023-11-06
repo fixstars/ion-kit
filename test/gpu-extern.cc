@@ -1,7 +1,5 @@
 #include "ion/ion.h"
 
-#include "ion-bb-internal/bb.h"
-
 #include "test-bb.h"
 #include "test-rt.h"
 
@@ -19,6 +17,7 @@ int main()
         Builder b;
         b.set_target(Halide::get_host_target()); // CPU
         //b.set_target(Halide::get_host_target().with_feature(Halide::Target::CUDA)); // GPU
+        b.with_bb_module("ion-bb");
 
         Node n;
         Port ip{"input", Halide::type_of<int32_t>(), 2};

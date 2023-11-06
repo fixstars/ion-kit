@@ -7,13 +7,10 @@
 
 #include <Halide.h>
 
-#include "json.hpp"
 #include "param.h"
 #include "port.h"
 
 namespace ion {
-
-using json = nlohmann::json;
 
 /**
  * Node class is used to manage node which consists graph structure.
@@ -35,9 +32,6 @@ class Node {
 
 public:
     friend class Builder;
-
-    friend void to_json(json&, const Node&);
-    friend void from_json(const json&, Node&);
 
     Node() : impl_(new Node_) {};
 
@@ -101,7 +95,15 @@ public:
         return impl_->id;
     }
 
+    std::string& id() {
+        return impl_->id;
+    }
+
     std::string name() const {
+        return impl_->name;
+    }
+
+    std::string& name(){
         return impl_->name;
     }
 
@@ -109,11 +111,23 @@ public:
         return impl_->target;
     }
 
+    Halide::Target& target() {
+        return impl_->target;
+    }
+
     std::vector<Param> params() const {
         return impl_->params;
     }
 
+    std::vector<Param>& params() {
+        return impl_->params;
+    }
+
     std::vector<Port> ports() const {
+        return impl_->ports;
+    }
+
+    std::vector<Port>& ports() {
         return impl_->ports;
     }
 

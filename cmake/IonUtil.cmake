@@ -22,9 +22,10 @@ function(ion_compile NAME)
             PUBLIC -fno-rtti  # For Halide::Generator
             PUBLIC -rdynamic) # For JIT compiling
     endif()
-    target_include_directories(${NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include;${ION_BB_INCLUDE_DIRS}")
-    target_link_libraries(${NAME} PRIVATE ion-core ${ION_BB_LIBRARIES} ${PLATFORM_LIBRARIES})
+    target_include_directories(${NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include")
+    target_link_libraries(${NAME} PRIVATE ion-core ${PLATFORM_LIBRARIES})
     set_target_properties(${NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY compile PIPELINE_NAME ${IEC_PIPELINE_NAME})
+    add_dependencies(${NAME} ion-bb)
 endfunction()
 
 function(ion_run NAME COMPILE_NAME)
@@ -50,24 +51,27 @@ function(ion_run NAME COMPILE_NAME)
         add_custom_command(OUTPUT ${HEADER} ${STATIC_LIB}
             COMMAND ${CMAKE_SOURCE_DIR}/script/invoke.sh $<TARGET_FILE:${COMPILE_NAME}>
                 HL_TARGET ${IER_TARGET_STRING}
-                LD_LIBRARY_PATH ${HALIDE_ROOT}/bin
-                LD_LIBRARY_PATH ${CMAKE_BINARY_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>
+                LD_LIBRARY_PATH ${Halide_DIR}/../../../bin
+                LD_LIBRARY_PATH ${CMAKE_BINARY_DIR}
+                LD_LIBRARY_PATH ${CMAKE_BINARY_DIR}/src/bb
             DEPENDS ${COMPILE_NAME} ${OUTPUT_PATH}
             WORKING_DIRECTORY ${OUTPUT_PATH})
     else()
         add_custom_command(OUTPUT ${HEADER} ${STATIC_LIB}
             COMMAND ${CMAKE_SOURCE_DIR}/script/invoke.bat $<TARGET_FILE:${COMPILE_NAME}>
                 HL_TARGET ${IER_TARGET_STRING}
-                PATH ${HALIDE_ROOT}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>
+                PATH ${Halide_DIR}/../../../bin/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>
                 PATH ${CMAKE_BINARY_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>
+                PATH ${CMAKE_BINARY_DIR}/src/bb/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>
             DEPENDS ${COMPILE_NAME} ${OUTPUT_PATH}
             WORKING_DIRECTORY ${OUTPUT_PATH})
     endif()
 
     # Build run
+    find_package(OpenCV 4 REQUIRED)
     add_executable(${NAME} ${IER_SRCS} ${HEADER})
-    target_include_directories(${NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include;${ION_BB_INCLUDE_DIRS};${OUTPUT_PATH}")
-    target_link_libraries(${NAME} PRIVATE ${STATIC_LIB} Halide::Halide Halide::Runtime ${ION_BB_LIBRARIES} ${PLATFORM_LIBRARIES})
+    target_include_directories(${NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include ${OpenCV_INCLUDE_DIRS} ${OUTPUT_PATH})
+    target_link_libraries(${NAME} PRIVATE ${STATIC_LIB} ion-bb Halide::Halide Halide::Runtime ${OpenCV_LIBS} ${PLATFORM_LIBRARIES})
 
     add_test(NAME ${NAME} COMMAND $<TARGET_FILE:${NAME}> ${IER_RUNTIME_ARGS})
 endfunction()
@@ -93,8 +97,9 @@ function(ion_jit NAME)
         # For JIT compiling
         target_compile_options(${NAME} PUBLIC -rdynamic)
     endif()
-    target_include_directories(${NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include;${ION_BB_INCLUDE_DIRS}")
-    target_link_libraries(${NAME} PRIVATE ion-core ${ION_BB_LIBRARIES} ${PLATFORM_LIBRARIES})
+    find_package(OpenCV 4 REQUIRED)
+    target_include_directories(${NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include ${ION_BB_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
+    target_link_libraries(${NAME} PRIVATE ion-core ${ION_BB_LIBRARIES} ${PLATFORM_LIBRARIES} ${OpenCV_LIBS})
     set_target_properties(${NAME} PROPERTIES ENABLE_EXPORTS ON)
 endfunction()
 
@@ -103,6 +108,12 @@ function(ion_register_test TEST_NAME EXEC_NAME)
     set(oneValueArgs TARGET_STRING)
     set(multiValueArgs RUNTIME_ARGS)
     cmake_parse_arguments(IERT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    if (UNIX)
+        set(IERT_RUNTIME_ENVS "LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/src/bb:${CMAKE_BINARY_DIR}/test")
+    else()
+        set(IERT_RUNTIME_ENVS "PATH=${CMAKE_BINARY_DIR}/src/bb/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>\\\;${CMAKE_BINARY_DIR}/test/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>")
+    endif()
 
     if (IERT_TARGET_STRING)
         list(APPEND IERT_RUNTIME_ENVS "HL_TARGET=${IERT_TARGET_STRING}")

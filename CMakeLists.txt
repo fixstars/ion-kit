@@ -5,8 +5,12 @@ cmake_minimum_required(VERSION 3.6)
 #
 # Options
 #
-option(ION_BUILD_ALL_BB "Enable to build all building blocks" ON)
-set(ION_BBS_TO_BUILD "ion-bb-core;ion-bb-dnn;ion-bb-image-io;ion-bb-image-processing;ion-bb-opencv;ion-bb-sgm" CACHE STRING "A List of building blocks to build (This overrides ION_BUILD_ALL_BB)")
+if (UNIX)
+  set(DEFAULT_TARGET_BB "base;dnn;image-io;image-processing;opencv;sgm")
+else()
+  set(DEFAULT_TARGET_BB "base;image-io;image-processing;opencv;sgm")
+endif()
+set(ION_TARGET_BB ${DEFAULT_TARGET_BB} CACHE STRING "A List of building blocks to build (This overrides ION_BUILD_ALL_BB)")
 option(ION_BUILD_DOC "Build documents." OFF)
 option(ION_BUILD_TEST "Enable to build tests" ON)
 option(ION_BUILD_EXAMPLE "Enable to build examples" ON)
@@ -19,7 +23,7 @@ option(WITH_CUDA "Enable CUDA with buliding examples." ON)
 # CMake common settings
 #
 set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON) # This is required to export symbols on windows platform
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
@@ -54,9 +58,9 @@ endif()
 #
 # Build main library
 #
-file(GLOB ION_SRC src/*)
-add_library(ion-core SHARED ${ION_SRC})
-target_include_directories(ion-core PUBLIC ${PROJECT_SOURCE_DIR}/include)
+file(GLOB ION_CORE_SRC LIST_DIRECTORIES false ${PROJECT_SOURCE_DIR}/src/*)
+add_library(ion-core SHARED ${ION_CORE_SRC})
+target_include_directories(ion-core PUBLIC ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/src)
 if (UNIX)
   target_link_libraries(ion-core PUBLIC Halide::Halide Halide::Runtime dl pthread z)
 else()
@@ -66,13 +70,7 @@ endif()
 #
 # ion-bb
 #
-include(ImportIonBB)
-ion_import_building_block()
-
-#
-# Link directories
-#
-link_directories(${ION_BB_LINK_DIRS})
+add_subdirectory(src/bb)
 
 #
 # Test
@@ -123,8 +121,6 @@ endif()
 #
 # Install
 #
-install(FILES cmake/ion-bb-config.cmake DESTINATION share/cmake/)
-
 if (UNIX)
     install(TARGETS ion-core DESTINATION lib)
 else()
@@ -197,11 +193,3 @@ string(STRIP "${GIT_DESCRIBE_RESULT}" ION_KIT_VERSION_S)
 string(REPLACE "v" "" ION_KIT_VERSION ${ION_KIT_VERSION_S})
 set(CPACK_PACKAGE_VERSION ${ION_KIT_VERSION})
 include(CPack)
-
-#
-# Allow big object
-#
-if (MSVC)
-    add_definitions(/bigobj)
-    message(STATUS "Allow big object")
-endif (MSVC)

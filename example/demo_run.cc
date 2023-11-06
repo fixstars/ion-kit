@@ -1,17 +1,13 @@
-#include "demo.h"
-
-#include "ion-bb-core/rt.h"
-#include "ion-bb-dnn/rt.h"
-#include "ion-bb-image-io/rt.h"
-#include "ion-bb-image-processing/rt.h"
-#include "ion-bb-sgm/rt.h"
-
-#include <HalideBuffer.h>
-
 #include <iostream>
 #include <vector>
 
-using namespace ion;
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
+#include <HalideBuffer.h>
+
+#include "demo.h"
 
 int main() {
     try {

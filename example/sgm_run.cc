@@ -1,16 +1,13 @@
-#include "sgm.h"
+#include <iostream>
+#include <vector>
 
-#include "ion-bb-core/rt.h"
-#include "ion-bb-image-io/rt.h"
-#include "ion-bb-image-processing/rt.h"
-#include "ion-bb-internal/rt.h"
-#include "ion-bb-sgm/rt.h"
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 
 #include <HalideBuffer.h>
 
-#include <iostream>
-
-// using namespace ion;
+#include "sgm.h"
 
 int main() {
     try {

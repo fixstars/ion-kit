@@ -10,8 +10,6 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include "ion-bb-image-io/bb.h"
-#include "ion-bb-image-io/rt.h"
 
 #include "util.h"
 
@@ -64,6 +62,7 @@ void save_image(Halide::Buffer<float> buffer, std::string filename) {
 int main(int argc, char *argv[]) {
     Builder b;
     b.set_target(Halide::Target{get_target_from_cmdline(argc, argv)});
+    b.with_bb_module("ion-bb");
 
     const int32_t width = 640;
     const int32_t height = 480;

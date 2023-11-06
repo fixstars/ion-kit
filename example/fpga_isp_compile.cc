@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
                        Param{"unroll_level", "3"})(
                        downscale["output"]);
 
-    Node reorder = b.add("core_reorder_buffer_3d_uint8")
+    Node reorder = b.add("base_reorder_buffer_3d_uint8")
                        .set_param(
                            Param{"dim0", "1"},
                            Param{"dim1", "2"},

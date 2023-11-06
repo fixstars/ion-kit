@@ -8,29 +8,7 @@
 
 #include <Halide.h>
 
-#include "json.hpp"
-
-namespace nlohmann {
-template <>
-class adl_serializer<halide_type_t> {
-public:
-    static void to_json(json& j, const halide_type_t& v) {
-        j["code"] = v.code;
-        j["bits"] = v.bits;
-        j["lanes"] = v.lanes;
-    }
-
-    static void from_json(const json& j, halide_type_t& v) {
-        v.code = j["code"];
-        v.bits = j["bits"];
-        v.lanes = j["lanes"];
-    }
-};
-} // namespace nlohmann
-
 namespace ion {
-
-using json = nlohmann::json;
 
 class ParamContainer {
  public:
@@ -166,8 +144,6 @@ DECLARE_SET_TO_PARAM(double, f64_);
  */
 class Port {
  public:
-     friend void to_json(json&, const Port&);
-     friend void from_json(const json&, Port&);
      friend class Node;
 
      Port()
@@ -191,12 +167,19 @@ class Port {
          : key_(k), type_(t), dimensions_(d), node_id_(), param_info_(new ParamContainer(k, t, d)) {}
 
      std::string key() const { return key_; }
+     std::string& key() { return key_; }
 
      Halide::Type type() const { return type_; }
+     Halide::Type& type() { return type_; }
 
      int32_t dimensions() const { return dimensions_; }
+     int32_t& dimensions() { return dimensions_; }
 
      std::string node_id() const { return node_id_; }
+     std::string& node_id() { return node_id_; }
+
+     std::shared_ptr<ParamContainer> param_info() const { return param_info_; }
+     std::shared_ptr<ParamContainer>& param_info() { return param_info_; }
 
      Halide::Expr expr() const {
          return param_info_->expr();

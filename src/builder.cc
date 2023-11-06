@@ -6,12 +6,15 @@
 
 #include "ion/builder.h"
 #include "ion/generator.h"
-#include "ion/json.hpp"
 #include "ion/util.h"
 
+#include "json/json.hpp"
+#include "uuid/sole.hpp"
+
+#include "log.h"
 #include "dynamic_module.h"
 #include "metadata.h"
-#include "sole.hpp"
+#include "serializer.h"
 
 namespace ion {
 
@@ -75,6 +78,7 @@ using json = nlohmann::json;
 
 Builder::Builder()
 {
+
 }
 
 Node Builder::add(const std::string& k)
@@ -217,6 +221,8 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
     if (pipeline_.defined()) {
         return pipeline_;
     }
+
+    log::info("Start building pipeline");
 
     // Sort nodes prior to build.
     // This operation is required especially for the graph which is loaded from JSON definition.
@@ -404,11 +410,6 @@ std::string Builder::bb_metadata(void) {
     json j(md);
 
     return j.dump();
-}
-
-
-const std::vector<Node>& Builder::get_nodes() const {
-    return nodes_;
 }
 
 } //namespace ion

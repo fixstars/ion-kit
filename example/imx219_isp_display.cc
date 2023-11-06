@@ -6,14 +6,6 @@
 
 #include <ion/ion.h>
 
-#include "ion-bb-core/bb.h"
-#include "ion-bb-image-io/bb.h"
-#include "ion-bb-image-processing/bb.h"
-
-#include "ion-bb-core/rt.h"
-#include "ion-bb-image-io/rt.h"
-#include "ion-bb-image-processing/rt.h"
-
 #include "util.h"
 
 using namespace ion;
@@ -29,6 +21,7 @@ int main(int argc, char *argv[]) {
 
     Builder b;
     b.set_target(Halide::Target{get_target_from_cmdline(argc, argv)});
+    b.with_bb_module("ion-bb");
 
     constexpr int32_t num = 2;
     Node n;
@@ -42,7 +35,7 @@ int main(int argc, char *argv[]) {
     }
 
     n = b.add("image_processing_tile_image_horizontal_3d_float")(ns[0]["output"], ns[1]["output"]).set_param(Param{"input0_width", std::to_string(quad_width_v)}, Param{"input0_height", std::to_string(quad_height_v)}, Param{"input1_width", std::to_string(quad_width_v)}, Param{"input1_height", std::to_string(quad_height_v)});
-    n = b.add("core_denormalize_3d_uint8")(n["output"]);
+    n = b.add("base_denormalize_3d_uint8")(n["output"]);
     n = b.add("image_io_gui_display")(n["output"]).set_param(Param{"width", std::to_string(half_width_v)}, Param{"height", std::to_string(quad_height_v)});
 
     PortMap pm;
