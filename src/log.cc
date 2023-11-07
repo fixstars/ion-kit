@@ -24,6 +24,8 @@ struct Logger {
          auto logger = std::make_shared<spdlog::logger>("ion", spdlog::sinks_init_list{console_sink, file_sink});
          logger->set_level(spdlog::level::trace);
 
+         logger->debug("ion-kit version is {}", ION_KIT_VERSION);
+
          spdlog::register_logger(logger);
      }
 } logger;
