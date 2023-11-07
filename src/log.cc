@@ -21,7 +21,10 @@ struct Logger {
          auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("logs/ion.log", false);
          file_sink->set_level(spdlog::level::trace);
 
-         spdlog::register_logger(std::make_shared<spdlog::logger>("ion", spdlog::sinks_init_list{console_sink, file_sink}));
+         auto logger = std::make_shared<spdlog::logger>("ion", spdlog::sinks_init_list{console_sink, file_sink});
+         logger->set_level(spdlog::level::trace);
+
+         spdlog::register_logger(logger);
      }
 } logger;
 
