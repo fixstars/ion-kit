@@ -5,6 +5,16 @@
 
 #include "log.h"
 
+namespace ion {
+namespace log {
+
+std::shared_ptr<spdlog::logger> get() {
+    return spdlog::get("ion");
+}
+
+} // log
+} // ion
+
 namespace {
 
 struct Logger {
