@@ -5,12 +5,13 @@
 
 namespace ion {
 namespace log {
-template<class... Types> static void critical(Types... args) { spdlog::get("ion")->critical(args...); }
-template<class... Types> static void error   (Types... args) { spdlog::get("ion")->error   (args...); }
-template<class... Types> static void warn    (Types... args) { spdlog::get("ion")->warn    (args...); }
-template<class... Types> static void info    (Types... args) { spdlog::get("ion")->info    (args...); }
-template<class... Types> static void debug   (Types... args) { spdlog::get("ion")->debug   (args...); }
-template<class... Types> static void trace   (Types... args) { spdlog::get("ion")->trace   (args...); }
+std::shared_ptr<spdlog::logger> get();
+template<class... Types> static void critical(Types... args) { get()->critical(args...); }
+template<class... Types> static void error   (Types... args) { get()->error   (args...); }
+template<class... Types> static void warning (Types... args) { get()->warning (args...); }
+template<class... Types> static void info    (Types... args) { get()->info    (args...); }
+template<class... Types> static void debug   (Types... args) { get()->debug   (args...); }
+template<class... Types> static void trace   (Types... args) { get()->trace   (args...); }
 } // log
 } // ion
 

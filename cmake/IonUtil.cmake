@@ -60,9 +60,9 @@ function(ion_run NAME COMPILE_NAME)
         add_custom_command(OUTPUT ${HEADER} ${STATIC_LIB}
             COMMAND ${CMAKE_SOURCE_DIR}/script/invoke.bat $<TARGET_FILE:${COMPILE_NAME}>
                 HL_TARGET ${IER_TARGET_STRING}
-                PATH ${Halide_DIR}/../../../bin/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>
-                PATH ${CMAKE_BINARY_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>
-                PATH ${CMAKE_BINARY_DIR}/src/bb/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>
+                PATH ${Halide_DIR}/../../../bin/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>$<$<CONFIG:RelWithDebInfo>:Release>
+                PATH ${CMAKE_BINARY_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>$<$<CONFIG:RelWithDebInfo>:Release>
+                PATH ${CMAKE_BINARY_DIR}/src/bb/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>$<$<CONFIG:RelWithDebInfo>:Release>
             DEPENDS ${COMPILE_NAME} ${OUTPUT_PATH}
             WORKING_DIRECTORY ${OUTPUT_PATH})
     endif()
