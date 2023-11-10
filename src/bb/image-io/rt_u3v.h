@@ -283,16 +283,22 @@ class U3V {
 
         if (operation_mode_ == OperationMode::Came2USB2 || operation_mode_ == OperationMode::Came1USB1){
 
+            std::vector<int> debug_frame_count;
+            std::vector<int> debug_camera_index;
+
             // get the first buffer for each stream
             for (auto i = 0; i< devices_.size(); ++i) {
                 bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, timeout_us);
                 if (bufs[i] == nullptr){
+                    list_all_popped_buffer(num_device, debug_frame_count, debug_camera_index);
                     log::error("pop_buffer(L1) failed due to timeout ({}s)", timeout_us*1e-6f);
                     throw ::std::runtime_error("Buffer is null");
                 }
                 devices_[i].frame_count_ = is_gendc_
                     ? static_cast<uint64_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
                     : static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
+                debug_frame_count.push_back(devices_[i].frame_count_);
+                debug_camera_index.push_back(i);
             }
 
             if (realtime_display_mode_){
@@ -310,12 +316,16 @@ class U3V {
                             arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
                             bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, timeout_us);
                             if (bufs[i] == nullptr){
+                                list_all_popped_buffer(num_device, debug_frame_count, debug_camera_index);
                                 log::error("pop_buffer(L2) failed due to timeout ({}s)", timeout_us*1e-6f);
                                 throw ::std::runtime_error("buffer is null");
                             }
                             devices_[i].frame_count_ = is_gendc_
                                 ? static_cast<uint64_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
                                 : static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
+
+                            debug_frame_count.push_back(devices_[i].frame_count_);
+                            debug_camera_index.push_back(i);
                         }
                     }
                 }
@@ -348,30 +358,44 @@ class U3V {
                             arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
                             bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, timeout_us);
                             if (bufs[i] == nullptr){
+                                list_all_popped_buffer(num_device, debug_frame_count, debug_camera_index);
                                 log::error("pop_buffer(L3) failed due to timeout ({}s)", timeout_us*1e-6f);
                                 throw ::std::runtime_error("buffer is null");
                             }
                             devices_[i].frame_count_ = is_gendc_
                                 ? static_cast<uint64_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
                                 : static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
+
+                            debug_frame_count.push_back(devices_[i].frame_count_);
+                            debug_camera_index.push_back(i);
                         }
                     }
                 }
             }
 
+            if (trace_framecount_){
+                list_all_popped_buffer(num_device, debug_frame_count, debug_camera_index);
+            }
+
             for (int i = 0; i < num_sensor_; ++i){
                 ::memcpy(outs[i], arv_buffer_get_part_data(bufs[i], 0, nullptr), devices_[i].image_payload_size_);
                 arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
+                log::trace("Obtained Frame from USB{}: {}", i, devices_[i].frame_count_);
             }
+
         } else if (operation_mode_ == OperationMode::Came1USB2) {
 
             uint64_t latest_cnt = 0;
             int32_t min_frame_device_idx = 0;
 
+            std::vector<int> debug_frame_count;
+            std::vector<int> debug_camera_index;
+
             while (frame_cnt_ >= latest_cnt) {
                 cameN_idx_ = (cameN_idx_+1) >= num_device ? 0 : cameN_idx_+1;
                 bufs[cameN_idx_] = arv_stream_timeout_pop_buffer (devices_[cameN_idx_].stream_, 30 * 1000 * 1000);
                 if (bufs[cameN_idx_] == nullptr){
+                    list_all_popped_buffer(num_device, debug_frame_count, debug_camera_index);
                     log::error("pop_buffer(L4) failed due to timeout ({}s)", timeout_us*1e-6f);
                     throw ::std::runtime_error("buffer is null");
                 }
@@ -379,11 +403,19 @@ class U3V {
                         ? static_cast<uint64_t>(get_frame_count_from_genDC_descriptor(bufs[cameN_idx_], devices_[cameN_idx_]))
                         : static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[cameN_idx_]) & 0x00000000FFFFFFFF);
                 latest_cnt = devices_[cameN_idx_].frame_count_;
+
+                debug_frame_count.push_back(latest_cnt);
+                debug_camera_index.push_back(cameN_idx_);
             }
 
             frame_cnt_ = latest_cnt;
             ::memcpy(outs[0], arv_buffer_get_part_data(bufs[cameN_idx_], 0, nullptr), devices_[cameN_idx_].image_payload_size_);
             arv_stream_push_buffer(devices_[cameN_idx_].stream_, bufs[cameN_idx_]);
+
+            if (trace_framecount_){
+                list_all_popped_buffer(num_device, debug_frame_count, debug_camera_index);
+            }
+            log::trace("Obtained Frame from USB{}: {}", cameN_idx_, frame_cnt_);
         }
     }
 
@@ -397,16 +429,23 @@ class U3V {
 
         if (operation_mode_ == OperationMode::Came2USB2 || operation_mode_ == OperationMode::Came1USB1){
 
+            std::vector<int> debug_frame_count;
+            std::vector<int> debug_camera_index;
+
             // get the first buffer for each stream
             for (auto i = 0; i< devices_.size(); ++i) {
                 bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, timeout_us);
                 if (bufs[i] == nullptr){
+                    list_all_popped_buffer(num_device, debug_frame_count, debug_camera_index);
                     log::error("pop_buffer(L5) failed due to timeout ({}s)", timeout_us*1e-6f);
                     throw ::std::runtime_error("buffer is null");
                 }
                 devices_[i].frame_count_ = is_gendc_
                     ? static_cast<uint64_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
                     : static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
+
+                debug_frame_count.push_back(devices_[i].frame_count_);
+                debug_camera_index.push_back(i);
             }
 
             if (realtime_display_mode_){
@@ -424,12 +463,16 @@ class U3V {
                             arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
                             bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, timeout_us);
                             if (bufs[i] == nullptr){
+                                list_all_popped_buffer(num_device, debug_frame_count, debug_camera_index);
                                 log::error("pop_buffer(L6) failed due to timeout ({}s)", timeout_us*1e-6f);
                                 throw ::std::runtime_error("buffer is null");
                             }
                             devices_[i].frame_count_ = is_gendc_
                                 ? static_cast<uint64_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
                                 : static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
+
+                            debug_frame_count.push_back(devices_[i].frame_count_);
+                            debug_camera_index.push_back(i);
                         }
                     }
                 }
@@ -462,21 +505,30 @@ class U3V {
                             arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
                             bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, timeout_us);
                             if (bufs[i] == nullptr){
+                                list_all_popped_buffer(num_device, debug_frame_count, debug_camera_index);
                                 log::error("pop_buffer(L7) failed due to timeout ({}s)", timeout_us*1e-6f);
                                 throw ::std::runtime_error("buffer is null");
                             }
                             devices_[i].frame_count_ = is_gendc_
                                 ? static_cast<uint64_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
                                 : static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
+                                                        debug_frame_count.push_back(devices_[i].frame_count_);
+                            debug_frame_count.push_back(devices_[i].frame_count_);
+                            debug_camera_index.push_back(i);
                         }
                     }
                 }
+            }
+
+            if (trace_framecount_){
+               list_all_popped_buffer(num_device, debug_frame_count, debug_camera_index);
             }
 
             for (int i = 0; i < num_sensor_; ++i){
                 ::memcpy(outs[i*num_sensor_], arv_buffer_get_data(bufs[i], nullptr), devices_[i].u3v_payload_size_);
                 ::memcpy(outs[i*num_sensor_+1], &(devices_[i].header_info_), sizeof(ion::bb::image_io::rawHeader));
                 arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
+                log::trace("Obtained Frame from USB{}: {}", i, devices_[i].frame_count_);
             }
         } else if (operation_mode_ == OperationMode::Came1USB2) {
                 uint64_t latest_cnt = 0;
@@ -508,16 +560,20 @@ class U3V {
     : gobject_(GOBJECT_FILE, true), aravis_(ARAVIS_FILE, true),
         pixel_format_(pixel_format), num_sensor_(num_sensor),
         frame_sync_(frame_sync), realtime_display_mode_(realtime_display_mode), is_gendc_(false), is_param_integer_(false),
-        devices_(num_sensor), buffers_(num_sensor), operation_mode_(OperationMode::Came1USB1), frame_cnt_(0), cameN_idx_(-1), disposed_(false)
+        devices_(num_sensor), buffers_(num_sensor), operation_mode_(OperationMode::Came1USB1), frame_cnt_(0), cameN_idx_(-1), trace_framecount_(false), disposed_(false)
     {
         init_symbols();
 
+        trace_framecount_ = spdlog::details::os::getenv("ION_LOG_LEVEL") == "trace";
+
+        log::info("ion-kit with framecount-log for 23-11-09 debug meeting");
         log::info("Using aravis-{}.{}.{}", arv_get_major_version(), arv_get_minor_version(), arv_get_micro_version());
 
         arv_update_device_list();
         unsigned int n_devices = arv_get_n_devices ();
 
         if (n_devices < num_sensor_){
+            log::info("Multiple devices are found; The first device is selected");
             throw std::runtime_error("No device found");
         }
         frame_sync_ = num_sensor_ > 1 ? frame_sync_ : false;
@@ -526,6 +582,10 @@ class U3V {
         if (n_devices != num_sensor_ && dev_id == nullptr) {
             log::info("Multiple devices are found; The first device is selected");
         }
+
+        log::info("Creating U3V instance with {} devices...", num_sensor_);
+        log::info("Acquisition option::{} is {}", "frame_sync_", frame_sync_);
+        log::info("Acquisition option::{} is {}", "realtime_display_mode_", realtime_display_mode_);
 
         for (int i = 0; i < n_devices; ++i){
             if (dev_id == arv_get_device_id (i) && dev_id != nullptr){
@@ -538,6 +598,7 @@ class U3V {
                 /* if device id is not specified */
                 devices_[i].dev_id_ = arv_get_device_id (i);
             }
+            log::info("\tDevice/USB {}::{} : {}", i, "DeviceID", devices_[i].dev_id_);
 
             devices_[i].device_ = arv_open_device(devices_[i].dev_id_, &err_);
             if (err_ ) {
@@ -552,6 +613,7 @@ class U3V {
             if (err_ ) {
                 throw std::runtime_error(err_->message);
             }
+            log::info("\tDevice/USB {}::{} : {}", i, "PixelFormat", pixel_format_);
 
             // Some type of U3V Camera has integer type on gain and exposure
             const char* device_vender_name;
@@ -566,6 +628,7 @@ class U3V {
 
             // Here PayloadSize is the one for U3V data
             devices_[i].u3v_payload_size_ = arv_device_get_integer_feature_value(devices_[i].device_, "PayloadSize", &err_);
+            log::info("\tDevice/USB {}::{} : {}", i, "PayloadSize", devices_[i].u3v_payload_size_);
             if (err_ ) {
                 throw std::runtime_error(err_->message);
             }
@@ -600,6 +663,7 @@ class U3V {
 
             // Check each parameters for GenDC device ==========================
             if (is_gendc_){
+                log::info("\tDevice/USB {}::{} : {}", i, "GenDC", "Available");
                 uint64_t gendc_desc_size = arv_device_get_register_feature_length(devices_[i].device_, "GenDCDescriptor", &err_);
                 if (err_) {
                     throw std::runtime_error(err_->message);
@@ -631,7 +695,7 @@ class U3V {
             }else{
                 devices_[i].data_offset_ = 0;
                 devices_[i].image_payload_size_ = devices_[i].u3v_payload_size_;
-                log::info("The device is not GenDC supported");
+                log::info("\tDevice/USB {}::{} : {}", i, "GenDC", "Not Supported");
             }
 
 
@@ -642,6 +706,8 @@ class U3V {
             if (arv_device_is_feature_available(devices_[i].device_, "AcquisitionFrameRate", &err_)){
                 fps = arv_device_get_float_feature_value(devices_[i].device_, "AcquisitionFrameRate", &err_);
             }
+            log::info("\tDevice/USB {}::{} : {}", i, "Width", wi);
+            log::info("\tDevice/USB {}::{} : {}", i, "Height", hi);
 
             int32_t px =
                 pixel_format_ == "RGB8" ? PFNC_RGB8 :
@@ -673,7 +739,7 @@ class U3V {
                     devices_.resize(n_devices);
                     buffers_.resize(n_devices);
                 }
-                log::info("Device is running in {} operation mode", operation_mode_in_string);
+                log::info("\tDevice/USB {}::{} : {}", i, "OperationMode", operation_mode_in_string);
             }
         }
 
@@ -685,30 +751,63 @@ class U3V {
                 buffers_[i].push_back(b);
                 arv_stream_push_buffer(devices_[i].stream_, b);
             }
+            log::info("\tDevice/USB {}::{} : {}", i, "Buffer Size", buffer_size);
+            log::info("\tDevice/USB {}::{} : {}", i, "Number of Buffers", n);
+
         }
 
-        for (auto d : devices_) {
-            arv_device_set_string_feature_value(d.device_, "AcquisitionMode", arv_acquisition_mode_to_string(ARV_ACQUISITION_MODE_CONTINUOUS), &err_);
+        for (auto i=0; i<devices_.size(); ++i) {
+            arv_device_set_string_feature_value(devices_[i].device_, "AcquisitionMode", arv_acquisition_mode_to_string(ARV_ACQUISITION_MODE_CONTINUOUS), &err_);
             if (err_) {
                 throw std::runtime_error(err_->message);
             }
+            log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionMode");
         }
 
-        for (auto d : devices_) {
-            arv_device_execute_command(d.device_, "AcquisitionStop", &err_);
+        for (auto i=0; i<devices_.size(); ++i) {
+            arv_device_execute_command(devices_[i].device_, "AcquisitionStop", &err_);
             if (err_) {
                 throw std::runtime_error(err_->message);
             }
+            log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionStop");
         }
 
-        for (auto d : devices_) {
-            arv_device_execute_command(d.device_, "AcquisitionStart", &err_);
+        for (auto i=0; i<devices_.size(); ++i) {
+            arv_device_execute_command(devices_[i].device_, "AcquisitionStart", &err_);
             if (err_) {
                 throw std::runtime_error(err_->message);
             }
+            log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionMode");
         }
+    }
 
-        log::info("U3V instance is created: pixel_format({}) num_sensor({}) frame_sync({}) realtime_display_mode({}) dev_id({})", pixel_format, num_sensor, frame_sync, realtime_display_mode, dev_id);
+    void list_all_popped_buffer(int num_device, std::vector<int>& framecounts, std::vector<int>& camera_index){
+        int i = 0;
+
+        if (framecounts.size() == camera_index.size()){
+            while(true){
+                if (i >= framecounts.size()){
+                    break;
+                }
+                if (num_device == 2){
+                    if (camera_index.at(i) == 1){
+                        log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", "", framecounts.at(i));
+                        i += 1;
+                    }else{
+                        if (i + 1 < framecounts.size()){
+                            log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", framecounts.at(i), framecounts.at(i+1));
+                            i += 2;
+                        }else{
+                            log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", framecounts.at(i), "");
+                            i += 1;
+                        }
+                    }
+                }else{
+                    log::trace("All-Popped Frames (USB0)=({:20})", framecounts.at(i));
+                    i += 1;
+                }
+            }
+        }
     }
 
     void init_symbols_gobject() {
@@ -908,6 +1007,7 @@ class U3V {
 
     uint64_t frame_cnt_;
     int32_t cameN_idx_;
+    bool trace_framecount_;
 
     // genDC
     ContainerHeader gendc_descriptor_;
