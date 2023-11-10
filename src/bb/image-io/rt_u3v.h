@@ -263,9 +263,11 @@ class U3V {
         }
     }
 
-    uint32_t get_frame_count(){
-        /* assume frame_sync is ON */
-        return devices_[0].frame_count_;
+    void get_frame_count(void * out){
+        for (int nd = 0; nd < num_sensor_; nd++){
+            uint32_t fc32 = static_cast<uint32_t>(devices_[nd].frame_count_);
+            ::memcpy(reinterpret_cast<uint32_t*>(out) + nd, &fc32, sizeof(uint32_t));
+        }
     }
 
     int32_t get_frame_count_from_genDC_descriptor(ArvBuffer * buf, DeviceInfo& d){
@@ -936,7 +938,7 @@ int u3v_camera_frame_count(
             out->dim[0].extent = 1;
         }
         else {
-            * reinterpret_cast<uint32_t*>(out->host) = u3v.get_frame_count();
+            u3v.get_frame_count(out->host);
             if(dispose){
                 u3v.dispose();
             }
