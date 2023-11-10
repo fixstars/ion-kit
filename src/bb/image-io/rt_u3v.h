@@ -264,9 +264,14 @@ class U3V {
     }
 
     void get_frame_count(void * out){
-        for (int nd = 0; nd < num_sensor_; nd++){
-            uint32_t fc32 = static_cast<uint32_t>(devices_[nd].frame_count_);
-            ::memcpy(reinterpret_cast<uint32_t*>(out) + nd, &fc32, sizeof(uint32_t));
+        if (num_sensor_ != devices_.size()){
+            uint32_t fc32 = static_cast<uint32_t>(frame_cnt_);
+            ::memcpy(reinterpret_cast<uint32_t*>(out), &fc32, sizeof(uint32_t));
+        }else{
+            for (int nd = 0; nd < num_sensor_; nd++){
+                uint32_t fc32 = static_cast<uint32_t>(devices_[nd].frame_count_);
+                ::memcpy(reinterpret_cast<uint32_t*>(out) + nd, &fc32, sizeof(uint32_t));
+            }
         }
     }
 
@@ -953,7 +958,7 @@ int u3v_camera_frame_count(
         return 1;
     }
 }
-
+  
 }  // namespace image_io
 }  // namespace bb
 }  // namespace ion
