@@ -368,7 +368,20 @@ class U3V {
             uint64_t latest_cnt = 0;
             int32_t min_frame_device_idx = 0;
 
+            //first buffer 
+            cameN_idx_ = (cameN_idx_+1) >= num_device ? 0 : cameN_idx_+1;
+            bufs[cameN_idx_] = arv_stream_timeout_pop_buffer (devices_[cameN_idx_].stream_, 30 * 1000 * 1000);
+            if (bufs[cameN_idx_] == nullptr){
+                log::error("pop_buffer(L4) failed due to timeout ({}s)", timeout_us*1e-6f);
+                throw ::std::runtime_error("buffer is null");
+            }
+            devices_[cameN_idx_].frame_count_ = is_gendc_
+                    ? static_cast<uint64_t>(get_frame_count_from_genDC_descriptor(bufs[cameN_idx_], devices_[cameN_idx_]))
+                    : static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[cameN_idx_]) & 0x00000000FFFFFFFF);
+            latest_cnt = devices_[cameN_idx_].frame_count_;
+
             while (frame_cnt_ >= latest_cnt) {
+                arv_stream_push_buffer(devices_[cameN_idx_].stream_, bufs[cameN_idx_]);
                 cameN_idx_ = (cameN_idx_+1) >= num_device ? 0 : cameN_idx_+1;
                 bufs[cameN_idx_] = arv_stream_timeout_pop_buffer (devices_[cameN_idx_].stream_, 30 * 1000 * 1000);
                 if (bufs[cameN_idx_] == nullptr){
@@ -482,7 +495,20 @@ class U3V {
                 uint64_t latest_cnt = 0;
                 int32_t min_frame_device_idx = 0;
 
-                while (frame_cnt_ >= latest_cnt){
+                //first buffer 
+                cameN_idx_ = (cameN_idx_+1) >= num_device ? 0 : cameN_idx_+1;
+                bufs[cameN_idx_] = arv_stream_timeout_pop_buffer (devices_[cameN_idx_].stream_, 30 * 1000 * 1000);
+                if (bufs[cameN_idx_] == nullptr){
+                    log::error("pop_buffer(L4) failed due to timeout ({}s)", timeout_us*1e-6f);
+                    throw ::std::runtime_error("buffer is null");
+                }
+                devices_[cameN_idx_].frame_count_ = is_gendc_
+                        ? static_cast<uint64_t>(get_frame_count_from_genDC_descriptor(bufs[cameN_idx_], devices_[cameN_idx_]))
+                        : static_cast<uint64_t>(arv_buffer_get_timestamp(bufs[cameN_idx_]) & 0x00000000FFFFFFFF);
+                latest_cnt = devices_[cameN_idx_].frame_count_;
+
+                while (frame_cnt_ >= latest_cnt) {
+                    arv_stream_push_buffer(devices_[cameN_idx_].stream_, bufs[cameN_idx_]);
                     cameN_idx_ = (cameN_idx_+1) >= num_device ? 0 : cameN_idx_+1;
                     auto timeout2_us = 30 * 1000 * 1000;
                     bufs[cameN_idx_] = arv_stream_timeout_pop_buffer (devices_[cameN_idx_].stream_, timeout2_us);
