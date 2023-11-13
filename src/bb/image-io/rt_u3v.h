@@ -273,14 +273,12 @@ class U3V {
         }
     }
 
-    void get_frame_count(void * out){
+    void get_frame_count(uint32_t * out){
         if (num_sensor_ != devices_.size()){
-            uint32_t fc32 = static_cast<uint32_t>(frame_cnt_);
-            ::memcpy(reinterpret_cast<uint32_t*>(out), &fc32, sizeof(uint32_t));
+            ::memcpy(out, &frame_cnt_, sizeof(uint32_t));
         }else{
             for (int nd = 0; nd < num_sensor_; nd++){
-                uint32_t fc32 = static_cast<uint32_t>(devices_[nd].frame_count_);
-                ::memcpy(reinterpret_cast<uint32_t*>(out) + nd, &fc32, sizeof(uint32_t));
+                ::memcpy(out + nd, &devices_[nd].frame_count_, sizeof(uint32_t));
             }
         }
     }
@@ -608,7 +606,7 @@ class U3V {
     {
         init_symbols();
 
-        log::debug("ion-kit with framecount-log for 23-11-14 Update framecount display");
+        log::debug("ion-kit with framecount-log for 23-11-14 Update framecount Came1USB2");
         log::info("Using aravis-{}.{}.{}", arv_get_major_version(), arv_get_minor_version(), arv_get_micro_version());
 
         arv_update_device_list();
@@ -1048,7 +1046,7 @@ int u3v_camera_frame_count(
             out->dim[0].extent = 1;
         }
         else {
-            u3v.get_frame_count(out->host);
+            u3v.get_frame_count(reinterpret_cast<uint32_t*>(out->host));
             if(dispose){
                 u3v.dispose();
             }
