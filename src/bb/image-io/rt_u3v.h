@@ -379,10 +379,29 @@ class U3V {
 
         } else if (operation_mode_ == OperationMode::Came1USB2) {
 
-            uint64_t latest_cnt = 0;
+            uint32_t latest_cnt = 0;
             int32_t min_frame_device_idx = 0;
 
+            //first buffer 
+            cameN_idx_ = (cameN_idx_+1) >= num_device ? 0 : cameN_idx_+1;
+            bufs[cameN_idx_] = arv_stream_timeout_pop_buffer (devices_[cameN_idx_].stream_, 30 * 1000 * 1000);
+            if (bufs[cameN_idx_] == nullptr){
+                log::error("pop_buffer(L4) failed due to timeout ({}s)", timeout_us*1e-6f);
+                throw ::std::runtime_error("buffer is null");
+            }
+            devices_[cameN_idx_].frame_count_ = is_gendc_
+                    ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[cameN_idx_], devices_[cameN_idx_]))
+                    : static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[cameN_idx_]) & 0x00000000FFFFFFFF);
+            latest_cnt = devices_[cameN_idx_].frame_count_;
+            cameN_idx_ == 0 ?    
+                log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", devices_[cameN_idx_].frame_count_, "") :
+                log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", "", devices_[cameN_idx_].frame_count_);
+
+            int internal_count = 0;
+            int max_internal_count = 1000;            
+
             while (frame_cnt_ >= latest_cnt) {
+                arv_stream_push_buffer(devices_[cameN_idx_].stream_, bufs[cameN_idx_]);
                 cameN_idx_ = (cameN_idx_+1) >= num_device ? 0 : cameN_idx_+1;
                 bufs[cameN_idx_] = arv_stream_timeout_pop_buffer (devices_[cameN_idx_].stream_, 30 * 1000 * 1000);
                 if (bufs[cameN_idx_] == nullptr){
@@ -397,6 +416,11 @@ class U3V {
                 cameN_idx_ == 0 ? 
                     log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", devices_[cameN_idx_].frame_count_, "") :
                     log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", "", devices_[cameN_idx_].frame_count_);
+
+                if (internal_count++ > max_internal_count){
+                    log::error("pop_buffer(L9) The sequential invalid buffer is more than {}; Stop the pipeline.", max_internal_count);
+                    throw ::std::runtime_error("Invalid framecount");
+                }
             }
 
             frame_cnt_ = latest_cnt;
@@ -511,21 +535,44 @@ class U3V {
                 log::trace("Obtained Frame from USB{}: {}", i, devices_[i].frame_count_);
             }
         } else if (operation_mode_ == OperationMode::Came1USB2) {
-                uint64_t latest_cnt = 0;
+                uint32_t latest_cnt = 0;
                 int32_t min_frame_device_idx = 0;
 
-                while (frame_cnt_ >= latest_cnt){
+                //first buffer 
+                cameN_idx_ = (cameN_idx_+1) >= num_device ? 0 : cameN_idx_+1;
+                bufs[cameN_idx_] = arv_stream_timeout_pop_buffer (devices_[cameN_idx_].stream_, 30 * 1000 * 1000);
+                if (bufs[cameN_idx_] == nullptr){
+                    log::error("pop_buffer(L4) failed due to timeout ({}s)", timeout_us*1e-6f);
+                    throw ::std::runtime_error("buffer is null");
+                }
+                devices_[cameN_idx_].frame_count_ = is_gendc_
+                        ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[cameN_idx_], devices_[cameN_idx_]))
+                        : static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[cameN_idx_]) & 0x00000000FFFFFFFF);
+                latest_cnt = devices_[cameN_idx_].frame_count_;
+                cameN_idx_ == 0 ?    
+                    log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", devices_[cameN_idx_].frame_count_, "") :
+                    log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", "", devices_[cameN_idx_].frame_count_);
+
+                int internal_count = 0;
+                int max_internal_count = 1000;
+
+                while (frame_cnt_ >= latest_cnt) {
+                    arv_stream_push_buffer(devices_[cameN_idx_].stream_, bufs[cameN_idx_]);
                     cameN_idx_ = (cameN_idx_+1) >= num_device ? 0 : cameN_idx_+1;
                     auto timeout2_us = 30 * 1000 * 1000;
                     bufs[cameN_idx_] = arv_stream_timeout_pop_buffer (devices_[cameN_idx_].stream_, timeout2_us);
                     if (bufs[cameN_idx_] == nullptr){
                         log::error("pop_buffer(L8) failed due to timeout ({}s)", timeout2_us*1e-6f);
                             throw ::std::runtime_error("buffer is null");
-                        }
+                    }
                     devices_[cameN_idx_].frame_count_ = is_gendc_
                             ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[cameN_idx_], devices_[cameN_idx_]))
                             : static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[cameN_idx_]) & 0x00000000FFFFFFFF);
                     latest_cnt = devices_[cameN_idx_].frame_count_;
+                    if (internal_count++ > max_internal_count){
+                        log::error("pop_buffer(L10) The sequential invalid buffer is more than {}; Stop the pipeline.", max_internal_count);
+                        throw ::std::runtime_error("Invalid framecount");
+                    }
                 }
 
                 frame_cnt_ = latest_cnt;
@@ -954,7 +1001,7 @@ class U3V {
     bool is_param_integer_;
     int32_t operation_mode_;
 
-    uint64_t frame_cnt_;
+    uint32_t frame_cnt_;
     int32_t cameN_idx_;
 
     // genDC
