@@ -181,16 +181,25 @@ class U3V {
     }
 
     void dispose(){
+        log::debug("U3V::dispose() :: is called");
         for (auto i=0; i<devices_.size(); ++i) {
             auto d = devices_[i];
             arv_device_execute_command(d.device_, "AcquisitionStop", &err_);
+            log::debug("U3V::dispose() :: AcquisitionStop");
             /*
             Note:
             unref stream also unref the buffers pushed to stream
             all buffers are in stream so do not undef buffres separately
             */
+            auto start = std::chrono::system_clock::now();
             g_object_unref(reinterpret_cast<gpointer>(d.stream_));
+            auto end = std::chrono::system_clock::now();
+            log::debug("U3V::dispose() :: g_object_unref took {} ms", std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count());
+
+            start = std::chrono::system_clock::now();
             g_object_unref(reinterpret_cast<gpointer>(d.device_));
+            end = std::chrono::system_clock::now();
+            log::debug("U3V::dispose() :: g_object_unref took {} ms", std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count());
         }
 
         devices_.clear();
@@ -201,6 +210,7 @@ class U3V {
         // TODO: get rid of the following code; no call destructor from the member function.
         //------------------------------------------------------------------------------------------
         instance_.reset(nullptr);
+        log::debug("U3V::dispose() :: Instance is deleted");
     }
 
     void SetGain(int32_t sensor_idx, const std::string key, double v) {
