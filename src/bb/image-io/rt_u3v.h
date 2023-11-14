@@ -447,7 +447,7 @@ class U3V {
         }
     }
 
-    void get_with_gendc(std::vector<void *>& outs) {
+    void get_gendc(std::vector<void *>& outs) {
 
         // TODO: Is 3 second fine?
         auto timeout_us = 3 * 1000 * 1000;
@@ -1191,7 +1191,7 @@ int ION_EXPORT ion_bb_image_io_u3v_gendc_camera1(
             }
 
             std::vector<void *> obufs{out_gendc->host, out_deviceinfo->host};
-            u3v.get_with_gendc(obufs);
+            u3v.get_gendc(obufs);
 
             if(dispose){
                 u3v.dispose();
@@ -1240,7 +1240,7 @@ int ION_EXPORT ion_bb_image_io_u3v_gendc_camera2(
             }
 
             std::vector<void *> obufs{gendc0->host, gendc1->host,deviceinfo0->host, deviceinfo1->host};
-            u3v.get_with_gendc(obufs);
+            u3v.get_gendc(obufs);
 
             if(dispose){
                 u3v.dispose();
