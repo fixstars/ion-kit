@@ -797,40 +797,73 @@ public:
         exposure_func(_) = exposure(_);
         exposure_func.compute_root();
 
-        const std::string pixel_format(pixel_format_ptr);
-        Buffer<uint8_t> pixel_format_buf(static_cast<int>(pixel_format.size() + 1));
-        pixel_format_buf.fill(0);
-        std::memcpy(pixel_format_buf.data(), pixel_format.c_str(), pixel_format.size());
-
-        const std::string gain_key(gain_key_ptr);
-        Buffer<uint8_t> gain_key_buf(static_cast<int>(gain_key.size() + 1));
-        gain_key_buf.fill(0);
-        std::memcpy(gain_key_buf.data(), gain_key.c_str(), gain_key.size());
-
-        const std::string exposure_key(exposure_key_ptr);
-        Buffer<uint8_t> exposure_key_buf(static_cast<int>(exposure_key.size() + 1));
-        exposure_key_buf.fill(0);
-        std::memcpy(exposure_key_buf.data(), exposure_key.c_str(), exposure_key.size());
-
-        std::vector<ExternFuncArgument> params{
-            dispose, static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
-            gain_func, exposure_func, pixel_format_buf,
-            gain_key_buf, exposure_key_buf
-         };
-
         Func u3v_gendc("u3v_gendc");
-        gendc.resize(num_devices);
-        device_info.resize(num_devices);
-        std::vector<Halide::Type> output_type;
-        for (int i = 0; i < gendc.size() * 2; i++) {
-            output_type.push_back(Halide::type_of<uint8_t>());
+        {
+            const std::string pixel_format(pixel_format_ptr);
+            Buffer<uint8_t> pixel_format_buf(static_cast<int>(pixel_format.size() + 1));
+            pixel_format_buf.fill(0);
+            std::memcpy(pixel_format_buf.data(), pixel_format.c_str(), pixel_format.size());
+
+            const std::string gain_key(gain_key_ptr);
+            Buffer<uint8_t> gain_key_buf(static_cast<int>(gain_key.size() + 1));
+            gain_key_buf.fill(0);
+            std::memcpy(gain_key_buf.data(), gain_key.c_str(), gain_key.size());
+
+            const std::string exposure_key(exposure_key_ptr);
+            Buffer<uint8_t> exposure_key_buf(static_cast<int>(exposure_key.size() + 1));
+            exposure_key_buf.fill(0);
+            std::memcpy(exposure_key_buf.data(), exposure_key.c_str(), exposure_key.size());
+
+            std::vector<ExternFuncArgument> params{
+                dispose, static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
+                gain_func, exposure_func, pixel_format_buf,
+                gain_key_buf, exposure_key_buf
+            };
+
+            gendc.resize(num_devices);
+            std::vector<Halide::Type> output_type;
+            for (int i = 0; i < gendc.size(); i++) {
+                output_type.push_back(Halide::type_of<uint8_t>());
+            }
+            u3v_gendc.define_extern("ion_bb_image_io_u3v_gendc_camera" + std::to_string(gendc.size()), params, output_type, 1);
+            u3v_gendc.compute_root();
+            if (gendc.size() == 1){
+                gendc[0](_) = u3v_gendc(_);
+            }else{
+                for (int i = 0; i < gendc.size(); i++) {
+                    gendc[i](_) = u3v_gendc(_)[i];
+                }
+            }
         }
-        u3v_gendc.define_extern("ion_bb_image_io_u3v_gendc_camera" + std::to_string(gendc.size()), params, output_type, 1);
-        u3v_gendc.compute_root();
-        for (int i = 0; i < gendc.size(); i++) {
-            gendc[i](_) = u3v_gendc(_)[2*i];
-            device_info[i](_) = u3v_gendc(_)[2*i+1];
+
+        Func u3v_device_info("u3v_device_info");
+        {
+            const std::string pixel_format(pixel_format_ptr);
+            Buffer<uint8_t> pixel_format_buf(static_cast<int>(pixel_format.size() + 1));
+            pixel_format_buf.fill(0);
+            std::memcpy(pixel_format_buf.data(), pixel_format.c_str(), pixel_format.size());
+
+            std::vector<ExternFuncArgument> params{
+                u3v_gendc, dispose, static_cast<bool>(frame_sync), 
+                static_cast<bool>(realtime_diaplay_mode), pixel_format_buf
+            };
+
+            device_info.resize(num_devices);
+            std::vector<Halide::Type> output_type;
+            for (int i = 0; i < gendc.size(); i++) {
+                output_type.push_back(Halide::type_of<uint8_t>());
+            }
+            u3v_device_info.define_extern("ion_bb_image_io_u3v_device_info" + std::to_string(device_info.size()), params, output_type, 1);
+            u3v_device_info.compute_root();
+            if (device_info.size() == 1){
+                device_info[0](_) = u3v_device_info(_);
+            }else{
+                for (int i = 0; i < device_info.size(); i++) {
+                    device_info[i](_) = u3v_device_info(_)[i];
+                }
+            }
         }
+
     }
 };
 
