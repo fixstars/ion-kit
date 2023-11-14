@@ -618,7 +618,7 @@ class U3V {
     {
         init_symbols();
 
-        log::debug("ion-kit with framecount-log for 23-11-14 Update framecount Came1USB2");
+        log::debug("ion-kit with framecount-log for 23-11-14 Update realtime-display-mode Came1USB2");
         log::info("Using aravis-{}.{}.{}", arv_get_major_version(), arv_get_minor_version(), arv_get_micro_version());
 
         arv_update_device_list();
