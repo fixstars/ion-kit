@@ -398,6 +398,36 @@ class U3V {
             uint32_t latest_cnt = 0;
             int32_t min_frame_device_idx = 0;
 
+            // if aravis output queue length is more than N (where N > 1) for all devices, pop all N-1 buffer
+            if (realtime_display_mode_){
+                int32_t min_num_output_buffer = std::numeric_limits<int>::max();
+                for (auto i = 0; i < num_device; ++i){
+                    int32_t num_input_buffer, num_output_buffer;
+                    arv_stream_get_n_buffers(devices_[i].stream_, &num_input_buffer, &num_output_buffer);
+                    min_num_output_buffer = num_output_buffer < min_num_output_buffer ? num_output_buffer : min_num_output_buffer;
+                }
+                // if all stream has N output buffers, discard N-1 of them
+                if (min_num_output_buffer > 1){
+                    for(auto i = 0; i < num_device; ++i){
+                        for (auto j = 0; j < min_num_output_buffer-1; ++j){
+                            
+                            bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, timeout_us);
+                            if (bufs[i] == nullptr){
+                                log::error("pop_buffer(L11) failed due to timeout ({}s)", timeout_us*1e-6f);
+                                throw ::std::runtime_error("buffer is null");
+                            }
+                            devices_[i].frame_count_ = is_gendc_
+                                ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
+                                : static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
+                            i == 0 ? 
+                                log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]", devices_[i].frame_count_, "") :
+                                log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]", "", devices_[i].frame_count_);
+                            arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
+                        }
+                    }
+                }
+            }
+
             //first buffer 
             cameN_idx_ = (cameN_idx_+1) >= num_device ? 0 : cameN_idx_+1;
             bufs[cameN_idx_] = arv_stream_timeout_pop_buffer (devices_[cameN_idx_].stream_, 30 * 1000 * 1000);
@@ -554,6 +584,36 @@ class U3V {
                 uint32_t latest_cnt = 0;
                 int32_t min_frame_device_idx = 0;
 
+                // if aravis output queue length is more than N (where N > 1) for all devices, pop all N-1 buffer
+                if (realtime_display_mode_){
+                    int32_t min_num_output_buffer = std::numeric_limits<int>::max();
+                    for (auto i = 0; i < num_device; ++i){
+                        int32_t num_input_buffer, num_output_buffer;
+                        arv_stream_get_n_buffers(devices_[i].stream_, &num_input_buffer, &num_output_buffer);
+                        min_num_output_buffer = num_output_buffer < min_num_output_buffer ? num_output_buffer : min_num_output_buffer;
+                    }
+                    // if all stream has N output buffers, discard N-1 of them
+                    if (min_num_output_buffer > 1){
+                        for(auto i = 0; i < num_device; ++i){
+                            for (auto j = 0; j < min_num_output_buffer-1; ++j){
+                                
+                                bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, timeout_us);
+                                if (bufs[i] == nullptr){
+                                    log::error("pop_buffer(L12) failed due to timeout ({}s)", timeout_us*1e-6f);
+                                    throw ::std::runtime_error("buffer is null");
+                                }
+                                devices_[i].frame_count_ = is_gendc_
+                                    ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
+                                    : static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
+                                i == 0 ? 
+                                    log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]", devices_[i].frame_count_, "") :
+                                    log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]", "", devices_[i].frame_count_);
+                                arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
+                            }
+                        }
+                    }
+                }
+
                 //first buffer 
                 cameN_idx_ = (cameN_idx_+1) >= num_device ? 0 : cameN_idx_+1;
                 bufs[cameN_idx_] = arv_stream_timeout_pop_buffer (devices_[cameN_idx_].stream_, 30 * 1000 * 1000);
@@ -584,6 +644,9 @@ class U3V {
                     devices_[cameN_idx_].frame_count_ = is_gendc_
                             ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[cameN_idx_], devices_[cameN_idx_]))
                             : static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[cameN_idx_]) & 0x00000000FFFFFFFF);
+                    cameN_idx_ == 0 ? 
+                        log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]", devices_[cameN_idx_].frame_count_, "") :
+                        log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]", "", devices_[cameN_idx_].frame_count_);
                     latest_cnt = devices_[cameN_idx_].frame_count_;
                     if (internal_count++ > max_internal_count){
                         log::error("pop_buffer(L10) The sequential invalid buffer is more than {}; Stop the pipeline.", max_internal_count);
@@ -595,6 +658,7 @@ class U3V {
                 ::memcpy(outs[0], arv_buffer_get_data(bufs[cameN_idx_], nullptr), devices_[cameN_idx_].u3v_payload_size_);
                 ::memcpy(outs[1], &(devices_[cameN_idx_].header_info_), sizeof(ion::bb::image_io::rawHeader));
                 arv_stream_push_buffer(devices_[cameN_idx_].stream_, bufs[cameN_idx_]);
+                log::trace("Obtained Frame from USB{}: {}", cameN_idx_, frame_cnt_);
         }
     }
 
