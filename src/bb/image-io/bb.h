@@ -691,6 +691,7 @@ public:
     GeneratorInput<Halide::Func> exposure{ "exposure", Halide::type_of<double>(), 1};
 
     GeneratorOutput<Halide::Func[]> output{ "output", Halide::type_of<T>(), D};
+    GeneratorOutput<Halide::Func[]> device_info{ "device_info", Halide::type_of<uint8_t>(), 1};
     GeneratorOutput<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
 
     void generate() {
@@ -744,6 +745,34 @@ public:
             }else{
                 for (int i = 0; i < output.size(); i++) {
                     output[i](_) = cameraN(_)[i];
+                }
+            }
+        }
+
+        Func u3v_device_info("u3v_device_info");
+        {
+            const std::string pixel_format(pixel_format_ptr);
+            Buffer<uint8_t> pixel_format_buf(static_cast<int>(pixel_format.size() + 1));
+            pixel_format_buf.fill(0);
+            std::memcpy(pixel_format_buf.data(), pixel_format.c_str(), pixel_format.size());
+
+            std::vector<ExternFuncArgument> params{
+                cameraN, dispose, static_cast<bool>(frame_sync), 
+                static_cast<bool>(realtime_diaplay_mode), pixel_format_buf
+            };
+
+            device_info.resize(num_devices);
+            std::vector<Halide::Type> output_type;
+            for (int i = 0; i < device_info.size(); i++) {
+                output_type.push_back(Halide::type_of<uint8_t>());
+            }
+            u3v_device_info.define_extern("ion_bb_image_io_u3v_device_info" + std::to_string(device_info.size()), params, output_type, 1);
+            u3v_device_info.compute_root();
+            if (device_info.size() == 1){
+                device_info[0](_) = u3v_device_info(_);
+            }else{
+                for (int i = 0; i < device_info.size(); i++) {
+                    device_info[i](_) = u3v_device_info(_)[i];
                 }
             }
         }
@@ -850,7 +879,7 @@ public:
 
             device_info.resize(num_devices);
             std::vector<Halide::Type> output_type;
-            for (int i = 0; i < gendc.size(); i++) {
+            for (int i = 0; i < device_info.size(); i++) {
                 output_type.push_back(Halide::type_of<uint8_t>());
             }
             u3v_device_info.define_extern("ion_bb_image_io_u3v_device_info" + std::to_string(device_info.size()), params, output_type, 1);
