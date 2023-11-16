@@ -757,7 +757,7 @@ public:
             std::memcpy(pixel_format_buf.data(), pixel_format.c_str(), pixel_format.size());
 
             std::vector<ExternFuncArgument> params{
-                cameraN, dispose, static_cast<bool>(frame_sync), 
+                cameraN, dispose, static_cast<int32_t>(output.size()), static_cast<bool>(frame_sync), 
                 static_cast<bool>(realtime_diaplay_mode), pixel_format_buf
             };
 
@@ -785,7 +785,8 @@ public:
             std::memcpy(pixel_format_buf.data(), pixel_format.c_str(), pixel_format.size());
 
             std::vector<ExternFuncArgument> params{
-                cameraN, dispose, static_cast<int32_t>(output.size()), static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode), pixel_format_buf
+                cameraN, dispose, static_cast<int32_t>(output.size()), static_cast<bool>(frame_sync), 
+                static_cast<bool>(realtime_diaplay_mode), pixel_format_buf
             };
             cameraN_fc.define_extern("ion_bb_image_io_u3v_multiple_camera_frame_count" + std::to_string(output.size()), params, type_of<uint32_t>(), 1);
             cameraN_fc.compute_root();
@@ -896,45 +897,28 @@ public:
     }
 };
 
-class BinarySaver : public ion::BuildingBlock<BinarySaver> {
+template<typename T, int D>
+class BinarySaver : public ion::BuildingBlock<BinarySaver<T, D>> {
 public:
     GeneratorParam<std::string> output_directory_ptr{ "output_directory", "." };
-    GeneratorParam<float> fps{ "fps", 1.0 };
-    GeneratorParam<float> r_gain0{ "r_gain0", 1.0 };
-    GeneratorParam<float> g_gain0{ "g_gain0", 1.0 };
-    GeneratorParam<float> b_gain0{ "b_gain0", 1.0 };
+    GeneratorParam<int32_t> num_devices{"num_devices", 2};
 
-    GeneratorParam<float> r_gain1{ "r_gain1", 1.0 };
-    GeneratorParam<float> g_gain1{ "g_gain1", 1.0 };
-    GeneratorParam<float> b_gain1{ "b_gain1", 1.0 };
+    GeneratorInput<Halide::Func[]> input_images{ "input_images", Halide::type_of<T>(), D };
 
-    GeneratorParam<int32_t> offset0_x{ "offset0_x", 0 };
-    GeneratorParam<int32_t> offset0_y{ "offset0_y", 0 };
-    GeneratorParam<int32_t> offset1_x{ "offset1_x", 0 };
-    GeneratorParam<int32_t> offset1_y{ "offset1_y", 0 };
+    GeneratorInput<Halide::Func[]> input_deviceinfo{ "input_deviceinfo", Halide::type_of<uint8_t>(), 1 };
+    GeneratorInput<Halide::Func> frame_count{ "frame_count", UInt(32), 1 };
+    
+    GeneratorInput<bool> dispose{ "dispose" };
+    GeneratorInput<int32_t> width{ "width" };
+    GeneratorInput<int32_t> height{ "height" };
+    GeneratorInput<int32_t> color_channel{ "color_channel" };
 
-    GeneratorParam<int32_t> outputsize0_x{ "outputsize0_x", 1 };
-    GeneratorParam<int32_t> outputsize0_y{ "outputsize0_y", 1 };
-    GeneratorParam<int32_t> outputsize1_x{ "outputsize1_x", 1 };
-    GeneratorParam<int32_t> outputsize1_y{ "outputsize1_y", 1 };
+    GeneratorOutput<int32_t> output{"output"};
 
-    Input<Halide::Func> input0{ "input0", UInt(16), 2 };
-    Input<Halide::Func> input1{ "input1", UInt(16), 2 };
-    Input<Halide::Func> frame_count{ "frame_count", UInt(32), 1 };
-    Input<bool> dispose{ "dispose" };
-    Input<int32_t> width{ "width", 0 };
-    Input<int32_t> height{ "height", 0 };
-
-    Output<int> output{ "output" };
     void generate() {
         using namespace Halide;
-        Func in0;
-        in0(_) = input0(_);
-        in0.compute_root();
 
-        Func in1;
-        in1(_) = input1(_);
-        in1.compute_root();
+        int32_t num_gendc = static_cast<int32_t>(num_devices);
 
         const std::string output_directory(output_directory_ptr);
         Halide::Buffer<uint8_t> output_directory_buf(static_cast<int>(output_directory.size() + 1));
@@ -944,20 +928,49 @@ public:
         Func fc;
         fc(_) = frame_count(_);
         fc.compute_root();
-        std::vector<ExternFuncArgument> params = { in0, in1, fc, dispose, width, height, output_directory_buf,
-            static_cast<float>(r_gain0), static_cast<float>(g_gain0), static_cast<float>(b_gain0),
-            static_cast<float>(r_gain1), static_cast<float>(g_gain1), static_cast<float>(b_gain1),
-            static_cast<int32_t>(offset0_x), static_cast<int32_t>(offset0_x),
-            static_cast<int32_t>(offset0_x), static_cast<int32_t>(offset1_y),
-            static_cast<int32_t>(outputsize0_x), static_cast<int32_t>(outputsize0_y),
-            static_cast<int32_t>(outputsize1_x), static_cast<int32_t>(outputsize1_y),
-            cast<float>(fps) };
-        Func binarysaver;
-        binarysaver.define_extern("binarysaver", params, Int(32), 0);
-        binarysaver.compute_root();
-        output() = binarysaver();
+
+        if (num_gendc==1){
+            Func image;
+            image(_) = input_images(_);
+            image.compute_root();
+
+            Func deviceinfo;
+            deviceinfo(_) = input_deviceinfo(_);
+            deviceinfo.compute_root();
+
+            std::vector<ExternFuncArgument> params = { image, deviceinfo, fc, dispose, width, height, color_channel, output_directory_buf };
+            Func ion_bb_image_io_binary_image_saver;
+            ion_bb_image_io_binary_image_saver.define_extern("ion_bb_image_io_binary_1image_saver", params, Int(32), 0);
+            ion_bb_image_io_binary_image_saver.compute_root();
+            output() = ion_bb_image_io_binary_image_saver();
+        }else if (num_devices==2){
+            Func image0, image1;
+            image0(_) = input_images[0](_);
+            image1(_) = input_images[1](_);
+            image0.compute_root();
+            image1.compute_root();
+
+            Func deviceinfo0, deviceinfo1;
+            deviceinfo0(_) = input_deviceinfo[0](_);
+            deviceinfo1(_) = input_deviceinfo[1](_);
+            deviceinfo0.compute_root();
+            deviceinfo1.compute_root();
+
+            std::vector<ExternFuncArgument> params = { image0, image1, deviceinfo0, deviceinfo1, fc, dispose, width, height, color_channel, output_directory_buf };
+            Func ion_bb_image_io_binary_image_saver;
+            ion_bb_image_io_binary_image_saver.define_extern("ion_bb_image_io_binary_2image_saver", params, Int(32), 0);
+            ion_bb_image_io_binary_image_saver.compute_root();
+            output() = ion_bb_image_io_binary_image_saver();
+        }else{
+            std::runtime_error("device number > 2 is not supported");
+        }
     }
 };
+
+
+using BinarySaver_U8x3 = BinarySaver<uint8_t, 3>;
+using BinarySaver_U8x2 = BinarySaver<uint8_t, 2>;
+using BinarySaver_U16x2 = BinarySaver<uint16_t, 2>;
 
 class BinaryGenDCSaver : public ion::BuildingBlock<BinaryGenDCSaver> {
 public:
@@ -1095,7 +1108,11 @@ ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCameraN_U16x2, image_io_u3v_ca
 
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VGenDC, image_io_u3v_gendc);
 
-ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinarySaver, image_io_binarysaver);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinarySaver_U16x2, image_io_binarysaver);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinarySaver_U8x3, image_io_binarysaver_u8x3);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinarySaver_U8x2, image_io_binarysaver_u8x2);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinarySaver_U16x2, image_io_binarysaver_u16x2);
+
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinaryLoader, image_io_binaryloader);
 
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinaryGenDCSaver, image_io_binary_gendc_saver);
