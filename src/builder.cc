@@ -4,8 +4,10 @@
 #include <unistd.h>
 #endif
 
+#include <Halide.h>
+
 #include "ion/builder.h"
-#include "ion/generator.h"
+// #include "ion/generator.h"
 #include "ion/util.h"
 
 #include "json/json.hpp"
@@ -20,12 +22,12 @@ namespace ion {
 
 namespace {
 
-std::map<Halide::Output, std::string> compute_output_files(const Halide::Target &target,
-                                                           const std::string &base_path,
-                                                           const std::set<Halide::Output> &outputs) {
-    std::map<Halide::Output, const Halide::Internal::OutputInfo> output_info = Halide::Internal::get_output_info(target);
+std::map<Halide::OutputFileType, std::string> compute_output_files(const Halide::Target &target,
+                                                                   const std::string &base_path,
+                                                                   const std::set<Halide::OutputFileType> &outputs) {
+    std::map<Halide::OutputFileType, const Halide::Internal::OutputInfo> output_info = Halide::Internal::get_output_info(target);
 
-    std::map<Halide::Output, std::string> output_files;
+    std::map<Halide::OutputFileType, std::string> output_files;
     for (auto o : outputs) {
         output_files[o] = base_path + output_info.at(o).extension;
     }
@@ -128,15 +130,15 @@ void Builder::compile(const std::string& function_name, const CompileOption& opt
     auto output_prefix = option.output_directory.empty() ? "." : option.output_directory + "/";
     output_prefix += "/" + function_name;
 
-    std::set<Output> outputs;
+    std::set<OutputFileType> outputs;
 
 #ifdef HALIDE_FOR_FPGA
     if (target_.has_fpga_feature()) {
-        outputs.insert(Output::hls_package);
+        outputs.insert(OutputFileType::hls_package);
     } else {
 #endif
-        outputs.insert(Output::c_header);
-        outputs.insert(Output::static_library);
+        outputs.insert(OutputFileType::c_header);
+        outputs.insert(OutputFileType::static_library);
 #ifdef HALIDE_FOR_FPGA
     }
 #endif
@@ -147,7 +149,7 @@ void Builder::compile(const std::string& function_name, const CompileOption& opt
 #ifdef HALIDE_FOR_FPGA
 #ifdef __linux__
     if (target_.has_fpga_feature()) {
-        std::string hls_dir = output_files.at(Output::hls_package);
+        std::string hls_dir = output_files.at(OutputFileType::hls_package);
         chdir(hls_dir.c_str());
         int ret = std::getenv("ION_CSIM") ? system("make -f Makefile.csim.static") : system("make -f Makefile.ultra96v2");
         std::string lib_name = std::getenv("ION_CSIM") ? function_name + "_sim.a" : function_name + ".a";
@@ -193,7 +195,7 @@ bool is_dereferenced(const std::vector<Node>& nodes, const std::string node_id, 
 }
 
 std::vector<std::tuple<std::string, Halide::Func>> collect_unbound_outputs(const std::vector<Node>& nodes,
-                                                                           const std::unordered_map<std::string, std::shared_ptr<Internal::BuildingBlockBase>>& bbs) {
+                                                                           const std::unordered_map<std::string, std::shared_ptr<BuildingBlockBase>>& bbs) {
     std::vector<std::tuple<std::string, Halide::Func>> unbounds;
     for (const auto& kv : bbs) {
         auto node_id = kv.first;
@@ -228,22 +230,22 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
     // This operation is required especially for the graph which is loaded from JSON definition.
     nodes_ = topological_sort(nodes_);
 
-    auto generator_names = Internal::GeneratorRegistry::enumerate();
+    auto generator_names = BuildingBlockRegistry::enumerate();
 
     // Constructing Generator object and setting static parameters
-    std::unordered_map<std::string, std::shared_ptr<Internal::BuildingBlockBase>> bbs;
+    std::unordered_map<std::string, std::shared_ptr<BuildingBlockBase>> bbs;
     for (auto n : nodes_) {
 
         if (std::find(generator_names.begin(), generator_names.end(), n.name()) == generator_names.end()) {
             throw std::runtime_error("Cannot find generator : " + n.name());
         }
 
-        std::shared_ptr<Internal::BuildingBlockBase> bb(Internal::GeneratorRegistry::create(n.name(), GeneratorContext(n.target())));
-        Internal::GeneratorParamsMap gpm;
+        std::shared_ptr<BuildingBlockBase> bb(BuildingBlockRegistry::create(n.name(), BuildingBlockContext(n.target())));
+        BuildingBlockParamsMap params;
         for (const auto& p : n.params()) {
-            gpm[p.key()] = p.val();
+            params[p.key()] = p.val();
         }
-        bb->set_generator_param_values(gpm);
+        bb->set_param_values(params);
         bbs[n.id()] = bb;
     }
 
@@ -251,7 +253,7 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
     for (size_t i=0; i<nodes_.size(); ++i) {
         auto n = nodes_[i];
         auto bb = bbs[n.id()];
-        std::vector<std::vector<Internal::StubInput>> args;
+        std::vector<std::vector<StubInput>> args;
         for (size_t j=0; j<n.ports().size(); ++j) {
             auto p = n.ports()[j];
             // Unbounded parameter
@@ -262,7 +264,7 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
                         "Unbounded port (" + in->name() + ") corresponding to an array of Inputs is not supported");
                 }
                 const auto k = in->kind();
-                if (k == Internal::IOKind::Scalar) {
+                if (k == IOKind::Scalar) {
                     Halide::Expr e;
                     if (pm.mapped(p.key())) {
                         // This block should be executed when g.run is called with appropriate PortMap.
@@ -271,7 +273,7 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
                         e = p.expr();
                     }
                     args.push_back(bb->build_input(j, e));
-                } else if (k == Internal::IOKind::Function) {
+                } else if (k == IOKind::Function) {
                     Halide::Func f;
                     if (pm.mapped(p.key())) {
                         // This block should be executed when g.run is called with appropriate PortMap.
@@ -286,7 +288,7 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
             } else {
                 if (in->is_array()) {
                     auto f_array = bbs[p.node_id()]->get_outputs(p.key());
-                    if (in->kind() == Internal::IOKind::Scalar) {
+                    if (in->kind() == IOKind::Scalar) {
                         std::vector<Halide::Expr> exprs;
                         for (auto &f : f_array) {
                             if (f.dimensions() != 0) {
@@ -295,19 +297,19 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
                             exprs.push_back(f());
                         }
                         args.push_back(bb->build_input(j, exprs));
-                    } else if (in->kind() == Internal::IOKind::Function) {
+                    } else if (in->kind() == IOKind::Function) {
                         args.push_back(bb->build_input(j, f_array));
                     } else {
                         throw std::runtime_error("fixme");
                     }
                 } else {
                     Halide::Func f = bbs[p.node_id()]->get_outputs(p.key()).front();
-                    if (in->kind() == Internal::IOKind::Scalar) {
+                    if (in->kind() == IOKind::Scalar) {
                         if (f.dimensions() != 0) {
                             throw std::runtime_error("Invalid port connection : " + in->name());
                         }
                         args.push_back(bb->build_input(j, f()));
-                    } else if (in->kind() == Internal::IOKind::Function) {
+                    } else if (in->kind() == IOKind::Function) {
                         args.push_back(bb->build_input(j, f));
                     } else {
                         throw std::runtime_error("fixme");

@@ -3083,7 +3083,7 @@ using GeneratorFactory = std::function<std::unique_ptr<GeneratorBase>(const Gene
 
 struct StringOrLoopLevel {
     std::string string_value;
-    LoopLevel loop_level;
+    halide::LoopLevel loop_level;
 
     StringOrLoopLevel() = default;
     /*not-explicit*/ StringOrLoopLevel(const char *s)
@@ -3092,7 +3092,7 @@ struct StringOrLoopLevel {
     /*not-explicit*/ StringOrLoopLevel(const std::string &s)
         : string_value(s) {
     }
-    /*not-explicit*/ StringOrLoopLevel(const LoopLevel &loop_level)
+    /*not-explicit*/ StringOrLoopLevel(const halide::LoopLevel &loop_level)
         : loop_level(loop_level) {
     }
 };

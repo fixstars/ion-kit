@@ -8,7 +8,7 @@
 #include <Halide.h>
 
 #include "def.h"
-#include "block.h"
+#include "building_block.h"
 #include "node.h"
 #include "port_map.h"
 
