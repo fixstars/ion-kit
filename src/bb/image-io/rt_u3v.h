@@ -618,7 +618,7 @@ class U3V {
     {
         init_symbols();
 
-        log::debug("ion-kit ======================================== 23-11-16 Testing new BBs");
+        log::debug("U3V class ======================================== 23-11-17 Testing new BBs");
         log::info("Using aravis-{}.{}.{}", arv_get_major_version(), arv_get_minor_version(), arv_get_micro_version());
 
         arv_update_device_list();

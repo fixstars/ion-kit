@@ -186,14 +186,10 @@ public:
         buf_queue_.pop();
         size_t offset = 0;
         for (int i = 0; i < outs.size(); ++i){
-            ion::log::debug("{}", i);
             ::std::memcpy(buffer + offset, reinterpret_cast<int32_t*>(framecounts) + i, sizeof(int32_t));
-            ion::log::debug("\toffset={}\tframecount={}\t\tsize={}", offset, *(reinterpret_cast<int32_t*>(framecounts) + i), sizeof(int32_t));
             offset += sizeof(int32_t);
             ::std::memcpy(buffer + offset, outs[i], size[i]);
-            ion::log::debug("\toffset={}\t\tout[i]\t\t\tsize={}", offset, size[i]);
             offset += size[i];
-            ion::log::debug("\toffset={}", offset);
         }
         task_queue_.push(::std::make_tuple(0, buffer, offset));
         task_cv_.notify_one();
@@ -426,11 +422,11 @@ int ion_bb_image_io_binary_2gendc_saver(halide_buffer_t * in0, halide_buffer_t *
             }
             if (in2->is_bounds_query()) {
                 in2->dim[0].min = 0;
-                in2->dim[0].extent = 76;
+                in2->dim[0].extent = sizeof(ion::bb::image_io::rawHeader);
             }
             if (in3->is_bounds_query()) {
                 in3->dim[0].min = 0;
-                in3->dim[0].extent = 76;
+                in3->dim[0].extent = sizeof(ion::bb::image_io::rawHeader);
             }
             return 0;
         }
@@ -480,7 +476,7 @@ int ion_bb_image_io_binary_1gendc_saver(halide_buffer_t * in0, halide_buffer_t *
             }
             if (in1->is_bounds_query()) {
                 in1->dim[0].min = 0;
-                in1->dim[0].extent = 76;
+                in1->dim[0].extent = sizeof(ion::bb::image_io::rawHeader);
             }
         }
         else {
@@ -523,6 +519,7 @@ int ion_bb_image_io_binary_1image_saver(
         int num_output = 1;
         const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
         auto& w(Writer::get_instance(std::vector<int32_t>{4147200}, output_directory));
+
         if (image->is_bounds_query() || deviceinfo->is_bounds_query() || frame_count->is_bounds_query()) {
             if (image->is_bounds_query()) {
                 image->dim[0].min = 0;
@@ -532,7 +529,7 @@ int ion_bb_image_io_binary_1image_saver(
             }
             if (deviceinfo->is_bounds_query()) {
                 deviceinfo->dim[0].min = 0;
-                deviceinfo->dim[0].extent = 76;
+                deviceinfo->dim[0].extent = sizeof(ion::bb::image_io::rawHeader);
             }
             if (frame_count->is_bounds_query()) {
                 frame_count->dim[0].min = 0;
@@ -541,7 +538,7 @@ int ion_bb_image_io_binary_1image_saver(
             return 0;
         }
         else {
-            ion::bb::image_io::rawHeader header_info0;
+            ion::bb::image_io::rawHeader header_info0;  
             ::memcpy(&header_info0, deviceinfo->host, sizeof(ion::bb::image_io::rawHeader));
             std::vector<ion::bb::image_io::rawHeader> header_infos{header_info0};
 
@@ -581,7 +578,7 @@ int ion_bb_image_io_binary_2image_saver(
         int num_output = 2;
         const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
         auto& w(Writer::get_instance(std::vector<int32_t>{4147200, 4147200}, output_directory));
-        ion::log::debug("{} {} {}", __FUNCTION__, width, height);
+
         if (image0->is_bounds_query() || deviceinfo0->is_bounds_query() || 
             image1->is_bounds_query() || deviceinfo1->is_bounds_query() || frame_count->is_bounds_query()) {
             if (image0->is_bounds_query()) {
@@ -592,7 +589,7 @@ int ion_bb_image_io_binary_2image_saver(
             }
             if (deviceinfo0->is_bounds_query()) {
                 deviceinfo0->dim[0].min = 0;
-                deviceinfo0->dim[0].extent = 76;
+                deviceinfo0->dim[0].extent = sizeof(ion::bb::image_io::rawHeader);
             }
             if (image1->is_bounds_query()) {
                 image1->dim[0].min = 0;
@@ -602,7 +599,7 @@ int ion_bb_image_io_binary_2image_saver(
             }
             if (deviceinfo1->is_bounds_query()) {
                 deviceinfo1->dim[0].min = 0;
-                deviceinfo1->dim[0].extent = 76;
+                deviceinfo1->dim[0].extent = sizeof(ion::bb::image_io::rawHeader);
             }
             if (frame_count->is_bounds_query()) {
                 frame_count->dim[0].min = 0;
