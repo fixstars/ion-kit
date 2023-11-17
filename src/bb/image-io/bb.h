@@ -906,7 +906,7 @@ public:
     GeneratorInput<Halide::Func[]> input_images{ "input_images", Halide::type_of<T>(), D };
 
     GeneratorInput<Halide::Func[]> input_deviceinfo{ "input_deviceinfo", Halide::type_of<uint8_t>(), 1 };
-    GeneratorInput<Halide::Func> frame_count{ "frame_count", UInt(32), 1 };
+    GeneratorInput<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
     
     GeneratorInput<bool> dispose{ "dispose" };
     GeneratorInput<int32_t> width{ "width" };

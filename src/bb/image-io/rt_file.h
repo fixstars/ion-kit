@@ -392,7 +392,8 @@ int ion_bb_image_io_binary_2gendc_saver(halide_buffer_t * in0, halide_buffer_t *
     {
     try {
         const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
-        auto& w(Writer::get_instance(std::vector<int32_t>{payloadsize, payloadsize},  output_directory));
+        std::vector<int32_t>payloadsize_list{payloadsize, payloadsize};
+        auto& w(Writer::get_instance(payloadsize_list,  output_directory));
         if (in0->is_bounds_query() || in1->is_bounds_query() || in2->is_bounds_query() || in3->is_bounds_query()) {
             int i = 1;
             if (in0->is_bounds_query()) {
@@ -451,7 +452,8 @@ int ion_bb_image_io_binary_1gendc_saver(halide_buffer_t * gendc, halide_buffer_t
     {
     try {
         const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
-        auto& w(Writer::get_instance(std::vector<int32_t>{payloadsize}, output_directory));
+        std::vector<int32_t>payloadsize_list{payloadsize};
+        auto& w(Writer::get_instance(payloadsize_list, output_directory));
         if (gendc->is_bounds_query() || deviceinfo->is_bounds_query()) {
             if (gendc->is_bounds_query()) {
                 gendc->dim[0].min = 0;
