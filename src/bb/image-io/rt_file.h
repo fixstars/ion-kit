@@ -134,41 +134,26 @@ namespace {
 
 class Writer {
 public:
-    static Writer& get_instance(int width, int height, const ::std::string& output_directory, ion::bb::image_io::rawHeader header_info)
+    static Writer& get_instance(int width, int height, const ::std::string& output_directory)
     {
         auto itr = instances.find(output_directory);
         if (itr == instances.end()) {
-            instances[output_directory] = std::unique_ptr<Writer>(new Writer(width, height, output_directory, header_info));
+            instances[output_directory] = std::unique_ptr<Writer>(new Writer(width, height, output_directory));
         }
         return *instances[output_directory];
     }
 
-    static Writer& get_instance(std::vector<int32_t>& payload_size, const ::std::string& output_directory, bool write_framecount = false)
+    static Writer& get_instance(std::vector<int32_t>& payload_size, const ::std::string& output_directory)
     {
         auto itr = instances.find(output_directory);
         if (itr == instances.end()) {
-            instances[output_directory] = std::unique_ptr<Writer>(new Writer(payload_size, output_directory, write_framecount));
+            instances[output_directory] = std::unique_ptr<Writer>(new Writer(payload_size, output_directory));
         }
         return *instances[output_directory];
     }
 
     ~Writer() {
         dispose();
-    }
-
-    void post(uint32_t frame_count, const uint8_t* ptr0, const uint8_t* ptr1, size_t size)
-    {
-        ::std::unique_lock<::std::mutex> lock(mutex_);
-        buf_cv_.wait(lock, [&] { return !buf_queue_.empty() || ep_; });
-        if (ep_) {
-            ::std::rethrow_exception(ep_);
-        }
-        uint8_t* buffer = buf_queue_.front();
-        buf_queue_.pop();
-        ::std::memcpy(buffer, ptr0, size);
-        ::std::memcpy(buffer + size, ptr1, size);
-        task_queue_.push(::std::make_tuple(frame_count, buffer, 2 * size));
-        task_cv_.notify_one();
     }
 
     void post_images(std::vector<void *>& outs, std::vector<size_t>& size, 
@@ -250,10 +235,9 @@ public:
     }
 
 private:
-    Writer(int width, int height, const ::std::string& output_directory,
-        ion::bb::image_io::rawHeader header_info)
+    Writer(int width, int height, const ::std::string& output_directory)
         : keep_running_(true), width_(width), height_(height), output_directory_(output_directory),
-        header_info_(header_info), with_header_(true), with_framecount_(true)
+        with_header_(true), with_framecount_(true)
     {
         int buffer_num = get_buffer_num(width, height);
         for (int i = 0; i < buffer_num; ++i) {
@@ -264,8 +248,8 @@ private:
         ofs_ = ::std::ofstream(output_directory_ / "raw-0.bin", ::std::ios::binary);
     }
 
-    Writer(std::vector<int32_t>& payload_size, const ::std::string& output_directory, bool write_framecount)
-        : keep_running_(true), output_directory_(output_directory), with_header_(true), with_framecount_(write_framecount)
+    Writer(std::vector<int32_t>& payload_size, const ::std::string& output_directory)
+        : keep_running_(true), output_directory_(output_directory), with_header_(true), with_framecount_(false)
     {
         int total_payload_size = 0;
         for (auto s : payload_size){
@@ -394,7 +378,6 @@ private:
     uint32_t height_;
     std::filesystem::path output_directory_;
 
-    ion::bb::image_io::rawHeader header_info_;
     bool with_header_;
     bool with_framecount_;
 };
@@ -548,7 +531,7 @@ int ion_bb_image_io_binary_1image_saver(
                 w.release_instance(output_directory);
                 return 0;
             }
-            
+
             ion::bb::image_io::rawHeader header_info0;  
             ::memcpy(&header_info0, deviceinfo->host, sizeof(ion::bb::image_io::rawHeader));
             std::vector<ion::bb::image_io::rawHeader> header_infos{header_info0};
