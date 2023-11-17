@@ -130,10 +130,34 @@ class BuildingBlockBase {
         return {};
      }
 
-     std::vector<StubInput> build_input(size_t i, const Halide::Internal::Buffer<T> &arg) {
+     template<typename T>
+     std::vector<StubInput> build_input(size_t i, const Halide::Buffer<T> &arg) {
         return {};
      }
 
+     std::vector<StubInput> build_input(size_t i, const Halide::Expr &arg) {
+         return {};
+     }
+
+     std::vector<StubInput> build_input(size_t i, const std::vector<Halide::Expr> &arg) {
+         return {};
+     }
+
+     std::vector<StubInput> build_input(size_t i, const Halide::Func &arg) {
+         return {};
+     }
+
+     std::vector<StubInput> build_input(size_t i, const std::vector<Halide::Func> &arg) {
+         return {};
+     }
+
+    template<typename... Args>
+    void apply(const Args &...args) {
+    }
+
+    Halide::Pipeline get_pipeline() {
+        return Halide::Pipeline();
+    }
  private:
      ParamInfo param_info_;
 };
