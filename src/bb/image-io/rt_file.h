@@ -543,6 +543,12 @@ int ion_bb_image_io_binary_1image_saver(
             return 0;
         }
         else {
+            if (dispose) {
+                w.dispose();
+                w.release_instance(output_directory);
+                return 0;
+            }
+            
             ion::bb::image_io::rawHeader header_info0;  
             ::memcpy(&header_info0, deviceinfo->host, sizeof(ion::bb::image_io::rawHeader));
             std::vector<ion::bb::image_io::rawHeader> header_infos{header_info0};
@@ -550,12 +556,6 @@ int ion_bb_image_io_binary_1image_saver(
             std::vector<void *> obufs{image->host};
             std::vector<size_t> size_in_bytes{image->size_in_bytes()};
             w.post_images(obufs, size_in_bytes, header_infos, frame_count->host);
-
-            if (dispose) {
-                w.dispose();
-                w.release_instance(output_directory);
-                return 0;
-            }
         }
 
         return 0;
@@ -622,6 +622,11 @@ int ion_bb_image_io_binary_2image_saver(
             return 0;
         }
         else {
+            if (dispose) {
+                w.dispose();
+                w.release_instance(output_directory);
+                return 0;
+            }
             ion::bb::image_io::rawHeader header_info0, header_info1;
             ::memcpy(&header_info0, deviceinfo0->host, sizeof(ion::bb::image_io::rawHeader));
             ::memcpy(&header_info1, deviceinfo1->host, sizeof(ion::bb::image_io::rawHeader));
@@ -630,12 +635,6 @@ int ion_bb_image_io_binary_2image_saver(
             std::vector<void *> obufs{image0->host, image1->host};
             std::vector<size_t> size_in_bytes{image0->size_in_bytes(), image1->size_in_bytes()};
             w.post_images(obufs, size_in_bytes, header_infos, frame_count->host);
-
-            if (dispose) {
-                w.dispose();
-                w.release_instance(output_directory);
-                return 0;
-            }
         }
 
         return 0;
