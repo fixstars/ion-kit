@@ -1419,7 +1419,6 @@ int ION_EXPORT ion_bb_image_io_u3v_multiple_camera2(
                 u3v.SetGain(i, gain_key, (reinterpret_cast<double*>(gain->host))[i]);
                 u3v.SetExposure(i, exposure_key, (reinterpret_cast<double*>(exposure->host))[i]);
             }
-            ion::log::debug("{} {}", out0->size_in_bytes(), out1->size_in_bytes());
             std::vector<void *> obufs{out0->host, out1->host};
             u3v.get(obufs);
             if(dispose){

@@ -929,6 +929,9 @@ public:
         fc(_) = frame_count(_);
         fc.compute_root();
 
+        int32_t dim = D;
+        int32_t byte_depth = sizeof(T);
+
         if (num_gendc==1){
             Func image;
             image(_) = input_images(_);
@@ -938,7 +941,7 @@ public:
             deviceinfo(_) = input_deviceinfo(_);
             deviceinfo.compute_root();
 
-            std::vector<ExternFuncArgument> params = { image, deviceinfo, fc, dispose, width, height, color_channel, output_directory_buf };
+            std::vector<ExternFuncArgument> params = { image, deviceinfo, fc, dispose, width, height, dim, byte_depth, output_directory_buf };
             Func ion_bb_image_io_binary_image_saver;
             ion_bb_image_io_binary_image_saver.define_extern("ion_bb_image_io_binary_1image_saver", params, Int(32), 0);
             ion_bb_image_io_binary_image_saver.compute_root();
@@ -956,7 +959,7 @@ public:
             deviceinfo0.compute_root();
             deviceinfo1.compute_root();
 
-            std::vector<ExternFuncArgument> params = { image0, image1, deviceinfo0, deviceinfo1, fc, dispose, width, height, color_channel, output_directory_buf };
+            std::vector<ExternFuncArgument> params = { image0, image1, deviceinfo0, deviceinfo1, fc, dispose, width, height, dim, byte_depth, output_directory_buf };
             Func ion_bb_image_io_binary_image_saver;
             ion_bb_image_io_binary_image_saver.define_extern("ion_bb_image_io_binary_2image_saver", params, Int(32), 0);
             ion_bb_image_io_binary_image_saver.compute_root();

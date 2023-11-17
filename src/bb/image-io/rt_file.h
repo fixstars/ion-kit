@@ -512,13 +512,14 @@ ION_REGISTER_EXTERN(ion_bb_image_io_binary_1gendc_saver);
 extern "C" ION_EXPORT
 int ion_bb_image_io_binary_1image_saver(
     halide_buffer_t * image, halide_buffer_t * deviceinfo, halide_buffer_t * frame_count,
-    bool dispose, int width, int height, int color_channel, halide_buffer_t*  output_directory_buf,
+    bool dispose, int width, int height, int dim, int byte_depth, halide_buffer_t*  output_directory_buf,
     halide_buffer_t * out)
     {
     try {
         int num_output = 1;
+        int32_t frame_size = dim == 2 ? width * height * byte_depth : width * height * 3 * byte_depth;
         const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
-        auto& w(Writer::get_instance(std::vector<int32_t>{4147200}, output_directory));
+        auto& w(Writer::get_instance(std::vector<int32_t>{frame_size}, output_directory));
 
         if (image->is_bounds_query() || deviceinfo->is_bounds_query() || frame_count->is_bounds_query()) {
             if (image->is_bounds_query()) {
@@ -526,6 +527,10 @@ int ion_bb_image_io_binary_1image_saver(
                 image->dim[0].extent = width;
                 image->dim[1].min = 0;
                 image->dim[1].extent = height;
+                if (dim == 3){
+                    image->dim[2].min = 0;
+                    image->dim[2].extent = 3;
+                }
             }
             if (deviceinfo->is_bounds_query()) {
                 deviceinfo->dim[0].min = 0;
@@ -571,13 +576,14 @@ extern "C" ION_EXPORT
 int ion_bb_image_io_binary_2image_saver(
     halide_buffer_t * image0, halide_buffer_t * image1, 
     halide_buffer_t * deviceinfo0, halide_buffer_t * deviceinfo1, halide_buffer_t * frame_count,
-    bool dispose, int32_t width, int32_t height, int32_t color_channel, halide_buffer_t*  output_directory_buf,
+    bool dispose, int32_t width, int32_t height, int32_t dim, int byte_depth, halide_buffer_t*  output_directory_buf,
     halide_buffer_t * out)
     {
     try {
         int num_output = 2;
+        int32_t frame_size = dim == 2 ? width * height * byte_depth : width * height * 3 * byte_depth;
         const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
-        auto& w(Writer::get_instance(std::vector<int32_t>{4147200, 4147200}, output_directory));
+        auto& w(Writer::get_instance(std::vector<int32_t>{frame_size, frame_size}, output_directory));
 
         if (image0->is_bounds_query() || deviceinfo0->is_bounds_query() || 
             image1->is_bounds_query() || deviceinfo1->is_bounds_query() || frame_count->is_bounds_query()) {
@@ -586,6 +592,10 @@ int ion_bb_image_io_binary_2image_saver(
                 image0->dim[0].extent = width;
                 image0->dim[1].min = 0;
                 image0->dim[1].extent = height;
+                if (dim == 3){
+                    image0->dim[2].min = 0;
+                    image0->dim[2].extent = 3;
+                }
             }
             if (deviceinfo0->is_bounds_query()) {
                 deviceinfo0->dim[0].min = 0;
@@ -596,6 +606,10 @@ int ion_bb_image_io_binary_2image_saver(
                 image1->dim[0].extent = width;
                 image1->dim[1].min = 0;
                 image1->dim[1].extent = height;
+                if (dim == 3){
+                    image1->dim[2].min = 0;
+                    image1->dim[2].extent = 3;
+                }
             }
             if (deviceinfo1->is_bounds_query()) {
                 deviceinfo1->dim[0].min = 0;
