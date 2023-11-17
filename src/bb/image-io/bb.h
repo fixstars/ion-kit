@@ -757,7 +757,7 @@ public:
             std::memcpy(pixel_format_buf.data(), pixel_format.c_str(), pixel_format.size());
 
             std::vector<ExternFuncArgument> params{
-                cameraN, dispose, static_cast<int32_t>(output.size()), static_cast<bool>(frame_sync), 
+                cameraN, dispose, static_cast<int32_t>(num_devices), static_cast<bool>(frame_sync), 
                 static_cast<bool>(realtime_diaplay_mode), pixel_format_buf
             };
 
@@ -874,7 +874,7 @@ public:
             std::memcpy(pixel_format_buf.data(), pixel_format.c_str(), pixel_format.size());
 
             std::vector<ExternFuncArgument> params{
-                u3v_gendc, dispose, static_cast<bool>(frame_sync), 
+                u3v_gendc, dispose, static_cast<int32_t>(num_devices), static_cast<bool>(frame_sync), 
                 static_cast<bool>(realtime_diaplay_mode), pixel_format_buf
             };
 
@@ -981,13 +981,13 @@ public:
 
     GeneratorParam<int32_t> num_devices{"num_devices", 2};
 
-    Input<Halide::Func[]> input_gendc{ "input_gendc", Halide::type_of<uint8_t>(), 1 };
-    Input<Halide::Func[]> input_deviceinfo{ "input_deviceinfo", Halide::type_of<uint8_t>(), 1 };
+    GeneratorInput<Halide::Func[]> input_gendc{ "input_gendc", Halide::type_of<uint8_t>(), 1 };
+    GeneratorInput<Halide::Func[]> input_deviceinfo{ "input_deviceinfo", Halide::type_of<uint8_t>(), 1 };
 
-    Input<bool> dispose{ "dispose" };
-    Input<int32_t> payloadsize{ "payloadsize" };
+    GeneratorInput<bool> dispose{ "dispose" };
+    GeneratorInput<int32_t> payloadsize{ "payloadsize" };
 
-    Output<int> output{ "output" };
+    GeneratorOutput<int> output{ "output" };
 
     void generate() {
         using namespace Halide;

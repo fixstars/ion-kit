@@ -445,30 +445,31 @@ int ion_bb_image_io_binary_2gendc_saver(halide_buffer_t * in0, halide_buffer_t *
 ION_REGISTER_EXTERN(ion_bb_image_io_binary_2gendc_saver);
 
 extern "C" ION_EXPORT
-int ion_bb_image_io_binary_1gendc_saver(halide_buffer_t * in0, halide_buffer_t * in1,
+int ion_bb_image_io_binary_1gendc_saver(halide_buffer_t * gendc, halide_buffer_t * deviceinfo,
     bool dispose, int payloadsize, halide_buffer_t*  output_directory_buf,
     halide_buffer_t * out)
     {
     try {
         const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
         auto& w(Writer::get_instance(std::vector<int32_t>{payloadsize}, output_directory));
-        if (in0->is_bounds_query() || in1->is_bounds_query()) {
-            if (in0->is_bounds_query()) {
-                in0->dim[0].min = 0;
-                in0->dim[0].extent = payloadsize;
+        if (gendc->is_bounds_query() || deviceinfo->is_bounds_query()) {
+            if (gendc->is_bounds_query()) {
+                gendc->dim[0].min = 0;
+                gendc->dim[0].extent = payloadsize;
             }
-            if (in1->is_bounds_query()) {
-                in1->dim[0].min = 0;
-                in1->dim[0].extent = sizeof(ion::bb::image_io::rawHeader);
+            if (deviceinfo->is_bounds_query()) {
+                deviceinfo->dim[0].min = 0;
+                deviceinfo->dim[0].extent = sizeof(ion::bb::image_io::rawHeader);
             }
+            return 0;
         }
         else {
             ion::bb::image_io::rawHeader header_info0;
-            ::memcpy(&header_info0, in1->host, sizeof(ion::bb::image_io::rawHeader));
+            ::memcpy(&header_info0, deviceinfo->host, sizeof(ion::bb::image_io::rawHeader));
             std::vector<ion::bb::image_io::rawHeader> header_infos{header_info0};
 
-            std::vector<void *> obufs{in0->host};
-            std::vector<size_t> size_in_bytes{in0->size_in_bytes()};
+            std::vector<void *> obufs{gendc->host};
+            std::vector<size_t> size_in_bytes{gendc->size_in_bytes()};
             w.post_gendc(obufs, size_in_bytes, header_infos);
 
             if (dispose) {

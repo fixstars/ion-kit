@@ -618,7 +618,7 @@ class U3V {
     {
         init_symbols();
 
-        log::debug("U3V class ======================================== 23-11-17 Testing new BBs");
+        log::debug("U3V:: 23-11-18 : updating obtain and write");
         log::info("Using aravis-{}.{}.{}", arv_get_major_version(), arv_get_minor_version(), arv_get_micro_version());
 
         arv_update_device_list();
@@ -1057,6 +1057,7 @@ int u3v_camera_frame_count(
         if (out->is_bounds_query()) {
             out->dim[0].min = 0;
             out->dim[0].extent = num_sensor;
+            return 0;
         }
         else {
             u3v.get_frame_count(reinterpret_cast<uint32_t*>(out->host));
@@ -1284,7 +1285,7 @@ int ION_EXPORT ion_bb_image_io_u3v_device_info1(
 
         if (out_deviceinfo->is_bounds_query()){
             out_deviceinfo->dim[0].min = 0;
-            out_deviceinfo->dim[0].extent = 76;
+            out_deviceinfo->dim[0].extent = sizeof(ion::bb::image_io::rawHeader);
             return 0;
         }else{
             std::vector<void *> obufs{out_deviceinfo->host};
@@ -1322,11 +1323,11 @@ int ION_EXPORT ion_bb_image_io_u3v_device_info2(
         if (deviceinfo0->is_bounds_query() || deviceinfo1->is_bounds_query()) {
             if (deviceinfo0->is_bounds_query()){
                 deviceinfo0->dim[0].min = 0;
-                deviceinfo0->dim[0].extent = 76;
+                deviceinfo0->dim[0].extent = sizeof(ion::bb::image_io::rawHeader);
             }
             if (deviceinfo1->is_bounds_query()){
                 deviceinfo1->dim[0].min = 0;
-                deviceinfo1->dim[0].extent = 76;
+                deviceinfo1->dim[0].extent = sizeof(ion::bb::image_io::rawHeader);
             }
             return 0;
         }else{
