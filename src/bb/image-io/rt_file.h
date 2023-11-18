@@ -134,20 +134,11 @@ namespace {
 
 class Writer {
 public:
-    static Writer& get_instance(int width, int height, const ::std::string& output_directory)
+    static Writer& get_instance(std::vector<int32_t>& payload_size, const ::std::string& output_directory, bool write_framecount)
     {
         auto itr = instances.find(output_directory);
         if (itr == instances.end()) {
-            instances[output_directory] = std::unique_ptr<Writer>(new Writer(width, height, output_directory));
-        }
-        return *instances[output_directory];
-    }
-
-    static Writer& get_instance(std::vector<int32_t>& payload_size, const ::std::string& output_directory)
-    {
-        auto itr = instances.find(output_directory);
-        if (itr == instances.end()) {
-            instances[output_directory] = std::unique_ptr<Writer>(new Writer(payload_size, output_directory));
+            instances[output_directory] = std::unique_ptr<Writer>(new Writer(payload_size, output_directory, write_framecount));
         }
         return *instances[output_directory];
     }
@@ -235,27 +226,14 @@ public:
     }
 
 private:
-    Writer(int width, int height, const ::std::string& output_directory)
-        : keep_running_(true), width_(width), height_(height), output_directory_(output_directory),
-        with_header_(true), with_framecount_(true)
-    {
-        int buffer_num = get_buffer_num(width, height);
-        for (int i = 0; i < buffer_num; ++i) {
-            buffers_.emplace_back(2 * width * height * sizeof(uint16_t));
-            buf_queue_.push(buffers_[i].data());
-        }
-        thread_ = ::std::make_shared<::std::thread>(entry_point, this);
-        ofs_ = ::std::ofstream(output_directory_ / "raw-0.bin", ::std::ios::binary);
-    }
-
-    Writer(std::vector<int32_t>& payload_size, const ::std::string& output_directory)
-        : keep_running_(true), output_directory_(output_directory), with_header_(true), with_framecount_(false)
+    Writer(std::vector<int32_t>& payload_size, const ::std::string& output_directory, bool write_framecount)
+        : keep_running_(true), output_directory_(output_directory), with_header_(true)
     {
         int total_payload_size = 0;
         for (auto s : payload_size){
             total_payload_size += s;
-            if (with_framecount_){
-               total_payload_size += sizeof(int32_t);
+            if (write_framecount){
+                total_payload_size += sizeof(int32_t);
             }
         }
         int buffer_num = get_buffer_num(total_payload_size);
@@ -316,9 +294,6 @@ private:
                 ofs_ = ::std::ofstream(output_directory_ / ("raw-" + ::std::to_string(file_idx++) + ".bin"), ::std::ios::binary);
             }
 
-            if (with_framecount_){
-              ofs_.write(reinterpret_cast<const char*>(&frame_count), sizeof(frame_count));
-            }
             ofs_.write(reinterpret_cast<const char*>(buffer), size);
 
             {
@@ -346,9 +321,7 @@ private:
                 ofs_ = ::std::ofstream(output_directory_ / ("raw-" + ::std::to_string(file_idx++) + ".bin"), ::std::ios::binary);
             }
 
-            if (with_framecount_){
-              ofs_.write(reinterpret_cast<const char*>(&frame_count), sizeof(frame_count));
-            }
+
             ofs_.write(reinterpret_cast<const char*>(buffer), size);
 
             {
@@ -379,7 +352,6 @@ private:
     std::filesystem::path output_directory_;
 
     bool with_header_;
-    bool with_framecount_;
 };
 
 ::std::unordered_map< ::std::string, std::unique_ptr<Writer>> Writer::instances; // defines Writer::instance
@@ -393,7 +365,7 @@ int ion_bb_image_io_binary_2gendc_saver(halide_buffer_t * in0, halide_buffer_t *
     try {
         const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
         std::vector<int32_t>payloadsize_list{payloadsize, payloadsize};
-        auto& w(Writer::get_instance(payloadsize_list,  output_directory));
+        auto& w(Writer::get_instance(payloadsize_list,  output_directory, false));
         if (in0->is_bounds_query() || in1->is_bounds_query() || in2->is_bounds_query() || in3->is_bounds_query()) {
             int i = 1;
             if (in0->is_bounds_query()) {
@@ -453,7 +425,7 @@ int ion_bb_image_io_binary_1gendc_saver(halide_buffer_t * gendc, halide_buffer_t
     try {
         const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
         std::vector<int32_t>payloadsize_list{payloadsize};
-        auto& w(Writer::get_instance(payloadsize_list, output_directory));
+        auto& w(Writer::get_instance(payloadsize_list, output_directory, false));
         if (gendc->is_bounds_query() || deviceinfo->is_bounds_query()) {
             if (gendc->is_bounds_query()) {
                 gendc->dim[0].min = 0;
@@ -504,8 +476,9 @@ int ion_bb_image_io_binary_1image_saver(
     try {
         int num_output = 1;
         int32_t frame_size = dim == 2 ? width * height * byte_depth : width * height * 3 * byte_depth;
+        std::vector<int32_t>frame_size_list{frame_size};
         const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
-        auto& w(Writer::get_instance(std::vector<int32_t>{frame_size}, output_directory));
+        auto& w(Writer::get_instance(frame_size_list, output_directory, true));
 
         if (image->is_bounds_query() || deviceinfo->is_bounds_query() || frame_count->is_bounds_query()) {
             if (image->is_bounds_query()) {
@@ -568,8 +541,9 @@ int ion_bb_image_io_binary_2image_saver(
     try {
         int num_output = 2;
         int32_t frame_size = dim == 2 ? width * height * byte_depth : width * height * 3 * byte_depth;
+        std::vector<int32_t>frame_size_list{frame_size, frame_size};
         const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
-        auto& w(Writer::get_instance(std::vector<int32_t>{frame_size, frame_size}, output_directory));
+        auto& w(Writer::get_instance(frame_size_list, output_directory, true));
 
         if (image0->is_bounds_query() || deviceinfo0->is_bounds_query() || 
             image1->is_bounds_query() || deviceinfo1->is_bounds_query() || frame_count->is_bounds_query()) {
