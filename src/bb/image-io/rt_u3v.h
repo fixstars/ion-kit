@@ -384,7 +384,7 @@ class U3V {
                 }
             }
 
-            for (int i = 0; i < num_sensor_; ++i){
+            for (int i = 0; i < num_sensor_; ++i){ 
                 ::memcpy(outs[i], arv_buffer_get_part_data(bufs[i], 0, nullptr), devices_[i].image_payload_size_);
                 arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
                 log::trace("Obtained Frame from USB{}: {}", i, devices_[i].frame_count_);
@@ -566,8 +566,8 @@ class U3V {
             }
 
             for (int i = 0; i < num_sensor_; ++i){
-                ::memcpy(outs[i*num_sensor_], arv_buffer_get_data(bufs[i], nullptr), devices_[i].u3v_payload_size_);
-                ::memcpy(outs[i*num_sensor_+1], &(devices_[i].header_info_), sizeof(ion::bb::image_io::rawHeader));
+                ::memcpy(outs[i], arv_buffer_get_data(bufs[i], nullptr), devices_[i].u3v_payload_size_);
+                // ::memcpy(outs[i*num_sensor_+1], &(devices_[i].header_info_), sizeof(ion::bb::image_io::rawHeader));
                 arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
                 log::trace("Obtained Frame from USB{}: {}", i, devices_[i].frame_count_);
             }
@@ -644,9 +644,21 @@ class U3V {
 
                 frame_cnt_ = latest_cnt;
                 ::memcpy(outs[0], arv_buffer_get_data(bufs[cameN_idx_], nullptr), devices_[cameN_idx_].u3v_payload_size_);
-                ::memcpy(outs[1], &(devices_[cameN_idx_].header_info_), sizeof(ion::bb::image_io::rawHeader));
+                // ::memcpy(outs[1], &(devices_[cameN_idx_].header_info_), sizeof(ion::bb::image_io::rawHeader));
                 arv_stream_push_buffer(devices_[cameN_idx_].stream_, bufs[cameN_idx_]);
                 log::trace("Obtained Frame from USB{}: {}", cameN_idx_, frame_cnt_);
+        }
+    }
+
+    void get_device_info(std::vector<void *>& outs){
+        if (operation_mode_ == OperationMode::Came2USB2 || operation_mode_ == OperationMode::Came1USB1){
+            for (int i = 0; i < num_sensor_; ++i){
+                ::memcpy(outs[i], &(devices_[i].header_info_), sizeof(ion::bb::image_io::rawHeader));
+                log::trace("Obtained Device info USB{}", i);
+            }
+        } else if (operation_mode_ == OperationMode::Came1USB2) {
+            ::memcpy(outs[0], &(devices_[cameN_idx_].header_info_), sizeof(ion::bb::image_io::rawHeader));
+            log::trace("Obtained Device info (OperationMode::Came1USB2)");
         }
     }
 
@@ -659,7 +671,7 @@ class U3V {
     {
         init_symbols();
 
-        log::debug("ion-kit with framecount-log for 23-11-14 Update framecount Came1USB2");
+        log::debug("U3V:: 23-11-18 : updating obtain and write");
         log::info("Using aravis-{}.{}.{}", arv_get_major_version(), arv_get_minor_version(), arv_get_micro_version());
 
         arv_update_device_list();
@@ -811,6 +823,7 @@ class U3V {
             if (px == 0){
                 log::info("The pixel format is not supported for header info");
             }
+
 
             devices_[i].header_info_ = { 1, wi, hi,
                 1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
@@ -1096,7 +1109,8 @@ int u3v_camera_frame_count(
         auto &u3v(ion::bb::image_io::U3V::get_instance(pixel_format, num_sensor, frame_sync, realtime_display_mode));
         if (out->is_bounds_query()) {
             out->dim[0].min = 0;
-            out->dim[0].extent = 1;
+            out->dim[0].extent = num_sensor;
+            return 0;
         }
         else {
             u3v.get_frame_count(reinterpret_cast<uint32_t*>(out->host));
@@ -1219,7 +1233,7 @@ int ION_EXPORT ion_bb_image_io_u3v_gendc_camera1(
     bool frame_sync, bool realtime_display_mode,
     halide_buffer_t* gain, halide_buffer_t* exposure,
     halide_buffer_t* pixel_format_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
-    halide_buffer_t * out_gendc, halide_buffer_t * out_deviceinfo
+    halide_buffer_t * out_gendc
     )
 {
     using namespace Halide;
@@ -1229,7 +1243,7 @@ int ION_EXPORT ion_bb_image_io_u3v_gendc_camera1(
         const ::std::string exposure_key(reinterpret_cast<const char*>(exposure_key_buf->host));
         const ::std::string pixel_format(reinterpret_cast<const char*>(pixel_format_buf->host));
         auto &u3v(ion::bb::image_io::U3V::get_instance(pixel_format, num_output, false, realtime_display_mode));
-        if (out_gendc->is_bounds_query() || out_deviceinfo->is_bounds_query() || gain->is_bounds_query() || exposure->is_bounds_query()) {
+        if (out_gendc->is_bounds_query() || gain->is_bounds_query() || exposure->is_bounds_query()) {
             gain->dim[0].min = 0;
             gain->dim[0].extent = num_output;
             exposure->dim[0].min = 0;
@@ -1241,8 +1255,7 @@ int ION_EXPORT ion_bb_image_io_u3v_gendc_camera1(
                 u3v.SetGain(i, gain_key, (reinterpret_cast<double*>(gain->host))[i]);
                 u3v.SetExposure(i, exposure_key, (reinterpret_cast<double*>(exposure->host))[i]);
             }
-
-            std::vector<void *> obufs{out_gendc->host, out_deviceinfo->host};
+            std::vector<void *> obufs{out_gendc->host};
             u3v.get_gendc(obufs);
 
             if(dispose){
@@ -1267,8 +1280,7 @@ int ION_EXPORT ion_bb_image_io_u3v_gendc_camera2(
     bool frame_sync, bool realtime_display_mode,
     halide_buffer_t* gain, halide_buffer_t* exposure,
     halide_buffer_t* pixel_format_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
-    halide_buffer_t * gendc0, halide_buffer_t * gendc1,
-    halide_buffer_t * deviceinfo0, halide_buffer_t * deviceinfo1
+    halide_buffer_t * gendc0, halide_buffer_t * gendc1
     )
 {
     using namespace Halide;
@@ -1291,14 +1303,13 @@ int ION_EXPORT ion_bb_image_io_u3v_gendc_camera2(
                 u3v.SetExposure(i, exposure_key, (reinterpret_cast<double*>(exposure->host))[i]);
             }
 
-            std::vector<void *> obufs{gendc0->host, gendc1->host,deviceinfo0->host, deviceinfo1->host};
+            std::vector<void *> obufs{gendc0->host, gendc1->host};
             u3v.get_gendc(obufs);
 
             if(dispose){
                 u3v.dispose();
             }
         }
-
         return 0;
     } catch (const std::exception &e) {
         ion::log::error("Exception was thrown: {}", e.what());
@@ -1309,6 +1320,87 @@ int ION_EXPORT ion_bb_image_io_u3v_gendc_camera2(
     }
 }
 ION_REGISTER_EXTERN(ion_bb_image_io_u3v_gendc_camera2);
+
+extern "C"
+int ION_EXPORT ion_bb_image_io_u3v_device_info1(
+    halide_buffer_t *,
+    bool dispose, int32_t num_sensor,
+    bool frame_sync, bool realtime_display_mode,
+    halide_buffer_t* pixel_format_buf,
+    halide_buffer_t * out_deviceinfo
+    )
+{
+    using namespace Halide;
+    int num_output = 1;
+    try {
+        const ::std::string pixel_format(reinterpret_cast<const char*>(pixel_format_buf->host));
+        auto &u3v(ion::bb::image_io::U3V::get_instance(pixel_format, num_sensor, false, realtime_display_mode));
+
+        if (out_deviceinfo->is_bounds_query()){
+            out_deviceinfo->dim[0].min = 0;
+            out_deviceinfo->dim[0].extent = sizeof(ion::bb::image_io::rawHeader);
+            return 0;
+        }else{
+            std::vector<void *> obufs{out_deviceinfo->host};
+            u3v.get_device_info(obufs);
+
+            if(dispose){
+                u3v.dispose();
+            }
+        }
+        return 0;
+    } catch (const std::exception &e) {
+        ion::log::error("Exception was thrown: {}", e.what());
+        return 1;
+    } catch (...) {
+        ion::log::error("Unknown exception was thrown");
+        return 1;
+    }
+}
+ION_REGISTER_EXTERN(ion_bb_image_io_u3v_device_info1);
+
+extern "C"
+int ION_EXPORT ion_bb_image_io_u3v_device_info2(
+    halide_buffer_t *, halide_buffer_t *,
+    bool dispose, int32_t num_sensor,
+    bool frame_sync, bool realtime_display_mode,
+    halide_buffer_t* pixel_format_buf, 
+    halide_buffer_t * deviceinfo0, halide_buffer_t * deviceinfo1
+    )
+{
+    using namespace Halide;
+    try {
+        int num_output = 2;
+        const ::std::string pixel_format(reinterpret_cast<const char*>(pixel_format_buf->host));
+        auto &u3v(ion::bb::image_io::U3V::get_instance(pixel_format, num_sensor, frame_sync, realtime_display_mode));
+        if (deviceinfo0->is_bounds_query() || deviceinfo1->is_bounds_query()) {
+            if (deviceinfo0->is_bounds_query()){
+                deviceinfo0->dim[0].min = 0;
+                deviceinfo0->dim[0].extent = sizeof(ion::bb::image_io::rawHeader);
+            }
+            if (deviceinfo1->is_bounds_query()){
+                deviceinfo1->dim[0].min = 0;
+                deviceinfo1->dim[0].extent = sizeof(ion::bb::image_io::rawHeader);
+            }
+            return 0;
+        }else{
+            std::vector<void *> obufs{deviceinfo0->host, deviceinfo1->host};
+            u3v.get_device_info(obufs);
+
+            if(dispose){
+                u3v.dispose();
+            }
+        }
+        return 0;
+    } catch (const std::exception &e) {
+        ion::log::error("Exception was thrown: {}", e.what());
+        return 1;
+    } catch (...) {
+        ion::log::error("Unknown exception was thrown");
+        return 1;
+    }
+}
+ION_REGISTER_EXTERN(ion_bb_image_io_u3v_device_info2);
 
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_multiple_camera1(
@@ -1381,7 +1473,6 @@ int ION_EXPORT ion_bb_image_io_u3v_multiple_camera2(
                 u3v.SetGain(i, gain_key, (reinterpret_cast<double*>(gain->host))[i]);
                 u3v.SetExposure(i, exposure_key, (reinterpret_cast<double*>(exposure->host))[i]);
             }
-
             std::vector<void *> obufs{out0->host, out1->host};
             u3v.get(obufs);
             if(dispose){
