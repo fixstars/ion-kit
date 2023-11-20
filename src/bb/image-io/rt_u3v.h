@@ -145,11 +145,11 @@ class U3V {
         int32_t image_payload_size_;
         uint32_t frame_count_;
 
-        float gain_;
-        float exposure_;
+        float gain_ =-1;
+        float exposure_ =-1;
 
-        int32_t int_gain_;
-        int32_t int_exposure_;
+        int32_t int_gain_ = -1;
+        int32_t int_exposure_ = -1;
 
         float exposure_range_[2];
 
