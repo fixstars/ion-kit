@@ -321,82 +321,82 @@ public:
 
 
 class CameraN : public ion::BuildingBlock<CameraN> {
-    public:
-        GeneratorParam<int32_t> num_devices{"num_devices", 2};
-        GeneratorParam<std::string> gc_title{"gc_title", "USBCamera"};
-        GeneratorParam<std::string> gc_description{"gc_description", "This captures USB camera image."};
-        GeneratorParam<std::string> gc_tags{"gc_tags", "input,sensor"};
-        GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.width), parseInt(v.height), 3] }}))"};
-        GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
-        GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
-        GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+public:
+    GeneratorParam<int32_t> num_devices{"num_devices", 2};
+    GeneratorParam<std::string> gc_title{"gc_title", "USBCamera"};
+    GeneratorParam<std::string> gc_description{"gc_description", "This captures USB camera image."};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "input,sensor"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.width), parseInt(v.height), 3] }}))"};
+    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
+    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
 
-        GeneratorParam<int32_t> fps{"fps", 30};
-        GeneratorParam<int32_t> width{"width", 0};
-        GeneratorParam<int32_t> height{"height", 0};
-        GeneratorParam<int32_t> index{"index", 0};
-        GeneratorParam<std::string> urls{"urls", ""};
+    GeneratorParam<int32_t> fps{"fps", 30};
+    GeneratorParam<int32_t> width{"width", 0};
+    GeneratorParam<int32_t> height{"height", 0};
+    GeneratorParam<int32_t> index{"index", 0};
+    GeneratorParam<std::string> urls{"urls", ""};
 
-//        GeneratorInput<Buffer<uint8_t>[]>  urls{"urls"};
-        GeneratorOutput<Halide::Func[]> output{"output", Halide::type_of<uint8_t>(), 3};
-
-
-        void generate() {
-
-            std::stringstream urls_stream(urls);
-            std::string url;
-            std::vector<std::string> url_list;
-            while(std::getline(urls_stream, url, ';'))
-            {
-                url_list.push_back(url);
-            }
+//  GeneratorInput<Buffer<uint8_t>[]>  urls{"urls"};
+    GeneratorOutput<Halide::Func[]> output{"output", Halide::type_of<uint8_t>(), 3};
 
 
-            using namespace Halide;
+    void generate() {
 
-            output.resize(num_devices);
-
-            for (int i =0; i < num_devices; i++){
-                std::string url_str;
-                if (url_list.size()!=0){
-                    url_str = url_list[i];
-                }
-                else{
-                    url_str = "";
-                }
-
-
-
-                Halide::Buffer<uint8_t> url_buf(url_str.size() + 1);
-                url_buf.fill(0);
-                std::memcpy(url_buf.data(), url_str.c_str(), url_str.size());
-
-                std::vector<ExternFuncArgument> params = {instance_id++, cast<int32_t>(index), cast<int32_t>(fps), cast<int32_t>(width), cast<int32_t>(height), url_buf};
-                Func camera(static_cast<std::string>(gc_prefix) + "camera");
-                camera.define_extern("ion_bb_image_io_camera", params, Halide::type_of<uint8_t>(), 2);
-                camera.compute_root();
-
-                Func camera_ = BoundaryConditions::repeat_edge(camera, {{0, 2 * width}, {0, height}});
-
-                Var c, x, y;
-
-                Expr yv = cast<float>(camera_(2 * x, y));
-                Expr uv = cast<float>(camera_(select((x & 1) == 0, 2 * x + 1, 2 * x - 1), y));
-                Expr vv = cast<float>(camera_(select((x & 1) == 0, 2 * x + 3, 2 * x + 1), y));
-
-                Expr f128 = cast<float>(128);
-                Expr r = saturating_cast<uint8_t>(yv + cast<float>(1.403f) * (vv - f128));
-                Expr g = saturating_cast<uint8_t>(yv - cast<float>(0.344f) * (uv - f128) - (cast<float>(0.714f) * (vv - f128)));
-                Expr b = saturating_cast<uint8_t>(yv + cast<float>(1.773f) * (uv - f128));
-
-
-                Func f(static_cast<std::string>(gc_prefix) + "output" + std::to_string(i));
-                f(x, y, c) = mux(c, {r, g, b});
-
-                output[i](_) = f(_);
-            }
-
+        std::stringstream urls_stream(urls);
+        std::string url;
+        std::vector<std::string> url_list;
+        while(std::getline(urls_stream, url, ';'))
+        {
+            url_list.push_back(url);
         }
+
+
+        using namespace Halide;
+
+        output.resize(num_devices);
+
+        for (int i =0; i < num_devices; i++){
+            std::string url_str;
+            if (url_list.size()!=0){
+                url_str = url_list[i];
+            }
+            else{
+                url_str = "";
+            }
+
+
+
+            Halide::Buffer<uint8_t> url_buf(url_str.size() + 1);
+            url_buf.fill(0);
+            std::memcpy(url_buf.data(), url_str.c_str(), url_str.size());
+
+            std::vector<ExternFuncArgument> params = {instance_id++, cast<int32_t>(index), cast<int32_t>(fps), cast<int32_t>(width), cast<int32_t>(height), url_buf};
+            Func camera(static_cast<std::string>(gc_prefix) + "camera");
+            camera.define_extern("ion_bb_image_io_camera", params, Halide::type_of<uint8_t>(), 2);
+            camera.compute_root();
+
+            Func camera_ = BoundaryConditions::repeat_edge(camera, {{0, 2 * width}, {0, height}});
+
+            Var c, x, y;
+
+            Expr yv = cast<float>(camera_(2 * x, y));
+            Expr uv = cast<float>(camera_(select((x & 1) == 0, 2 * x + 1, 2 * x - 1), y));
+            Expr vv = cast<float>(camera_(select((x & 1) == 0, 2 * x + 3, 2 * x + 1), y));
+
+            Expr f128 = cast<float>(128);
+            Expr r = saturating_cast<uint8_t>(yv + cast<float>(1.403f) * (vv - f128));
+            Expr g = saturating_cast<uint8_t>(yv - cast<float>(0.344f) * (uv - f128) - (cast<float>(0.714f) * (vv - f128)));
+            Expr b = saturating_cast<uint8_t>(yv + cast<float>(1.773f) * (uv - f128));
+
+
+            Func f(static_cast<std::string>(gc_prefix) + "output" + std::to_string(i));
+            f(x, y, c) = mux(c, {r, g, b});
+
+            output[i](_) = f(_);
+        }
+
+    }
 };
 
 
