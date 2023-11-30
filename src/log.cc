@@ -20,19 +20,20 @@ namespace {
 struct Logger {
      Logger()
      {
-         auto console_sink = std::make_shared<spdlog::sinks::stderr_color_sink_mt>();
+         auto log_level = spdlog::level::off;
          auto env_val = spdlog::details::os::getenv("ION_LOG_LEVEL");
-         if (env_val.empty()) {
-             console_sink->set_level(spdlog::level::critical);
-         } else {
-             console_sink->set_level(spdlog::level::from_str(env_val));
+         if (!env_val.empty()) {
+             log_level = spdlog::level::from_str(env_val);
          }
 
+         auto console_sink = std::make_shared<spdlog::sinks::stderr_color_sink_mt>();
+         console_sink->set_level(log_level);
+
          auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("logs/ion.log", false);
-         file_sink->set_level(spdlog::level::trace);
+         file_sink->set_level(log_level);
 
          auto logger = std::make_shared<spdlog::logger>("ion", spdlog::sinks_init_list{console_sink, file_sink});
-         logger->set_level(spdlog::level::trace);
+         logger->set_level(log_level);
 
          logger->debug("ion-kit version is {}", ION_KIT_VERSION);
 
