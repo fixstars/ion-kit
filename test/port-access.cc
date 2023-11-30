@@ -26,9 +26,8 @@ void display_image_float(Halide::Buffer<float> buffer, std::string filename) {
         cv::Mat img_float(height, width, CV_32F, buffer.data());
         img_float.convertTo(img_out, CV_8U, 255);
     }
-
-//     cv::imshow( "Display window: " + filename, img_out);
-    cv::imwrite("./saved.png", img_out);
+    cv::imshow( "Display window: " + filename, img_out);
+//    cv::imwrite("./saved.png", img_out);
 }
 
 

@@ -140,21 +140,14 @@ namespace ion {
             };
 
             std::tuple<std::string, std::string> parse_url(const std::string &url) {
-
-                const std::string https_prefix = "https://";
-                const std::string http_prefix = "http://";
-
-                auto prefix_length = url.rfind( https_prefix, 0) == 0 ? https_prefix.size() :
-                                     url.rfind( http_prefix, 0) == 0 ? http_prefix.size() : -1;
-
-                if (prefix_length == -1){
+                auto protocol_end_pos = url.find("://");
+                if (protocol_end_pos == std::string::npos) {
                     return std::tuple<std::string, std::string>("", "");
                 }
-
-                auto path_name_pos = url.find("/", prefix_length);
-                auto host_name = url.substr(prefix_length, path_name_pos-prefix_length);
+                auto host_name_pos = protocol_end_pos + 3;
+                auto path_name_pos = url.find("/", host_name_pos);
+                auto host_name = url.substr(0, path_name_pos);
                 auto path_name = url.substr(path_name_pos);
-
                 return std::tuple<std::string, std::string>(host_name, path_name);
             }
 
@@ -176,13 +169,8 @@ namespace ion {
                         img_loaded = true;
                     }
                 } else {
-//for https url, httplib::Client throw exception (what(): 'https' scheme is not supported.). need SSL support instead
-#ifdef CPPHTTPLIB_OPENSSL_SUPPORT
-                        httplib::SSLClient cli(host_name.c_str());
-#else
-                        httplib::Client cli(host_name.c_str());
-#endif
-
+// Without CPPHTTPLIB_OPENSSL_SUPPORT pre-defined,  httplib::Client throw exception (what(): 'https' scheme is not supported.).
+                    httplib::Client cli(host_name.c_str());
                     cli.set_follow_location(true);
                     auto res = cli.Get(path_name.c_str());
 
@@ -220,13 +208,7 @@ namespace ion {
                         std::ifstream ifs(url, std::ios::binary);
                         ifs.read(reinterpret_cast<char *>(data.data()), data.size());
                     } else {
-
-#ifdef CPPHTTPLIB_OPENSSL_SUPPORT
-                        httplib::SSLClient cli(host_name.c_str());
-#else
                         httplib::Client cli(host_name.c_str());
-#endif
-
                         cli.set_follow_location(true);
                         auto res = cli.Get(path_name.c_str());
                         if (res && res->status == 200) {

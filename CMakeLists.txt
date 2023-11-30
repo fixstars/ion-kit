@@ -37,10 +37,6 @@ if (WITH_CUDA)
     find_package(CUDA REQUIRED)
 endif()
 
-
-
-
-
 #
 # Version
 #
@@ -77,22 +73,10 @@ else()
     target_link_libraries(ion-core PUBLIC Halide::Halide Halide::Runtime)
 endif()
 
-
-#
-# SSL support to download image from url
-#
-if(OPENSSL_FOUND)
-    if (UNIX)
-        target_link_libraries(ion-core PUBLIC ssl crypto)
-        target_compile_definitions(ion-core PUBLIC CPPHTTPLIB_OPENSSL_SUPPORT)
-    endif()
-endif()
-
 #
 # ion-bb
 #
 add_subdirectory(src/bb)
-
 
 #
 # Test
@@ -209,4 +193,3 @@ else ()
 endif ()
 set(CPACK_PACKAGE_VERSION ${ION_KIT_VERSION})
 include(CPack)
-
