@@ -2,9 +2,6 @@
 # ion-core Testing
 #
 
-
-
-
 # Test BB module
 add_library(ion-bb-test SHARED ion-bb-test.cc)
 if(UNIX)
@@ -62,18 +59,16 @@ ion_jit(dup SRCS dup.cc)
 add_dependencies(dup ion-bb-test)
 ion_register_test(dup_test dup)
 
-
 # Output error handling
 ion_jit(port-binding SRCS port-binding.cc)
 add_dependencies(port-binding ion-bb-test)
 ion_register_test(port-binding_test port-binding)
 
-# Port index access
 ion_jit(port-access SRCS port-access.cc)
 add_dependencies(port-access  ion-bb-test)
 ion_register_test(port-access_test port-access)
 
-
+# Port index access
 ion_jit(direct-extern SRCS direct-extern.cc)
 add_dependencies(direct-extern ion-bb-test)
 ion_register_test(direct-extern_test direct-extern)

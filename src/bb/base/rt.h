@@ -133,7 +133,6 @@ extern "C" ION_EXPORT int ion_bb_base_buffer_loader(halide_buffer_t *url_buf, in
             }
         }
     } else {
-
         httplib::Client cli(host_name.c_str());
         cli.set_follow_location(true);
         auto res = cli.Get(path_name.c_str());
