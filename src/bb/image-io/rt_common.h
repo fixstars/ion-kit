@@ -176,6 +176,7 @@ namespace ion {
                         img_loaded = true;
                     }
                 } else {
+//for https url, httplib::Client throw exception (what(): 'https' scheme is not supported.). need SSL support instead
 #ifdef CPPHTTPLIB_OPENSSL_SUPPORT
                         httplib::SSLClient cli(host_name.c_str());
 #else

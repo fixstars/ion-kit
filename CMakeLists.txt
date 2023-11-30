@@ -37,6 +37,10 @@ if (WITH_CUDA)
     find_package(CUDA REQUIRED)
 endif()
 
+
+
+
+
 #
 # Version
 #
@@ -73,28 +77,27 @@ else()
     target_link_libraries(ion-core PUBLIC Halide::Halide Halide::Runtime)
 endif()
 
+
+#
+# SSL support to download image from url
+#
+if(OPENSSL_FOUND)
+    if (UNIX)
+        target_link_libraries(ion-core PUBLIC ssl crypto)
+        target_compile_definitions(ion-core PUBLIC CPPHTTPLIB_OPENSSL_SUPPORT)
+    endif()
+endif()
+
 #
 # ion-bb
 #
 add_subdirectory(src/bb)
 
+
 #
 # Test
 #
 if (ION_BUILD_TEST)
-    find_package(OpenSSL REQUIRED)
-    if(OPENSSL_FOUND)
-        set(HTTPLIB_IS_USING_OPENSSL TRUE)
-    endif()
-    if (UNIX)
-        target_link_libraries(ion-core PUBLIC
-                $<$<BOOL:${HTTPLIB_IS_USING_OPENSSL}>:OpenSSL::SSL>
-                $<$<BOOL:${HTTPLIB_IS_USING_OPENSSL}>:OpenSSL::Crypto>)
-
-        target_compile_definitions(ion-core PUBLIC
-                $<$<BOOL:${HTTPLIB_IS_USING_OPENSSL}>:CPPHTTPLIB_OPENSSL_SUPPORT>
-        )
-    endif()
     enable_testing()
     add_subdirectory(test)
 endif()
