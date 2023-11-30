@@ -26,8 +26,9 @@ void display_image_float(Halide::Buffer<float> buffer, std::string filename) {
         cv::Mat img_float(height, width, CV_32F, buffer.data());
         img_float.convertTo(img_out, CV_8U, 255);
     }
+#ifdef DISPLAY
     cv::imshow( "Display window: " + filename, img_out);
-//    cv::imwrite("./saved.png", img_out);
+#endif
 }
 
 
@@ -52,7 +53,7 @@ int main(int argc, char *argv[]) {
                 wparam,
                 hparam,
                 Param{"num_devices", "2"},
-                Param{"urls", "http://optipng.sourceforge.net/pngtech/img/lena.png;https://upload.wikimedia.org/wikipedia/commons/0/05/Cat.png"}
+                Param{"urls", "http://optipng.sourceforge.net/pngtech/img/lena.png;http://upload.wikimedia.org/wikipedia/commons/0/05/Cat.png"}
                 //input urls split by ';'
         );
         n = b.add("base_normalize_3d_uint8")(n["output"][1]);  // access only port[1]
