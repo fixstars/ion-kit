@@ -12,22 +12,22 @@
 namespace std
 {
 
-    template<>
-    struct hash<tuple<string, string>>
+template<>
+struct hash<tuple<string, string>>
 {
     std::size_t operator()(const tuple<string, string>& k) const noexcept
-{
-    return std::hash<std::string>{}(std::get<0>(k)) ^ std::hash<std::string>{}(std::get<1>(k));
-}
+    {
+        return std::hash<std::string>{}(std::get<0>(k)) ^ std::hash<std::string>{}(std::get<1>(k));
+    }
 };
 
 template<>
 struct equal_to<tuple<string, string>>
 {
-bool operator()(const tuple<string, string>& v0, const tuple<string, string>& v1) const
-{
-    return (std::get<0>(v0) == std::get<0>(v1) && std::get<1>(v0) == std::get<1>(v1));
-}
+    bool operator()(const tuple<string, string>& v0, const tuple<string, string>& v1) const
+    {
+        return (std::get<0>(v0) == std::get<0>(v1) && std::get<1>(v0) == std::get<1>(v1));
+    }
 };
 
 } // std
@@ -37,133 +37,133 @@ namespace ion {
 /**
  * PortMap is used to assign actual value to the port input.
  */
-    class PortMap {
+class PortMap {
 
-    public:
+public:
 
-        template<typename T>
-        void set(const Halide::Param<T>& p, T v) {
-            param_expr_[p.name()] = p;
-            param_map_.set(p, v);
+    template<typename T>
+    void set(const Halide::Param<T>& p, T v) {
+        param_expr_[p.name()] = p;
+        param_map_.set(p, v);
+    }
+
+    template<typename T>
+    void set(const Halide::ImageParam& p, Halide::Buffer<T> &buf) {
+        param_func_[p.name()] = p;
+        param_map_.set(p, buf);
+    }
+
+    /**
+     * Set the scalar value against to the port.
+     * Template type T is allowed to be one of the following.
+     * - bool
+     * - uint8_t
+     * - uint16_t
+     * - uint32_t
+     * - uint64_t
+     * - int8_t
+     * - int16_t
+     * - int32_t
+     * - int64_t
+     * - float
+     * - double
+     * @arg p: The port object which value is assigned.
+     * @arg v: Actual value to be mapped to the port.
+     */
+    template<typename T>
+    void set(Port p, T v) {
+        param_expr_[p.key()] = p.expr();
+        p.set_to_param_map(param_map_, v);
+    }
+
+    /**
+     * Set the vector value against to the port.
+     * Following type value is allowed to specified:
+     * - bool
+     * - uint8_t
+     * - uint16_t
+     * - uint32_t
+     * - uint64_t
+     * - int8_t
+     * - int16_t
+     * - int32_t
+     * - int64_t
+     * - float
+     * - double
+     * @arg p: The port object which value is assigned.
+     * @arg buf: Actual value to be mapped to the port.
+     * Buffer dimension should be matched with port's one.
+     */
+    template<typename T>
+    void set(Port p, Halide::Buffer<T> &buf) {
+        if (p.bound()) {
+            // This is just an output.
+            output_buffer_[std::make_tuple(p.node_id(), p.key())] = { buf };
+        } else {
+            param_func_[p.key()] = p.func();
+            p.set_to_param_map(param_map_, buf);
         }
+    }
 
-        template<typename T>
-        void set(const Halide::ImageParam& p, Halide::Buffer<T> &buf) {
-            param_func_[p.name()] = p;
-            param_map_.set(p, buf);
-        }
+    /**
+     * Set the vector of the vector values against to the port.
+     * Following type value is allowed to specified:
+     * - bool
+     * - uint8_t
+     * - uint16_t
+     * - uint32_t
+     * - uint64_t
+     * - int8_t
+     * - int16_t
+     * - int32_t
+     * - int64_t
+     * - float
+     * - double
+     * @arg p: The port object which value is assigned.
+     * @arg bufs: Actual value to be mapped to the port.
+     * Buffer dimension should be matched with port's one.
+     */
+    template<typename T>
+    void set(Port p, const std::vector<Halide::Buffer<T>> &bufs) {
+        if (p.bound()) {
+            // This is just an output.
 
-        /**
-         * Set the scalar value against to the port.
-         * Template type T is allowed to be one of the following.
-         * - bool
-         * - uint8_t
-         * - uint16_t
-         * - uint32_t
-         * - uint64_t
-         * - int8_t
-         * - int16_t
-         * - int32_t
-         * - int64_t
-         * - float
-         * - double
-         * @arg p: The port object which value is assigned.
-         * @arg v: Actual value to be mapped to the port.
-         */
-        template<typename T>
-        void set(Port p, T v) {
-            param_expr_[p.key()] = p.expr();
-            p.set_to_param_map(param_map_, v);
-        }
-
-        /**
-         * Set the vector value against to the port.
-         * Following type value is allowed to specified:
-         * - bool
-         * - uint8_t
-         * - uint16_t
-         * - uint32_t
-         * - uint64_t
-         * - int8_t
-         * - int16_t
-         * - int32_t
-         * - int64_t
-         * - float
-         * - double
-         * @arg p: The port object which value is assigned.
-         * @arg buf: Actual value to be mapped to the port.
-         * Buffer dimension should be matched with port's one.
-         */
-        template<typename T>
-        void set(Port p, Halide::Buffer<T> &buf) {
-            if (p.bound()) {
-                // This is just an output.
-                output_buffer_[std::make_tuple(p.node_id(), p.key())] = { buf };
-            } else {
-                param_func_[p.key()] = p.func();
-                p.set_to_param_map(param_map_, buf);
+            for (size_t i=0; i<bufs.size(); ++i) {
+                output_buffer_[std::make_tuple(p.node_id(), p.key())].push_back(bufs[i]);
             }
+        } else {
+            throw std::invalid_argument(
+                "Unbounded port (" + p.key() + ") corresponding to an array of Inputs is not supported");
         }
+    }
 
-        /**
-         * Set the vector of the vector values against to the port.
-         * Following type value is allowed to specified:
-         * - bool
-         * - uint8_t
-         * - uint16_t
-         * - uint32_t
-         * - uint64_t
-         * - int8_t
-         * - int16_t
-         * - int32_t
-         * - int64_t
-         * - float
-         * - double
-         * @arg p: The port object which value is assigned.
-         * @arg bufs: Actual value to be mapped to the port.
-         * Buffer dimension should be matched with port's one.
-         */
-        template<typename T>
-        void set(Port p, const std::vector<Halide::Buffer<T>> &bufs) {
-            if (p.bound()) {
-                // This is just an output.
+    bool mapped(const std::string& k) const {
+        return param_expr_.count(k) != 0 || param_func_.count(k) != 0;
+    }
 
-                for (size_t i=0; i<bufs.size(); ++i) {
-                    output_buffer_[std::make_tuple(p.node_id(), p.key())].push_back(bufs[i]);
-                }
-            } else {
-                throw std::invalid_argument(
-                        "Unbounded port (" + p.key() + ") corresponding to an array of Inputs is not supported");
-            }
-        }
+    Halide::Expr get_param_expr(const std::string& k) const {
+        return param_expr_.at(k);
+    }
 
-        bool mapped(const std::string& k) const {
-            return param_expr_.count(k) != 0 || param_func_.count(k) != 0;
-        }
+    Halide::Func get_param_func(const std::string& k) const {
+        return param_func_.at(k);
+    }
 
-        Halide::Expr get_param_expr(const std::string& k) const {
-            return param_expr_.at(k);
-        }
+    std::unordered_map<std::tuple<std::string, std::string>, std::vector<Halide::Buffer<>>> get_output_buffer() const {
+        return output_buffer_;
+    }
 
-        Halide::Func get_param_func(const std::string& k) const {
-            return param_func_.at(k);
-        }
+    Halide::ParamMap get_param_map() const {
+        return param_map_;
+    }
 
-        std::unordered_map<std::tuple<std::string, std::string>, std::vector<Halide::Buffer<>>> get_output_buffer() const {
-            return output_buffer_;
-        }
+ private:
 
-        Halide::ParamMap get_param_map() const {
-            return param_map_;
-        }
-
-    private:
-
-        std::unordered_map<std::string, Halide::Expr> param_expr_;
-        std::unordered_map<std::string, Halide::Func> param_func_;
-        std::unordered_map<std::tuple<std::string, std::string>, std::vector<Halide::Buffer<>>> output_buffer_;
-        Halide::ParamMap param_map_;
-    };
+    std::unordered_map<std::string, Halide::Expr> param_expr_;
+    std::unordered_map<std::string, Halide::Func> param_func_;
+    std::unordered_map<std::tuple<std::string, std::string>, std::vector<Halide::Buffer<>>> output_buffer_;
+    Halide::ParamMap param_map_;
+};
 
 
 } // namespace ion
