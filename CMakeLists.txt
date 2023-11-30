@@ -6,9 +6,9 @@ cmake_minimum_required(VERSION 3.6)
 # Options
 #
 if (UNIX)
-  set(DEFAULT_TARGET_BB "base;dnn;image-io;image-processing;opencv;sgm")
+    set(DEFAULT_TARGET_BB "base;dnn;image-io;image-processing;opencv;sgm")
 else()
-  set(DEFAULT_TARGET_BB "base;image-io;image-processing;opencv;sgm")
+    set(DEFAULT_TARGET_BB "base;image-io;image-processing;opencv;sgm")
 endif()
 set(ION_TARGET_BB ${DEFAULT_TARGET_BB} CACHE STRING "A List of building blocks to build (This overrides ION_BUILD_ALL_BB)")
 option(ION_BUILD_DOC "Build documents." OFF)
@@ -41,12 +41,12 @@ endif()
 # Version
 #
 execute_process(COMMAND git describe --tags
-    OUTPUT_VARIABLE GIT_DESCRIBE_RESULT
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+        OUTPUT_VARIABLE GIT_DESCRIBE_RESULT
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 message(STATUS "Version: ${GIT_DESCRIBE_RESULT}")
 string(STRIP "${GIT_DESCRIBE_RESULT}" ION_KIT_VERSION_S)
 add_definitions("-DION_KIT_VERSION=\"${ION_KIT_VERSION_S}\"")
-string(REPLACE "v" "" ION_KIT_VERSION ${ION_KIT_VERSION_S})
+string(REPLACE "v" "" ION_KIT_VERSION "${ION_KIT_VERSION_S}")
 file(GENERATE OUTPUT ${CMAKE_BINARY_DIR}/VERSION CONTENT "${ION_KIT_VERSION_S}")
 
 #
@@ -68,9 +68,9 @@ file(GLOB ION_CORE_SRC LIST_DIRECTORIES false ${PROJECT_SOURCE_DIR}/src/*)
 add_library(ion-core SHARED ${ION_CORE_SRC})
 target_include_directories(ion-core PUBLIC ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/src)
 if (UNIX)
-  target_link_libraries(ion-core PUBLIC Halide::Halide Halide::Runtime dl pthread z)
+    target_link_libraries(ion-core PUBLIC Halide::Halide Halide::Runtime dl pthread z)
 else()
-  target_link_libraries(ion-core PUBLIC Halide::Halide Halide::Runtime)
+    target_link_libraries(ion-core PUBLIC Halide::Halide Halide::Runtime)
 endif()
 
 #
@@ -82,6 +82,19 @@ add_subdirectory(src/bb)
 # Test
 #
 if (ION_BUILD_TEST)
+    find_package(OpenSSL REQUIRED)
+    if(OPENSSL_FOUND)
+        set(HTTPLIB_IS_USING_OPENSSL TRUE)
+    endif()
+    if (UNIX)
+        target_link_libraries(ion-core PUBLIC
+                $<$<BOOL:${HTTPLIB_IS_USING_OPENSSL}>:OpenSSL::SSL>
+                $<$<BOOL:${HTTPLIB_IS_USING_OPENSSL}>:OpenSSL::Crypto>)
+
+        target_compile_definitions(ion-core PUBLIC
+                $<$<BOOL:${HTTPLIB_IS_USING_OPENSSL}>:CPPHTTPLIB_OPENSSL_SUPPORT>
+        )
+    endif()
     enable_testing()
     add_subdirectory(test)
 endif()
@@ -105,19 +118,19 @@ if (ION_BUILD_DOC)
         list(APPEND PUBLIC_HEADERS ${FILES})
         set(DOXYGEN_INDEX_FILE ${CMAKE_BINARY_DIR}/xml/index.xml)
         add_custom_command(OUTPUT ${DOXYGEN_INDEX_FILE}
-            COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_SOURCE_DIR}/doc/Doxyfile
-            DEPENDS ${PUBLIC_HEADERS}
-            MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/doc/Doxyfile
-            COMMENT "Generating docs")
+                COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_SOURCE_DIR}/doc/Doxyfile
+                DEPENDS ${PUBLIC_HEADERS}
+                MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/doc/Doxyfile
+                COMMENT "Generating docs")
         add_custom_target(Doxygen ALL DEPENDS ${DOXYGEN_INDEX_FILE})
 
         set(SPHINX_INDEX_FILE ${CMAKE_BINARY_DIR}/doc/index.html)
         add_custom_command(OUTPUT ${SPHINX_INDEX_FILE}
-            COMMAND ${SPHINX_EXECUTABLE} -b html
-            -Dbreathe_projects.ion-core=${CMAKE_BINARY_DIR}/xml
-            ${CMAKE_SOURCE_DIR}/doc ${CMAKE_BINARY_DIR}/doc
-            DEPENDS ${DOXYGEN_INDEX_FILE}
-            MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/doc/index.rst)
+                COMMAND ${SPHINX_EXECUTABLE} -b html
+                -Dbreathe_projects.ion-core=${CMAKE_BINARY_DIR}/xml
+                ${CMAKE_SOURCE_DIR}/doc ${CMAKE_BINARY_DIR}/doc
+                DEPENDS ${DOXYGEN_INDEX_FILE}
+                MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/doc/index.rst)
         add_custom_target(Sphinx ALL DEPENDS ${SPHINX_INDEX_FILE})
 
         install(DIRECTORY ${CMAKE_BINARY_DIR}/doc DESTINATION .)
@@ -141,14 +154,14 @@ endif()
 
 install(DIRECTORY include DESTINATION .)
 install(FILES
-    ${CMAKE_BINARY_DIR}/VERSION
-    DESTINATION .)
+        ${CMAKE_BINARY_DIR}/VERSION
+        DESTINATION .)
 install(FILES
-    ${CMAKE_SOURCE_DIR}/LICENSE
-    DESTINATION license)
+        ${CMAKE_SOURCE_DIR}/LICENSE
+        DESTINATION license)
 install(FILES
-    ${CMAKE_SOURCE_DIR}/thirdparty_notice.txt
-    DESTINATION license)
+        ${CMAKE_SOURCE_DIR}/thirdparty_notice.txt
+        DESTINATION license)
 
 # Halide
 if (ION_BUNDLE_HALIDE)
@@ -158,10 +171,10 @@ if (ION_BUNDLE_HALIDE)
     install(FILES ${HALIDE_HEADERS} DESTINATION include)
 
     file(GLOB HALIDE_BINS
-        ${HALIDE_ROOT}/bin/featurization_to_sample*
-        ${HALIDE_ROOT}/bin/get_host_target*
-        ${HALIDE_ROOT}/bin/retrain_cost_model*
-        ${HALIDE_ROOT}/bin/weightsdir_to_weightsfile*)
+            ${HALIDE_ROOT}/bin/featurization_to_sample*
+            ${HALIDE_ROOT}/bin/get_host_target*
+            ${HALIDE_ROOT}/bin/retrain_cost_model*
+            ${HALIDE_ROOT}/bin/weightsdir_to_weightsfile*)
     install(FILES ${HALIDE_BINS} DESTINATION bin)
 
     install(DIRECTORY ${HALIDE_ROOT}/lib/cmake/Halide DESTINATION lib/cmake/)
@@ -193,3 +206,4 @@ else ()
 endif ()
 set(CPACK_PACKAGE_VERSION ${ION_KIT_VERSION})
 include(CPack)
+

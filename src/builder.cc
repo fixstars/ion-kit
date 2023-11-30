@@ -254,6 +254,7 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
         std::vector<std::vector<Internal::StubInput>> args;
         for (size_t j=0; j<n.ports().size(); ++j) {
             auto p = n.ports()[j];
+            auto index = p.index();
             // Unbounded parameter
             auto *in = bb->param_info().inputs().at(j);
             if (p.node_id().empty()) {
@@ -308,7 +309,16 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
                         }
                         args.push_back(bb->build_input(j, f()));
                     } else if (in->kind() == Internal::IOKind::Function) {
-                        args.push_back(bb->build_input(j, f));
+                        auto fs =bbs[p.node_id()]->get_outputs(p.key());
+                            // no specific index provided, direct output Port
+                        if (index == -1)
+                            args.push_back(bb->build_input(j,f));
+                        else{
+                            // access to Port[index]
+                            args.push_back(bb->build_input(j, fs[index]));
+                        }
+
+
                     } else {
                         throw std::runtime_error("fixme");
                     }
@@ -338,6 +348,20 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
                            output_funcs.push_back(fs[i]);
                            outputs->push_back(kv.second[i]);
                        }
+//                       if (index!=-1){
+//                           auto fs = bbs[node_id]->get_outputs(port_key);
+//                           output_funcs.push_back(fs[index]);
+//                           outputs->push_back(kv.second[0]);
+//                       }else{
+//                           auto fs = bbs[node_id]->get_outputs(port_key);
+//                           if (fs.size() != kv.second.size()) {
+//                               throw std::runtime_error("Invalid size of array : " + node_id + ", " + port_key);
+//                           }
+//                           for (size_t i=0; i<fs.size(); ++i) {
+//                               output_funcs.push_back(fs[i]);
+//                               outputs->push_back(kv.second[i]);
+//                           }
+//                       }
                    } else {
                        auto f = bbs[node_id]->get_outputs(port_key).front();
                        if (1 != kv.second.size()) {

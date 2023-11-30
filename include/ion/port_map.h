@@ -127,10 +127,21 @@ public:
     void set(Port p, const std::vector<Halide::Buffer<T>> &bufs) {
         if (p.bound()) {
             // This is just an output.
+//            if (p.index()!=-1){
+//                for (size_t i=0; i<bufs.size(); ++i) {
+//                    output_buffer_[std::make_tuple(p.node_id(), p.key())].push_back(bufs[i]);
+//                }
+//            }else{
+//                if(p.index()>=buf.size()){
+//                    throw std::invalid_argument(
+//                            "Port index is out of range");
+//                }
 
-            for (size_t i=0; i<bufs.size(); ++i) {
-                output_buffer_[std::make_tuple(p.node_id(), p.key())].push_back(bufs[i]);
-            }
+                output_buffer_[std::make_tuple(p.node_id(), p.key())].push_back(bufs[p.index()]);
+
+//            }
+
+
         } else {
             throw std::invalid_argument(
                 "Unbounded port (" + p.key() + ") corresponding to an array of Inputs is not supported");
