@@ -33,7 +33,7 @@ if __name__ == "__main__":
     #    Port class would be  used to define dynamic O/O for each node.
     t = Type(TypeCode.Uint, 1, 1)
     dispose_p = Port('dispose', t, 0)
-    t = Type(TypeCode.Int, 32, 1)
+    t = Type(TypeCode.Float, 64, 1)
     gain0_p = Port('gain0', t, 0)
     gain1_p = Port('gain1', t, 0)
     exposure0_p = Port('exposure0', t, 0)
@@ -62,10 +62,10 @@ if __name__ == "__main__":
     port_map = PortMap()
 
     # input values
-    port_map.set_i32(gain0_p, gain)
-    port_map.set_i32(gain1_p, gain)
-    port_map.set_i32(exposure0_p, exposure)
-    port_map.set_i32(exposure1_p, exposure)
+    port_map.set_f64(gain0_p, gain)
+    port_map.set_f64(gain1_p, gain)
+    port_map.set_f64(exposure0_p, exposure)
+    port_map.set_f64(exposure1_p, exposure)
 
     # output values
     buf_size = (width, height, )
