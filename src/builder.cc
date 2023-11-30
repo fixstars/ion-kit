@@ -254,6 +254,7 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
         std::vector<std::vector<Internal::StubInput>> args;
         for (size_t j=0; j<n.ports().size(); ++j) {
             auto p = n.ports()[j];
+            auto index = p.index();
             // Unbounded parameter
             auto *in = bb->param_info().inputs().at(j);
             if (p.node_id().empty()) {
@@ -308,7 +309,19 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
                         }
                         args.push_back(bb->build_input(j, f()));
                     } else if (in->kind() == Internal::IOKind::Function) {
-                        args.push_back(bb->build_input(j, f));
+                        auto fs =bbs[p.node_id()]->get_outputs(p.key());
+                            // no specific index provided, direct output Port
+                        if (index == -1)
+                            args.push_back(bb->build_input(j,f));
+                        else{
+                            // access to Port[index]
+                            if (index>=fs.size()){
+                                throw std::runtime_error("Port index out of range: " + in->name());
+                            }
+                            args.push_back(bb->build_input(j, fs[index]));
+                        }
+
+
                     } else {
                         throw std::runtime_error("fixme");
                     }
