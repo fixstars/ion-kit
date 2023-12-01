@@ -14,6 +14,8 @@
 #define ION_DYNAMIC_MODULE_EXT ".so"
 #endif
 
+#include "log.h"
+
 namespace ion {
 
 class DynamicModule {
@@ -25,7 +27,7 @@ class DynamicModule {
   using Handle = void*;
 #endif
 
-     DynamicModule(const std::string& module_name_or_path) {
+     DynamicModule(const std::string& module_name_or_path, bool essential = true) {
          if (module_name_or_path == "") {
              handle_ = nullptr;
              return;
@@ -39,18 +41,18 @@ class DynamicModule {
          }
 
          // TODO: WIP: test moduel_name_or_path using std::filesystem
-
 #ifdef _WIN32
          handle_ = LoadLibraryA(target.c_str());
-         if (handle_ == nullptr) {
-             throw std::runtime_error(getErrorString());
-         }
 #else
          handle_ = dlopen(target.c_str(), RTLD_NOW);
-         if (handle_ == nullptr) {
-             throw std::runtime_error(getErrorString());
-         }
 #endif
+         if (handle_ == nullptr) {
+             if (essential) {
+                 throw std::runtime_error(getErrorString());
+             } else {
+                 log::warn("Not found inessential library {} : {}", target, getErrorString());
+             }
+         }
      }
 
      ~DynamicModule() {
@@ -59,6 +61,10 @@ class DynamicModule {
              // Loading more than twice does not have any side effects.
          }
      }
+
+    bool is_available(void) const {
+        return handle_ != NULL;
+    }
 
     template<typename T>
     T get_symbol(const std::string &symbol_name) const {

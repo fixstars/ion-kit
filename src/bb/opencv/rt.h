@@ -1,6 +1,7 @@
 #ifndef ION_BB_OPENCV_RT_H
 #define ION_BB_OPENCV_RT_H
 
+#include <Halide.h>
 #include <HalideBuffer.h>
 
 #include "dynamic_module.h"
@@ -11,7 +12,8 @@
 #define ION_EXPORT
 #endif
 
-#include <Halide.h>
+#include "log.h"
+
 namespace ion {
 namespace bb {
 namespace opencv {
@@ -88,17 +90,22 @@ cvSmooth_t cvSmooth;
 cvShowImage_t cvShowImage;
 cvWaitKey_t cvWaitKey;
 
-class Initializer {
+class OpenCV {
 public:
 
-    Initializer() :
+    static OpenCV &get_instance() {
+        static OpenCV instance;
+        return instance;
+    }
+
+    OpenCV() :
 #ifdef _WIN32
         // TODO: Determine OpenCV version dynamically
-        opencv_world_("opencv_world455")
+        opencv_world_("opencv_world455", false)
 #else
-        opencv_core_("opencv_core"),
-        opencv_imgproc_("opencv_imgproc"),
-        opencv_highgui_("opencv_highgui")
+        opencv_core_("opencv_core", false),
+        opencv_imgproc_("opencv_imgproc", false),
+        opencv_highgui_("opencv_highgui", false)
 #endif
     {
         init_symbols();
@@ -141,6 +148,14 @@ public:
 #endif
     }
 
+    bool is_available(void) const {
+#if _WIN32
+        return opencv_world_.is_available()
+#else
+        return opencv_core_.is_available() && opencv_imgproc_.is_available() && opencv_highgui_.is_available();
+#endif
+    }
+
 private:
 #if _WIN32
     ion::DynamicModule opencv_world_;
@@ -149,7 +164,7 @@ private:
     ion::DynamicModule opencv_imgproc_;
     ion::DynamicModule opencv_highgui_;
 #endif
-} initializer;
+};
 
 int hl2cv_type(halide_type_t hl_type, int channel) {
     if (hl_type.code != halide_type_uint) {
@@ -164,12 +179,16 @@ int hl2cv_type(halide_type_t hl_type, int channel) {
     }
 }
 
-
 } // namespace
 
 
 extern "C" ION_EXPORT
 int median_blur(halide_buffer_t *in, int ksize, halide_buffer_t *out) {
+    if (!OpenCV::get_instance().is_available()) {
+        ion::log::error("OpenCV is not available");
+        return -1;
+    }
+
     if (in->is_bounds_query()) {
         for (auto i=0; i<in->dimensions; ++i) {
             in->dim[i].min = out->dim[i].min;
@@ -201,6 +220,11 @@ ION_REGISTER_EXTERN(median_blur);
 
 extern "C" ION_EXPORT
 int display(halide_buffer_t *in, int width, int height, int idx, halide_buffer_t *out) {
+    if (!OpenCV::get_instance().is_available()) {
+        ion::log::error("OpenCV is not available");
+        return -1;
+    }
+
     if (in->is_bounds_query()) {
         in->dim[0].min = 0;
         in->dim[0].extent = 3; // RGB
