@@ -7,8 +7,6 @@ class MedianBlur : public ion::BuildingBlock<MedianBlur> {
 public:
     GeneratorParam<int32_t> ksize{"ksize", 3};
     Input<Halide::Func> input{"input", UInt(8), 3};
-    Input<int32_t> width{"width", 0};
-    Input<int32_t> height{"height", 0};
     Output<Halide::Func> output{"output", UInt(8), 3};
 
     void generate() {
@@ -16,7 +14,7 @@ public:
         Func in;
         in(_) = input(_);
         in.compute_root();
-        std::vector<ExternFuncArgument> params{in, cast<int32_t>(3), width, height, static_cast<int>(ksize)};
+        std::vector<ExternFuncArgument> params{in, static_cast<int>(ksize)};
         Func median_blur;
         median_blur.define_extern("median_blur", params, UInt(8), 3);
         median_blur.compute_root();
@@ -35,9 +33,9 @@ ION_REGISTER_BUILDING_BLOCK(MedianBlur, opencv_median_blur);
 class Display : public ion::BuildingBlock<Display> {
 public:
     GeneratorParam<int32_t> idx{"idx", 0};
+    GeneratorParam<int32_t> width{"width", 640};
+    GeneratorParam<int32_t> height{"height", 480};
     Input<Halide::Func> input{"input", UInt(8), 3};
-    Input<int32_t> width{"width", 0};
-    Input<int32_t> height{"height", 0};
 
     Output<int> output{"output"};
     void generate() {
@@ -45,7 +43,7 @@ public:
         Func in;
         in(_) = input(_);
         in.compute_root();
-        std::vector<ExternFuncArgument> params = {in, width, height, static_cast<int>(idx)};
+        std::vector<ExternFuncArgument> params = {in, static_cast<int>(width), static_cast<int>(height), static_cast<int>(idx)};
         Func display;
         display.define_extern("display", params, Int(32), 0);
         display.compute_root();

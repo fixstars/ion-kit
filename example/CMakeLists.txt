@@ -44,6 +44,7 @@ ion_jit(demo_jit SRCS demo.cc)
 ion_jit(imx219_isp_display_jit SRCS imx219_isp_display.cc)
 ion_jit(gender_count SRCS gender_count.cc)
 ion_jit(io SRCS io.cc)
+ion_jit(opencv_bb SRCS opencv_bb.cc)
 # ion_jit(u3v_jit SRCS u3v.cc)
 
 ion_register_test(isp isp_jit TARGET_STRING "host-profile")
