@@ -37,7 +37,7 @@ if(UNIX)
         PUBLIC -fno-rtti  # For Halide::Generator
         PUBLIC -rdynamic) # For JIT compiling
 elseif(MSVC)
-    target_compile_options(ion-bb 
+    target_compile_options(ion-bb
         PUBLIC /bigobj)
 endif()
 
