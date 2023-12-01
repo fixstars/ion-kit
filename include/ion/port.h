@@ -147,7 +147,7 @@ class Port {
      friend class Node;
 
      Port()
-         : key_(), type_(), dimensions_(0), node_id_(), param_info_() {}
+         : key_(), type_(), dimensions_(0), index_(-1), node_id_(), param_info_() {}
 
      /**
       * Construct new port for scalar value.
@@ -155,7 +155,7 @@ class Port {
       * @arg t: The type of the value.
       */
      Port(const std::string& k, Halide::Type t)
-         : key_(k), type_(t), dimensions_(0), node_id_(), param_info_(new ParamContainer(k, t)) {}
+         : key_(k), type_(t), dimensions_(0), index_(-1), node_id_(), param_info_(new ParamContainer(k, t)) {}
 
      /**
       * Construct new port for vector value.
@@ -164,7 +164,7 @@ class Port {
       * @arg d: The dimension of the port. The range is 1 to 4.
       */
      Port(const std::string& k, Halide::Type t, int32_t d)
-         : key_(k), type_(t), dimensions_(d), node_id_(), param_info_(new ParamContainer(k, t, d)) {}
+         : key_(k), type_(t), dimensions_(d), index_(-1), node_id_(), param_info_(new ParamContainer(k, t, d)) {}
 
      std::string key() const { return key_; }
      std::string& key() { return key_; }
@@ -174,6 +174,9 @@ class Port {
 
      int32_t dimensions() const { return dimensions_; }
      int32_t& dimensions() { return dimensions_; }
+
+     int32_t index() const { return index_; }
+     int32_t& index() { return index_; }
 
      std::string node_id() const { return node_id_; }
      std::string& node_id() { return node_id_; }
@@ -203,15 +206,25 @@ class Port {
          return !node_id_.empty();
      }
 
- private:
-     /**
-      * This port is bound with some node.
-      */
-     Port(const std::string& k, const std::string& ni) : key_(k), type_(), dimensions_(0), node_id_(ni), param_info_(nullptr){}
+
+    /**
+     * Overloaded operator to set the port index and return a reference to the current port. eg. port[0]
+     */
+   Port operator[](int i) {
+       this->index_ = i;
+       return *this;
+   }
+
+private:
+    /**
+     * This port is bound with some node.
+     */
+     Port(const std::string& k, const std::string& ni) : key_(k), type_(), index_(-1), dimensions_(0), node_id_(ni), param_info_(nullptr){}
 
      std::string key_;
      Halide::Type type_;
      int32_t dimensions_;
+     int32_t index_;
      std::string node_id_;
      std::shared_ptr<ParamContainer> param_info_;
 };

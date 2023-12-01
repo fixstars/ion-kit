@@ -19,8 +19,8 @@ using namespace ion;
 //  Resize it according to the resolution of the sensor.
 const int32_t width = 640;
 const int32_t height = 480;
-int32_t gain = 400;
-int32_t exposure = 400;
+double gain = 400;
+double exposure = 400;
 
 #ifdef _WIN32
     #define MODULE_NAME "ion-bb.dll"
@@ -54,10 +54,10 @@ int main(int argc, char *argv[])
   // Define the input port
   //  Port class is used to define dynamic I/O for each node.
   Port dispose_p{ "dispose",  Halide::type_of<bool>() };
-  Port gain0_p{ "gain0", Halide::type_of<int32_t>() };
-  Port gain1_p{ "gain1", Halide::type_of<int32_t>() };
-  Port exposure0_p{ "exposure0", Halide::type_of<int32_t>() };
-  Port exposure1_p{ "exposure1", Halide::type_of<int32_t>() };
+  Port gain0_p{ "gain0", Halide::type_of<double>() };
+  Port gain1_p{ "gain1", Halide::type_of<double>() };
+  Port exposure0_p{ "exposure0", Halide::type_of<double>() };
+  Port exposure1_p{ "exposure1", Halide::type_of<double>() };
 
   //  Connect the input port to the Node instance created by b.add().
   Node n = b.add("image_io_u3v_camera1_u16x2")(dispose_p, gain0_p, exposure0_p)

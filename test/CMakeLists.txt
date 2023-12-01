@@ -64,6 +64,12 @@ ion_jit(port-binding SRCS port-binding.cc)
 add_dependencies(port-binding ion-bb-test)
 ion_register_test(port-binding_test port-binding)
 
+# Port index access
+ion_jit(port-access SRCS port-access.cc)
+add_dependencies(port-access  ion-bb-test)
+ion_register_test(port-access_test port-access)
+
+
 ion_jit(direct-extern SRCS direct-extern.cc)
 add_dependencies(direct-extern ion-bb-test)
 ion_register_test(direct-extern_test direct-extern)

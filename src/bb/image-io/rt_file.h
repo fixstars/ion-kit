@@ -12,6 +12,8 @@
 
 #include "json/json.hpp"
 
+#include "log.h"
+
 #include "rt_common.h"
 #include "httplib.h"
 
@@ -132,20 +134,11 @@ namespace {
 
 class Writer {
 public:
-    static Writer& get_instance(int width, int height, const ::std::string& output_directory, ion::bb::image_io::rawHeader header_info)
+    static Writer& get_instance(std::vector<int32_t>& payload_size, const ::std::string& output_directory, bool write_framecount)
     {
         auto itr = instances.find(output_directory);
         if (itr == instances.end()) {
-            instances[output_directory] = std::unique_ptr<Writer>(new Writer(width, height, output_directory, header_info));
-        }
-        return *instances[output_directory];
-    }
-
-    static Writer& get_instance(int total_payload_size, const ::std::string& output_directory, bool config_file)
-    {
-        auto itr = instances.find(output_directory);
-        if (itr == instances.end()) {
-            instances[output_directory] = std::unique_ptr<Writer>(new Writer(total_payload_size, output_directory, config_file));
+            instances[output_directory] = std::unique_ptr<Writer>(new Writer(payload_size, output_directory, write_framecount));
         }
         return *instances[output_directory];
     }
@@ -154,8 +147,12 @@ public:
         dispose();
     }
 
-    void post(uint32_t frame_count, const uint8_t* ptr0, const uint8_t* ptr1, size_t size)
+    void post_images(std::vector<void *>& outs, std::vector<size_t>& size, 
+                    std::vector<ion::bb::image_io::rawHeader>& header_infos, void* framecounts)
     {
+        if (with_header_){
+            write_config_file(header_infos);
+        }
         ::std::unique_lock<::std::mutex> lock(mutex_);
         buf_cv_.wait(lock, [&] { return !buf_queue_.empty() || ep_; });
         if (ep_) {
@@ -163,12 +160,16 @@ public:
         }
         uint8_t* buffer = buf_queue_.front();
         buf_queue_.pop();
-        ::std::memcpy(buffer, ptr0, size);
-        ::std::memcpy(buffer + size, ptr1, size);
-        task_queue_.push(::std::make_tuple(frame_count, buffer, 2 * size));
+        size_t offset = 0;
+        for (int i = 0; i < outs.size(); ++i){
+            ::std::memcpy(buffer + offset, reinterpret_cast<int32_t*>(framecounts) + i, sizeof(int32_t));
+            offset += sizeof(int32_t);
+            ::std::memcpy(buffer + offset, outs[i], size[i]);
+            offset += size[i];
+        }
+        task_queue_.push(::std::make_tuple(0, buffer, offset));
         task_cv_.notify_one();
     }
-
 
     void post_gendc(std::vector<void *>& outs, std::vector<size_t>& size, std::vector<ion::bb::image_io::rawHeader>& header_infos)
     {
@@ -225,51 +226,23 @@ public:
     }
 
 private:
-    Writer(int width, int height, const ::std::string& output_directory,
-        ion::bb::image_io::rawHeader header_info)
-        : keep_running_(true), width_(width), height_(height), output_directory_(output_directory),
-        header_info_(header_info), with_header_(true), with_framecount_(true)
+    Writer(std::vector<int32_t>& payload_size, const ::std::string& output_directory, bool write_framecount)
+        : keep_running_(true), output_directory_(output_directory), with_header_(true)
     {
-        int buffer_num = get_buffer_num(width, height);
-        for (int i = 0; i < buffer_num; ++i) {
-            buffers_.emplace_back(2 * width * height * sizeof(uint16_t));
-            buf_queue_.push(buffers_[i].data());
+        int total_payload_size = 0;
+        for (auto s : payload_size){
+            total_payload_size += s;
+            if (write_framecount){
+                total_payload_size += sizeof(int32_t);
+            }
         }
-        thread_ = ::std::make_shared<::std::thread>(entry_point, this);
-        ofs_ = ::std::ofstream(output_directory_ / "raw-0.bin", ::std::ios::binary);
-
-        // write header (size is 512)
-        ofs_.write(reinterpret_cast<const char*>(&header_info_), sizeof(header_info_));
-        char padding_item = '0';
-        for (int i = 0; i < 512 - sizeof(header_info_); ++i) {
-            ofs_.write(reinterpret_cast<const char*>(&padding_item), sizeof(padding_item));
-        }
-    }
-
-    Writer(int total_payload_size, const ::std::string& output_directory, bool config_file)
-        : keep_running_(true), output_directory_(output_directory), with_header_(!config_file), with_framecount_(false)
-    {
         int buffer_num = get_buffer_num(total_payload_size);
+
         for (int i = 0; i < buffer_num; ++i) {
             buffers_.emplace_back(total_payload_size);
             buf_queue_.push(buffers_[i].data());
         }
         thread_ = ::std::make_shared<::std::thread>(entry_point, this);
-
-        // nlohmann::json j;
-        // j["num_device"] = header_infos.size();
-        // for (int i = 0; i < header_infos.size(); ++i){
-        //     nlohmann::json j_ith_sensor;
-        //     j_ith_sensor["framerate"] = header_infos[i].fps_;
-        //     j_ith_sensor["width"] = header_infos[i].width_;
-        //     j_ith_sensor["height"] = header_infos[i].height_;
-        //     j_ith_sensor["pfnc_pixelformat"] = header_infos[i].pfnc_pixelformat;
-        //     j["sensor" + std::to_string(i+1)] = j_ith_sensor;
-        // }
-
-        // ::std::ofstream config(output_directory_ / "config.json");
-        // config << std::setw(4) << j << std::endl;
-        // config.close();
         ofs_ = ::std::ofstream(output_directory_ / "raw-0.bin", ::std::ios::binary);
     }
 
@@ -319,20 +292,8 @@ private:
             if (i == rotate_limit) {
                 i = 0;
                 ofs_ = ::std::ofstream(output_directory_ / ("raw-" + ::std::to_string(file_idx++) + ".bin"), ::std::ios::binary);
-
-                if (with_header_){
-                    // write header (size is 512)
-                    ofs_.write(reinterpret_cast<const char*>(&header_info_), sizeof(header_info_));
-                    char padding_item = '0';
-                    for (int i = 0; i < 512 - sizeof(header_info_); ++i) {
-                        ofs_.write(reinterpret_cast<const char*>(&padding_item), sizeof(padding_item));
-                    }
-                }
             }
 
-            if (with_framecount_){
-              ofs_.write(reinterpret_cast<const char*>(&frame_count), sizeof(frame_count));
-            }
             ofs_.write(reinterpret_cast<const char*>(buffer), size);
 
             {
@@ -358,20 +319,9 @@ private:
             if (i == rotate_limit) {
                 i = 0;
                 ofs_ = ::std::ofstream(output_directory_ / ("raw-" + ::std::to_string(file_idx++) + ".bin"), ::std::ios::binary);
-
-                if (with_header_){
-                    // write header (size is 512)
-                    ofs_.write(reinterpret_cast<const char*>(&header_info_), sizeof(header_info_));
-                    char padding_item = '0';
-                    for (int i = 0; i < 512 - sizeof(header_info_); ++i) {
-                        ofs_.write(reinterpret_cast<const char*>(&padding_item), sizeof(padding_item));
-                    }
-                }
             }
 
-            if (with_framecount_){
-              ofs_.write(reinterpret_cast<const char*>(&frame_count), sizeof(frame_count));
-            }
+
             ofs_.write(reinterpret_cast<const char*>(buffer), size);
 
             {
@@ -401,76 +351,11 @@ private:
     uint32_t height_;
     std::filesystem::path output_directory_;
 
-    ion::bb::image_io::rawHeader header_info_;
     bool with_header_;
-    bool with_framecount_;
 };
 
 ::std::unordered_map< ::std::string, std::unique_ptr<Writer>> Writer::instances; // defines Writer::instance
 } // namespace
-
-
-extern "C" ION_EXPORT
-int binarysaver(halide_buffer_t * in0, halide_buffer_t * in1, halide_buffer_t * fc,
-    bool dispose, int width, int height, halide_buffer_t*  output_directory_buf,
-    float r_gain0, float g_gain0, float b_gain0, float r_gain1, float g_gain1, float b_gain1,
-    int offset0_x, int offset0_y, int offset1_x, int offset1_y,
-    int outputsize0_x, int outputsize0_y, int outputsize1_x, int outputsize1_y, float fps,
-    halide_buffer_t * out)
-    {
-    try {
-        const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
-        ion::bb::image_io::rawHeader header_info = {
-            1, width, height, r_gain0, g_gain0, b_gain0, r_gain1, g_gain1, b_gain1,
-            offset0_x, offset0_y, offset1_x, offset1_y,
-            outputsize0_x, outputsize0_y, outputsize1_x, outputsize1_y, fps, PFNC_Mono12};
-
-        auto& w(Writer::get_instance(width, height, output_directory, header_info));
-        if (in0->is_bounds_query() || in1->is_bounds_query()) {
-            if (in0->is_bounds_query()) {
-                in0->dim[0].min = 0;
-                in0->dim[0].extent = width;
-                in0->dim[1].min = 0;
-                in0->dim[1].extent = height;
-            }
-            if (in1->is_bounds_query()) {
-                in1->dim[0].min = 0;
-                in1->dim[0].extent = width;
-                in1->dim[1].min = 0;
-                in1->dim[1].extent = height;
-            }
-            if (fc->is_bounds_query()) {
-                if (fc->is_bounds_query()) {
-                    fc->dim[0].min = 0;
-                    fc->dim[0].extent = 1;
-                }
-
-            }
-        }
-        else {
-            const uint32_t frame_count = reinterpret_cast<uint32_t*>(fc->host)[0];
-            w.post(frame_count, in0->host, in1->host, in0->size_in_bytes());
-
-            if (dispose) {
-                w.dispose();
-                w.release_instance(output_directory);
-                return 0;
-            }
-        }
-
-        return 0;
-    }
-    catch (const ::std::exception& e) {
-        ::std::cerr << e.what() << ::std::endl;
-        return -1;
-    }
-    catch (...) {
-        ::std::cerr << "Unknown error" << ::std::endl;
-        return -1;
-    }
-}
-
-ION_REGISTER_EXTERN(binarysaver);
 
 extern "C" ION_EXPORT
 int ion_bb_image_io_binary_2gendc_saver(halide_buffer_t * in0, halide_buffer_t * in1, halide_buffer_t * in2, halide_buffer_t * in3,
@@ -479,7 +364,8 @@ int ion_bb_image_io_binary_2gendc_saver(halide_buffer_t * in0, halide_buffer_t *
     {
     try {
         const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
-        auto& w(Writer::get_instance(payloadsize + payloadsize, output_directory, false));
+        std::vector<int32_t>payloadsize_list{payloadsize, payloadsize};
+        auto& w(Writer::get_instance(payloadsize_list,  output_directory, false));
         if (in0->is_bounds_query() || in1->is_bounds_query() || in2->is_bounds_query() || in3->is_bounds_query()) {
             int i = 1;
             if (in0->is_bounds_query()) {
@@ -492,11 +378,11 @@ int ion_bb_image_io_binary_2gendc_saver(halide_buffer_t * in0, halide_buffer_t *
             }
             if (in2->is_bounds_query()) {
                 in2->dim[0].min = 0;
-                in2->dim[0].extent = 76;
+                in2->dim[0].extent = sizeof(ion::bb::image_io::rawHeader);
             }
             if (in3->is_bounds_query()) {
                 in3->dim[0].min = 0;
-                in3->dim[0].extent = 76;
+                in3->dim[0].extent = sizeof(ion::bb::image_io::rawHeader);
             }
             return 0;
         }
@@ -532,30 +418,32 @@ int ion_bb_image_io_binary_2gendc_saver(halide_buffer_t * in0, halide_buffer_t *
 ION_REGISTER_EXTERN(ion_bb_image_io_binary_2gendc_saver);
 
 extern "C" ION_EXPORT
-int ion_bb_image_io_binary_1gendc_saver(halide_buffer_t * in0, halide_buffer_t * in1,
+int ion_bb_image_io_binary_1gendc_saver(halide_buffer_t * gendc, halide_buffer_t * deviceinfo,
     bool dispose, int payloadsize, halide_buffer_t*  output_directory_buf,
     halide_buffer_t * out)
     {
     try {
         const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
-        auto& w(Writer::get_instance(payloadsize, output_directory, false));
-        if (in0->is_bounds_query() || in1->is_bounds_query()) {
-            if (in0->is_bounds_query()) {
-                in0->dim[0].min = 0;
-                in0->dim[0].extent = payloadsize;
+        std::vector<int32_t>payloadsize_list{payloadsize};
+        auto& w(Writer::get_instance(payloadsize_list, output_directory, false));
+        if (gendc->is_bounds_query() || deviceinfo->is_bounds_query()) {
+            if (gendc->is_bounds_query()) {
+                gendc->dim[0].min = 0;
+                gendc->dim[0].extent = payloadsize;
             }
-            if (in1->is_bounds_query()) {
-                in1->dim[0].min = 0;
-                in1->dim[0].extent = 76;
+            if (deviceinfo->is_bounds_query()) {
+                deviceinfo->dim[0].min = 0;
+                deviceinfo->dim[0].extent = sizeof(ion::bb::image_io::rawHeader);
             }
+            return 0;
         }
         else {
             ion::bb::image_io::rawHeader header_info0;
-            ::memcpy(&header_info0, in1->host, sizeof(ion::bb::image_io::rawHeader));
+            ::memcpy(&header_info0, deviceinfo->host, sizeof(ion::bb::image_io::rawHeader));
             std::vector<ion::bb::image_io::rawHeader> header_infos{header_info0};
 
-            std::vector<void *> obufs{in0->host};
-            std::vector<size_t> size_in_bytes{in0->size_in_bytes()};
+            std::vector<void *> obufs{gendc->host};
+            std::vector<size_t> size_in_bytes{gendc->size_in_bytes()};
             w.post_gendc(obufs, size_in_bytes, header_infos);
 
             if (dispose) {
@@ -578,6 +466,150 @@ int ion_bb_image_io_binary_1gendc_saver(halide_buffer_t * in0, halide_buffer_t *
 }
 
 ION_REGISTER_EXTERN(ion_bb_image_io_binary_1gendc_saver);
+
+extern "C" ION_EXPORT
+int ion_bb_image_io_binary_1image_saver(
+    halide_buffer_t * image, halide_buffer_t * deviceinfo, halide_buffer_t * frame_count,
+    bool dispose, int width, int height, int dim, int byte_depth, halide_buffer_t*  output_directory_buf,
+    halide_buffer_t * out)
+    {
+    try {
+        int num_output = 1;
+        int32_t frame_size = dim == 2 ? width * height * byte_depth : width * height * 3 * byte_depth;
+        std::vector<int32_t>frame_size_list{frame_size};
+        const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
+        auto& w(Writer::get_instance(frame_size_list, output_directory, true));
+
+        if (image->is_bounds_query() || deviceinfo->is_bounds_query() || frame_count->is_bounds_query()) {
+            if (image->is_bounds_query()) {
+                image->dim[0].min = 0;
+                image->dim[0].extent = width;
+                image->dim[1].min = 0;
+                image->dim[1].extent = height;
+                if (dim == 3){
+                    image->dim[2].min = 0;
+                    image->dim[2].extent = 3;
+                }
+            }
+            if (deviceinfo->is_bounds_query()) {
+                deviceinfo->dim[0].min = 0;
+                deviceinfo->dim[0].extent = sizeof(ion::bb::image_io::rawHeader);
+            }
+            if (frame_count->is_bounds_query()) {
+                frame_count->dim[0].min = 0;
+                frame_count->dim[0].extent = num_output;
+            }
+            return 0;
+        }
+        else {
+            if (dispose) {
+                w.dispose();
+                w.release_instance(output_directory);
+                return 0;
+            }
+
+            ion::bb::image_io::rawHeader header_info0;  
+            ::memcpy(&header_info0, deviceinfo->host, sizeof(ion::bb::image_io::rawHeader));
+            std::vector<ion::bb::image_io::rawHeader> header_infos{header_info0};
+
+            std::vector<void *> obufs{image->host};
+            std::vector<size_t> size_in_bytes{image->size_in_bytes()};
+            w.post_images(obufs, size_in_bytes, header_infos, frame_count->host);
+        }
+
+        return 0;
+    }
+    catch (const ::std::exception& e) {
+        ::std::cerr << e.what() << ::std::endl;
+        return -1;
+    }
+    catch (...) {
+        ::std::cerr << "Unknown error" << ::std::endl;
+        return -1;
+    }
+}
+
+ION_REGISTER_EXTERN(ion_bb_image_io_binary_1image_saver);
+
+extern "C" ION_EXPORT
+int ion_bb_image_io_binary_2image_saver(
+    halide_buffer_t * image0, halide_buffer_t * image1, 
+    halide_buffer_t * deviceinfo0, halide_buffer_t * deviceinfo1, halide_buffer_t * frame_count,
+    bool dispose, int32_t width, int32_t height, int32_t dim, int byte_depth, halide_buffer_t*  output_directory_buf,
+    halide_buffer_t * out)
+    {
+    try {
+        int num_output = 2;
+        int32_t frame_size = dim == 2 ? width * height * byte_depth : width * height * 3 * byte_depth;
+        std::vector<int32_t>frame_size_list{frame_size, frame_size};
+        const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
+        auto& w(Writer::get_instance(frame_size_list, output_directory, true));
+
+        if (image0->is_bounds_query() || deviceinfo0->is_bounds_query() || 
+            image1->is_bounds_query() || deviceinfo1->is_bounds_query() || frame_count->is_bounds_query()) {
+            if (image0->is_bounds_query()) {
+                image0->dim[0].min = 0;
+                image0->dim[0].extent = width;
+                image0->dim[1].min = 0;
+                image0->dim[1].extent = height;
+                if (dim == 3){
+                    image0->dim[2].min = 0;
+                    image0->dim[2].extent = 3;
+                }
+            }
+            if (deviceinfo0->is_bounds_query()) {
+                deviceinfo0->dim[0].min = 0;
+                deviceinfo0->dim[0].extent = sizeof(ion::bb::image_io::rawHeader);
+            }
+            if (image1->is_bounds_query()) {
+                image1->dim[0].min = 0;
+                image1->dim[0].extent = width;
+                image1->dim[1].min = 0;
+                image1->dim[1].extent = height;
+                if (dim == 3){
+                    image1->dim[2].min = 0;
+                    image1->dim[2].extent = 3;
+                }
+            }
+            if (deviceinfo1->is_bounds_query()) {
+                deviceinfo1->dim[0].min = 0;
+                deviceinfo1->dim[0].extent = sizeof(ion::bb::image_io::rawHeader);
+            }
+            if (frame_count->is_bounds_query()) {
+                frame_count->dim[0].min = 0;
+                frame_count->dim[0].extent = num_output;
+            }
+            return 0;
+        }
+        else {
+            if (dispose) {
+                w.dispose();
+                w.release_instance(output_directory);
+                return 0;
+            }
+            ion::bb::image_io::rawHeader header_info0, header_info1;
+            ::memcpy(&header_info0, deviceinfo0->host, sizeof(ion::bb::image_io::rawHeader));
+            ::memcpy(&header_info1, deviceinfo1->host, sizeof(ion::bb::image_io::rawHeader));
+            std::vector<ion::bb::image_io::rawHeader> header_infos{header_info0, header_info1};
+
+            std::vector<void *> obufs{image0->host, image1->host};
+            std::vector<size_t> size_in_bytes{image0->size_in_bytes(), image1->size_in_bytes()};
+            w.post_images(obufs, size_in_bytes, header_infos, frame_count->host);
+        }
+
+        return 0;
+    }
+    catch (const ::std::exception& e) {
+        ::std::cerr << e.what() << ::std::endl;
+        return -1;
+    }
+    catch (...) {
+        ::std::cerr << "Unknown error" << ::std::endl;
+        return -1;
+    }
+}
+
+ION_REGISTER_EXTERN(ion_bb_image_io_binary_2image_saver);
 
 namespace {
 
