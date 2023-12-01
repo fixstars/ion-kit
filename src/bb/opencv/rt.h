@@ -32,18 +32,25 @@ class RegisterExtern {
 #define ION_REGISTER_EXTERN(NAME) static auto ion_register_extern_##NAME = ion::bb::opencv::RegisterExtern(#NAME, NAME);
 
 namespace {
-int hl2cv_type(halide_type_t hl_type, int channel) {
-    if (hl_type.code != halide_type_uint) {
-        return -1;
-    }
-    if (hl_type.bits == 8) {
-        return CV_MAKETYPE(CV_8U, channel);
-    } else if (hl_type.bits == 16) {
-        return CV_MAKETYPE(CV_16U, channel);
-    } else {
-        return -1;
-    }
-}
+
+#define CV_CN_MAX     512
+#define CV_CN_SHIFT   3
+#define CV_DEPTH_MAX  (1 << CV_CN_SHIFT)
+
+#define CV_8U   0
+#define CV_8S   1
+#define CV_16U  2
+#define CV_16S  3
+#define CV_32S  4
+#define CV_32F  5
+#define CV_64F  6
+#define CV_16F  7
+
+#define CV_MAT_DEPTH_MASK       (CV_DEPTH_MAX - 1)
+#define CV_MAT_DEPTH(flags)     ((flags) & CV_MAT_DEPTH_MASK)
+
+#define CV_MAKETYPE(depth,cn) (CV_MAT_DEPTH(depth) + (((cn)-1) << CV_CN_SHIFT))
+#define CV_MAKE_TYPE CV_MAKETYPE
 
 enum SmoothMethod_c
 {
@@ -143,6 +150,20 @@ private:
     ion::DynamicModule opencv_highgui_;
 #endif
 } initializer;
+
+int hl2cv_type(halide_type_t hl_type, int channel) {
+    if (hl_type.code != halide_type_uint) {
+        return -1;
+    }
+    if (hl_type.bits == 8) {
+        return CV_MAKETYPE(CV_8U, channel);
+    } else if (hl_type.bits == 16) {
+        return CV_MAKETYPE(CV_16U, channel);
+    } else {
+        return -1;
+    }
+}
+
 
 } // namespace
 
