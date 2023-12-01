@@ -209,9 +209,9 @@ int display(halide_buffer_t *in, int width, int height, int idx, halide_buffer_t
         in->dim[2].min = 0;
         in->dim[2].extent = height;
     } else {
-        CvMat *img = cvCreateMatHeader(height, width, CV_8UC3);
+        CvMat *img = cvCreateMatHeader(height, width, CV_MAKETYPE(CV_8U, 3));
         cvSetData(img, in->host, 3*width*sizeof(uint8_t));
-
+        
         auto name = "img" + std::to_string(idx);
         cvShowImage(name.c_str(), img);
         cvWaitKey(1);
