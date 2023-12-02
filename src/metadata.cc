@@ -1,6 +1,6 @@
 #include <sstream>
 
-#include "ion/generator.h"
+#include "ion/building_block.h"
 #include "ion/port.h"
 
 #include "json/json.hpp"
@@ -84,7 +84,7 @@ void from_json(const json& j, ParamMD& v) {
 Metadata::Metadata(const std::string& n)
     : name(n)
 {
-    auto bb = Internal::GeneratorRegistry::create(n, GeneratorContext(Halide::get_host_target()));
+    auto bb = BuildingBlockRegistry::create(n, BuildingBlockContext(Halide::get_host_target()));
 
     // NOTE: Call fake_configure just to get default value of Param
     bb->fake_configure();
@@ -99,7 +99,7 @@ Metadata::Metadata(const std::string& n)
         auto dims = info->dims_defined() ? info->dims() : -1;
         outputs.push_back(PortMD(info->name(), type, dims));
     }
-    for (auto info : bb->param_info().generator_params()) {
+    for (auto info : bb->param_info().building_block_params()) {
         auto dv = info->is_synthetic_param() ? "" : unquote(info->get_default_value());
         auto ctv = info->is_synthetic_param() ? "" : info->get_c_type();
         auto tdv = info->is_synthetic_param() ? "" : info->get_type_decls();

@@ -416,7 +416,7 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
 std::string Builder::bb_metadata(void) {
 
     std::vector<Metadata> md;
-    for (auto n : Internal::GeneratorRegistry::enumerate()) {
+    for (auto n : BuildingBlockRegistry::enumerate()) {
         md.push_back(Metadata(n));
     }
 

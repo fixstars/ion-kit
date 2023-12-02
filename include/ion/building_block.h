@@ -56,32 +56,76 @@ private:
     }
 };
 
-class InputBase {
- public:
+class IOBase {
+public:
+    bool array_size_defined() const { return true; }
+    size_t array_size() const { return 0; }
+    virtual bool is_array() const { return true; }
 
-     std::string name() {
-         return "";
-     }
+    const std::string &name() const { return name_; }
+    IOKind kind() const { return IOKind::Unknown; }
 
-     bool is_array() {
-         return true;
-     }
+    bool types_defined() const { return true; }
+    const std::vector<Halide::Type> &types() const {return types_; }
+    Halide::Type type() const { return Halide::Type(); }
 
-     IOKind kind() {
-         return IOKind::Unknown;
-     }
+    bool dims_defined() const { return true; }
+    int dims() const { return 0; }
+
+    const std::vector<Halide::Func> &funcs() const { return funcs_; }
+    const std::vector<Halide::Expr> &exprs() const { return exprs_; }
+
+    virtual ~IOBase() = default;
+
+    void set_type(const Halide::Type &type) {}
+    void set_dimensions(int dims) {}
+    void set_array_size(int size) {}
+
+protected:
+    mutable int array_size_;  // always 1 if is_array() == false.
+        // -1 if is_array() == true but unspecified.
+
+    const std::string name_;
+    const IOKind kind_;
+    mutable std::vector<Halide::Type> types_;  // empty if type is unspecified
+    mutable int dims_;                 // -1 if dim is unspecified
+
+    // Exactly one of these will have nonzero length
+    std::vector<Halide::Func> funcs_;
+    std::vector<Halide::Expr> exprs_;
 };
 
-class OutputBase {
+class InputBase : public IOBase {
+};
+
+class OutputBase : public IOBase {
+};
+
+class BuildingBlockParamBase {
  public:
 
-     std::string name() {
-         return "";
-     }
+    inline const std::string &name() const {
+        return name_;
+    }
 
-     bool is_array() {
-         return true;
-     }
+    virtual std::string get_default_value() const {
+        return "";
+    }
+
+     virtual bool is_synthetic_param() const {
+        return false;
+    }
+
+    virtual std::string get_c_type() const  {
+        return "";
+    }
+
+    virtual std::string get_type_decls() const {
+        return "";
+    }
+
+ private:
+    const std::string name_;
 };
 
 class ParamInfo {
@@ -93,10 +137,15 @@ class ParamInfo {
      const std::vector<OutputBase *> &outputs() const {
          return outputs_;
      }
+
+    const std::vector<BuildingBlockParamBase *> &building_block_params() const {
+        return filter_building_block_params;
+    }
  private:
 
      std::vector<InputBase *> inputs_;
      std::vector<OutputBase *> outputs_;
+     std::vector<BuildingBlockParamBase *> filter_building_block_params;
 };
 
 struct StringOrLoopLevel {
@@ -151,13 +200,16 @@ class BuildingBlockBase {
          return {};
      }
 
-    template<typename... Args>
-    void apply(const Args &...args) {
-    }
+     template<typename... Args>
+         void apply(const Args &...args) {
+         }
 
-    Halide::Pipeline get_pipeline() {
-        return Halide::Pipeline();
-    }
+     Halide::Pipeline get_pipeline() {
+         return Halide::Pipeline();
+     }
+
+     void fake_configure();
+
  private:
      ParamInfo param_info_;
 };
