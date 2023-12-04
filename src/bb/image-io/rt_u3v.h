@@ -442,7 +442,6 @@ class U3V {
 
             while (frame_cnt_ >= latest_cnt) {
                 arv_stream_push_buffer(devices_[cameN_idx_].stream_, bufs[cameN_idx_]);
-                cameN_idx_ = (cameN_idx_+1) >= num_device ? 0 : cameN_idx_+1;
                 bufs[cameN_idx_] = arv_stream_timeout_pop_buffer (devices_[cameN_idx_].stream_, 30 * 1000 * 1000);
                 if (bufs[cameN_idx_] == nullptr){
                     log::error("pop_buffer(L4) failed due to timeout ({}s)", timeout_us*1e-6f);
