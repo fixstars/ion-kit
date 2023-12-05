@@ -621,7 +621,6 @@ class U3V {
 
                 while (frame_cnt_ >= latest_cnt) {
                     arv_stream_push_buffer(devices_[cameN_idx_].stream_, bufs[cameN_idx_]);
-                    cameN_idx_ = (cameN_idx_+1) >= num_device ? 0 : cameN_idx_+1;
                     auto timeout2_us = 30 * 1000 * 1000;
                     bufs[cameN_idx_] = arv_stream_timeout_pop_buffer (devices_[cameN_idx_].stream_, timeout2_us);
                     if (bufs[cameN_idx_] == nullptr){
@@ -632,8 +631,8 @@ class U3V {
                             ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[cameN_idx_], devices_[cameN_idx_]))
                             : static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[cameN_idx_]) & 0x00000000FFFFFFFF);
                     cameN_idx_ == 0 ? 
-                        log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]", devices_[cameN_idx_].frame_count_, "") :
-                        log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]", "", devices_[cameN_idx_].frame_count_);
+                        log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", devices_[cameN_idx_].frame_count_, "") :
+                        log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", "", devices_[cameN_idx_].frame_count_);
                     latest_cnt = devices_[cameN_idx_].frame_count_;
                     if (internal_count++ > max_internal_count){
                         log::error("pop_buffer(L10) The sequential invalid buffer is more than {}; Stop the pipeline.", max_internal_count);
