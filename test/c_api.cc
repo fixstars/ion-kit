@@ -16,7 +16,7 @@ int main()
         if (ret != 0)
             return ret;
 
-        ret = ion_port_index_access(p, 1)
+        ret = ion_port_index_access(p, 1);
         if (ret != 0)
             return ret;
 
