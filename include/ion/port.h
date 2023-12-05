@@ -206,11 +206,9 @@ class Port {
          return !node_id_.empty();
      }
 
-
      void set_index(int idx) {
          this->index_ = idx;
      }
-
 
     /**
      * Overloaded operator to set the port index and return a reference to the current port. eg. port[0]
