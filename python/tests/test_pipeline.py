@@ -5,7 +5,6 @@ import cv2
 import os
 
 
-
 def test_pipeline():
 
     w = 200

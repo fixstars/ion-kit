@@ -44,7 +44,6 @@ ion_port_index_access = ion_core.ion_port_index_access
 ion_port_index_access.restype = ctypes.c_int
 ion_port_index_access.argtypes =[c_ion_port_t, ctypes.c_int ]
 
-
 # int ion_port_destroy(ion_port_t);
 ion_port_destroy = ion_core.ion_port_destroy
 ion_port_destroy.restype = ctypes.c_int

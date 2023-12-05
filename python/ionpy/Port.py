@@ -18,7 +18,6 @@ class Port:
         dim: Optional[int] = None,
         # -- or
         obj_: Optional[c_ion_port_t] = None,
-
     ):
         if obj_ is None:
             obj_ = c_ion_port_t()
