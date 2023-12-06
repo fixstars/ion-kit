@@ -805,30 +805,38 @@ class U3V {
 
 
             // Set Device Info =================================================
-            int32_t wi = arv_device_get_integer_feature_value(devices_[i].device_, "Width", &err_);
-            int32_t hi = arv_device_get_integer_feature_value(devices_[i].device_, "Height", &err_);
-            double fps = 0.0;
-            if (arv_device_is_feature_available(devices_[i].device_, "AcquisitionFrameRate", &err_)){
-                fps = arv_device_get_float_feature_value(devices_[i].device_, "AcquisitionFrameRate", &err_);
+            {
+                int32_t wi = arv_device_get_integer_feature_value(devices_[i].device_, "Width", &err_);
+                int32_t hi = arv_device_get_integer_feature_value(devices_[i].device_, "Height", &err_);
+                double fps = 0.0;
+                if (arv_device_is_feature_available(devices_[i].device_, "AcquisitionFrameRate", &err_)){
+                    fps = arv_device_get_float_feature_value(devices_[i].device_, "AcquisitionFrameRate", &err_);
+                }
+                log::info("\tDevice/USB {}::{} : {}", i, "Width", wi);
+                log::info("\tDevice/USB {}::{} : {}", i, "Height", hi);
+
+                int32_t px =
+                    pixel_format_ == "RGB8" ? PFNC_RGB8 :
+                    pixel_format_ == "GBR8" ? PFNC_BGR8 :
+                    pixel_format_ == "Mono8" ? PFNC_Mono8 :
+                    pixel_format_ == "Mono10" ? PFNC_Mono10 :
+                    pixel_format_ == "Mono12" ? PFNC_Mono12 :
+                    pixel_format_ == "BayerBG8" ? PFNC_BayerBG8 :
+                    pixel_format_ == "BayerBG10" ? PFNC_BayerBG10 :
+                    pixel_format_ == "BayerBG12" ? PFNC_BayerBG12 :
+                    pixel_format_ == "BayerGR8" ? PFNC_BayerGR8 :
+                    pixel_format_ == "BayerGR12" ? PFNC_BayerGR12 :
+                    pixel_format_ == "YCbCr422_8" ? PFNC_YCbCr422_8 : 0;
+                if (px == 0){
+                    log::info("The pixel format is not supported for header info");
+                }
+
+
+                devices_[i].header_info_ = { 1, wi, hi,
+                    1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+                    wi, hi, wi, hi, static_cast<float>(fps), px
+                };
             }
-            log::info("\tDevice/USB {}::{} : {}", i, "Width", wi);
-            log::info("\tDevice/USB {}::{} : {}", i, "Height", hi);
-
-            int32_t px =
-                pixel_format_ == "RGB8" ? PFNC_RGB8 :
-                pixel_format_ == "GBR8" ? PFNC_BGR8 :
-                pixel_format_ == "Mono8" ? PFNC_Mono8 :
-                pixel_format_ == "Mono10" ? PFNC_Mono10 :
-                pixel_format_ == "Mono12" ? PFNC_Mono12 : 0;
-            if (px == 0){
-                log::info("The pixel format is not supported for header info");
-            }
-
-
-            devices_[i].header_info_ = { 1, wi, hi,
-                1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
-                wi, hi, wi, hi, static_cast<float>(fps), px
-            };
 
             if (arv_device_is_feature_available(devices_[0].device_, "OperationMode", &err_)){
                 const char* operation_mode_in_string;
