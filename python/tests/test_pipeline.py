@@ -12,11 +12,11 @@ def test_pipeline():
     t = Type(code_=TypeCode.Float, bits_=32, lanes_=1)
     width = Param(key='width', val=str(w))
     height = Param(key='height', val=str(h))
-    urls = Param(key="urls",val="https://optipng.sourceforge.net/pngtech/img/lena.png;https://upload.wikimedia.org/wikipedia/commons/0/05/Cat.png")
+    urls = Param(key="urls",val="http://optipng.sourceforge.net/pngtech/img/lena.png;http://upload.wikimedia.org/wikipedia/commons/0/05/Cat.png")
 
     builder = Builder()
     builder.set_target(target='host')
-
+    # make sure path includes libion-bb.so
     builder.with_bb_module(path='libion-bb.so')
 
     node = builder.add('image_io_cameraN').set_param(params=[width, height, urls])
