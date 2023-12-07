@@ -685,6 +685,7 @@ class U3V {
 
         unsigned int target_device_idx;
         if (n_devices != num_sensor_ && dev_id == nullptr) {
+            n_devices = num_sensor_;
             log::info("Multiple devices are found; The first device is selected");
         }
 
