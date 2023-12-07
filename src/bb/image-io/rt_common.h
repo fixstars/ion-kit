@@ -14,6 +14,8 @@
 #include <opencv2/imgproc.hpp>
 #endif
 
+#include "log.h"
+
 #include "httplib.h"
 #include "zip_file.hpp"
 
@@ -52,6 +54,7 @@ public:
 #endif
 
     DynamicModule(const std::string &module_name, bool essential) {
+        ion::log::debug("Load module : Trying to load {}", module_name);
         if (module_name == "") {
             handle_ = nullptr;
             return;
@@ -59,6 +62,7 @@ public:
 
 #ifdef _WIN32
         auto file_name = module_name + ".dll";
+        ion::log::debug("Load module : Looking for {}", file_name);
         handle_ = LoadLibraryA(file_name.c_str());
 
         if (handle_ != nullptr){
@@ -67,10 +71,12 @@ public:
         }
 
         file_name = "lib" + file_name;
+        ion::log::debug("Load module : Looking for {}", file_name);
         handle_ = LoadLibraryA(file_name.c_str());
 
 #else
         auto file_name = "lib" + module_name + ".so";
+        ion::log::debug("Load module : Looking for {}", file_name);
         handle_ = dlopen(file_name.c_str(), RTLD_NOW);
 #endif
 
