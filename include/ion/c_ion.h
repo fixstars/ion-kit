@@ -33,6 +33,7 @@ typedef struct ion_buffer_t_ *ion_buffer_t;
 typedef struct ion_port_map_t_ *ion_port_map_t;
 
 int ion_port_create(ion_port_t *, const char *, ion_type_t, int);
+int ion_port_index_access(ion_port_t , int);
 int ion_port_destroy(ion_port_t);
 
 int ion_param_create(ion_param_t *, const char *, const char *);

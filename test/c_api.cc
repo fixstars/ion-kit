@@ -7,7 +7,21 @@
 int main()
 {
     int ret = 0;
+    {
+        ion_type_t t = {.code=ion_type_int, .bits=32, .lanes=1};
 
+        ion_port_t p;
+
+        ret = ion_port_create(&p, "port", t, 0);
+        if (ret != 0)
+            return ret;
+
+        ret = ion_port_index_access(p, 1);
+        if (ret != 0)
+            return ret;
+
+    }
+    
     {
         ion_type_t t = {.code=ion_type_int, .bits=32, .lanes=1};
 

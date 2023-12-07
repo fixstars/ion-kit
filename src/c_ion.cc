@@ -25,6 +25,22 @@ int ion_port_create(ion_port_t *ptr, const char *key, ion_type_t type, int dim)
     return 0;
 }
 
+int ion_port_index_access(ion_port_t obj, int index)
+{
+    try {
+        Port p = *reinterpret_cast<Port*>(obj);
+        reinterpret_cast<ion::Port*>(obj)->set_index(index);
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        return -1;
+    } catch (...) {
+        std::cerr << "Unknown exception was happened." << std::endl;
+        return -1;
+    }
+
+    return 0;
+}
+
 int ion_port_destroy(ion_port_t obj)
 {
     try {
@@ -683,4 +699,3 @@ int ion_port_map_set_buffer_array(ion_port_map_t obj, ion_port_t p, ion_buffer_t
 
     return 0;
 }
-
