@@ -326,11 +326,19 @@ struct rawHeader {
 
 // PFNC
 // https://www.emva.org/wp-content/uploads/GenICamPixelFormatValues.pdf
-#define PFNC_Mono8      0x01080001
-#define PFNC_Mono10     0x01100003
-#define PFNC_Mono12     0x01100005
-#define PFNC_RGB8       0x02180014
-#define PFNC_BGR8       0x02180015
+#define PFNC_Mono8 0x01080001 //PFNC Monochrome 8-bit
+#define PFNC_Mono10 0x01100003 //PFNC Monochrome 10-bit unpacked
+#define PFNC_Mono12 0x01100005 //PFNC Monochrome 12-bit unpacked
+#define PFNC_RGB8 0x02180014 //PFNC Red-Green-Blue 8-bit
+#define PFNC_BGR8 0x02180015 //PFNC Blue-Green-Red 8-bit
+
+#define PFNC_BayerBG8 0x0108000B //PFNC Bayer Blue-Green 8-bit
+#define PFNC_BayerBG10 0x0110000F //PFNC Bayer Blue-Green 10-bit unpacked
+#define PFNC_BayerBG12 0x01100013 //PFNC Bayer Blue-Green 12-bit unpacked 
+
+#define PFNC_BayerGR8 0x01080008 //PFNC Bayer Green-Red 8-bit
+#define PFNC_BayerGR12 0x01100010 //PFNC Bayer Green-Red 12-bit unpacked
+#define PFNC_YCbCr422_8 0x0210003B //PFNC YCbCr 4:2:2 8-bit
 
 }  // namespace image_io
 }  // namespace bb
