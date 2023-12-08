@@ -194,30 +194,6 @@ bool is_dereferenced(const std::vector<Node>& nodes, const std::string node_id, 
     throw std::runtime_error("Unreachable");
 }
 
-// std::vector<std::tuple<std::string, Halide::Func>> collect_unbound_outputs(const std::vector<Node>& nodes,
-//                                                                            const std::unordered_map<std::string, std::shared_ptr<AbstractGenerator>>& bbs) {
-//     std::vector<std::tuple<std::string, Halide::Func>> unbounds;
-//     for (const auto& kv : bbs) {
-//         auto node_id = kv.first;
-//         auto bb = kv.second;
-//         for (const auto& output : bb->param_info().outputs()) {
-//             if (output->is_array()) {
-//                 throw std::runtime_error("Unreachable");
-//                 // for (const auto &f : bb->get_array_output(p.key())) {
-//                 //     const auto key = f.name();
-//                 //     dereferenced[p.node_id()].emplace_back(key.substr(0, key.find('$')));
-//                 // }
-//             } else {
-//                 if (!is_dereferenced(nodes, node_id, output->name())) {
-//                     unbounds.push_back(std::make_tuple(output_name(node_id, output->name()), bb->get_outputs(output->name()).front()));
-//                 }
-//             }
-//         }
-//     }
-//
-//     return unbounds;
-// }
-
 Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buffer<>> *outputs) {
 
     if (pipeline_.defined()) {
@@ -254,18 +230,12 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
         auto n = nodes_[i];
         const auto& bb = bbs[n.id()];
         auto arginfos = bb->arginfos();
-        // std::vector<std::vector<StubInput>> args;
         for (size_t j=0; j<n.ports().size(); ++j) {
             auto p = n.ports()[j];
             auto index = p.index();
             // Unbounded parameter
-            // auto *in = bb->param_info().inputs().at(j);
             const auto& arginfo = arginfos[j];
             if (p.node_id().empty()) {
-                // if (in->is_array()) {
-                //     throw std::runtime_error(
-                //         "Unbounded port (" + in->name() + ") corresponding to an array of Inputs is not supported");
-                // }
                 if (arginfo.kind == Halide::Internal::ArgInfoKind::Scalar) {
                     Halide::Expr e;
                     if (pm.mapped(p.key())) {
@@ -274,8 +244,7 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
                     } else {
                         e = p.expr();
                     }
-                    //args.push_back(bb->build_input(j, e));
-                    bb->bind_input(p.key(), {e});
+                    bb->bind_input(arginfo.name, {e});
                 } else if (arginfo.kind == Halide::Internal::ArgInfoKind::Function) {
                     Halide::Func f;
                     if (pm.mapped(p.key())) {
@@ -285,56 +254,31 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
                         f = p.func();
                     }
                     //args.push_back(bb->build_input(j, f));
-                    bb->bind_input(p.key(), {f});
+                    bb->bind_input(arginfo.name, {f});
                 } else {
                     throw std::runtime_error("fixme");
                 }
             } else {
-                // if (in->is_array()) {
-                //     auto f_array = bbs[p.node_id()]->output_func(p.key());
-                //     if (in->kind() == IOKind::Scalar) {
-                //         std::vector<Halide::Expr> exprs;
-                //         for (auto &f : f_array) {
-                //             if (f.dimensions() != 0) {
-                //                 throw std::runtime_error("Invalid port connection : " + in->name());
-                //             }
-                //             exprs.push_back(f());
-                //         }
-                //         args.push_back(bb->build_input(j, exprs));
-                //     } else if (in->kind() == IOKind::Function) {
-                //         args.push_back(bb->build_input(j, f_array));
-                //     } else {
-                //         throw std::runtime_error("fixme");
-                //     }
-                // } else {
+                auto fs = bbs[p.node_id()]->output_func(p.key());
+                if (arginfo.kind == Halide::Internal::ArgInfoKind::Scalar) {
+                    bb->bind_input(arginfo.name, fs);
+                } else if (arginfo.kind == Halide::Internal::ArgInfoKind::Function) {
                     auto fs = bbs[p.node_id()]->output_func(p.key());
-                    if (arginfo.kind == Halide::Internal::ArgInfoKind::Scalar) {
-                        // if (f.dimensions() != 0) {
-                        //     throw std::runtime_error("Invalid port connection : " + in->name());
-                        // }
-                        //args.push_back(bb->build_input(j, f()));
+                    // no specific index provided, direct output Port
+                    if (index == -1) {
                         bb->bind_input(arginfo.name, fs);
-                    } else if (arginfo.kind == Halide::Internal::ArgInfoKind::Function) {
-                        auto fs = bbs[p.node_id()]->output_func(p.key());
-                            // no specific index provided, direct output Port
-                        if (index == -1) {
-                            bb->bind_input(arginfo.name, fs);
-                            //args.push_back(bb->build_input(j,f));
-                        } else {
-                            // access to Port[index]
-                            if (index>=fs.size()){
-                                throw std::runtime_error("Port index out of range: " + p.key());
-                            }
-                            bb->bind_input(arginfo.name, {fs[index]});
-                            // args.push_back(bb->build_input(j, fs[index]));
-                        }
                     } else {
-                        throw std::runtime_error("fixme");
+                        // access to Port[index]
+                        if (index>=fs.size()){
+                            throw std::runtime_error("Port index out of range: " + p.key());
+                        }
+                        bb->bind_input(arginfo.name, {fs[index]});
                     }
-                // }
+                } else {
+                    throw std::runtime_error("fixme");
+                }
             }
         }
-        //bb->apply(args);
         bb->build_pipeline();
     }
 
@@ -363,23 +307,6 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
                output_funcs.insert(output_funcs.end(), fs.begin(), fs.end());
                outputs->insert(outputs->end(), kv.second.begin(), kv.second.end());
 
-               // if (info->is_array()) {
-               //     auto fs = bbs[node_id]->output_func(port_key);
-               //     if (fs.size() != kv.second.size()) {
-               //         throw std::runtime_error("Invalid size of array : " + node_id + ", " + port_key);
-               //     }
-               //     for (size_t i=0; i<fs.size(); ++i) {
-               //         output_funcs.push_back(fs[i]);
-               //         outputs->push_back(kv.second[i]);
-               //     }
-               // } else {
-               //     auto f = bbs[node_id]->output_func(port_key).front();
-               //     if (1 != kv.second.size()) {
-               //         throw std::runtime_error("Invalid size of array : " + node_id + ", " + port_key);
-               //     }
-               //     output_funcs.push_back(f);
-               //     outputs->push_back(kv.second.front());
-               // }
                found = true;
            }
            if (!found) {
@@ -391,14 +318,12 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
 
         // Traverse bbs and bundling all outputs
         std::unordered_map<std::string, std::vector<std::string>> dereferenced;
-        for (size_t i = 0; i < nodes_.size(); ++i) {
-            auto n = nodes_[i];
-            for (size_t j = 0; j < n.ports().size(); ++j) {
-                auto p = n.ports()[j];
-
-                if (!p.node_id().empty()) {
-                    for (const auto &f : bbs[p.node_id()]->output_func(p.key())) {
-                        dereferenced[p.node_id()].emplace_back(f.name());
+        for (const auto& n : nodes_) {
+            for (const auto& p : n.ports()) {
+                auto node_id = p.node_id();
+                if (!node_id.empty()) {
+                    for (const auto &f : bbs[node_id]->output_func(p.key())) {
+                        dereferenced[node_id].emplace_back(f.name());
                     }
                 }
             }
@@ -413,10 +338,13 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
 
                 // It is not dereferenced, then treat as outputs
                 const auto& dv = dereferenced[node_id];
-                auto it = std::find(dv.begin(), dv.end(), arginfo.name);
-                if (it == dv.end()) {
-                    auto fs = bbs[node_id]->output_func(arginfo.name);
-                    output_funcs.insert(output_funcs.end(), fs.begin(), fs.end());
+
+                for (auto f : bbs[node_id]->output_func(arginfo.name)) {
+                    auto it = std::find(dv.begin(), dv.end(), f.name());
+                    if (it == dv.end()) {
+                        auto fs = bbs[node_id]->output_func(arginfo.name);
+                        output_funcs.insert(output_funcs.end(), fs.begin(), fs.end());
+                    }
                 }
             }
         }
@@ -439,15 +367,14 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
 
 std::string Builder::bb_metadata(void) {
 
-    // std::vector<Metadata> md;
-    // for (auto n : BuildingBlockRegistry::enumerate()) {
-    //     md.push_back(Metadata(n));
-    // }
+    std::vector<Metadata> md;
+    for (auto n : Halide::Internal::GeneratorRegistry::enumerate()) {
+         md.push_back(Metadata(n));
+    }
 
-    // json j(md);
+    json j(md);
 
-    // return j.dump();
-    return "";
+    return j.dump();
 }
 
 } //namespace ion

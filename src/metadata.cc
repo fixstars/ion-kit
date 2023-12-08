@@ -23,25 +23,32 @@ std::string unquote(const std::string& s) {
     }
 }
 
-}
+} // anonymous
 
 namespace ion {
 
 using json = nlohmann::json;
 
-PortMD::PortMD(const std::string& n, Halide::Type t, int d)
-    : name(n), type(t), dimension(d)
+PortMD::PortMD(const std::string& n, const std::vector<Halide::Type>& ts, int d)
+    : name(n), types(ts), dimension(d)
 {}
 
 void to_json(json& j, const PortMD& v) {
     j["name"] = v.name;
-    j["type"] = static_cast<halide_type_t>(v.type);
+    std::vector<halide_type_t> types;
+    for (auto t : v.types) {
+        types.push_back(t);
+    }
+    j["types"] = types;
     j["dimension"] = v.dimension;
 }
 
 void from_json(const json& j, PortMD& v) {
     v.name = j["name"].get<std::string>();
-    v.type = j["type"].get<halide_type_t>();
+    auto types = j["types"].get<std::vector<halide_type_t>>();
+    for (auto t : types) {
+        v.types.push_back(t);
+    }
     v.dimension = j["dimension"];
 }
 
@@ -86,24 +93,17 @@ Metadata::Metadata(const std::string& n)
 {
     auto bb = Halide::Internal::GeneratorRegistry::create(n, Halide::GeneratorContext(Halide::get_host_target()));
 
-    // NOTE: Call build_pipeline just to get default value of Param
-    bb->build_pipeline();
+    for (auto arginfo : bb->arginfos()) {
+        if (arginfo.dir == Halide::Internal::ArgInfoDirection::Input) {
+            inputs.push_back(PortMD(arginfo.name, arginfo.types, arginfo.dimensions));
+        } else if (arginfo.dir == Halide::Internal::ArgInfoDirection::Output) {
+            outputs.push_back(PortMD(arginfo.name, arginfo.types, arginfo.dimensions));
+        } else {
+            throw std::runtime_error("fixme");
+        }
+    }
 
-    // TBD:
-    // for (auto info : bb->arginfos()) {
-
-    // }
-
-    // for (auto info : bb->param_info().inputs()) {
-    //     auto type = info->types_defined() ? info->type() : Halide::Type();
-    //     auto dims = info->dims_defined() ? info->dims() : -1;
-    //     inputs.push_back(PortMD(info->name(), type, dims));
-    // }
-    // for (auto info : bb->param_info().outputs()) {
-    //     auto type = info->types_defined() ? info->type() : Halide::Type();
-    //     auto dims = info->dims_defined() ? info->dims() : -1;
-    //     outputs.push_back(PortMD(info->name(), type, dims));
-    // }
+    // TBD: Handle parameter
     // for (auto info : bb->param_info().building_block_params()) {
     //     auto dv = info->is_synthetic_param() ? "" : unquote(info->get_default_value());
     //     auto ctv = info->is_synthetic_param() ? "" : info->get_c_type();
