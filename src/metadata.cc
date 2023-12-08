@@ -84,27 +84,32 @@ void from_json(const json& j, ParamMD& v) {
 Metadata::Metadata(const std::string& n)
     : name(n)
 {
-    auto bb = BuildingBlockRegistry::create(n, BuildingBlockContext(Halide::get_host_target()));
+    auto bb = Halide::Internal::GeneratorRegistry::create(n, Halide::GeneratorContext(Halide::get_host_target()));
 
-    // NOTE: Call fake_configure just to get default value of Param
-    bb->fake_configure();
+    // NOTE: Call build_pipeline just to get default value of Param
+    bb->build_pipeline();
 
-    for (auto info : bb->param_info().inputs()) {
-        auto type = info->types_defined() ? info->type() : Halide::Type();
-        auto dims = info->dims_defined() ? info->dims() : -1;
-        inputs.push_back(PortMD(info->name(), type, dims));
-    }
-    for (auto info : bb->param_info().outputs()) {
-        auto type = info->types_defined() ? info->type() : Halide::Type();
-        auto dims = info->dims_defined() ? info->dims() : -1;
-        outputs.push_back(PortMD(info->name(), type, dims));
-    }
-    for (auto info : bb->param_info().building_block_params()) {
-        auto dv = info->is_synthetic_param() ? "" : unquote(info->get_default_value());
-        auto ctv = info->is_synthetic_param() ? "" : info->get_c_type();
-        auto tdv = info->is_synthetic_param() ? "" : info->get_type_decls();
-        params.push_back(ParamMD(info->name(), dv, ctv, tdv));
-    }
+    // TBD:
+    // for (auto info : bb->arginfos()) {
+
+    // }
+
+    // for (auto info : bb->param_info().inputs()) {
+    //     auto type = info->types_defined() ? info->type() : Halide::Type();
+    //     auto dims = info->dims_defined() ? info->dims() : -1;
+    //     inputs.push_back(PortMD(info->name(), type, dims));
+    // }
+    // for (auto info : bb->param_info().outputs()) {
+    //     auto type = info->types_defined() ? info->type() : Halide::Type();
+    //     auto dims = info->dims_defined() ? info->dims() : -1;
+    //     outputs.push_back(PortMD(info->name(), type, dims));
+    // }
+    // for (auto info : bb->param_info().building_block_params()) {
+    //     auto dv = info->is_synthetic_param() ? "" : unquote(info->get_default_value());
+    //     auto ctv = info->is_synthetic_param() ? "" : info->get_c_type();
+    //     auto tdv = info->is_synthetic_param() ? "" : info->get_type_decls();
+    //     params.push_back(ParamMD(info->name(), dv, ctv, tdv));
+    // }
 }
 
 void to_json(json& j, const Metadata& v) {

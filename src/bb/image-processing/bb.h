@@ -74,7 +74,8 @@ public:
             return (average1 - average0) * (average1 - average0);
         }
         default:
-            internal_error << "Unknown ColorDifference method";
+            log::error("Unknown ColorDifference method");
+            throw std::runtime_error("Unknown ColorDifference method");
         }
 
         return Halide::Expr();
@@ -107,7 +108,8 @@ public:
         case Method::Y:
             return r * 0.2126f + g * 0.7152f + b * 0.0722f;  // BT.709
         default:
-            internal_error << "Unknown Luminance method";
+            log::error("Unknown Luminance method");
+            throw std::runtime_error("Unknown Luminance method");
         }
 
         return Halide::Expr();
@@ -133,7 +135,10 @@ public:
     static const std::map<std::string, Method> enum_map;
 
     static Halide::Func calc(Method method, Halide::Func f, Halide::Expr width, Halide::Expr height) {
-        internal_assert(f.dimensions() >= 2) << "Bad func for BoundaryConditions";
+        if (f.dimensions() < 2) {
+            log::error("Dimension must be more than two for BoundaryCondition");
+            throw std::runtime_error("Dimension must be more than two for BoundaryCondition");
+        }
 
         Halide::Region region(f.dimensions(), {Halide::Expr(), Halide::Expr()});
         region[0] = {0, width};
@@ -151,7 +156,8 @@ public:
         case Method::Zero:
             return Halide::BoundaryConditions::constant_exterior(f, 0, region);
         default:
-            internal_error << "Unknown BoundaryCondition method";
+            log::error("Unknown BoundaryCondition method");
+            throw std::runtime_error("Unknown BoundaryCondition method");
         }
 
         return Halide::Func();
@@ -304,7 +310,8 @@ public:
                  input_wrapper(x * 2 + 1, y * 2)});
             break;
         default:
-            internal_error << "Unknown BayerMap pattern";
+            log::error("Unknown BayerMap method");
+            throw std::runtime_error("Unknown BayerMap method");
         }
     }
 
@@ -778,7 +785,11 @@ public:
         Halide::Func input_mirror = Halide::BoundaryConditions::mirror_interior(input, {{0, width}, {0, height}, {0, 3}});
         Halide::Expr color_diff, weight;
 
-        r = {-window_size, window_size * 2 + 1, -window_size, window_size * 2 + 1, "r"};
+        r = {
+            -static_cast<int32_t>(window_size), static_cast<int32_t>(window_size) * 2 + 1,
+            -static_cast<int32_t>(window_size), static_cast<int32_t>(window_size) * 2 + 1,
+            "r"
+        };
 
         color_diff = (input_mirror(x + r.x, y + r.y) - input_mirror(x, y)) * (input_mirror(x + r.x, y + r.y) - input_mirror(x, y));
         sigma_inv(x, y) = 1 / sigma(x, y);
@@ -849,7 +860,11 @@ public:
         Halide::Func input_mirror = Halide::BoundaryConditions::mirror_interior(input, {{0, width}, {0, height}, {0, 3}});
         Halide::Expr color_diff, weight;
 
-        r = {-window_size, window_size * 2 + 1, -window_size, window_size * 2 + 1, "r"};
+        r = {
+            -static_cast<int32_t>(window_size), static_cast<int32_t>(window_size) * 2 + 1,
+            -static_cast<int32_t>(window_size), static_cast<int32_t>(window_size) * 2 + 1,
+            "r"
+        };
 
         color_diff = ColorDifference::calc(
             color_difference_method,
@@ -933,7 +948,11 @@ public:
 
         Halide::Func input_wrapper = BoundaryConditions::calc(boundary_conditions_method, input, width, height);
 
-        r = {-window_size, window_size * 2 + 1, -window_size, window_size * 2 + 1, "r"};
+        r = {
+            -static_cast<int32_t>(window_size), static_cast<int32_t>(window_size) * 2 + 1,
+            -static_cast<int32_t>(window_size), static_cast<int32_t>(window_size) * 2 + 1,
+            "r"
+        };
         sum(x, y, Halide::_) += input(x + r.x, y + r.y, Halide::_) * kernel(r.x + window_size, r.y + window_size, Halide::_);
         output(x, y, Halide::_) = sum(x, y, Halide::_);
     }
