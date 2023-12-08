@@ -23,7 +23,7 @@ int main()
     pm.set(extent1, 2);
     pm.set(v, 1);
 
-    Halide::Buffer<int32_t> r = Halide::Buffer<int32_t>::make_scalar();
+    ion::Buffer<int32_t> r = ion::Buffer<int32_t>::make_scalar();
     pm.set(n["output"], r);
 
     b.run(pm);

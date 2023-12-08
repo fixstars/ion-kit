@@ -80,7 +80,7 @@ using json = nlohmann::json;
 
 Builder::Builder()
 {
-
+    args_.push_back(&jit_ctx_);
 }
 
 Node Builder::add(const std::string& k)
@@ -165,15 +165,31 @@ void Builder::compile(const std::string& function_name, const CompileOption& opt
     return;
 }
 
-Halide::Realization Builder::run(const std::vector<int32_t>& sizes, const ion::PortMap& pm) {
-    return build(pm).realize(sizes, target_, pm.get_param_map());
-}
-
 void Builder::run(const ion::PortMap& pm) {
-    auto p = build(pm, &outputs_);
+     if (!pipeline_.defined()) {
+        pipeline_ = build(pm);
+    }
 
+    if (!callable_.defined()) {
+        std::map<std::string, Halide::JITExtern> jit_externs;
+        for (auto bb : bb_modules_) {
+            auto register_extern = bb.second->get_symbol<void (*)(std::map<std::string, Halide::JITExtern>&)>("register_externs");
+            if (register_extern) {
+                register_extern(jit_externs);
 
-    return p.realize(Halide::Realization(outputs_), target_, pm.get_param_map());
+            }
+        }
+        pipeline_.set_jit_externs(jit_externs);
+
+        // TODO: Validate argument list
+        // pipeline_.infer_arguments();
+
+        callable_ = pipeline_.compile_to_callable(pm.get_arguments_stub(), target_);
+        auto args = pm.get_arguments_instance();
+        args_.insert(args_.end(), args.begin(), args.end());
+    }
+
+    callable_.call_argv_fast(args_.size(), args_.data());
 }
 
 bool is_dereferenced(const std::vector<Node>& nodes, const std::string node_id, const std::string& func_name) {
@@ -195,10 +211,6 @@ bool is_dereferenced(const std::vector<Node>& nodes, const std::string node_id, 
 }
 
 Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buffer<>> *outputs) {
-
-    if (pipeline_.defined()) {
-        return pipeline_;
-    }
 
     log::info("Start building pipeline");
 
@@ -350,19 +362,7 @@ Halide::Pipeline Builder::build(const ion::PortMap& pm, std::vector<Halide::Buff
         }
     }
 
-    pipeline_ = Halide::Pipeline(output_funcs);
-
-    // Register extern functions to resolve symbols
-    for (auto bb : bb_modules_) {
-        auto register_extern = bb.second->get_symbol<void (*)(std::map<std::string, Halide::JITExtern>&)>("register_externs");
-        if (register_extern) {
-            auto externs = pipeline_.get_jit_externs();
-            register_extern(externs);
-            pipeline_.set_jit_externs(externs);
-        }
-    }
-
-    return pipeline_;
+    return Halide::Pipeline(output_funcs);
 }
 
 std::string Builder::bb_metadata(void) {

@@ -1,6 +1,7 @@
 #ifndef ION_BUILDER_H
 #define ION_BUILDER_H
 
+#include <deque>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -8,6 +9,7 @@
 #include <Halide.h>
 
 #include "def.h"
+#include "buffer.h"
 #include "building_block.h"
 #include "node.h"
 #include "port_map.h"
@@ -72,16 +74,6 @@ public:
 
     /**
      * Compile and execute the pipeline.
-     * @arg sizes: The expected output port extent.
-     * @arg ports: The mapping of the port and actual value.
-     * @return Execution result of the pipeline.
-     * See https://halide-lang.org/docs/class_halide_1_1_realization.html for more details.
-     */
-    ION_ATTRIBUTE_DEPRECATED("Call run() only with ports instead")
-    Halide::Realization run(const std::vector<int32_t>& sizes, const ion::PortMap& ports);
-
-    /**
-     * Compile and execute the pipeline.
      * @arg r: The list of output.
      * @arg ports: The mapping of the port and actual value.
      * @return Execution result of the pipeline.
@@ -100,18 +92,21 @@ public:
     const std::vector<Node>& nodes() const { return nodes_; }
     std::vector<Node>& nodes() { return nodes_; }
 
+private:
+
+    Halide::Pipeline build(const ion::PortMap& ports = ion::PortMap(), std::vector<Buffer<>> *outputs = nullptr);
+
     void set_jit_externs(const std::map<std::string, Halide::JITExtern> &externs) {
         pipeline_.set_jit_externs(externs);
     }
-
-private:
-    Halide::Pipeline build(const ion::PortMap& ports = ion::PortMap(), std::vector<Halide::Buffer<>> *outputs = nullptr);
 
     Halide::Target target_;
     std::vector<Node> nodes_;
     std::unordered_map<std::string, std::shared_ptr<DynamicModule>> bb_modules_;
     Halide::Pipeline pipeline_;
-    std::vector<Halide::Buffer<>> outputs_;
+    Halide::Callable callable_;
+    Halide::JITUserContext jit_ctx_;
+    std::vector<void*> args_;
 };
 
 } // namespace ion
