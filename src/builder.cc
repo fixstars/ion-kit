@@ -79,8 +79,9 @@ std::vector<Node> topological_sort(std::vector<Node> nodes) {
 using json = nlohmann::json;
 
 Builder::Builder()
+    : jit_ctx_(new Halide::JITUserContext), jit_ctx_ptr_(jit_ctx_.get())
 {
-    args_.push_back(&jit_ctx_);
+    args_.push_back(&jit_ctx_ptr_);
 }
 
 Node Builder::add(const std::string& k)
@@ -90,12 +91,12 @@ Node Builder::add(const std::string& k)
     return n;
 }
 
-Builder Builder::set_target(const Halide::Target& target) {
+Builder& Builder::set_target(const Halide::Target& target) {
     target_ = target;
     return *this;
 }
 
-Builder Builder::with_bb_module(const std::string& module_path) {
+Builder& Builder::with_bb_module(const std::string& module_path) {
     bb_modules_[module_path] = std::make_shared<DynamicModule>(module_path);
     return *this;
 }

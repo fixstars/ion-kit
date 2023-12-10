@@ -42,11 +42,13 @@ class PortMap {
 public:
 
     template<typename T>
-    void set(const Halide::Param<T>& p, T& v) {
+    void set(const Halide::Param<T>& p, T v) {
         param_expr_[p.name()] = p;
         param_map_.set(p, v);
 
-        param_expr_instance_[p.name()] = reinterpret_cast<void*>(&v);
+        auto & vs(param_expr_instance_[p.name()]);
+        vs.resize(sizeof(v));
+        std::memcpy(vs.data(), &v, sizeof(v));
     }
 
     template<typename T>
@@ -54,7 +56,7 @@ public:
         param_func_[p.name()] = p;
         param_map_.set(p, buf);
 
-        param_func_instance_[p.name()] = buf;
+        param_func_instance_[p.name()] = buf.raw_buffer();
     }
 
     /**
@@ -75,11 +77,13 @@ public:
      * @arg v: Actual value to be mapped to the port.
      */
     template<typename T>
-    void set(Port p, T& v) {
+    void set(Port p, T v) {
         param_expr_[p.key()] = p.expr();
         p.set_to_param_map(param_map_, v);
 
-        param_expr_instance_[p.key()] = reinterpret_cast<void*>(&v);
+        auto & vs(param_expr_instance_[p.key()]);
+        vs.resize(sizeof(v));
+        std::memcpy(vs.data(), &v, sizeof(v));
     }
 
     /**
@@ -184,13 +188,24 @@ public:
 
     std::vector<void*> get_arguments_instance() const {
         std::vector<void*> args;
+        for (auto kv : param_func_instance_) {
+            args.push_back(kv.second);
+        }
+        for (auto kv : param_expr_instance_) {
+            args.push_back(reinterpret_cast<void*>(kv.second.data()));
+        }
+        for (auto kv : output_buffer_instance_) {
+            for (auto f : kv.second) {
+                args.push_back(f);
+            }
+        }
         return args;
     }
 
  private:
 
     std::unordered_map<std::string, Halide::Expr> param_expr_;
-    std::unordered_map<std::string, void*> param_expr_instance_;
+    std::unordered_map<std::string, std::vector<uint8_t>> param_expr_instance_;
     std::unordered_map<std::string, Halide::Func> param_func_;
     std::unordered_map<std::string, halide_buffer_t*> param_func_instance_;
     std::unordered_map<std::tuple<std::string, std::string>, std::vector<Halide::Buffer<>>> output_buffer_;

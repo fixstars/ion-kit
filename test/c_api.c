@@ -133,7 +133,7 @@ int main()
         if (ret != 0)
             return ret;
 
-        ret = ion_builder_with_bb_module(b, "./libion-bb-test.so");
+        ret = ion_builder_with_bb_module(b, "ion-bb-test");
         if (ret != 0)
             return ret;
 
@@ -210,7 +210,7 @@ int main()
         if (ret != 0)
             return ret;
 
-        ret = ion_builder_with_bb_module(b, "./libion-bb-test.so");
+        ret = ion_builder_with_bb_module(b, "ion-bb-test");
         if (ret != 0)
             return ret;
 

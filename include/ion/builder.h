@@ -43,7 +43,7 @@ public:
      * @arg target: The target ofject which consists of OS, Architecture, and sets of Features.
      * See https://halide-lang.org/docs/struct_halide_1_1_target.html for more details.
      */
-    Builder set_target(const Halide::Target& target);
+    Builder& set_target(const Halide::Target& target);
 
     /**
      * Load bb module dynamically and enable it to compile your pipeline.
@@ -51,7 +51,7 @@ public:
      * @note This API is expected to be used from external process.
      * This information is not stored in graph definition exported by Builder::save because it is not portable.
      */
-    Builder with_bb_module(const std::string& path);
+    Builder& with_bb_module(const std::string& path);
 
     /**
      * Save the pipeline as a file in JSON format.
@@ -105,7 +105,8 @@ private:
     std::unordered_map<std::string, std::shared_ptr<DynamicModule>> bb_modules_;
     Halide::Pipeline pipeline_;
     Halide::Callable callable_;
-    Halide::JITUserContext jit_ctx_;
+    std::unique_ptr<Halide::JITUserContext> jit_ctx_;
+    Halide::JITUserContext* jit_ctx_ptr_;
     std::vector<void*> args_;
 };
 
