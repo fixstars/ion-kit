@@ -41,6 +41,10 @@ class PortMap {
 
 public:
 
+    PortMap() : dirty_(false)
+    {
+    }
+
     template<typename T>
     void set(const Halide::Param<T>& p, T v) {
         param_expr_[p.name()] = p;
@@ -49,6 +53,8 @@ public:
         auto & vs(param_expr_instance_[p.name()]);
         vs.resize(sizeof(v));
         std::memcpy(vs.data(), &v, sizeof(v));
+
+        dirty_ = true;
     }
 
     template<typename T>
@@ -57,6 +63,8 @@ public:
         param_map_.set(p, buf);
 
         param_func_instance_[p.name()] = buf.raw_buffer();
+
+        dirty_ = true;
     }
 
     /**
@@ -84,6 +92,8 @@ public:
         auto & vs(param_expr_instance_[p.key()]);
         vs.resize(sizeof(v));
         std::memcpy(vs.data(), &v, sizeof(v));
+
+        dirty_ = true;
     }
 
     /**
@@ -115,6 +125,8 @@ public:
             p.set_to_param_map(param_map_, buf);
             param_func_instance_[p.key()] = buf.raw_buffer();
         }
+
+        dirty_ = true;
     }
 
     /**
@@ -148,6 +160,8 @@ public:
             throw std::invalid_argument(
                 "Unbounded port (" + p.key() + ") corresponding to an array of Inputs is not supported");
         }
+
+        dirty_ = true;
     }
 
     bool mapped(const std::string& k) const {
@@ -187,23 +201,32 @@ public:
         return args;
     }
 
-    std::vector<void*> get_arguments_instance() const {
-        std::vector<void*> args;
-        for (auto kv : param_func_instance_) {
+    std::vector<const void*> get_arguments_instance() const {
+        std::vector<const void*> args;
+        for (const auto& kv : param_func_instance_) {
             args.push_back(kv.second);
         }
-        for (auto kv : param_expr_instance_) {
-            args.push_back(reinterpret_cast<void*>(kv.second.data()));
+        for (const auto& kv : param_expr_instance_) {
+            args.push_back(reinterpret_cast<const void*>(kv.second.data()));
         }
-        for (auto kv : output_buffer_instance_) {
-            for (auto f : kv.second) {
-                args.push_back(f);
-            }
-        }
+        // for (const auto& kv : output_buffer_instance_) {
+        //     for (auto f : kv.second) {
+        //         args.push_back(f);
+        //     }
+        // }
         return args;
     }
 
+    void updated() {
+        dirty_ = false;
+    }
+
+    bool dirty() const {
+        return dirty_;
+    }
+
  private:
+    bool dirty_;
 
     std::unordered_map<std::string, Halide::Expr> param_expr_;
     std::unordered_map<std::string, std::vector<uint8_t>> param_expr_instance_;

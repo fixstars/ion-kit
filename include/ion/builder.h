@@ -79,7 +79,7 @@ public:
      * @return Execution result of the pipeline.
      * See https://halide-lang.org/docs/class_halide_1_1_realization.html for more details.
      */
-    void run(const ion::PortMap& ports);
+    void run(ion::PortMap& ports);
 
     /**
      * Retrieve metadata of Building Block in json format.
@@ -94,7 +94,7 @@ public:
 
 private:
 
-    Halide::Pipeline build(const ion::PortMap& ports = ion::PortMap(), std::vector<Buffer<>> *outputs = nullptr);
+    Halide::Pipeline build(ion::PortMap& ports);
 
     void set_jit_externs(const std::map<std::string, Halide::JITExtern> &externs) {
         pipeline_.set_jit_externs(externs);
@@ -107,7 +107,7 @@ private:
     Halide::Callable callable_;
     std::unique_ptr<Halide::JITUserContext> jit_ctx_;
     Halide::JITUserContext* jit_ctx_ptr_;
-    std::vector<void*> args_;
+    std::vector<const void*> args_;
 };
 
 } // namespace ion
