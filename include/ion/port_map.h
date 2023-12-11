@@ -178,11 +178,11 @@ public:
         for (auto kv : param_expr_) {
             args.push_back(Halide::Argument(kv.first, Halide::Argument::InputScalar, kv.second.type(), 0, Halide::ArgumentEstimates()));
         }
-        for (auto kv : output_buffer_) {
-            for (auto f : kv.second) {
-                args.push_back(Halide::Argument(std::get<0>(kv.first) + "_" + std::get<1>(kv.first), Halide::Argument::OutputBuffer, f.type(), 0, Halide::ArgumentEstimates()));
-            }
-        }
+        // for (auto kv : output_buffer_) {
+        //     for (auto f : kv.second) {
+        //         args.push_back(Halide::Argument(std::get<0>(kv.first) + "_" + std::get<1>(kv.first), Halide::Argument::OutputBuffer, f.type(), 0, Halide::ArgumentEstimates()));
+        //     }
+        // }
         return args;
     }
 

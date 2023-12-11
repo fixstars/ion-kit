@@ -166,6 +166,33 @@ void Builder::compile(const std::string& function_name, const CompileOption& opt
     return;
 }
 
+void Builder::prepare(const ion::PortMap& pm) {
+     if (!pipeline_.defined()) {
+        pipeline_ = build(pm);
+    }
+
+    if (!callable_.defined()) {
+        std::map<std::string, Halide::JITExtern> jit_externs;
+        for (auto bb : bb_modules_) {
+            auto register_extern = bb.second->get_symbol<void (*)(std::map<std::string, Halide::JITExtern>&)>("register_externs");
+            if (register_extern) {
+                register_extern(jit_externs);
+
+            }
+        }
+        pipeline_.set_jit_externs(jit_externs);
+
+        // TODO: Validate argument list
+        // pipeline_.infer_arguments();
+
+        callable_ = pipeline_.compile_to_callable(pm.get_arguments_stub(), target_);
+        auto args = pm.get_arguments_instance();
+        args_.insert(args_.end(), args.begin(), args.end());
+    }
+
+    // callable_.call_argv_fast(args_.size(), args_.data());
+}
+
 void Builder::run(const ion::PortMap& pm) {
      if (!pipeline_.defined()) {
         pipeline_ = build(pm);
@@ -192,6 +219,7 @@ void Builder::run(const ion::PortMap& pm) {
 
     callable_.call_argv_fast(args_.size(), args_.data());
 }
+
 
 bool is_dereferenced(const std::vector<Node>& nodes, const std::string node_id, const std::string& func_name) {
     for (const auto& node : nodes) {
