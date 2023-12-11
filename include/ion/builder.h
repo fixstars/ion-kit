@@ -80,7 +80,6 @@ public:
      * See https://halide-lang.org/docs/class_halide_1_1_realization.html for more details.
      */
     void run(const ion::PortMap& ports);
-    void prepare(const ion::PortMap& ports);
 
     /**
      * Retrieve metadata of Building Block in json format.
@@ -93,8 +92,7 @@ public:
     const std::vector<Node>& nodes() const { return nodes_; }
     std::vector<Node>& nodes() { return nodes_; }
 
-//private:
-public:
+private:
 
     Halide::Pipeline build(const ion::PortMap& ports = ion::PortMap(), std::vector<Buffer<>> *outputs = nullptr);
 
