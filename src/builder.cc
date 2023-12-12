@@ -270,20 +270,26 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
                     if (pm.mapped(p.key())) {
                         // This block should be executed when g.run is called with appropriate PortMap.
                         e = pm.get_param_expr(p.key());
+                        bb->bind_input(arginfo.name, {e});
                     } else {
-                        e = p.expr();
+                        Halide::Internal::Parameter param(p.type(), false, p.dimensions(), "_" + n.id() + "_" + p.key());
+                        bb->bind_input(arginfo.name, { p.expr() });
+                        //e = p.expr();
                     }
-                    bb->bind_input(arginfo.name, {e});
+                    //bb->bind_input(arginfo.name, {e});
                 } else if (arginfo.kind == Halide::Internal::ArgInfoKind::Function) {
                     Halide::Func f;
                     if (pm.mapped(p.key())) {
                         // This block should be executed when g.run is called with appropriate PortMap.
                         f = pm.get_param_func(p.key());
+                        bb->bind_input(arginfo.name, {f});
                     } else {
-                        f = p.func();
+                        Halide::ImageParam param(p.type(), p.dimensions(), "_" + n.id() + "_" + p.key());
+                        bb->bind_input(arginfo.name, { p.func() });
+                        //f = p.func();
                     }
                     //args.push_back(bb->build_input(j, f));
-                    bb->bind_input(arginfo.name, {f});
+                        // bb->bind_input(arginfo.name, {f});
                 } else {
                     throw std::runtime_error("fixme");
                 }

@@ -48,7 +48,6 @@ public:
     template<typename T>
     void set(const Halide::Param<T>& p, T v) {
         param_expr_[p.name()] = p;
-        param_map_.set(p, v);
 
         auto & vs(param_expr_instance_[p.name()]);
         vs.resize(sizeof(v));
@@ -60,7 +59,6 @@ public:
     template<typename T>
     void set(const Halide::ImageParam& p, Halide::Buffer<T>& buf) {
         param_func_[p.name()] = p;
-        param_map_.set(p, buf);
 
         param_func_instance_[p.name()] = buf.raw_buffer();
 
@@ -87,7 +85,6 @@ public:
     template<typename T>
     void set(Port p, T v) {
         param_expr_[p.key()] = p.expr();
-        p.set_to_param_map(param_map_, v);
 
         auto & vs(param_expr_instance_[p.key()]);
         vs.resize(sizeof(v));
@@ -122,7 +119,6 @@ public:
             output_buffer_instance_[std::make_tuple(p.node_id(), p.key())] = { buf.raw_buffer() };
         } else {
             param_func_[p.key()] = p.func();
-            p.set_to_param_map(param_map_, buf);
             param_func_instance_[p.key()] = buf.raw_buffer();
         }
 
@@ -180,10 +176,6 @@ public:
         return output_buffer_;
     }
 
-    Halide::ParamMap get_param_map() const {
-        return param_map_;
-    }
-
     std::vector<Halide::Argument> get_arguments_stub() const {
         std::vector<Halide::Argument> args;
         for (auto kv : param_func_) {
@@ -192,12 +184,6 @@ public:
         for (auto kv : param_expr_) {
             args.push_back(Halide::Argument(kv.first, Halide::Argument::InputScalar, kv.second.type(), 0, Halide::ArgumentEstimates()));
         }
-        // NOTE: Output parameter is not needed for compile_to_callable
-        // for (auto kv : output_buffer_) {
-        //     for (auto f : kv.second) {
-        //         args.push_back(Halide::Argument(std::get<0>(kv.first) + "_" + std::get<1>(kv.first), Halide::Argument::OutputBuffer, f.type(), 0, Halide::ArgumentEstimates()));
-        //     }
-        // }
         return args;
     }
 
@@ -209,11 +195,6 @@ public:
         for (const auto& kv : param_expr_instance_) {
             args.push_back(reinterpret_cast<const void*>(kv.second.data()));
         }
-        // for (const auto& kv : output_buffer_instance_) {
-        //     for (auto f : kv.second) {
-        //         args.push_back(f);
-        //     }
-        // }
         return args;
     }
 
@@ -234,7 +215,6 @@ public:
     std::unordered_map<std::string, halide_buffer_t*> param_func_instance_;
     std::unordered_map<std::tuple<std::string, std::string>, std::vector<Halide::Buffer<>>> output_buffer_;
     std::unordered_map<std::tuple<std::string, std::string>, std::vector<halide_buffer_t*>> output_buffer_instance_;
-    Halide::ParamMap param_map_;
 };
 
 
