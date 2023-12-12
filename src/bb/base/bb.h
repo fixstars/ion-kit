@@ -3,6 +3,8 @@
 
 #include <ion/ion.h>
 
+#include "log.h"
+
 namespace ion {
 namespace bb {
 namespace base {
@@ -546,7 +548,8 @@ public:
         // Check order
         for (int i = 0; i < order.size(); i++) {
             if (std::count(order.begin(), order.end(), i) != 1) {
-                internal_error << "Invalid order";
+                log::error("Invalid order");
+                throw std::runtime_error("Invalid order");
             }
         }
 
@@ -1062,7 +1065,8 @@ class ConstantBuffer : public BuildingBlock<X> {
             if ((ss >> value) && value <= static_cast<value_t>(std::numeric_limits<T>::max()) && value >= static_cast<value_t>(std::numeric_limits<T>::lowest())) {
                 result.push_back(static_cast<T>(value));
             } else {
-                internal_error << "Invalid value";
+                log::error("Invalid value");
+                throw std::runtime_error("Invalid value");
             }
         }
 

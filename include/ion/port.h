@@ -10,135 +10,6 @@
 
 namespace ion {
 
-class ParamContainer {
- public:
-    ParamContainer() {
-    }
-
-    ParamContainer(const std::string& k, Halide::Type t, int32_t d = 0)
-        : type_(t), dim_(d)
-    {
-        if (d == 0) {
-            // Scalar Param
-            if (t.is_int()) {
-                switch (t.bits()) {
-                case 8:  i8_  = Halide::Param<int8_t>(k);  break;
-                case 16: i16_ = Halide::Param<int16_t>(k); break;
-                case 32: i32_ = Halide::Param<int32_t>(k); break;
-                case 64: i64_ = Halide::Param<int64_t>(k); break;
-                default: throw std::runtime_error("Unsupported type");
-                }
-            } else if (t.is_uint()) {
-                switch (t.bits()) {
-                case 1:  b_   = Halide::Param<bool>(k);     break;
-                case 8:  u8_  = Halide::Param<uint8_t>(k);  break;
-                case 16: u16_ = Halide::Param<uint16_t>(k); break;
-                case 32: u32_ = Halide::Param<uint32_t>(k); break;
-                case 64: u64_ = Halide::Param<uint64_t>(k); break;
-                default: throw std::runtime_error("Unsupported type");
-                }
-            } else if (t.is_float()) {
-                switch (t.bits()) {
-                case 32: f32_ = Halide::Param<float>(k);  break;
-                case 64: f64_ = Halide::Param<double>(k); break;
-                default: throw std::runtime_error("Unsupported type");
-                }
-            } else {
-                throw std::runtime_error("Unsupported type");
-            }
-        } else {
-            // Vector Param
-            v_ = Halide::ImageParam(t, d, k);
-        }
-    }
-
-    Halide::Expr expr() {
-        if (dim_ != 0) {
-            throw std::runtime_error("Invalid port type");
-        }
-
-        if (type_.is_int()) {
-            switch (type_.bits()) {
-            case 8:  return i8_;
-            case 16: return i16_;
-            case 32: return i32_;
-            case 64: return i64_;
-            default: throw std::runtime_error("unsupported type");
-            }
-        } else if (type_.is_uint()) {
-            switch (type_.bits()) {
-            case 1:  return b_;
-            case 8:  return u8_;
-            case 16: return u16_;
-            case 32: return u32_;
-            case 64: return u64_;
-            default: throw std::runtime_error("unsupported type");
-            }
-        } else if (type_.is_float()) {
-            switch (type_.bits()) {
-            case 32: return f32_;
-            case 64: return f64_;
-            default: throw std::runtime_error("unsupported type");
-            }
-        } else {
-            throw std::runtime_error("unsupported type");
-        }
-
-        return Halide::Expr();
-    }
-
-    Halide::Func func() {
-        return v_;
-    }
-
-    template<typename T>
-    void set_to_param_map(Halide::ParamMap& pm, T v) {
-        throw std::runtime_error("Implement me");
-    }
-
-    template<typename T>
-    void set_to_param_map(Halide::ParamMap& pm, Halide::Buffer<T> &buf) {
-        if (dim_ == 0) {
-            throw std::runtime_error("Invalid port type");
-        }
-        pm.set(v_, buf);
-    }
-
- private:
-
-    Halide::Param<bool>     b_;
-    Halide::Param<int8_t>   i8_;
-    Halide::Param<int16_t>  i16_;
-    Halide::Param<int32_t>  i32_;
-    Halide::Param<int64_t>  i64_;
-    Halide::Param<uint8_t>  u8_;
-    Halide::Param<uint16_t> u16_;
-    Halide::Param<uint32_t> u32_;
-    Halide::Param<uint64_t> u64_;
-    Halide::Param<float>    f32_;
-    Halide::Param<double>   f64_;
-    Halide::ImageParam      v_;
-
-    Halide::Type type_;
-    int32_t dim_;
-};
-
-#define DECLARE_SET_TO_PARAM(TYPE, MEMBER_V)                              \
-template<>                                                                \
-void ParamContainer::set_to_param_map<TYPE>(Halide::ParamMap& pm, TYPE v)
-DECLARE_SET_TO_PARAM(bool, b_);
-DECLARE_SET_TO_PARAM(int8_t, i8_);
-DECLARE_SET_TO_PARAM(int16_t, i16_);
-DECLARE_SET_TO_PARAM(int32_t, i32_);
-DECLARE_SET_TO_PARAM(int64_t, i64_);
-DECLARE_SET_TO_PARAM(uint8_t, u8_);
-DECLARE_SET_TO_PARAM(uint16_t, u16_);
-DECLARE_SET_TO_PARAM(uint32_t, u32_);
-DECLARE_SET_TO_PARAM(uint64_t, u64_);
-DECLARE_SET_TO_PARAM(float, f32_);
-DECLARE_SET_TO_PARAM(double, f64_);
-#undef DECLARE_SET_TO_PARAM
-
 /**
  * Port class is used to create dynamic i/o for each node.
  */
@@ -147,7 +18,7 @@ class Port {
      friend class Node;
 
      Port()
-         : key_(), type_(), dimensions_(0), index_(-1), node_id_(), param_info_() {}
+         : key_(), type_(), dimensions_(0), index_(-1), node_id_() {}
 
      /**
       * Construct new port for scalar value.
@@ -155,7 +26,9 @@ class Port {
       * @arg t: The type of the value.
       */
      Port(const std::string& k, Halide::Type t)
-         : key_(k), type_(t), dimensions_(0), index_(-1), node_id_(), param_info_(new ParamContainer(k, t)) {}
+         : key_(k), type_(t), dimensions_(0), index_(-1), node_id_(),
+           expr_(Halide::Internal::Variable::make(t, k, Halide::Internal::Parameter(t, false, 0, k)))
+    {}
 
      /**
       * Construct new port for vector value.
@@ -164,7 +37,9 @@ class Port {
       * @arg d: The dimension of the port. The range is 1 to 4.
       */
      Port(const std::string& k, Halide::Type t, int32_t d)
-         : key_(k), type_(t), dimensions_(d), index_(-1), node_id_(), param_info_(new ParamContainer(k, t, d)) {}
+         : key_(k), type_(t), dimensions_(d), index_(-1), node_id_(),
+           func_(Halide::ImageParam(t, d, k))
+    {}
 
      std::string key() const { return key_; }
      std::string& key() { return key_; }
@@ -181,30 +56,18 @@ class Port {
      std::string node_id() const { return node_id_; }
      std::string& node_id() { return node_id_; }
 
-     std::shared_ptr<ParamContainer> param_info() const { return param_info_; }
-     std::shared_ptr<ParamContainer>& param_info() { return param_info_; }
-
-     Halide::Expr expr() const {
-         return param_info_->expr();
+     Halide::Expr& expr() {
+         return expr_;
      }
 
-     Halide::Func func() const {
-         return param_info_->func();
-     }
-
-     template<typename t>
-     void set_to_param_map(Halide::ParamMap& pm, t v) {
-         param_info_->set_to_param_map(pm, v);
-     }
-
-     template<typename t>
-     void set_to_param_map(Halide::ParamMap& pm, Halide::Buffer<t> &buf) {
-         param_info_->set_to_param_map(pm, buf);
+     Halide::Func& func() {
+         return func_;
      }
 
      bool bound() const {
          return !node_id_.empty();
      }
+
 
      void set_index(int idx) {
          this->index_ = idx;
@@ -222,14 +85,16 @@ private:
     /**
      * This port is bound with some node.
      */
-     Port(const std::string& k, const std::string& ni) : key_(k), type_(), index_(-1), dimensions_(0), node_id_(ni), param_info_(nullptr){}
+     Port(const std::string& k, const std::string& ni) : key_(k), type_(), index_(-1), dimensions_(0), node_id_(ni) {}
 
      std::string key_;
      Halide::Type type_;
      int32_t dimensions_;
      int32_t index_;
      std::string node_id_;
-     std::shared_ptr<ParamContainer> param_info_;
+
+     Halide::Expr expr_; // If portdlfkj is scalar, hold as Expr
+     Halide::Func func_; // If port is not scalar, hold as Func
 };
 
 } // namespace ion

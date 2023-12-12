@@ -2,9 +2,9 @@
 #define ION_ION_H
 
 #include "def.h"
-#include "block.h"
+#include "building_block.h"
 #include "builder.h"
-#include "generator.h"
+// #include "generator.h"
 #include "node.h"
 #include "param.h"
 #include "port.h"

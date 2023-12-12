@@ -17,11 +17,11 @@ struct PortMD {
     friend void from_json(const json&, PortMD&);
 
     std::string name;
-    Halide::Type type;
+    std::vector<Halide::Type> types;
     int dimension;
 
     PortMD() {}
-    PortMD(const std::string& n, Halide::Type t, int d);
+    PortMD(const std::string& n, const std::vector<Halide::Type>& ts, int d);
 };
 
 struct ParamMD {
