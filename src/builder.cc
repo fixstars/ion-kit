@@ -312,11 +312,51 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
     }
 
     std::vector<Halide::Func> output_funcs;
-    for (auto kv : pm.get_output_buffer()) {
-        auto node_id = std::get<0>(kv.first);
-        auto port_key = std::get<1>(kv.first);
-        for (auto f : bbs[node_id]->output_func(port_key)) {
-            output_funcs.push_back(f);
+    const auto& output_buffers(pm.get_output_buffer());
+
+    if (output_buffers.empty()) {
+        // This is implicit mode. Make output list based on unbound output in the graph.
+        // Traverse bbs and bundling all outputs
+        std::unordered_map<std::string, std::vector<std::string>> dereferenced;
+        for (const auto& n : nodes_) {
+            for (const auto& p : n.ports()) {
+                auto node_id = p.node_id();
+                if (!node_id.empty()) {
+                    for (const auto &f : bbs[node_id]->output_func(p.key())) {
+                        dereferenced[node_id].emplace_back(f.name());
+                    }
+                }
+            }
+        }
+        for (int i=0; i<nodes_.size(); ++i) {
+            auto node_id = nodes_[i].id();
+            for (auto arginfo : bbs[node_id]->arginfos()) {
+                if (arginfo.dir != Halide::Internal::ArgInfoDirection::Output) {
+                    // This is not output
+                    continue;
+                }
+
+                // It is not dereferenced, then treat as outputs
+                const auto& dv = dereferenced[node_id];
+
+                for (auto f : bbs[node_id]->output_func(arginfo.name)) {
+                    auto it = std::find(dv.begin(), dv.end(), f.name());
+                    if (it == dv.end()) {
+                        auto fs = bbs[node_id]->output_func(arginfo.name);
+                        output_funcs.insert(output_funcs.end(), fs.begin(), fs.end());
+                    }
+                }
+            }
+        }
+
+    } else {
+        // This is expliti mode, mainly used in JIT compilation
+        for (auto kv : output_buffers) {
+            auto node_id = std::get<0>(kv.first);
+            auto port_key = std::get<1>(kv.first);
+            for (auto f : bbs[node_id]->output_func(port_key)) {
+                output_funcs.push_back(f);
+            }
         }
     }
 
