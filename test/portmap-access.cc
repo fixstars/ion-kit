@@ -9,22 +9,20 @@
 
 using namespace ion;
 
-void display_image_float(Halide::Buffer<float> buffer, std::string filename) {
+void display_image_uint8(Halide::Buffer<uint8_t> buffer, std::string filename) {
     int width = buffer.width();
     int height = buffer.height();
     int channels = buffer.channels();
     cv::Mat img_out;
     if (channels == 3) {
-        cv::Mat img_float;
         cv::merge(std::vector<cv::Mat>{
-                          cv::Mat(height, width, CV_32F, buffer.data() + width * height * 2),
-                          cv::Mat(height, width, CV_32F, buffer.data() + width * height * 1),
-                          cv::Mat(height, width, CV_32F, buffer.data())},
-                  img_float);
-        img_float.convertTo(img_out, CV_8U, 255);
+                          cv::Mat(height, width, CV_8U, buffer.data() + width * height * 2), //b
+                          cv::Mat(height, width, CV_8U, buffer.data() + width * height * 1), //g
+                          cv::Mat(height, width, CV_8U, buffer.data())}, //r
+                  img_out);
+
     } else {
-        cv::Mat img_float(height, width, CV_32F, buffer.data());
-        img_float.convertTo(img_out, CV_8U, 255);
+        cv::Mat img_out(height, width, CV_8U, buffer.data());
     }
 #ifdef DISPLAY
     cv::imshow( "Display window: " + filename, img_out);
@@ -57,22 +55,25 @@ int main(int argc, char *argv[]) {
                 Param{"urls", "http://optipng.sourceforge.net/pngtech/img/lena.png;http://upload.wikimedia.org/wikipedia/commons/0/05/Cat.png"}
                 //input urls split by ';'
         );
-        n = b.add("base_normalize_3d_uint8")(n["output"][1]);  // access only port[1]
-        n = b.add("image_processing_resize_nearest_3d")(n["output"]).set_param(
-                Param{"width", std::to_string(width)},
-                Param{"height", std::to_string(height)},
-                Param{"scale", std::to_string(2)});
-        Port output = n["output"];
+
 
         PortMap pm;
+        Halide::Buffer<uint8_t> out_buf0( width, height,3);
+        Halide::Buffer<uint8_t> out_buf1( width, height,3);
+
+
+
+
 
         pm.set(wport, width);
         pm.set(hport, height);
-        Halide::Buffer<float> out_buf( width, height,3);
-        pm.set(output, out_buf);
+
+        pm.set(n["output"][0],out_buf0);
+        pm.set(n["output"][1],out_buf1);
 
         b.run(pm);
-        display_image_float(out_buf, "display.png");
+        display_image_uint8(out_buf0, "display.png");
+        display_image_uint8(out_buf1, "display.png");
         std::cout << "Success" << std::endl;
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;

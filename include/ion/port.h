@@ -68,11 +68,16 @@ class Port {
          return !node_id_.empty();
      }
 
-     /**
-      * Overloaded operator to set the port index and return a reference to the current port. eg. port[0]
-      */
-     Port operator[](int i) {
-         this->index_ = i;
+
+     void set_index(int idx) {
+         this->index_ = idx;
+     }
+
+    /**
+     * Overloaded operator to set the port index and return a reference to the current port. eg. port[0]
+     */
+     Port operator[](int idx) {
+         this->set_index(idx);
          return *this;
      }
 

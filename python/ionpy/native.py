@@ -39,6 +39,11 @@ ion_port_create = ion_core.ion_port_create
 ion_port_create.restype = ctypes.c_int
 ion_port_create.argtypes = [ ctypes.POINTER(c_ion_port_t), ctypes.c_char_p, c_ion_type_t, ctypes.c_int ]
 
+# ion_port_index_access(ion_port_t, int);
+ion_port_index_access = ion_core.ion_port_index_access
+ion_port_index_access.restype = ctypes.c_int
+ion_port_index_access.argtypes =[c_ion_port_t, ctypes.c_int ]
+
 # int ion_port_destroy(ion_port_t);
 ion_port_destroy = ion_core.ion_port_destroy
 ion_port_destroy.restype = ctypes.c_int

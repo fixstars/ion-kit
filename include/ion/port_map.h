@@ -13,20 +13,20 @@ namespace std
 {
 
 template<>
-struct hash<tuple<string, string>>
+struct hash<tuple<string, string, int>>
 {
-    std::size_t operator()(const tuple<string, string>& k) const noexcept
+    std::size_t operator()(const tuple<string, string, int>& k) const noexcept
     {
-        return std::hash<std::string>{}(std::get<0>(k)) ^ std::hash<std::string>{}(std::get<1>(k));
+        return std::hash<std::string>{}(std::get<0>(k)) ^ std::hash<std::string>{}(std::get<1>(k)) ^ std::hash<int>{}(std::get<2>(k));
     }
 };
 
 template<>
-struct equal_to<tuple<string, string>>
+struct equal_to<tuple<string, string, int>>
 {
-    bool operator()(const tuple<string, string>& v0, const tuple<string, string>& v1) const
+    bool operator()(const tuple<string, string, int>& v0, const tuple<string, string, int>& v1) const
     {
-        return (std::get<0>(v0) == std::get<0>(v1) && std::get<1>(v0) == std::get<1>(v1));
+        return (std::get<0>(v0) == std::get<0>(v1) && std::get<1>(v0) == std::get<1>(v1) && std::get<2>(v0) == std::get<2>(v1));
     }
 };
 
@@ -115,8 +115,8 @@ public:
     void set(Port p, Halide::Buffer<T>& buf) {
         if (p.bound()) {
             // This is just an output.
-            output_buffer_[std::make_tuple(p.node_id(), p.key())] = { buf };
-            output_buffer_instance_[std::make_tuple(p.node_id(), p.key())] = { buf.raw_buffer() };
+            output_buffer_[std::make_tuple(p.node_id(), p.key(), p.index())] = { buf };
+            output_buffer_instance_[std::make_tuple(p.node_id(), p.key(), p.index())] = { buf.raw_buffer() };
         } else {
             param_func_[p.key()] = p.func();
             param_func_instance_[p.key()] = buf.raw_buffer();
@@ -149,8 +149,8 @@ public:
             // This is just an output.
             for (size_t i=0; i<bufs.size(); ++i) {
                 auto buf = bufs[i];
-                output_buffer_[std::make_tuple(p.node_id(), p.key())].push_back(buf);
-                output_buffer_instance_[std::make_tuple(p.node_id(), p.key())].push_back(buf.raw_buffer());
+                output_buffer_[std::make_tuple(p.node_id(), p.key(), p.index())].push_back(buf);
+                output_buffer_instance_[std::make_tuple(p.node_id(), p.key(), p.index())].push_back(buf.raw_buffer());
             }
         } else {
             throw std::invalid_argument(
@@ -172,7 +172,7 @@ public:
         return param_func_.at(k);
     }
 
-    std::unordered_map<std::tuple<std::string, std::string>, std::vector<Halide::Buffer<>>> get_output_buffer() const {
+    std::unordered_map<std::tuple<std::string, std::string, int>, std::vector<Halide::Buffer<>>> get_output_buffer() const {
         return output_buffer_;
     }
 
@@ -213,8 +213,8 @@ public:
     std::unordered_map<std::string, std::vector<uint8_t>> param_expr_instance_;
     std::unordered_map<std::string, Halide::Func> param_func_;
     std::unordered_map<std::string, halide_buffer_t*> param_func_instance_;
-    std::unordered_map<std::tuple<std::string, std::string>, std::vector<Halide::Buffer<>>> output_buffer_;
-    std::unordered_map<std::tuple<std::string, std::string>, std::vector<halide_buffer_t*>> output_buffer_instance_;
+    std::unordered_map<std::tuple<std::string, std::string, int>, std::vector<Halide::Buffer<>>> output_buffer_;
+    std::unordered_map<std::tuple<std::string, std::string, int>, std::vector<halide_buffer_t*>> output_buffer_instance_;
 };
 
 

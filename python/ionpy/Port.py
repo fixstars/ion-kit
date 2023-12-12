@@ -5,6 +5,7 @@ from .native import (
     c_ion_port_t,
     ion_port_create,
     ion_port_destroy,
+    ion_port_index_access,
 )
 
 from .Type import Type
@@ -27,6 +28,12 @@ class Port:
                 raise Exception('Invalid operation')
 
         self.obj = obj_
+
+    def __getitem__(self,index):
+        ret = ion_port_index_access(self.obj, index)
+        if ret != 0:
+            raise Exception('Invalid operation')
+        return self
 
     def __del__(self):
         if self.obj: # check not nullptr

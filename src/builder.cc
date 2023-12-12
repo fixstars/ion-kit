@@ -360,8 +360,18 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
         for (auto kv : output_buffers) {
             auto node_id = std::get<0>(kv.first);
             auto port_key = std::get<1>(kv.first);
-            for (auto f : bbs[node_id]->output_func(port_key)) {
-                output_funcs.push_back(f);
+            auto index = std::get<2>(kv.first);
+
+            if (index != -1) {
+                auto fs = bbs[node_id]->output_func(port_key);
+                if (index >= fs.size()) {
+                    throw std::runtime_error("Port index out of range: " + node_id + ", " + port_key);
+                }
+                output_funcs.push_back(fs[index]);
+            } else {
+                for (auto f : bbs[node_id]->output_func(port_key)) {
+                    output_funcs.push_back(f);
+                }
             }
         }
     }

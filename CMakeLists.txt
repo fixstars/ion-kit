@@ -1,6 +1,5 @@
-project(ion-kit LANGUAGES C CXX)
-
 cmake_minimum_required(VERSION 3.6)
+project(ion-kit LANGUAGES C CXX)
 
 #
 # Options
@@ -43,8 +42,8 @@ endif()
 execute_process(COMMAND git describe --tags
     OUTPUT_VARIABLE GIT_DESCRIBE_RESULT
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-message(STATUS "Version: ${GIT_DESCRIBE_RESULT}")
 string(STRIP "${GIT_DESCRIBE_RESULT}" ION_KIT_VERSION_S)
+message(STATUS "Version: ${ION_KIT_VERSION_S}")
 add_definitions("-DION_KIT_VERSION=\"${ION_KIT_VERSION_S}\"")
 string(REPLACE "v" "" ION_KIT_VERSION "${ION_KIT_VERSION_S}")
 file(GENERATE OUTPUT ${CMAKE_BINARY_DIR}/VERSION CONTENT "${ION_KIT_VERSION_S}")
@@ -66,7 +65,6 @@ endif()
 #
 file(GLOB ION_CORE_SRC LIST_DIRECTORIES false ${PROJECT_SOURCE_DIR}/src/*)
 list(REMOVE_ITEM ION_CORE_SRC "${PROJECT_SOURCE_DIR}/src/generator.cc")
-message("${ION_CORE_SRC}")
 add_library(ion-core SHARED ${ION_CORE_SRC})
 target_include_directories(ion-core PUBLIC ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/src)
 if (UNIX)

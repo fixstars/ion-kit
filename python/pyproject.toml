@@ -1,0 +1,35 @@
+[project]
+name = 'ionpy'
+dynamic = ["version"]
+authors = [
+  { name="Takuro Iizuka", email="t_iizuka@fixstars.com" }
+]
+description = "Python Binding for ion-kit"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers=[
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python"
+]
+
+[project.urls]
+Documentation = "https://sensing-dev.github.io/doc/"
+Repository = "https://github.com/fixstars/ion-kit"
+Changelog = "https://sensing-dev.github.io/doc/blog/index.html"
+
+[build-system]
+requires = ["setuptools>=61.0", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+addopts = "-ra -q"
+testpaths = [
+    "tests",
+]
+
+[tool.setuptools]
+packages = ["ionpy"]
+
+[tool.setuptools.dynamic]
+version = {attr = "ionpy.__version__"}
+

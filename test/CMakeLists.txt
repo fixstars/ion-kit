@@ -10,7 +10,7 @@ endif()
 target_link_libraries(ion-bb-test ion-core)
 
 # C interface test
-ion_jit(c_api SRCS c_api.c)
+ion_jit(c_api SRCS c_api.cc)
 add_dependencies(c_api ion-bb-test)
 ion_register_test(c_api_test c_api)
 
@@ -69,6 +69,10 @@ ion_jit(port-access SRCS port-access.cc)
 add_dependencies(port-access  ion-bb-test)
 ion_register_test(port-access_test port-access)
 
+# PortMap index access
+ion_jit(portmap-access SRCS portmap-access.cc)
+add_dependencies(portmap-access  ion-bb-test)
+ion_register_test(portmap-access_test portmap-access)
 
 ion_jit(direct-extern SRCS direct-extern.cc)
 add_dependencies(direct-extern ion-bb-test)
