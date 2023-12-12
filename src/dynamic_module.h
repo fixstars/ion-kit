@@ -69,6 +69,7 @@ class DynamicModule {
 #endif
     }
 
+
  private:
 
      std::string getErrorString(void) const {
