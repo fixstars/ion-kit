@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:22.04
 
 # Basic package
 ENV DEBIAN_FRONTEND=noninteractive
@@ -22,8 +22,8 @@ RUN apt-get update && apt-get install -y \
 RUN pip3 install scikit-build
 RUN pip3 install cmake
 
-# LLVM 12
-RUN git clone https://github.com/llvm/llvm-project.git -b release/12.x --depth=1
+# LLVM 16
+RUN git clone https://github.com/llvm/llvm-project.git -b release/16.x --depth=1
 RUN mkdir llvm-project/build && cd llvm-project/build && \
     cmake -GNinja \
         -DCMAKE_BUILD_TYPE=Release \
@@ -37,10 +37,10 @@ RUN mkdir llvm-project/build && cd llvm-project/build && \
         ../llvm && \
     cmake --build . --target install
 
-# Halide 12
+# Halide 16
 ARG HALIDE_GIT_URL=invalid
 ARG HALIDE_GIT_BRANCH=invalid
-RUN git clone ${HALIDE_GIT_URL} -b ${HALIDE_GIT_BRANCH} --depth=1
+RUN git clone https://github.com/halide/Halide.git -b v16.0.0 --depth=1
 RUN mkdir -p Halide/build && cd Halide/build && \
     cmake -GNinja \
         -DHALIDE_ENABLE_RTTI=ON \
