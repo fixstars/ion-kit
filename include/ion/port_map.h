@@ -13,20 +13,20 @@ namespace std
 {
 
 template<>
-struct hash<tuple<string, string>>
+struct hash<tuple<string, string, int>>
 {
-    std::size_t operator()(const tuple<string, string>& k) const noexcept
+    std::size_t operator()(const tuple<string, string, int>& k) const noexcept
     {
-        return std::hash<std::string>{}(std::get<0>(k)) ^ std::hash<std::string>{}(std::get<1>(k));
+        return std::hash<std::string>{}(std::get<0>(k)) ^ std::hash<std::string>{}(std::get<1>(k)) ^ std::hash<int>{}(std::get<2>(k));
     }
 };
 
 template<>
-struct equal_to<tuple<string, string>>
+struct equal_to<tuple<string, string, int>>
 {
-    bool operator()(const tuple<string, string>& v0, const tuple<string, string>& v1) const
+    bool operator()(const tuple<string, string, int>& v0, const tuple<string, string, int>& v1) const
     {
-        return (std::get<0>(v0) == std::get<0>(v1) && std::get<1>(v0) == std::get<1>(v1));
+        return (std::get<0>(v0) == std::get<0>(v1) && std::get<1>(v0) == std::get<1>(v1) && std::get<2>(v0) == std::get<2>(v1));
     }
 };
 
@@ -98,7 +98,7 @@ public:
     void set(Port p, Halide::Buffer<T> &buf) {
         if (p.bound()) {
             // This is just an output.
-            output_buffer_[std::make_tuple(p.node_id(), p.key())] = { buf };
+            output_buffer_[std::make_tuple(p.node_id(), p.key(), p.index())] = { buf };
         } else {
             param_func_[p.key()] = p.func();
             p.set_to_param_map(param_map_, buf);
@@ -129,7 +129,7 @@ public:
             // This is just an output.
 
             for (size_t i=0; i<bufs.size(); ++i) {
-                output_buffer_[std::make_tuple(p.node_id(), p.key())].push_back(bufs[i]);
+                output_buffer_[std::make_tuple(p.node_id(), p.key(), p.index())].push_back(bufs[i]);
             }
         } else {
             throw std::invalid_argument(
@@ -149,7 +149,7 @@ public:
         return param_func_.at(k);
     }
 
-    std::unordered_map<std::tuple<std::string, std::string>, std::vector<Halide::Buffer<>>> get_output_buffer() const {
+    std::unordered_map<std::tuple<std::string, std::string, int>, std::vector<Halide::Buffer<>>> get_output_buffer() const {
         return output_buffer_;
     }
 
@@ -161,7 +161,7 @@ public:
 
     std::unordered_map<std::string, Halide::Expr> param_expr_;
     std::unordered_map<std::string, Halide::Func> param_func_;
-    std::unordered_map<std::tuple<std::string, std::string>, std::vector<Halide::Buffer<>>> output_buffer_;
+    std::unordered_map<std::tuple<std::string, std::string, int>, std::vector<Halide::Buffer<>>> output_buffer_;
     Halide::ParamMap param_map_;
 };
 
