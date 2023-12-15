@@ -32,7 +32,7 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 # Dependent libraries
 #
 find_package(Halide REQUIRED COMPONENTS shared)
-if (WITH_CUDA)
+if (${WITH_CUDA})
     find_package(CUDA REQUIRED)
 endif()
 
