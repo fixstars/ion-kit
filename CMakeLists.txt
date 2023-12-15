@@ -22,7 +22,7 @@ option(WITH_CUDA "Enable CUDA with buliding examples." ON)
 # CMake common settings
 #
 set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON) # This is required to export symbols on windows platform
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
@@ -68,9 +68,9 @@ list(REMOVE_ITEM ION_CORE_SRC "${PROJECT_SOURCE_DIR}/src/generator.cc")
 add_library(ion-core SHARED ${ION_CORE_SRC})
 target_include_directories(ion-core PUBLIC ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/src)
 if (UNIX)
-  target_link_libraries(ion-core PUBLIC Halide::Halide Halide::Runtime dl pthread z)
+  target_link_libraries(ion-core PUBLIC Halide::Halide Halide::Runtime dl pthread z m stdc++)
 else()
-  target_link_libraries(ion-core PUBLIC Halide::Halide Halide::Runtime)
+  target_link_libraries(ion-core PUBLIC Halide::Halide Halide::Runtime m stdc++)
 endif()
 
 #
