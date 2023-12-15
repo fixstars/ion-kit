@@ -70,7 +70,7 @@ target_include_directories(ion-core PUBLIC ${PROJECT_SOURCE_DIR}/include ${PROJE
 if (UNIX)
   target_link_libraries(ion-core PUBLIC Halide::Halide Halide::Runtime dl pthread z m stdc++)
 else()
-  target_link_libraries(ion-core PUBLIC Halide::Halide Halide::Runtime m stdc++)
+  target_link_libraries(ion-core PUBLIC Halide::Halide Halide::Runtime)
 endif()
 
 #
