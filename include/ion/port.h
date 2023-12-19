@@ -27,7 +27,8 @@ class Port {
       */
      Port(const std::string& k, Halide::Type t)
          : key_(k), type_(t), dimensions_(0), index_(-1), node_id_(),
-           expr_(Halide::Internal::Variable::make(t, k, Halide::Internal::Parameter(t, false, 0, k)))
+           //expr_(Halide::Internal::Variable::make(t, k, Halide::Internal::Parameter(t, false, 0, k)))
+           param_(t, false, 0, k)
     {}
 
      /**
@@ -38,7 +39,8 @@ class Port {
       */
      Port(const std::string& k, Halide::Type t, int32_t d)
          : key_(k), type_(t), dimensions_(d), index_(-1), node_id_(),
-           func_(Halide::ImageParam(t, d, k))
+           //func_(Halide::ImageParam(t, d, k))
+           param_(t, true, d, k)
     {}
 
      std::string key() const { return key_; }
@@ -56,15 +58,20 @@ class Port {
      std::string node_id() const { return node_id_; }
      std::string& node_id() { return node_id_; }
 
-     Halide::Expr& expr() {
-         return expr_;
+     // Halide::Expr expr() {
+     //     return Halide::Internal::Variable::make(type_, key_, param_);
+     // }
+
+     // Halide::Func func() {
+     //     auto buffer = param_.buffer();
+     //     return Halide::Func(buffer);
+     // }
+
+     Halide::Internal::Parameter& param() {
+         return param_;
      }
 
-     Halide::Func& func() {
-         return func_;
-     }
-
-     bool bound() const {
+     bool is_bound() const {
          return !node_id_.empty();
      }
 
@@ -93,8 +100,9 @@ private:
      int32_t index_;
      std::string node_id_;
 
-     Halide::Expr expr_; // If portdlfkj is scalar, hold as Expr
-     Halide::Func func_; // If port is not scalar, hold as Func
+     // Halide::Expr expr_; // If port is scalar, hold as Expr
+     // Halide::Func func_; // If port is not scalar, hold as Func
+     Halide::Internal::Parameter param_;
 };
 
 } // namespace ion

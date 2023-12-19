@@ -73,12 +73,19 @@ public:
      * @return Node object whose port is set.
      */
     template<typename... Args>
+    //Node operator()(Args& ...args) {
     Node operator()(Args ...args) {
+        // for (auto& port : { std::forward<Args>(args)... } ) {
+        //     port.node_id_ = this->id();
+        // }
         impl_->ports = std::vector<Port>{args...};
         return *this;
     }
 
-    void operator()(const std::vector<Port>& ports) {
+    void set_port(std::vector<Port>& ports) {
+        for (auto& port : ports) {
+            port.node_id_ = this->id();
+        }
         impl_->ports = ports;
     }
 

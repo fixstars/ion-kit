@@ -55,11 +55,12 @@ class adl_serializer<ion::Port> {
          v.dimensions() = j["dimensions_"];
          v.node_id() = j["node_id_"].get<std::string>();
          if (v.node_id().empty()) {
-             if (v.dimensions() == 0) {
-                 v.expr() = Halide::Internal::Variable::make(v.type(), v.key(), Halide::Internal::Parameter(v.type(), false, 0, v.key()));
-             } else {
-                 v.func() = Halide::ImageParam(v.type(), v.dimensions(), v.key());
-             }
+             // if (v.dimensions() == 0) {
+             //     v.expr() = Halide::Internal::Variable::make(v.type(), v.key(), Halide::Internal::Parameter(v.type(), false, 0, v.key()));
+             // } else {
+             //     v.func() = Halide::ImageParam(v.type(), v.dimensions(), v.key());
+             // }
+             v.param() = Halide::Internal::Parameter(v.type(), v.dimensions() != 0, v.dimensions(), v.key());
          }
      }
 };
