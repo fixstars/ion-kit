@@ -3016,7 +3016,7 @@ void vformat_to(
     locale_ref loc = {});
 
 FMT_API void vprint_mojibake(std::FILE*, string_view, format_args);
-#ifdef __unix__
+#ifdef __linux__
 inline void vprint_mojibake(std::FILE*, string_view, format_args) {}
 #endif
 FMT_END_DETAIL_NAMESPACE

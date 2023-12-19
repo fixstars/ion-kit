@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include <vector>
 
-#ifdef __unix__
+#ifdef __linux__
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 #endif
@@ -154,7 +154,7 @@ std::tuple<std::string, std::string> parse_url(const std::string &url) {
     return std::tuple<std::string, std::string>(host_name, path_name);
 }
 
-#ifdef __unix__
+#ifdef __linux__
 cv::Mat get_image(const std::string &url) {
     if (url.empty()) {
         return {};

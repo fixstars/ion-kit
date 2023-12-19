@@ -59,7 +59,7 @@
 
 // Retries the expression while it evaluates to error_result and errno
 // equals to EINTR.
-#ifdef __unix__
+#ifdef __linux__
 #  define FMT_RETRY_VAL(result, expression, error_result) \
     do {                                                  \
       (result) = (expression);                            \

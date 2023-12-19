@@ -3,7 +3,7 @@
 
 #include <stdexcept>
 
-#ifdef __unix__
+#ifdef __linux__
 #include <fcntl.h>
 #include <linux/fb.h>
 #include <sys/ioctl.h>
@@ -17,7 +17,7 @@
 
 #include "rt_common.h"
 
-#ifdef __unix__
+#ifdef __linux__
 namespace {
 
 class FBDev {

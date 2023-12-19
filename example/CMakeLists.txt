@@ -11,7 +11,7 @@ ion_compile(demo_compile SRCS demo_compile.cc PIPELINE_NAME demo)
 
 ion_run(producerx3 producerx3_compile SRCS producerx3_run.cc TARGET_STRING "host-profile")
 
-if (UNIX)
+if (UNIX AND NOT APPLE)
     ion_run(sgm sgm_compile SRCS sgm_run.cc TARGET_STRING "host-profile")
     ion_run(dnn dnn_compile SRCS dnn_run.cc TARGET_STRING "host-profile")
     ion_run(demo demo_compile SRCS demo_run.cc TARGET_STRING "host-profile")
