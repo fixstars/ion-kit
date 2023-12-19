@@ -165,14 +165,14 @@ private:
 
 class ArrayOutput : public BuildingBlock<ArrayOutput> {
 public:
-    GeneratorParam<std::size_t> len{"len", 5};
+    GeneratorParam<int> len{"len", 5};
 
     Input<Halide::Func> input{"input", Int(32), 2};
     Output<Halide::Func[]> array_output{"array_output", Int(32), 2};
 
     void generate() {
         array_output.resize(len);
-        for (std::size_t i = 0; i < array_output.size(); ++i) {
+        for (int i = 0; i < len; ++i) {
             array_output[i](x, y) = input(x, y);
         }
     }
@@ -183,13 +183,17 @@ private:
 
 class ArrayInput : public BuildingBlock<ArrayInput> {
 public:
+    GeneratorParam<int> len{"len", 5};
+
     Input<Halide::Func[]> array_input{"array_input", Int(32), 2};
     Output<Halide::Func> output{"output", Int(32), 2};
 
     void generate() {
-        for (std::size_t i = 0; i < array_input.size(); ++i) {
-            output(x, y) += array_input[i](x, y);
+        Halide::Expr v = 0;
+        for (int i = 0; i < len; ++i) {
+             v += array_input[i](x, y);
         }
+        output(x, y) = v;
     }
 
 private:

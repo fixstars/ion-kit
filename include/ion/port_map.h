@@ -121,21 +121,21 @@ public:
      * @arg bufs: Actual value to be mapped to the port.
      * Buffer dimension should be matched with port's one.
      */
-    template<typename T>
-    void set(Port p, const std::vector<Halide::Buffer<T>> &bufs) {
-        if (p.is_bound()) {
-            // This is just an output.
-            for (size_t i=0; i<bufs.size(); ++i) {
-                auto buf = bufs[i];
-                output_buffer_[std::make_tuple(p.node_id(), p.key(), p.index())].push_back(buf);
-            }
-        } else {
-            throw std::invalid_argument(
-                "Unbounded port (" + p.key() + ") corresponding to an array of Inputs is not supported");
-        }
+    // template<typename T>
+    // void set(Port p, const std::vector<Halide::Buffer<T>> &bufs) {
+    //     if (p.is_bound()) {
+    //         // This is just an output.
+    //         for (size_t i=0; i<bufs.size(); ++i) {
+    //             auto buf = bufs[i];
+    //             output_buffer_[std::make_tuple(p.node_id(), p.key(), p.index())].push_back(buf);
+    //         }
+    //     } else {
+    //         throw std::invalid_argument(
+    //             "Unbounded port (" + p.key() + ") corresponding to an array of Inputs is not supported");
+    //     }
 
-        dirty_ = true;
-    }
+    //     dirty_ = true;
+    // }
 
     bool is_mapped(const std::string& k) const {
         return param_.count(k);
