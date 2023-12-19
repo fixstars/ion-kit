@@ -2,7 +2,7 @@
 #define ION_BB_IMAGE_IO_BB_H
 
 #include <ion/ion.h>
-#ifndef _WIN32
+#ifdef __unix__
 #include <linux/videodev2.h>
 #endif
 
@@ -60,7 +60,7 @@ const int BayerMap::bayer_map[4][4]{
     {1, 2, 0, 1}   // GBRG
 };
 
-#ifndef _WIN32
+#ifdef __unix__
 uint32_t make_pixel_format(BayerMap::Pattern bayer_pattern, int32_t bit_width)
 {
     uint32_t pix_format;
@@ -544,7 +544,7 @@ public:
     }
 };
 
-#ifndef _WIN32
+#ifdef __unix__
 class FBDisplay : public ion::BuildingBlock<FBDisplay> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "FBDisplay"};
@@ -1195,7 +1195,7 @@ public:
 }  // namespace bb
 }  // namespace ion
 
-#ifndef _WIN32
+#ifdef __unix__
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::IMX219, image_io_imx219);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::D435, image_io_d435);
 

@@ -48,7 +48,17 @@ function(ion_run NAME COMPILE_NAME)
         COMMAND ${CMAKE_COMMAND} -E make_directory ${OUTPUT_PATH}
     )
     if (UNIX)
-        add_custom_command(OUTPUT ${HEADER} ${STATIC_LIB}
+        if(APPLE)
+            add_custom_command(OUTPUT ${HEADER} ${STATIC_LIB}
+            COMMAND ${CMAKE_SOURCE_DIR}/script/invoke.sh $<TARGET_FILE:${COMPILE_NAME}>
+                HL_TARGET ${IER_TARGET_STRING}
+                DYLD_LIBRARY_PATH ${Halide_DIR}/../../../bin
+                DYLD_LIBRARY_PATH ${CMAKE_BINARY_DIR}
+                DYLD_LIBRARY_PATH ${CMAKE_BINARY_DIR}/src/bb
+            DEPENDS ${COMPILE_NAME} ${OUTPUT_PATH}
+            WORKING_DIRECTORY ${OUTPUT_PATH})
+        else()
+            add_custom_command(OUTPUT ${HEADER} ${STATIC_LIB}
             COMMAND ${CMAKE_SOURCE_DIR}/script/invoke.sh $<TARGET_FILE:${COMPILE_NAME}>
                 HL_TARGET ${IER_TARGET_STRING}
                 LD_LIBRARY_PATH ${Halide_DIR}/../../../bin
@@ -56,6 +66,7 @@ function(ion_run NAME COMPILE_NAME)
                 LD_LIBRARY_PATH ${CMAKE_BINARY_DIR}/src/bb
             DEPENDS ${COMPILE_NAME} ${OUTPUT_PATH}
             WORKING_DIRECTORY ${OUTPUT_PATH})
+        endif()
     else()
         add_custom_command(OUTPUT ${HEADER} ${STATIC_LIB}
             COMMAND ${CMAKE_SOURCE_DIR}/script/invoke.bat $<TARGET_FILE:${COMPILE_NAME}>
@@ -110,7 +121,11 @@ function(ion_register_test TEST_NAME EXEC_NAME)
     cmake_parse_arguments(IERT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if (UNIX)
-        set(IERT_RUNTIME_ENVS "LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/src/bb:${CMAKE_BINARY_DIR}/test")
+        if(APPLE)
+            set(IERT_RUNTIME_ENVS "DYLD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/src/bb:${CMAKE_BINARY_DIR}/test")
+        else()
+            set(IERT_RUNTIME_ENVS "LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/src/bb:${CMAKE_BINARY_DIR}/test")
+        endif()
     else()
         set(IERT_RUNTIME_ENVS "PATH=${CMAKE_BINARY_DIR}/src/bb/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>\\\;${CMAKE_BINARY_DIR}/test/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>")
     endif()

@@ -1858,7 +1858,7 @@ socket_t create_socket(const char *host, int port, int socket_flags,
 #endif
     if (sock == INVALID_SOCKET) { continue; }
 
-#ifndef _WIN32
+#ifdef __unix__
     if (fcntl(sock, F_SETFD, FD_CLOEXEC) == -1) { continue; }
 #endif
 
@@ -3772,7 +3772,7 @@ inline Server::Server()
     : new_task_queue(
           [] { return new ThreadPool(CPPHTTPLIB_THREAD_POOL_COUNT); }),
       svr_sock_(INVALID_SOCKET), is_running_(false) {
-#ifndef _WIN32
+#ifdef __unix__
   signal(SIGPIPE, SIG_IGN);
 #endif
 }
@@ -4353,7 +4353,7 @@ inline bool Server::listen_internal() {
     std::unique_ptr<TaskQueue> task_queue(new_task_queue());
 
     while (svr_sock_ != INVALID_SOCKET) {
-#ifndef _WIN32
+#ifdef __unix__
       if (idle_interval_sec_ > 0 || idle_interval_usec_ > 0) {
 #endif
         auto val = detail::select_read(svr_sock_, idle_interval_sec_,
@@ -4362,7 +4362,7 @@ inline bool Server::listen_internal() {
           task_queue->on_idle();
           continue;
         }
-#ifndef _WIN32
+#ifdef __unix__
       }
 #endif
       socket_t sock = accept(svr_sock_, nullptr, nullptr);
