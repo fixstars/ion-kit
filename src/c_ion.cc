@@ -146,10 +146,6 @@ int ion_node_set_port(ion_node_t obj, ion_port_t *ports_ptr, int ports_num)
             ports[i] = *reinterpret_cast<Port*>(ports_ptr[i]);
         }
         reinterpret_cast<Node*>(obj)->set_port(ports);
-        // TODO: Avoid copy-back
-        for (int i=0; i<ports_num; ++i) {
-            *reinterpret_cast<Port*>(ports_ptr[i]) = ports[i];
-        }
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
         return -1;

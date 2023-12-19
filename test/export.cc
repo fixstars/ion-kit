@@ -131,18 +131,15 @@ int main()
                 }
             }
 
+            Halide::Buffer<int32_t> out(w, h);
+
             PortMap pm;
             pm.set(input, in);
 
-            // TODO: Need to resolve issue #16
-            // Halide::Buffer<int32_t> out = b.run({w, h}, pm)[0];
-            // pm.set(Halide::ImageParam(Halide::type_of<int32_t>(), 2, "output"), out);
-            // Halide::Buffer<int32_t> out = b.run({w, h}, pm)[0];
-
-            Halide::Buffer<int32_t> out(std::vector<int>{w, h});
-
             auto nodes = b.nodes();
-            pm.set(nodes.back()["output"], out);
+            pm.set(nodes.back()["output"][0], out);
+
+            b.run(pm);
 
             if (out.dimensions() != 2) {
                 return -1;
