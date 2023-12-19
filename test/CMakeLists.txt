@@ -91,6 +91,7 @@ ion_register_test(dup-port-name_test dup-port-name)
 
 # Export test
 ion_jit(export SRCS export.cc)
+ion_register_test(export_test export)
 
 #
 # Pipeline testing

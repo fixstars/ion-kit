@@ -302,22 +302,17 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
                         // validation
                         bb->bind_input(arginfo.name, { Halide::Internal::Variable::make(p.type(), p.key(), param) });
                     } else {
-                        //const std::vector<Halide::Expr>& vs = { p.expr() };
                         bb->bind_input(arginfo.name, { Halide::Internal::Variable::make(p.type(), p.key(), p.param()) });
-                        //bb->bind_input(arginfo.name, { p.param() });
                     }
                 } else if (arginfo.kind == Halide::Internal::ArgInfoKind::Function) {
                     if (pm.is_mapped(p.key())) {
                         // This block should be executed when g.run is called with appropriate PortMap.
-                        // f = pm.get_param_func(p.key());
-                        // bb->bind_input(arginfo.name, {f});
-                        /// auto para = pm.get_param(p.key());
                         auto b = pm.get_param(p.key()).buffer();
                         Halide::Func f;
                         f(Halide::_) = b(Halide::_);
                         bb->bind_input(arginfo.name, { f });
                     } else {
-                        Halide::ImageParam param(p.type(), p.dimensions(), argument_name(n.id(), p.key()));
+                        Halide::ImageParam param(p.type(), p.dimensions(), p.key());
                         bb->bind_input(arginfo.name, { param });
                     }
                 } else {

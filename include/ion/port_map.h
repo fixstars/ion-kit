@@ -46,26 +46,6 @@ public:
     {
     }
 
-    template<typename T>
-    void set(const Halide::Param<T>& p, T v) {
-        param_expr_[p.name()] = p;
-
-        auto & vs(param_expr_instance_[p.name()]);
-        vs.resize(sizeof(v));
-        std::memcpy(vs.data(), &v, sizeof(v));
-
-        dirty_ = true;
-    }
-
-    template<typename T>
-    void set(const Halide::ImageParam& p, Halide::Buffer<T>& buf) {
-        param_func_[p.name()] = p;
-
-        param_func_instance_[p.name()] = buf.raw_buffer();
-
-        dirty_ = true;
-    }
-
     /**
      * Set the scalar value against to the port.
      * Template type T is allowed to be one of the following.
@@ -85,16 +65,9 @@ public:
      */
     template<typename T>
     void set(Port p, T v) {
-        // param_expr_[p.key()] = p.expr();
-
-        auto & vs(param_expr_instance_[argument_name(p.node_id(), p.key())]);
-        vs.resize(sizeof(v));
-        std::memcpy(vs.data(), &v, sizeof(v));
-
         auto param = p.param();
         param.set_scalar(v);
-        param_[argument_name(p.node_id(), p.key())] = param;
-
+        param_[(p.key())] = param;
         dirty_ = true;
     }
 
@@ -121,13 +94,10 @@ public:
         if (p.is_bound()) {
             // This is just an output.
             output_buffer_[std::make_tuple(p.node_id(), p.key(), p.index())] = { buf };
-            output_buffer_instance_[std::make_tuple(p.node_id(), p.key(), p.index())] = { buf.raw_buffer() };
         } else {
             auto param = p.param();
             param.set_buffer(buf);
-            param_[argument_name(p.node_id(), p.key())] = param;
-            // param_func_[p.key()] = p.func();
-            param_func_instance_[argument_name(p.node_id(), p.key())] = buf.raw_buffer();
+            param_[p.key()] = param;
         }
 
         dirty_ = true;
@@ -158,7 +128,6 @@ public:
             for (size_t i=0; i<bufs.size(); ++i) {
                 auto buf = bufs[i];
                 output_buffer_[std::make_tuple(p.node_id(), p.key(), p.index())].push_back(buf);
-                output_buffer_instance_[std::make_tuple(p.node_id(), p.key(), p.index())].push_back(buf.raw_buffer());
             }
         } else {
             throw std::invalid_argument(
@@ -169,20 +138,12 @@ public:
     }
 
     bool is_mapped(const std::string& k) const {
-        return param_expr_.count(k) != 0 || param_func_.count(k) != 0;
+        return param_.count(k);
     }
 
     Halide::Internal::Parameter get_param(const std::string& k) const {
         return param_.at(k);
     }
-
-    // Halide::Expr get_param_expr(const std::string& k) const {
-    //     return param_expr_.at(k);
-    // }
-
-    // Halide::Func get_param_func(const std::string& k) const {
-    //     return param_func_.at(k);
-    // }
 
     std::unordered_map<std::tuple<std::string, std::string, int>, std::vector<Halide::Buffer<>>> get_output_buffer() const {
         return output_buffer_;
@@ -190,33 +151,20 @@ public:
 
     std::vector<Halide::Argument> get_arguments_stub() const {
         std::vector<Halide::Argument> args;
-        // for (auto kv : param_func_) {
-        //     args.push_back(Halide::Argument(kv.first, Halide::Argument::InputBuffer, kv.second.type(), 0, Halide::ArgumentEstimates()));
-        // }
-        // for (auto kv : param_expr_) {
-        //     args.push_back(Halide::Argument(kv.first, Halide::Argument::InputScalar, kv.second.type(), 0, Halide::ArgumentEstimates()));
-        // }
         for (auto kv : param_) {
             auto kind = kv.second.is_buffer() ? Halide::Argument::InputBuffer : Halide::Argument::InputScalar;
-            args.push_back(Halide::Argument(kv.first, kind, kv.second.type(), kv.second.dimensions(), Halide::ArgumentEstimates()));
+            args.push_back(Halide::Argument(kv.first,  kind, kv.second.type(), kv.second.dimensions(), Halide::ArgumentEstimates()));
         }
         return args;
     }
 
     std::vector<const void*> get_arguments_instance() const {
         std::vector<const void*> args;
-        // for (const auto& kv : param_func_instance_) {
-        //     args.push_back(kv.second);
-        // }
-        // for (const auto& kv : param_expr_instance_) {
-        //     args.push_back(reinterpret_cast<const void*>(kv.second.data()));
-        // }
         for (auto kv : param_) {
-            auto kind = kv.second.is_buffer() ? Halide::Argument::InputBuffer : Halide::Argument::InputScalar;
             if (kv.second.is_buffer()) {
-                args.push_back(param_func_instance_.at(kv.first));
+                args.push_back(kv.second.raw_buffer());
             } else {
-                args.push_back(reinterpret_cast<const void*>(param_expr_instance_.at(kv.first).data()));
+                args.push_back(kv.second.scalar_address());
             }
         }
         return args;
@@ -232,17 +180,9 @@ public:
 
  private:
     bool dirty_;
-
     std::unordered_map<std::string, Halide::Internal::Parameter> param_;
-
-    std::unordered_map<std::string, Halide::Expr> param_expr_;
-    std::unordered_map<std::string, std::vector<uint8_t>> param_expr_instance_;
-    std::unordered_map<std::string, Halide::Func> param_func_;
-    std::unordered_map<std::string, halide_buffer_t*> param_func_instance_;
     std::unordered_map<std::tuple<std::string, std::string, int>, std::vector<Halide::Buffer<>>> output_buffer_;
-    std::unordered_map<std::tuple<std::string, std::string, int>, std::vector<halide_buffer_t*>> output_buffer_instance_;
 };
-
 
 } // namespace ion
 

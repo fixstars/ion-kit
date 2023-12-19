@@ -21,14 +21,16 @@ int main()
             b.save("simple_graph.json");
         }
         {
+            Halide::Type t = Halide::type_of<int32_t>();
+            Port min0{"min0", t}, extent0{"extent0", t}, min1{"min1", t}, extent1{"extent1", t}, v{"v", t};
             Builder b;
             b.load("simple_graph.json");
             PortMap pm;
-            pm.set(Halide::Param<int32_t>{"min0"}, 0);
-            pm.set(Halide::Param<int32_t>{"extent0"}, 2);
-            pm.set(Halide::Param<int32_t>{"min1"}, 0);
-            pm.set(Halide::Param<int32_t>{"extent1"}, 2);
-            pm.set(Halide::Param<int32_t>{"v"}, 1);
+            pm.set(min0, 0);
+            pm.set(extent0, 2);
+            pm.set(min1, 0);
+            pm.set(extent1, 2);
+            pm.set(v, 1);
 
             Halide::Buffer<int32_t> out = Halide::Buffer<int32_t>::make_scalar();
 
@@ -56,6 +58,8 @@ int main()
     }
 
     {
+        Halide::Type t = Halide::type_of<int32_t>();
+        Port input{"input", t, 2}, width{"width", t}, height{"height", t};
         Builder b;
         b.load("complex_graph.json");
 
@@ -70,9 +74,9 @@ int main()
         }
 
         PortMap pm;
-        pm.set(Halide::ImageParam{Halide::type_of<int32_t>(), 2, "input"}, ibuf);
-        pm.set(Halide::Param<int32_t>{"width"}, size);
-        pm.set(Halide::Param<int32_t>{"height"}, size);
+        pm.set(input, ibuf);
+        pm.set(width, size);
+        pm.set(height, size);
 
         Halide::Buffer<int32_t> out(std::vector<int>{size, size});
 
@@ -116,6 +120,7 @@ int main()
             b.save("array_inout.json");
         }
         {
+            Port input{"input", Halide::type_of<int32_t>(), 2};
             Builder b;
             b.load("array_inout.json");
 
@@ -127,7 +132,7 @@ int main()
             }
 
             PortMap pm;
-            pm.set(Halide::ImageParam(Halide::type_of<int32_t>(), 2, "input"), in);
+            pm.set(input, in);
 
             // TODO: Need to resolve issue #16
             // Halide::Buffer<int32_t> out = b.run({w, h}, pm)[0];

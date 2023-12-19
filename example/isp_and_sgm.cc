@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
         pm.set(shading_correction_offset_g_l, 1.f);
         pm.set(shading_correction_offset_b_l, 1.f);
         pm.set(coef_color_l, 100.f);
-        pm.set(coef_space_l, 0.03);
+        pm.set(coef_space_l, 0.03f);
         pm.set(gamma_l, 1.f / 2.2f);
         pm.set(k1_l, 0.f);
         pm.set(k2_l, 0.f);
@@ -118,7 +118,7 @@ int main(int argc, char *argv[]) {
         pm.set(shading_correction_offset_g_r, 1.f);
         pm.set(shading_correction_offset_b_r, 1.f);
         pm.set(coef_color_r, 100.f);
-        pm.set(coef_space_r, 0.03);
+        pm.set(coef_space_r, 0.03f);
         pm.set(gamma_r, 1.f / 2.2f);
         pm.set(k1_r, 0.f);
         pm.set(k2_r, 0.f);

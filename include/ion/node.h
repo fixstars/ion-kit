@@ -83,9 +83,9 @@ public:
     }
 
     void set_port(std::vector<Port>& ports) {
-        for (auto& port : ports) {
-            port.node_id_ = this->id();
-        }
+        // for (auto& port : ports) {
+        //     port.node_id_ = this->id();
+        // }
         impl_->ports = ports;
     }
 
