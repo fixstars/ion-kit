@@ -11,7 +11,7 @@ def test_all():
     builder = Builder()
     builder.set_target(target='host')
     # make sure path includes libion-bb-test.so
-    builder.with_bb_module(path='libion-bb-test.so')
+    builder.with_bb_module(path='ion-bb-test')
     # builder.with_bb_module(path='ion-bb-test.dll') # for Windows
 
     node = builder.add('test_inc_i32x2').set_port(ports=[ input_port, ]).set_param(params=[ value41, ])

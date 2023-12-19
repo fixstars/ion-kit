@@ -17,7 +17,7 @@ def test_pipeline():
     builder = Builder()
     builder.set_target(target='host')
     # make sure path includes libion-bb.so
-    builder.with_bb_module(path='libion-bb.so')
+    builder.with_bb_module(path='ion-bb')
 
     node = builder.add('image_io_cameraN').set_param(params=[width, height, urls])
     node1 = builder.add("base_normalize_3d_uint8").set_port(ports=[node.get_port(key='output')[0], ]);
