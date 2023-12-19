@@ -26,9 +26,7 @@ class Port {
       * @arg t: The type of the value.
       */
      Port(const std::string& k, Halide::Type t)
-         : key_(k), type_(t), dimensions_(0), index_(-1), node_id_(),
-           param_(t, false, 0, k)
-    {}
+         : key_(k), type_(t), dimensions_(0), index_(-1), node_id_() {}
 
      /**
       * Construct new port for vector value.
@@ -37,9 +35,7 @@ class Port {
       * @arg d: The dimension of the port. The range is 1 to 4.
       */
      Port(const std::string& k, Halide::Type t, int32_t d)
-         : key_(k), type_(t), dimensions_(d), index_(-1), node_id_(),
-           param_(t, true, d, k)
-    {}
+         : key_(k), type_(t), dimensions_(d), index_(-1), node_id_() {}
 
      std::string key() const { return key_; }
      std::string& key() { return key_; }
@@ -56,8 +52,13 @@ class Port {
      std::string node_id() const { return node_id_; }
      std::string& node_id() { return node_id_; }
 
-     Halide::Internal::Parameter& param() {
-         return param_;
+     std::vector<Halide::Internal::Parameter>& params() {
+         if (index_ == -1) {
+             params_.resize(1, Halide::Internal::Parameter{type_, dimensions_ != 0, dimensions_, key_});
+         } else {
+             params_.resize(index_+1, Halide::Internal::Parameter{type_, dimensions_ != 0, dimensions_, key_});
+         }
+         return params_;
      }
 
      bool is_bound() const {
@@ -89,7 +90,7 @@ private:
      int32_t index_;
      std::string node_id_;
 
-     Halide::Internal::Parameter param_;
+     std::vector<Halide::Internal::Parameter> params_;
 };
 
 } // namespace ion

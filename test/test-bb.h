@@ -163,24 +163,6 @@ private:
     Halide::Var x, y, c;
 };
 
-class ArrayOutput : public BuildingBlock<ArrayOutput> {
-public:
-    GeneratorParam<int> len{"len", 5};
-
-    Input<Halide::Func> input{"input", Int(32), 2};
-    Output<Halide::Func[]> array_output{"array_output", Int(32), 2};
-
-    void generate() {
-        array_output.resize(len);
-        for (int i = 0; i < len; ++i) {
-            array_output[i](x, y) = input(x, y);
-        }
-    }
-
-private:
-    Halide::Var x, y;
-};
-
 class ArrayInput : public BuildingBlock<ArrayInput> {
 public:
     GeneratorParam<int> len{"len", 5};
@@ -199,6 +181,43 @@ public:
 private:
     Halide::Var x, y;
 };
+
+class ArrayOutput : public BuildingBlock<ArrayOutput> {
+public:
+    GeneratorParam<int> len{"len", 5};
+
+    Input<Halide::Func> input{"input", Int(32), 2};
+    Output<Halide::Func[]> array_output{"array_output", Int(32), 2};
+
+    void generate() {
+        array_output.resize(len);
+        for (int i = 0; i < len; ++i) {
+            array_output[i](x, y) = input(x, y);
+        }
+    }
+
+private:
+    Halide::Var x, y;
+};
+
+class ArrayCopy : public BuildingBlock<ArrayCopy> {
+public:
+    GeneratorParam<int> len{"len", 5};
+
+    Input<Halide::Func[]> array_input{"array_input", Int(32), 2};
+    Output<Halide::Func[]> array_output{"array_output", Int(32), 2};
+
+    void generate() {
+        array_output.resize(len);
+        for (int i = 0; i < len; ++i) {
+            array_output[i](x, y) = array_input[i](x, y);
+        }
+    }
+
+private:
+    Halide::Var x, y;
+};
+
 
 class ExternIncI32x2 : public BuildingBlock<ExternIncI32x2> {
 public:
@@ -235,8 +254,9 @@ ION_REGISTER_BUILDING_BLOCK(ion::bb::test::IncI32x2, test_inc_i32x2);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::test::Dup, test_dup);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::test::Scale2x, test_scale2x);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::test::MultiOut, test_multi_out);
-ION_REGISTER_BUILDING_BLOCK(ion::bb::test::ArrayOutput, test_array_output);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::test::ArrayInput, test_array_input);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::test::ArrayOutput, test_array_output);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::test::ArrayCopy, test_array_copy);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::test::ExternIncI32x2, test_extern_inc_i32x2);
 
 #endif

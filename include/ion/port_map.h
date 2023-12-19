@@ -65,9 +65,16 @@ public:
      */
     template<typename T>
     void set(Port p, T v) {
-        auto param = p.param();
-        param.set_scalar(v);
-        param_[(p.key())] = param;
+        auto params(p.params());
+        auto i = p.index();
+        if (i == -1) {
+            params[0].set_scalar(v);
+            params_[(p.key())] = params;
+        } else {
+            params[i].set_scalar(v);
+            params_[(p.key())].resize(i+1);
+            params_[(p.key())][i] = params[i];
+        }
         dirty_ = true;
     }
 
@@ -95,9 +102,16 @@ public:
             // This is just an output.
             output_buffer_[std::make_tuple(p.node_id(), p.key(), p.index())] = { buf };
         } else {
-            auto param = p.param();
-            param.set_buffer(buf);
-            param_[p.key()] = param;
+            auto params(p.params());
+            auto i = p.index();
+            if (i == -1) {
+                params[0].set_buffer(buf);
+                params_[p.key()] = params;
+            } else {
+                params[i].set_buffer(buf);
+                params_[p.key()].resize(i+1);
+                params_[p.key()][i] = params[i];
+            }
         }
 
         dirty_ = true;
@@ -138,11 +152,11 @@ public:
     // }
 
     bool is_mapped(const std::string& k) const {
-        return param_.count(k);
+        return params_.count(k);
     }
 
-    Halide::Internal::Parameter get_param(const std::string& k) const {
-        return param_.at(k);
+    std::vector<Halide::Internal::Parameter> get_params(const std::string& k) const {
+        return params_.at(k);
     }
 
     std::unordered_map<std::tuple<std::string, std::string, int>, std::vector<Halide::Buffer<>>> get_output_buffer() const {
@@ -151,20 +165,24 @@ public:
 
     std::vector<Halide::Argument> get_arguments_stub() const {
         std::vector<Halide::Argument> args;
-        for (auto kv : param_) {
-            auto kind = kv.second.is_buffer() ? Halide::Argument::InputBuffer : Halide::Argument::InputScalar;
-            args.push_back(Halide::Argument(kv.first,  kind, kv.second.type(), kv.second.dimensions(), Halide::ArgumentEstimates()));
+        for (const auto& kv : params_) {
+            for (const auto& p : kv.second) {
+                auto kind = p.is_buffer() ? Halide::Argument::InputBuffer : Halide::Argument::InputScalar;
+                args.push_back(Halide::Argument(kv.first,  kind, p.type(), p.dimensions(), Halide::ArgumentEstimates()));
+            }
         }
         return args;
     }
 
     std::vector<const void*> get_arguments_instance() const {
         std::vector<const void*> args;
-        for (auto kv : param_) {
-            if (kv.second.is_buffer()) {
-                args.push_back(kv.second.raw_buffer());
-            } else {
-                args.push_back(kv.second.scalar_address());
+        for (const auto& kv : params_) {
+            for (const auto& p : kv.second) {
+                if (p.is_buffer()) {
+                    args.push_back(p.raw_buffer());
+                } else {
+                    args.push_back(p.scalar_address());
+                }
             }
         }
         return args;
@@ -180,7 +198,7 @@ public:
 
  private:
     bool dirty_;
-    std::unordered_map<std::string, Halide::Internal::Parameter> param_;
+    std::unordered_map<std::string, std::vector<Halide::Internal::Parameter>> params_;
     std::unordered_map<std::tuple<std::string, std::string, int>, std::vector<Halide::Buffer<>>> output_buffer_;
 };
 
