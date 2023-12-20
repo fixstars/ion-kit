@@ -302,13 +302,13 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
 
                         std::vector<Halide::Expr> es;
                         for (const auto& p : params) {
-                            es.push_back(Halide::Internal::Variable::make(port.type(), port.key(), p));
+                            es.push_back(Halide::Internal::Variable::make(port.type(), Halide::Internal::unique_name(port.key()), p));
                         }
                         bb->bind_input(arginfo.name, es);
                     } else {
                         std::vector<Halide::Expr> es;
                         for (const auto& p : port.params()) {
-                            es.push_back(Halide::Internal::Variable::make(port.type(), port.key(), p));
+                            es.push_back(Halide::Internal::Variable::make(port.type(), Halide::Internal::unique_name(port.key()), p));
                         }
                         bb->bind_input(arginfo.name, es);
                     }
