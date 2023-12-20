@@ -11,22 +11,22 @@ set(LINK_DIRS
     ${OpenCV_DIR}/lib)
 
 if (UNIX)
-if (APPLE)
-    set(LIBRARIES
-        dl
-        pthread
-        m
-        z
-        ${OpenCV_LIBRARIES})
-else()
-    set(LIBRARIES
-        rt
-        dl
-        pthread
-        m
-        z
-        ${OpenCV_LIBRARIES})
-endif()
+    if (APPLE)
+        set(LIBRARIES
+            dl
+            pthread
+            m
+            z
+            ${OpenCV_LIBRARIES})
+    else()
+        set(LIBRARIES
+            rt
+            dl
+            pthread
+            m
+            z
+            ${OpenCV_LIBRARIES})
+    endif()
 else()
     set(LIBRARIES ${OpenCV_LIBRARIES})
 endif()

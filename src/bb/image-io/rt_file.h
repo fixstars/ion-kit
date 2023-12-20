@@ -17,12 +17,10 @@
 #include "rt_common.h"
 #include "httplib.h"
 
-#ifdef __linux__
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
-#endif
 
-#ifdef __linux__
+
 extern "C" int ION_EXPORT ion_bb_image_io_color_data_loader(halide_buffer_t *session_id_buf, halide_buffer_t *url_buf, int32_t width, int32_t height, halide_buffer_t *out) {
 
     using namespace ion::bb::image_io;
@@ -128,7 +126,7 @@ extern "C" int ION_EXPORT ion_bb_image_io_saver(halide_buffer_t *in, int32_t in_
     return 0;
 }
 ION_REGISTER_EXTERN(ion_bb_image_io_saver);
-#endif
+
 
 namespace {
 

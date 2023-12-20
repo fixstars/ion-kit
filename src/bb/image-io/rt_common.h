@@ -154,7 +154,7 @@ std::tuple<std::string, std::string> parse_url(const std::string &url) {
     return std::tuple<std::string, std::string>(host_name, path_name);
 }
 
-#ifdef __linux__
+
 cv::Mat get_image(const std::string &url) {
     if (url.empty()) {
         return {};
@@ -291,7 +291,7 @@ class ImageSequence {
     int32_t idx_;
     std::vector<std::filesystem::path> paths_;
 };
-#endif // _WIN32
+
 
 struct rawHeader {
 
