@@ -302,13 +302,13 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
 
                         std::vector<Halide::Expr> es;
                         for (const auto& p : params) {
-                            es.push_back(Halide::Internal::Variable::make(port.type(), Halide::Internal::unique_name(port.name()), p));
+                            es.push_back(Halide::Internal::Variable::make(port.type(), argument_name(port.node_id(), port.name()), p));
                         }
                         bb->bind_input(arginfo.name, es);
                     } else {
                         std::vector<Halide::Expr> es;
                         for (const auto& p : port.params()) {
-                            es.push_back(Halide::Internal::Variable::make(port.type(), Halide::Internal::unique_name(port.name()), p));
+                            es.push_back(Halide::Internal::Variable::make(port.type(), argument_name(port.node_id(), port.name()), p));
                         }
                         bb->bind_input(arginfo.name, es);
                     }
@@ -329,9 +329,9 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
                     } else {
                         std::vector<Halide::Func> fs;
                         if (port.index() == -1) {
-                            fs.resize(1, Halide::ImageParam(port.type(), port.dimensions(), port.name()));
+                            fs.resize(1, Halide::ImageParam(port.type(), port.dimensions(), argument_name(port.node_id(), port.name())));
                         } else {
-                            fs.resize(port.index()+1, Halide::ImageParam(port.type(), port.dimensions(), port.name()));
+                            fs.resize(port.index()+1, Halide::ImageParam(port.type(), port.dimensions(), argument_name(port.node_id(), port.name())));
                         }
                         bb->bind_input(arginfo.name, fs);
                     }

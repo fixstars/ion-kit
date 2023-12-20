@@ -4,6 +4,7 @@
 #include "ion/node.h"
 #include "ion/param.h"
 #include "ion/port.h"
+#include "ion/util.h"
 
 #include "json/json.hpp"
 
@@ -58,9 +59,9 @@ class adl_serializer<ion::Port> {
          v.node_id() = j["node_id_"].get<std::string>();
          if (v.node_id().empty()) {
              if (v.index() == -1) {
-                 v.params() = { Halide::Internal::Parameter(v.type(), v.dimensions() != 0, v.dimensions(), v.name()) };
+                 v.params() = { Halide::Internal::Parameter(v.type(), v.dimensions() != 0, v.dimensions(), ion::argument_name(v.node_id(), v.name())) };
              } else {
-                 v.params() = std::vector<Halide::Internal::Parameter>(v.index()+1, Halide::Internal::Parameter{v.type(), v.dimensions() != 0, v.dimensions(), v.name()});
+                 v.params() = std::vector<Halide::Internal::Parameter>(v.index()+1, Halide::Internal::Parameter{v.type(), v.dimensions() != 0, v.dimensions(), ion::argument_name(v.node_id(), v.name())});
              }
          }
      }

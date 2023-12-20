@@ -64,16 +64,16 @@ public:
      * @arg v: Actual value to be mapped to the port.
      */
     template<typename T>
-    void set(Port p, T v) {
-        auto params(p.params());
-        auto i = p.index();
+    void set(Port port, T v) {
+        auto params(port.params());
+        auto i = port.index();
         if (i == -1) {
             params[0].set_scalar(v);
-            params_[(p.name())] = params;
+            params_[argument_name(port.node_id(), port.name())] = params;
         } else {
             params[i].set_scalar(v);
-            params_[(p.name())].resize(i+1);
-            params_[(p.name())][i] = params[i];
+            params_[argument_name(port.node_id(), port.name())].resize(i+1);
+            params_[argument_name(port.node_id(), port.name())][i] = params[i];
         }
         dirty_ = true;
     }
@@ -97,20 +97,20 @@ public:
      * Buffer dimension should be matched with port's one.
      */
     template<typename T>
-    void set(Port p, Halide::Buffer<T>& buf) {
-        if (p.is_bound()) {
+    void set(Port port, Halide::Buffer<T>& buf) {
+        if (port.is_bound()) {
             // This is just an output.
-            output_buffer_[std::make_tuple(p.node_id(), p.name(), p.index())] = { buf };
+            output_buffer_[std::make_tuple(port.node_id(), port.name(), port.index())] = { buf };
         } else {
-            auto params(p.params());
-            auto i = p.index();
+            auto params(port.params());
+            auto i = port.index();
             if (i == -1) {
                 params[0].set_buffer(buf);
-                params_[p.name()] = params;
+                params_[argument_name(port.node_id(), port.name())] = params;
             } else {
                 params[i].set_buffer(buf);
-                params_[p.name()].resize(i+1);
-                params_[p.name()][i] = params[i];
+                params_[argument_name(port.node_id(), port.name())].resize(i+1);
+                params_[argument_name(port.node_id(), port.name())][i] = params[i];
             }
         }
 
@@ -151,12 +151,12 @@ public:
     //     dirty_ = true;
     // }
 
-    bool is_mapped(const std::string& k) const {
-        return params_.count(k);
+    bool is_mapped(const std::string& n) const {
+        return params_.count(n);
     }
 
-    std::vector<Halide::Internal::Parameter> get_params(const std::string& k) const {
-        return params_.at(k);
+    std::vector<Halide::Internal::Parameter> get_params(const std::string& n) const {
+        return params_.at(n);
     }
 
     std::unordered_map<std::tuple<std::string, std::string, int>, std::vector<Halide::Buffer<>>> get_output_buffer() const {

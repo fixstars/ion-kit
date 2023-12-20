@@ -5,7 +5,7 @@
 
 namespace ion {
 
-std::string argument_name(const std::string& node_id, const std::string& port_key);
+std::string argument_name(const std::string& node_id, const std::string& port_name);
 
 std::string array_name(const std::string& port_key, size_t i);
 

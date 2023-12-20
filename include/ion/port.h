@@ -8,6 +8,8 @@
 
 #include <Halide.h>
 
+#include "util.h"
+
 namespace ion {
 
 /**
@@ -70,9 +72,9 @@ class Port {
 
      std::vector<Halide::Internal::Parameter>& params() {
          if (index() == -1) {
-             impl_->params.resize(1, Halide::Internal::Parameter{type(), dimensions() != 0, dimensions(), name()});
+             impl_->params.resize(1, Halide::Internal::Parameter{type(), dimensions() != 0, dimensions(), argument_name(node_id(), name())});
          } else {
-             impl_->params.resize(index()+1, Halide::Internal::Parameter{type(), dimensions() != 0, dimensions(), name()});
+             impl_->params.resize(index()+1, Halide::Internal::Parameter{type(), dimensions() != 0, dimensions(), argument_name(node_id(), name())});
          }
          return impl_->params;
      }
