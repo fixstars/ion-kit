@@ -23,6 +23,7 @@ int main()
                     {
                       "dimensions_": 0,
                       "key_": "output",
+                      "index_" : -1,
                       "node_id_": "1310589d-1448-4107-ac1d-67c32f482906",
                       "type_": {
                         "bits": 0,
@@ -33,6 +34,7 @@ int main()
                     {
                       "dimensions_": 0,
                       "key_": "min0",
+                      "index_" : -1,
                       "node_id_": "",
                       "type_": {
                         "bits": 32,
@@ -43,6 +45,7 @@ int main()
                     {
                       "dimensions_": 0,
                       "key_": "extent0",
+                      "index_" : -1,
                       "node_id_": "",
                       "type_": {
                         "bits": 32,
@@ -53,6 +56,7 @@ int main()
                     {
                       "dimensions_": 0,
                       "key_": "min1",
+                      "index_" : -1,
                       "node_id_": "",
                       "type_": {
                         "bits": 32,
@@ -63,6 +67,7 @@ int main()
                     {
                       "dimensions_": 0,
                       "key_": "extent1",
+                      "index_" : -1,
                       "node_id_": "",
                       "type_": {
                         "bits": 32,
@@ -73,6 +78,7 @@ int main()
                     {
                       "dimensions_": 0,
                       "key_": "v",
+                      "index_" : -1,
                       "node_id_": "",
                       "type_": {
                         "bits": 32,
