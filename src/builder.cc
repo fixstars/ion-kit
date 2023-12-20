@@ -216,7 +216,7 @@ bool is_dereferenced(const std::vector<Node>& nodes, const std::string node_id, 
         }
 
         for (const auto& port : node.ports()) {
-            if (port.key() == func_name) {
+            if (port.name() == func_name) {
                 return true;
             }
         }
@@ -265,18 +265,18 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
             // Unbounded parameter
             const auto& arginfo = arginfos[j];
             if (port.is_bound()) {
-                auto fs = bbs[port.node_id()]->output_func(port.key());
+                auto fs = bbs[port.node_id()]->output_func(port.name());
                 if (arginfo.kind == Halide::Internal::ArgInfoKind::Scalar) {
                     bb->bind_input(arginfo.name, fs);
                 } else if (arginfo.kind == Halide::Internal::ArgInfoKind::Function) {
-                    auto fs = bbs[port.node_id()]->output_func(port.key());
+                    auto fs = bbs[port.node_id()]->output_func(port.name());
                     // no specific index provided, direct output Port
                     if (index == -1) {
                         bb->bind_input(arginfo.name, fs);
                     } else {
                         // access to Port[index]
                         if (index>=fs.size()){
-                            throw std::runtime_error("Port index out of range: " + port.key());
+                            throw std::runtime_error("Port index out of range: " + port.name());
                         }
                         bb->bind_input(arginfo.name, {fs[index]});
                     }
@@ -285,9 +285,9 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
                 }
             } else {
                 if (arginfo.kind == Halide::Internal::ArgInfoKind::Scalar) {
-                    if (pm.is_mapped(port.key())) {
+                    if (pm.is_mapped(port.name())) {
                         // This block should be executed when g.run is called with appropriate PortMap.
-                        const auto& params(pm.get_params(port.key()));
+                        const auto& params(pm.get_params(port.name()));
 
                         // validation
                         // if (arginfo.types.size() != vs.size()) {
@@ -295,27 +295,27 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
                         // }
                         // for (auto i=0; i<vs.size(); ++i) {
                         //     if (arginfo.types[i] != vs[i].type()) {
-                        //         log::error("Type mismatch: BB {} expects {}, but port {} has {}", bb->name(), Halide::type_to_c_type(arginfo.types[i], false), port.key(), Halide::type_to_c_type(vs[i].type(), false));
+                        //         log::error("Type mismatch: BB {} expects {}, but port {} has {}", bb->name(), Halide::type_to_c_type(arginfo.types[i], false), port.name(), Halide::type_to_c_type(vs[i].type(), false));
                         //     }
                         // }
                         // validation
 
                         std::vector<Halide::Expr> es;
                         for (const auto& p : params) {
-                            es.push_back(Halide::Internal::Variable::make(port.type(), Halide::Internal::unique_name(port.key()), p));
+                            es.push_back(Halide::Internal::Variable::make(port.type(), Halide::Internal::unique_name(port.name()), p));
                         }
                         bb->bind_input(arginfo.name, es);
                     } else {
                         std::vector<Halide::Expr> es;
                         for (const auto& p : port.params()) {
-                            es.push_back(Halide::Internal::Variable::make(port.type(), Halide::Internal::unique_name(port.key()), p));
+                            es.push_back(Halide::Internal::Variable::make(port.type(), Halide::Internal::unique_name(port.name()), p));
                         }
                         bb->bind_input(arginfo.name, es);
                     }
                 } else if (arginfo.kind == Halide::Internal::ArgInfoKind::Function) {
-                    if (pm.is_mapped(port.key())) {
+                    if (pm.is_mapped(port.name())) {
                         // This block should be executed when g.run is called with appropriate PortMap.
-                        const auto& params(pm.get_params(port.key()));
+                        const auto& params(pm.get_params(port.name()));
 
                         std::vector<Halide::Func> fs;
                         for (const auto& p : params) {
@@ -329,9 +329,9 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
                     } else {
                         std::vector<Halide::Func> fs;
                         if (port.index() == -1) {
-                            fs.resize(1, Halide::ImageParam(port.type(), port.dimensions(), port.key()));
+                            fs.resize(1, Halide::ImageParam(port.type(), port.dimensions(), port.name()));
                         } else {
-                            fs.resize(port.index()+1, Halide::ImageParam(port.type(), port.dimensions(), port.key()));
+                            fs.resize(port.index()+1, Halide::ImageParam(port.type(), port.dimensions(), port.name()));
                         }
                         bb->bind_input(arginfo.name, fs);
                     }
@@ -354,7 +354,7 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
             for (const auto& port : n.ports()) {
                 auto node_id = port.node_id();
                 if (!node_id.empty()) {
-                    for (const auto &f : bbs[node_id]->output_func(port.key())) {
+                    for (const auto &f : bbs[node_id]->output_func(port.name())) {
                         dereferenced[node_id].emplace_back(f.name());
                     }
                 }

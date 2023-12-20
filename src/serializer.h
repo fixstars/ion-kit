@@ -43,7 +43,7 @@ template<>
 class adl_serializer<ion::Port> {
  public:
      static void to_json(json& j, const ion::Port& v) {
-         j["key_"] = v.key();
+         j["name_"] = v.name();
          j["type_"] = static_cast<halide_type_t>(v.type());
          j["dimensions_"] = v.dimensions();
          j["index_"] = v.index();
@@ -51,16 +51,16 @@ class adl_serializer<ion::Port> {
      }
 
      static void from_json(const json& j, ion::Port& v) {
-         v.key() = j["key_"].get<std::string>();
+         v.name() = j["name_"].get<std::string>();
          v.type() = j["type_"].get<halide_type_t>();
          v.dimensions() = j["dimensions_"];
          v.index() = j["index_"];
          v.node_id() = j["node_id_"].get<std::string>();
          if (v.node_id().empty()) {
              if (v.index() == -1) {
-                 v.params() = { Halide::Internal::Parameter(v.type(), v.dimensions() != 0, v.dimensions(), v.key()) };
+                 v.params() = { Halide::Internal::Parameter(v.type(), v.dimensions() != 0, v.dimensions(), v.name()) };
              } else {
-                 v.params() = std::vector<Halide::Internal::Parameter>(v.index()+1, Halide::Internal::Parameter{v.type(), v.dimensions() != 0, v.dimensions(), v.key()});
+                 v.params() = std::vector<Halide::Internal::Parameter>(v.index()+1, Halide::Internal::Parameter{v.type(), v.dimensions() != 0, v.dimensions(), v.name()});
              }
          }
      }

@@ -69,11 +69,11 @@ public:
         auto i = p.index();
         if (i == -1) {
             params[0].set_scalar(v);
-            params_[(p.key())] = params;
+            params_[(p.name())] = params;
         } else {
             params[i].set_scalar(v);
-            params_[(p.key())].resize(i+1);
-            params_[(p.key())][i] = params[i];
+            params_[(p.name())].resize(i+1);
+            params_[(p.name())][i] = params[i];
         }
         dirty_ = true;
     }
@@ -100,17 +100,17 @@ public:
     void set(Port p, Halide::Buffer<T>& buf) {
         if (p.is_bound()) {
             // This is just an output.
-            output_buffer_[std::make_tuple(p.node_id(), p.key(), p.index())] = { buf };
+            output_buffer_[std::make_tuple(p.node_id(), p.name(), p.index())] = { buf };
         } else {
             auto params(p.params());
             auto i = p.index();
             if (i == -1) {
                 params[0].set_buffer(buf);
-                params_[p.key()] = params;
+                params_[p.name()] = params;
             } else {
                 params[i].set_buffer(buf);
-                params_[p.key()].resize(i+1);
-                params_[p.key()][i] = params[i];
+                params_[p.name()].resize(i+1);
+                params_[p.name()][i] = params[i];
             }
         }
 
@@ -141,11 +141,11 @@ public:
     //         // This is just an output.
     //         for (size_t i=0; i<bufs.size(); ++i) {
     //             auto buf = bufs[i];
-    //             output_buffer_[std::make_tuple(p.node_id(), p.key(), p.index())].push_back(buf);
+    //             output_buffer_[std::make_tuple(p.node_id(), p.name(), p.index())].push_back(buf);
     //         }
     //     } else {
     //         throw std::invalid_argument(
-    //             "Unbounded port (" + p.key() + ") corresponding to an array of Inputs is not supported");
+    //             "Unbounded port (" + p.name() + ") corresponding to an array of Inputs is not supported");
     //     }
 
     //     dirty_ = true;

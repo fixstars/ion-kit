@@ -9,127 +9,137 @@ using namespace ion;
 
 int main()
 {
-    const char *file_name = "test.graph";
+    try {
+        const char *file_name = "test.graph";
 
-    {
-        std::string graph = R"(
-            {
-              "nodes": [
+        {
+            std::string graph = R"(
                 {
-                  "id": "dc4b82f0-497c-4f32-b210-3ad5cfd91143",
-                  "name": "test_consumer",
-                  "params": [],
-                  "ports": [
+                  "nodes": [
                     {
-                      "dimensions_": 0,
-                      "key_": "output",
-                      "index_" : -1,
-                      "node_id_": "1310589d-1448-4107-ac1d-67c32f482906",
-                      "type_": {
-                        "bits": 0,
-                        "code": 3,
-                        "lanes": 0
-                      }
+                      "id": "dc4b82f0-497c-4f32-b210-3ad5cfd91143",
+                      "name": "test_consumer",
+                      "params": [],
+                      "ports": [
+                        {
+                          "dimensions_": 0,
+                          "name_": "output",
+                          "index_" : -1,
+                          "node_id_": "1310589d-1448-4107-ac1d-67c32f482906",
+                          "type_": {
+                            "bits": 0,
+                            "code": 3,
+                            "lanes": 0
+                          }
+                        },
+                        {
+                          "dimensions_": 0,
+                          "name_": "min0",
+                          "index_" : -1,
+                          "node_id_": "",
+                          "type_": {
+                            "bits": 32,
+                            "code": 0,
+                            "lanes": 1
+                          }
+                        },
+                        {
+                          "dimensions_": 0,
+                          "name_": "extent0",
+                          "index_" : -1,
+                          "node_id_": "",
+                          "type_": {
+                            "bits": 32,
+                            "code": 0,
+                            "lanes": 1
+                          }
+                        },
+                        {
+                          "dimensions_": 0,
+                          "name_": "min1",
+                          "index_" : -1,
+                          "node_id_": "",
+                          "type_": {
+                            "bits": 32,
+                            "code": 0,
+                            "lanes": 1
+                          }
+                        },
+                        {
+                          "dimensions_": 0,
+                          "name_": "extent1",
+                          "index_" : -1,
+                          "node_id_": "",
+                          "type_": {
+                            "bits": 32,
+                            "code": 0,
+                            "lanes": 1
+                          }
+                        },
+                        {
+                          "dimensions_": 0,
+                          "name_": "v",
+                          "index_" : -1,
+                          "node_id_": "",
+                          "type_": {
+                            "bits": 32,
+                            "code": 0,
+                            "lanes": 1
+                          }
+                        }
+                      ],
+                      "target": "host"
                     },
                     {
-                      "dimensions_": 0,
-                      "key_": "min0",
-                      "index_" : -1,
-                      "node_id_": "",
-                      "type_": {
-                        "bits": 32,
-                        "code": 0,
-                        "lanes": 1
-                      }
-                    },
-                    {
-                      "dimensions_": 0,
-                      "key_": "extent0",
-                      "index_" : -1,
-                      "node_id_": "",
-                      "type_": {
-                        "bits": 32,
-                        "code": 0,
-                        "lanes": 1
-                      }
-                    },
-                    {
-                      "dimensions_": 0,
-                      "key_": "min1",
-                      "index_" : -1,
-                      "node_id_": "",
-                      "type_": {
-                        "bits": 32,
-                        "code": 0,
-                        "lanes": 1
-                      }
-                    },
-                    {
-                      "dimensions_": 0,
-                      "key_": "extent1",
-                      "index_" : -1,
-                      "node_id_": "",
-                      "type_": {
-                        "bits": 32,
-                        "code": 0,
-                        "lanes": 1
-                      }
-                    },
-                    {
-                      "dimensions_": 0,
-                      "key_": "v",
-                      "index_" : -1,
-                      "node_id_": "",
-                      "type_": {
-                        "bits": 32,
-                        "code": 0,
-                        "lanes": 1
-                      }
+                      "id": "1310589d-1448-4107-ac1d-67c32f482906",
+                      "name": "test_producer",
+                      "params": [],
+                      "ports": [],
+                      "target": "host"
                     }
                   ],
                   "target": "host"
-                },
-                {
-                  "id": "1310589d-1448-4107-ac1d-67c32f482906",
-                  "name": "test_producer",
-                  "params": [],
-                  "ports": [],
-                  "target": "host"
                 }
-              ],
-              "target": "host"
-            }
-            )";
-        std::ofstream ofs(file_name);
-        ofs << graph;
-    }
-
-    Halide::Type t = Halide::type_of<int32_t>();
-    Port min0{"min0", t}, extent0{"extent0", t}, min1{"min1", t}, extent1{"extent1", t}, v{"v", t};
-
-    Builder b;
-
-    b.set_target(Halide::get_host_target());
-
-    b.with_bb_module("ion-bb-test");
-
-    b.load(file_name);
-
-    PortMap pm;
-    pm.set(min0, 0);
-    pm.set(extent0, 2);
-    pm.set(min1, 0);
-    pm.set(extent1, 2);
-    pm.set(v, 1);
-
-    Halide::Buffer<int32_t> r = Halide::Buffer<int32_t>::make_scalar();
-    for (auto& n : b.nodes()) {
-        if (n.name() == "test_consumer") {
-            pm.set(n["output"], r);
-            break;
+                )";
+            std::ofstream ofs(file_name);
+            ofs << graph;
         }
+
+        Halide::Type t = Halide::type_of<int32_t>();
+        Port min0{"min0", t}, extent0{"extent0", t}, min1{"min1", t}, extent1{"extent1", t}, v{"v", t};
+
+        Builder b;
+
+        b.set_target(Halide::get_host_target());
+
+        b.with_bb_module("ion-bb-test");
+
+        b.load(file_name);
+
+        PortMap pm;
+        pm.set(min0, 0);
+        pm.set(extent0, 2);
+        pm.set(min1, 0);
+        pm.set(extent1, 2);
+        pm.set(v, 1);
+
+        Halide::Buffer<int32_t> r = Halide::Buffer<int32_t>::make_scalar();
+        for (auto& n : b.nodes()) {
+            if (n.name() == "test_consumer") {
+                pm.set(n["output"], r);
+                break;
+            }
+        }
+
+        b.run(pm);
+    } catch (const Halide::Error &e) {
+        std::cerr << e.what() << std::endl;
+        return 1;
+    } catch (const std::exception &e) {
+        std::cerr << e.what() << std::endl;
+        return 1;
     }
 
-    b.run(pm);
+
     return 0;
 }

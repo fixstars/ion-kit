@@ -14,19 +14,32 @@ namespace ion {
  * Port class is used to create dynamic i/o for each node.
  */
 class Port {
+
+    struct Port_ {
+        std::string name;
+        Halide::Type type;
+        int32_t dimensions;
+        int32_t index;
+        std::string node_id;
+        std::vector<Halide::Internal::Parameter> params;
+
+        Port_() : name(), type(), dimensions(0), index(-1), node_id(), params() {}
+    };
+
  public:
      friend class Node;
 
-     Port()
-         : key_(), type_(), dimensions_(0), index_(-1), node_id_() {}
+     Port() : impl_(new Port_) {};
 
      /**
       * Construct new port for scalar value.
       * @arg k: The key of the port which should be matched with BuildingBlock Input/Output name.
       * @arg t: The type of the value.
       */
-     Port(const std::string& k, Halide::Type t)
-         : key_(k), type_(t), dimensions_(0), index_(-1), node_id_() {}
+     Port(const std::string& n, Halide::Type t) : impl_(new Port_) {
+         impl_->name = n;
+         impl_->type = t;
+     }
 
      /**
       * Construct new port for vector value.
@@ -34,47 +47,50 @@ class Port {
       * @arg t: The type of the element value.
       * @arg d: The dimension of the port. The range is 1 to 4.
       */
-     Port(const std::string& k, Halide::Type t, int32_t d)
-         : key_(k), type_(t), dimensions_(d), index_(-1), node_id_() {}
+     Port(const std::string& n, Halide::Type t, int32_t d) : impl_(new Port_) {
+        impl_->name = n;
+        impl_->type = t;
+        impl_->dimensions = d;
+     }
 
-     std::string key() const { return key_; }
-     std::string& key() { return key_; }
+     std::string name() const { return impl_->name; }
+     std::string& name() { return impl_->name; }
 
-     Halide::Type type() const { return type_; }
-     Halide::Type& type() { return type_; }
+     Halide::Type type() const { return impl_->type; }
+     Halide::Type& type() { return impl_->type; }
 
-     int32_t dimensions() const { return dimensions_; }
-     int32_t& dimensions() { return dimensions_; }
+     int32_t dimensions() const { return impl_->dimensions; }
+     int32_t& dimensions() { return impl_->dimensions; }
 
-     int32_t index() const { return index_; }
-     int32_t& index() { return index_; }
+     int32_t index() const { return impl_->index; }
+     int32_t& index() { return impl_->index; }
 
-     std::string node_id() const { return node_id_; }
-     std::string& node_id() { return node_id_; }
+     std::string node_id() const { return impl_->node_id; }
+     std::string& node_id() { return impl_->node_id; }
 
      std::vector<Halide::Internal::Parameter>& params() {
-         if (index_ == -1) {
-             params_.resize(1, Halide::Internal::Parameter{type_, dimensions_ != 0, dimensions_, key_});
+         if (index() == -1) {
+             impl_->params.resize(1, Halide::Internal::Parameter{type(), dimensions() != 0, dimensions(), name()});
          } else {
-             params_.resize(index_+1, Halide::Internal::Parameter{type_, dimensions_ != 0, dimensions_, key_});
+             impl_->params.resize(index()+1, Halide::Internal::Parameter{type(), dimensions() != 0, dimensions(), name()});
          }
-         return params_;
+         return impl_->params;
      }
 
      bool is_bound() const {
-         return !node_id_.empty();
+         return !node_id().empty();
      }
 
 
-     void set_index(int idx) {
-         this->index_ = idx;
+     void set_index(int index) {
+         impl_->index = index;
      }
 
     /**
      * Overloaded operator to set the port index and return a reference to the current port. eg. port[0]
      */
-     Port operator[](int idx) {
-         this->set_index(idx);
+     Port operator[](int index) {
+         set_index(index);
          return *this;
      }
 
@@ -82,15 +98,12 @@ private:
     /**
      * This port is bound with some node.
      */
-     Port(const std::string& k, const std::string& ni) : key_(k), type_(), index_(-1), dimensions_(0), node_id_(ni) {}
+     Port(const std::string& n, const std::string& ni) : impl_(new Port_) {
+         impl_->name = n;
+         impl_->node_id = ni;
+     }
 
-     std::string key_;
-     Halide::Type type_;
-     int32_t dimensions_;
-     int32_t index_;
-     std::string node_id_;
-
-     std::vector<Halide::Internal::Parameter> params_;
+     std::shared_ptr<Port_> impl_;
 };
 
 } // namespace ion

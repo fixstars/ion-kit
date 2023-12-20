@@ -74,11 +74,12 @@ int main(int argc, char *argv[]) {
         b.run(pm);
         display_image_float(out_buf, "display.png");
         std::cout << "Success" << std::endl;
+    } catch (const Halide::Error &e) {
+        std::cerr << e.what() << std::endl;
+        return 1;
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
-        return -1;
-    } catch (...) {
-        return -1;
+        return 1;
     }
 
     return 0;
