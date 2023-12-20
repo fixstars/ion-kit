@@ -16,16 +16,16 @@ namespace ion {
  * Node class is used to manage node which consists graph structure.
  */
 class Node {
-    struct Node_ {
+    struct Impl {
         std::string id;
         std::string name;
         Halide::Target target;
         std::vector<Param> params;
         std::vector<Port> ports;
 
-        Node_(): id(), name(), target(), params(), ports() {}
+        Impl(): id(), name(), target(), params(), ports() {}
 
-        Node_(const std::string& id_, const std::string& name_, const Halide::Target& target_)
+        Impl(const std::string& id_, const std::string& name_, const Halide::Target& target_)
             : id(id_), name(name_), target(target_), params(), ports() {
         }
     };
@@ -33,7 +33,7 @@ class Node {
 public:
     friend class Builder;
 
-    Node() : impl_(new Node_) {};
+    Node() : impl_(new Impl) {};
 
     /**
      * Set the target of the node.
@@ -133,11 +133,11 @@ public:
 
 private:
     Node(const std::string& id, const std::string& name, const Halide::Target& target)
-        : impl_(new Node_{id, name, target})
+        : impl_(new Impl{id, name, target})
     {
     }
 
-    std::shared_ptr<Node_> impl_;
+    std::shared_ptr<Impl> impl_;
 };
 
 } // namespace ion

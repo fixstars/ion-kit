@@ -9,7 +9,6 @@
 #include "json/json.hpp"
 
 namespace nlohmann {
-
 template <>
 class adl_serializer<halide_type_t> {
 public:
@@ -49,21 +48,16 @@ class adl_serializer<ion::Port> {
          j["dimensions_"] = v.dimensions();
          j["index_"] = v.index();
          j["node_id_"] = v.node_id();
+         j["impl_"] = reinterpret_cast<uintptr_t>(v.impl_.get());
      }
 
      static void from_json(const json& j, ion::Port& v) {
+         v = ion::Port(ion::Port::find_impl(j["impl_"].get<uintptr_t>()));
          v.name() = j["name_"].get<std::string>();
          v.type() = j["type_"].get<halide_type_t>();
          v.dimensions() = j["dimensions_"];
          v.index() = j["index_"];
          v.node_id() = j["node_id_"].get<std::string>();
-         if (v.node_id().empty()) {
-             if (v.index() == -1) {
-                 v.params() = { Halide::Internal::Parameter(v.type(), v.dimensions() != 0, v.dimensions(), ion::argument_name(v.node_id(), v.name())) };
-             } else {
-                 v.params() = std::vector<Halide::Internal::Parameter>(v.index()+1, Halide::Internal::Parameter{v.type(), v.dimensions() != 0, v.dimensions(), ion::argument_name(v.node_id(), v.name())});
-             }
-         }
      }
 };
 

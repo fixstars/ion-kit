@@ -2,11 +2,14 @@
 #define ION_PORT_H
 
 #include <functional>
+#include <mutex>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
 #include <Halide.h>
+
+#include "json/json.hpp"
 
 #include "util.h"
 
@@ -17,7 +20,7 @@ namespace ion {
  */
 class Port {
 
-    struct Port_ {
+    struct Impl {
         std::string name;
         Halide::Type type;
         int32_t dimensions;
@@ -25,20 +28,22 @@ class Port {
         std::string node_id;
         std::vector<Halide::Internal::Parameter> params;
 
-        Port_() : name(), type(), dimensions(0), index(-1), node_id(), params() {}
+        Impl() : name(), type(), dimensions(0), index(-1), node_id(), params() {}
     };
 
  public:
      friend class Node;
+     friend class nlohmann::adl_serializer<Port>;
 
-     Port() : impl_(new Port_) {};
+     Port() : impl_(new Impl) {};
+     Port(const std::shared_ptr<Impl>& impl) : impl_(impl) {};
 
      /**
       * Construct new port for scalar value.
       * @arg k: The key of the port which should be matched with BuildingBlock Input/Output name.
       * @arg t: The type of the value.
       */
-     Port(const std::string& n, Halide::Type t) : impl_(new Port_) {
+     Port(const std::string& n, Halide::Type t) : impl_(new Impl) {
          impl_->name = n;
          impl_->type = t;
      }
@@ -49,7 +54,7 @@ class Port {
       * @arg t: The type of the element value.
       * @arg d: The dimension of the port. The range is 1 to 4.
       */
-     Port(const std::string& n, Halide::Type t, int32_t d) : impl_(new Port_) {
+     Port(const std::string& n, Halide::Type t, int32_t d) : impl_(new Impl) {
         impl_->name = n;
         impl_->type = t;
         impl_->dimensions = d;
@@ -96,16 +101,26 @@ class Port {
          return *this;
      }
 
+     static std::shared_ptr<Impl> find_impl(uintptr_t ptr) {
+         static std::unordered_map<uintptr_t, std::shared_ptr<Impl>> impls;
+         static std::mutex mutex;
+         std::scoped_lock lock(mutex);
+         if (!impls.count(ptr)) {
+             impls[ptr] = std::make_shared<Impl>();
+         }
+         return impls[ptr];
+     }
+
 private:
     /**
      * This port is bound with some node.
      */
-     Port(const std::string& n, const std::string& ni) : impl_(new Port_) {
+     Port(const std::string& n, const std::string& ni) : impl_(new Impl) {
          impl_->name = n;
          impl_->node_id = ni;
      }
 
-     std::shared_ptr<Port_> impl_;
+     std::shared_ptr<Impl> impl_;
 };
 
 } // namespace ion
