@@ -33,10 +33,10 @@ class Node:
         if self.obj: # check not nullptr
             ion_node_destroy(self.obj)
 
-    def get_port(self, key: str) -> Port:
+    def get_port(self, name: str) -> Port:
         c_port = c_ion_port_t()
 
-        ret = ion_node_get_port(self.obj, key.encode(), ctypes.byref(c_port))
+        ret = ion_node_get_port(self.obj, name.encode(), ctypes.byref(c_port))
         if ret != 0:
             raise Exception('Invalid operation')
 

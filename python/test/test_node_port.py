@@ -4,7 +4,7 @@ from ionpy import Node, Port, Type, TypeCode
 def test_node_port():
     t = Type(code_=TypeCode.Int, bits_=32, lanes_=1)
 
-    port_to_set = Port(key='iamkey', type=t, dim=3)
+    port_to_set = Port(name='iamkey', type=t, dim=3)
 
     ports = [ port_to_set, ]
 

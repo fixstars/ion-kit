@@ -20,8 +20,8 @@ def test_pipeline():
     builder.with_bb_module(path='ion-bb')
 
     node = builder.add('image_io_cameraN').set_param(params=[width, height, urls])
-    node1 = builder.add("base_normalize_3d_uint8").set_port(ports=[node.get_port(key='output')[0], ]);
-    node2 = builder.add("base_normalize_3d_uint8").set_port(ports=[node.get_port(key='output')[1], ]);
+    node1 = builder.add("base_normalize_3d_uint8").set_port(ports=[node.get_port(name='output')[0], ]);
+    node2 = builder.add("base_normalize_3d_uint8").set_port(ports=[node.get_port(name='output')[1], ]);
 
     port_map = PortMap()
 
@@ -36,8 +36,8 @@ def test_pipeline():
     obuf1.write(data=odata_bytes1)
     obuf2.write(data=odata_bytes2)
 
-    port_map.set_buffer(port=node1.get_port(key='output'), buffer=obuf1)
-    port_map.set_buffer(port=node2.get_port(key='output'), buffer=obuf2)
+    port_map.set_buffer(port=node1.get_port(name='output'), buffer=obuf1)
+    port_map.set_buffer(port=node2.get_port(name='output'), buffer=obuf2)
 
     builder.run(port_map=port_map)
 

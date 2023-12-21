@@ -18,7 +18,6 @@ function(ion_compile NAME)
     # Build compile
     add_executable(${NAME} ${IEC_SRCS})
     if(UNIX)
-        target_compile_options(${NAME} PUBLIC -fno-rtti)  # For Halide::Generator
         target_link_options(${NAME} PUBLIC -Wl,--export-dynamic) # For JIT compiling
     endif()
     target_include_directories(${NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include")
