@@ -25,7 +25,11 @@ int main()
         ion::Buffer<int32_t> r = ion::Buffer<int32_t>::make_scalar();
         pm.set(n["output"], r);
 
-        b.run(pm);
+        for (int i=0; i<5; ++i) {
+            std::cout << i << "'th loop" << std::endl;
+            b.run(pm);
+        }
+
     } catch (Halide::Error& e) {
         std::cerr << e.what() << std::endl;
         return 1;

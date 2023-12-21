@@ -1,3 +1,6 @@
+#ifndef FMT_CONSTEVAL
+#define FMT_CONSTEVAL // To prevent format string is evaluated as constexpr
+#endif
 #include "spdlog/cfg/helpers.h"
 #include "spdlog/details/os.h"
 #include "spdlog/sinks/stdout_color_sinks.h"

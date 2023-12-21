@@ -38,11 +38,13 @@ public:
         Func in;
         in(x, y) = input(x, y);
         in.compute_root();
-        std::vector<ExternFuncArgument> params{in, desired_min0, desired_extent0, desired_min1, desired_extent1, v};
+        std::vector<ExternFuncArgument> params{in, get_id(), desired_min0, desired_extent0, desired_min1, desired_extent1, v};
         Func consume;
         consume.define_extern("consume", params, Int(32), 0);
         consume.compute_root();
         output() = consume();
+
+        register_disposer("consume_dispose");
     }
 
     void schedule() {
