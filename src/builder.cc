@@ -361,7 +361,12 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
                     for (const auto& p : port.params()) {
                         auto b(p.buffer());
                         Halide::Func f;
-                        f(Halide::_) = b(Halide::_);
+                        if (b.defined()) {
+                            f(Halide::_) = b(Halide::_);
+                        } else {
+                            // TODO: Its' enough to pass ImageParam for any case?
+                            f = Halide::ImageParam(port.type(), port.dimensions(), argument_name(port.node_id(), port.name()));
+                        }
                         fs.push_back(f);
                     }
                     bb->bind_input(arginfo.name, fs);
