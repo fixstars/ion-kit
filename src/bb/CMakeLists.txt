@@ -33,11 +33,10 @@ add_library(ion-bb SHARED bb.cc)
 target_include_directories(ion-bb PUBLIC ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR} ${ION_BB_INCLUDE_DIRS})
 target_link_libraries(ion-bb PUBLIC ion-core ${ION_BB_LIBRARIES})
 if(UNIX)
-    target_compile_options(ion-bb
-        PUBLIC -fno-rtti  # For Halide::Generator
-        PUBLIC -rdynamic) # For JIT compiling
+    target_compile_options(ion-bb PUBLIC -fno-rtti)  # For Halide::Generator
+    target_link_options(ion-bb PUBLIC -Wl,--export-dynamic) # For JIT compiling
 elseif(MSVC)
-    target_compile_options(ion-bb 
+    target_compile_options(ion-bb
         PUBLIC /bigobj)
 endif()
 

@@ -83,6 +83,15 @@ Builder::Builder()
 {
 }
 
+Builder::~Builder()
+{
+    for (auto kv : disposers_) {
+        auto bb_id(std::get<0>(kv));
+        auto disposer(std::get<1>(kv));
+        disposer(bb_id.c_str());
+    }
+}
+
 Node Builder::add(const std::string& k)
 {
     Node n(sole::uuid4().str(), k, target_);
@@ -247,6 +256,8 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
 
         auto bb(Halide::Internal::GeneratorRegistry::create(n.name(), Halide::GeneratorContext(n.target())));
         Halide::GeneratorParamsMap params;
+        params["builder_ptr"] = std::to_string(reinterpret_cast<uint64_t>(this));
+        params["bb_id"] = n.id();
         for (const auto& p : n.params()) {
             params[p.key()] = p.val();
         }
@@ -389,6 +400,17 @@ std::string Builder::bb_metadata(void) {
     json j(md);
 
     return j.dump();
+}
+
+void Builder::register_disposer(const std::string& bb_id, const std::string& disposer_symbol) {
+    log::info("Builder::register_disposer");
+    for (const auto& kv : bb_modules_) {
+        const auto& dm(kv.second);
+        auto disposer_ptr = dm->get_symbol<void (*)(const char*)>(disposer_symbol);
+        if (disposer_ptr) {
+            disposers_.push_back(std::make_tuple(bb_id, disposer_ptr));
+        }
+    }
 }
 
 } //namespace ion

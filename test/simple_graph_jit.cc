@@ -9,7 +9,7 @@ int main()
     Param v41{"v", "41"};
     Builder b;
     b.with_bb_module("ion-bb-test");
-    b.set_target(Halide::get_host_target().with_feature(Halide::Target::Debug).with_feature(Halide::Target::TracePipeline));
+    b.set_target(Halide::get_host_target());
     Node n;
     n = b.add("test_producer").set_param(v41);
     n = b.add("test_consumer")(n["output"], min0, extent0, min1, extent1, v);
@@ -24,7 +24,10 @@ int main()
     ion::Buffer<int32_t> r = ion::Buffer<int32_t>::make_scalar();
     pm.set(n["output"], r);
 
-    b.run(pm);
+    for (int i=0; i<5; ++i) {
+        std::cout << i << "'th loop" << std::endl;
+        b.run(pm);
+    }
 
     return 0;
 }
