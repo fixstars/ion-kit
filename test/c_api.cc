@@ -114,6 +114,7 @@ int main()
             if (ret != 0)
                 return ret;
 
+
             ret = ion_port_destroy(extent1);
             if (ret != 0)
                 return ret;

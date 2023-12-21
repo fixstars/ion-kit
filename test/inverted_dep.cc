@@ -22,72 +22,78 @@ int main()
                       "params": [],
                       "ports": [
                         {
-                          "dimensions_": 0,
-                          "name_": "output",
-                          "index_" : -1,
-                          "node_id_": "1310589d-1448-4107-ac1d-67c32f482906",
-                          "impl_": 1,
-                          "type_": {
+                          "dimensions": 0,
+                          "name": "output",
+                          "index" : -1,
+                          "node_id": "1310589d-1448-4107-ac1d-67c32f482906",
+                          "array_size": 1,
+                          "impl": 1,
+                          "type": {
                             "bits": 0,
                             "code": 3,
                             "lanes": 0
                           }
                         },
                         {
-                          "dimensions_": 0,
-                          "name_": "min0",
-                          "index_" : -1,
-                          "node_id_": "",
-                          "impl_": 2,
-                          "type_": {
+                          "dimensions": 0,
+                          "name": "min0",
+                          "index" : -1,
+                          "node_id": "",
+                          "array_size": 1,
+                          "impl": 2,
+                          "type": {
                             "bits": 32,
                             "code": 0,
                             "lanes": 1
                           }
                         },
                         {
-                          "dimensions_": 0,
-                          "name_": "extent0",
-                          "index_" : -1,
-                          "node_id_": "",
-                          "impl_": 3,
-                          "type_": {
+                          "dimensions": 0,
+                          "name": "extent0",
+                          "index" : -1,
+                          "node_id": "",
+                          "array_size": 1,
+                          "impl": 3,
+                          "type": {
                             "bits": 32,
                             "code": 0,
                             "lanes": 1
                           }
                         },
                         {
-                          "dimensions_": 0,
-                          "name_": "min1",
-                          "index_" : -1,
-                          "node_id_": "",
-                          "impl_": 5,
-                          "type_": {
+                          "dimensions": 0,
+                          "name": "min1",
+                          "index" : -1,
+                          "node_id": "",
+                          "array_size": 1,
+                          "impl": 5,
+                          "type": {
                             "bits": 32,
                             "code": 0,
                             "lanes": 1
                           }
                         },
                         {
-                          "dimensions_": 0,
-                          "name_": "extent1",
-                          "index_" : -1,
-                          "node_id_": "",
-                          "impl_": 6,
-                          "type_": {
+                          "dimensions": 0,
+                          "name": "extent1",
+                          "index" : -1,
+                          "node_id": "",
+                          "array_size": 1,
+                          "impl": 6,
+                          "type": {
                             "bits": 32,
                             "code": 0,
                             "lanes": 1
                           }
                         },
                         {
-                          "dimensions_": 0,
-                          "name_": "v",
-                          "index_" : -1,
-                          "node_id_": "",
-                          "impl_": 7,
-                          "type_": {
+                          "dimensions": 0,
+                          "name": "v",
+                          "index" : -1,
+                          "node_id": "",
+                          "array_size": 1,
+                          "impl": 7,
+                          "type": {
                             "bits": 32,
                             "code": 0,
                             "lanes": 1

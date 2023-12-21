@@ -27,25 +27,26 @@ class Port {
         std::string node_id;
         std::vector<Halide::Internal::Parameter> params;
 
-        Impl() : name(), type(), dimensions(0), node_id(), params() {}
+        Impl() {}
+
+        Impl(const std::string& n, const Halide::Type& t, int32_t d, const std::string& nid)
+            : name(n), type(t), dimensions(d), node_id(nid), params({ Halide::Internal::Parameter(type, dimensions != 0, dimensions, argument_name(node_id, name)) })
+        {}
     };
 
  public:
      friend class Node;
      friend class nlohmann::adl_serializer<Port>;
 
-     Port() : impl_(new Impl), index_(-1) {};
-     Port(const std::shared_ptr<Impl>& impl) : impl_(impl), index_(-1) {};
+     Port() : impl_(new Impl("", Halide::Type(), 0, "")), index_(-1) {}
+     Port(const std::shared_ptr<Impl>& impl) : impl_(impl), index_(-1) {}
 
      /**
       * Construct new port for scalar value.
       * @arg k: The key of the port which should be matched with BuildingBlock Input/Output name.
       * @arg t: The type of the value.
       */
-     Port(const std::string& n, Halide::Type t) : impl_(new Impl), index_(-1) {
-         impl_->name = n;
-         impl_->type = t;
-     }
+     Port(const std::string& n, Halide::Type t) : impl_(new Impl(n, t, 0, "")), index_(-1) {}
 
      /**
       * Construct new port for vector value.
@@ -53,11 +54,7 @@ class Port {
       * @arg t: The type of the element value.
       * @arg d: The dimension of the port. The range is 1 to 4.
       */
-     Port(const std::string& n, Halide::Type t, int32_t d) : impl_(new Impl), index_(-1) {
-        impl_->name = n;
-        impl_->type = t;
-        impl_->dimensions = d;
-     }
+     Port(const std::string& n, Halide::Type t, int32_t d) : impl_(new Impl(n, t, d, "")), index_(-1) {}
 
      const std::string& name() const { return impl_->name; }
      std::string& name() { return impl_->name; }
@@ -97,21 +94,24 @@ class Port {
      template<typename T>
      void bind(T v) {
          auto i = index_ == -1 ? 0 : index_;
-         impl_->params.resize(i+1, Halide::Internal::Parameter{type(), dimensions() != 0, dimensions(), argument_name(node_id(), name())});
+         impl_->params.resize(i+1);
+         impl_->params[i] = Halide::Internal::Parameter{type(), dimensions() != 0, dimensions(), argument_name(node_id(), name())};
          impl_->params[i].set_scalar(v);
      }
 
      template<typename T>
      void bind(const Halide::Buffer<T>& buf) {
          auto i = index_ == -1 ? 0 : index_;
-         impl_->params.resize(i+1, Halide::Internal::Parameter{type(), dimensions() != 0, dimensions(), argument_name(node_id(), name())});
+         impl_->params.resize(i+1);
+         impl_->params[i] = Halide::Internal::Parameter{type(), dimensions() != 0, dimensions(), argument_name(node_id(), name())};
          impl_->params[i].set_buffer(buf);
      }
 
      template<typename T>
      void bind(const std::vector<Halide::Buffer<T>>& bufs) {
-         impl_->params.resize(bufs.size(), Halide::Internal::Parameter{type(), dimensions() != 0, dimensions(), argument_name(node_id(), name())});
+         impl_->params.resize(bufs.size());
          for (size_t i=0; i<bufs.size(); ++i) {
+             impl_->params[i] = Halide::Internal::Parameter{type(), dimensions() != 0, dimensions(), argument_name(node_id(), name())};
              impl_->params[i].set_buffer(bufs[i]);
          }
      }
@@ -130,10 +130,7 @@ private:
     /**
      * This port is bound with some node.
      */
-     Port(const std::string& n, const std::string& ni) : impl_(new Impl), index_(-1) {
-         impl_->name = n;
-         impl_->node_id = ni;
-     }
+     Port(const std::string& n, const std::string& nid) : impl_(new Impl(n, Halide::Type(), 0, nid)), index_(-1) {}
 
      std::shared_ptr<Impl> impl_;
 
