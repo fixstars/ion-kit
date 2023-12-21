@@ -65,16 +65,13 @@ public:
      */
     template<typename T>
     void set(Port port, T v) {
-        auto params(port.params());
+        auto& params(port.params());
         auto i = port.index();
-        if (i == -1) {
-            params[0].set_scalar(v);
-            params_[argument_name(port.node_id(), port.name())] = params;
-        } else {
-            params[i].set_scalar(v);
-            params_[argument_name(port.node_id(), port.name())].resize(i+1);
-            params_[argument_name(port.node_id(), port.name())][i] = params[i];
-        }
+        params.resize(i+1, Halide::Internal::Parameter{port.type(), port.dimensions() != 0, port.dimensions(), argument_name(port.node_id(), port.name())});
+        params[i].set_scalar(v);
+        params_[argument_name(port.node_id(), port.name())].resize(i+1);
+        params_[argument_name(port.node_id(), port.name())][i] = params[i];
+
         dirty_ = true;
     }
 
@@ -102,16 +99,12 @@ public:
             // This is just an output.
             output_buffer_[std::make_tuple(port.node_id(), port.name(), port.index())] = { buf };
         } else {
-            auto params(port.params());
+            auto& params(port.params());
             auto i = port.index();
-            if (i == -1) {
-                params[0].set_buffer(buf);
-                params_[argument_name(port.node_id(), port.name())] = params;
-            } else {
-                params[i].set_buffer(buf);
-                params_[argument_name(port.node_id(), port.name())].resize(i+1);
-                params_[argument_name(port.node_id(), port.name())][i] = params[i];
-            }
+            params.resize(i+1, Halide::Internal::Parameter{port.type(), port.dimensions() != 0, port.dimensions(), argument_name(port.node_id(), port.name())});
+            params[i].set_buffer(buf);
+            params_[argument_name(port.node_id(), port.name())].resize(i+1);
+            params_[argument_name(port.node_id(), port.name())][i] = params[i];
         }
 
         dirty_ = true;
@@ -135,21 +128,25 @@ public:
      * @arg bufs: Actual value to be mapped to the port.
      * Buffer dimension should be matched with port's one.
      */
-    // template<typename T>
-    // void set(Port p, const std::vector<Halide::Buffer<T>> &bufs) {
-    //     if (p.is_bound()) {
-    //         // This is just an output.
-    //         for (size_t i=0; i<bufs.size(); ++i) {
-    //             auto buf = bufs[i];
-    //             output_buffer_[std::make_tuple(p.node_id(), p.name(), p.index())].push_back(buf);
-    //         }
-    //     } else {
-    //         throw std::invalid_argument(
-    //             "Unbounded port (" + p.name() + ") corresponding to an array of Inputs is not supported");
-    //     }
+    template<typename T>
+    void set(Port port, const std::vector<Halide::Buffer<T>> &bufs) {
+        if (port.is_bound()) {
+            // This is just an output.
+            for (auto buf : bufs) {
+                output_buffer_[std::make_tuple(port.node_id(), port.name(), port.index())].push_back(buf);
+            }
+        } else {
+            auto& params(port.params());
+            params.resize(bufs.size(), Halide::Internal::Parameter{port.type(), port.dimensions() != 0, port.dimensions(), argument_name(port.node_id(), port.name())});
+            for (size_t i=0; i<bufs.size(); ++i) {
+                params[i].set_buffer(bufs[i]);
+            }
+            params_[argument_name(port.node_id(), port.name())] = params;
 
-    //     dirty_ = true;
-    // }
+        }
+
+        dirty_ = true;
+    }
 
     bool is_mapped(const std::string& n) const {
         return params_.count(n);

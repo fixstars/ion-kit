@@ -19,7 +19,8 @@ int main()
             if (ret != 0)
                 return ret;
 
-            ret = ion_port_index_access(p, 1);
+            ion_port_t p2;
+            ret = ion_port_create_with_index(&p2, p, 1);
             if (ret != 0)
                 return ret;
 

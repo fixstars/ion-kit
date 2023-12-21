@@ -25,10 +25,12 @@ int ion_port_create(ion_port_t *ptr, const char *key, ion_type_t type, int dim)
     return 0;
 }
 
-int ion_port_index_access(ion_port_t obj, int index)
+int ion_port_create_with_index(ion_port_t *ptr, ion_port_t obj, int index)
 {
     try {
-        Port p = *reinterpret_cast<Port*>(obj);
+        auto p = new Port(*reinterpret_cast<Port*>(obj));
+        p->set_index(index);
+        *ptr = reinterpret_cast<ion_port_t>(p);
         reinterpret_cast<ion::Port*>(obj)->set_index(index);
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;

@@ -306,8 +306,15 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
                         }
                         bb->bind_input(arginfo.name, es);
                     } else {
+                        auto& params(port.params());
+                        auto i = port.index();
+                        if (i == -1) {
+                            // TODO: It should be a number of array defined at BuildingBlock
+                            i = 0;
+                        }
+                        params.resize(i + 1, Halide::Internal::Parameter(port.type(), port.dimensions() != 0, port.dimensions(), argument_name(port.node_id(), port.name())));
                         std::vector<Halide::Expr> es;
-                        for (const auto& p : port.params()) {
+                        for (const auto& p : params) {
                             es.push_back(Halide::Internal::Variable::make(port.type(), argument_name(port.node_id(), port.name()), p));
                         }
                         bb->bind_input(arginfo.name, es);
@@ -327,13 +334,7 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
 
                         bb->bind_input(arginfo.name, fs);
                     } else {
-                        std::vector<Halide::Func> fs;
-                        if (port.index() == -1) {
-                            fs.resize(1, Halide::ImageParam(port.type(), port.dimensions(), argument_name(port.node_id(), port.name())));
-                        } else {
-                            fs.resize(port.index()+1, Halide::ImageParam(port.type(), port.dimensions(), argument_name(port.node_id(), port.name())));
-                        }
-                        bb->bind_input(arginfo.name, fs);
+                        bb->bind_input(arginfo.name, { Halide::ImageParam(port.type(), port.dimensions(), argument_name(port.node_id(), port.name()))});
                     }
                 } else {
                     throw std::runtime_error("fixme");
