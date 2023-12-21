@@ -108,6 +108,8 @@ cmake --build .
 ```
 #### b. Windows
 ```
+mkdir build
+cd build
 cmake -G "Visual Studio 17 2022" -A x64 -DHalide_DIR=<path-to-HalideConfig.cmake> -DOpenCV_DIR=<path-to-opencv-cmake> ../
 cmake --build . --config Release
 ```
