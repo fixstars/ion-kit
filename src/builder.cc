@@ -287,7 +287,7 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
                 if (arginfo.kind == Halide::Internal::ArgInfoKind::Scalar) {
                     if (pm.is_mapped(argument_name(port.node_id(), port.name()))) {
                         // This block should be executed when g.run is called with appropriate PortMap.
-                        const auto& params(pm.get_params(port.name()));
+                        const auto& params(pm.get_params(argument_name(port.node_id(), port.name())));
 
                         // validation
                         // if (arginfo.types.size() != vs.size()) {
@@ -322,7 +322,7 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
                 } else if (arginfo.kind == Halide::Internal::ArgInfoKind::Function) {
                     if (pm.is_mapped(argument_name(port.node_id(), port.name()))) {
                         // This block should be executed when g.run is called with appropriate PortMap.
-                        const auto& params(pm.get_params(port.name()));
+                        const auto& params(pm.get_params(argument_name(port.node_id(), port.name())));
 
                         std::vector<Halide::Func> fs;
                         for (const auto& p : params) {

@@ -5,7 +5,7 @@ import numpy as np # TODO: rewrite with pure python
 
 def test_all():
     t = Type(code_=TypeCode.Int, bits_=32, lanes_=1)
-    input_port = Port(key='input', type=t, dim=2)
+    input_port = Port(name='input', type=t, dim=2)
     value41 = Param(key='v', val='41')
 
     builder = Builder()
@@ -32,7 +32,7 @@ def test_all():
     obuf.write(data=odata_bytes)
 
     port_map.set_buffer(port=input_port, buffer=ibuf)
-    port_map.set_buffer(port=node.get_port(key='output'), buffer=obuf)
+    port_map.set_buffer(port=node.get_port(name='output'), buffer=obuf)
 
     builder.run(port_map=port_map)
 

@@ -19,7 +19,7 @@ function(ion_compile NAME)
     add_executable(${NAME} ${IEC_SRCS})
     if(UNIX)
         target_compile_options(${NAME}
-            PUBLIC -fno-rtti  # For Halide::Generator
+            #PUBLIC -fno-rtti  # For Halide::Generator
             PUBLIC -rdynamic) # For JIT compiling
     endif()
     target_include_directories(${NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include")
