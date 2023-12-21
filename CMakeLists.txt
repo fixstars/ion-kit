@@ -32,7 +32,7 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 # Dependent libraries
 #
 find_package(Halide REQUIRED COMPONENTS shared)
-if (WITH_CUDA)
+if (${WITH_CUDA})
     find_package(CUDA REQUIRED)
 endif()
 
@@ -68,7 +68,7 @@ list(REMOVE_ITEM ION_CORE_SRC "${PROJECT_SOURCE_DIR}/src/generator.cc")
 add_library(ion-core SHARED ${ION_CORE_SRC})
 target_include_directories(ion-core PUBLIC ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/src)
 if (UNIX)
-  target_link_libraries(ion-core PUBLIC Halide::Halide Halide::Runtime dl pthread z)
+  target_link_libraries(ion-core PUBLIC Halide::Halide Halide::Runtime dl pthread z m stdc++)
 else()
   target_link_libraries(ion-core PUBLIC Halide::Halide Halide::Runtime)
 endif()
