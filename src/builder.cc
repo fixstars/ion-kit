@@ -194,14 +194,14 @@ void Builder::run(ion::PortMap& pm) {
         // TODO: Validate argument list
         // pipeline_.infer_arguments();
 
-        callable_ = pipeline_.compile_to_callable(pm.get_arguments_stub(), target_);
+        callable_ = pipeline_.compile_to_callable(get_arguments_stub(), target_);
     }
 
     if (pm.dirty()) {
         args_.clear();
         args_.push_back(&jit_ctx_ptr_);
 
-        auto args = pm.get_arguments_instance();
+        auto args = get_arguments_instance();
         args_.insert(args_.end(), args.begin(), args.end());
 
         auto output_funcs = pipeline_.outputs();

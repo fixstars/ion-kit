@@ -104,6 +104,38 @@ private:
 
     Halide::Pipeline build(ion::PortMap& ports);
 
+    std::vector<Halide::Argument> get_arguments_stub() const {
+        std::vector<Halide::Argument> args;
+        for (const auto& node : nodes_) {
+            for (const auto& port : node.ports()) {
+                if (port.is_bound()) {
+                    continue;
+                }
+                auto kind = port.dimensions() == 0 ? Halide::Argument::InputScalar : Halide::Argument::InputBuffer;
+                args.push_back(Halide::Argument(argument_name(port.node_id(), port.name()),  kind, port.type(), port.dimensions(), Halide::ArgumentEstimates()));
+            }
+        }
+        return args;
+    }
+
+    std::vector<const void*> get_arguments_instance() const {
+        std::vector<const void*> args;
+        for (const auto& node : nodes_) {
+            for (const auto& port : node.ports()) {
+                if (port.is_bound()) {
+                    continue;
+                }
+                for (const auto& param : port.params())
+                if (param.is_buffer()) {
+                    args.push_back(param.raw_buffer());
+                } else {
+                    args.push_back(param.scalar_address());
+                }
+            }
+        }
+        return args;
+    }
+
     void set_jit_externs(const std::map<std::string, Halide::JITExtern> &externs) {
         pipeline_.set_jit_externs(externs);
     }
