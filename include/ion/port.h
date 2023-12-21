@@ -34,15 +34,15 @@ class Port {
      friend class Node;
      friend class nlohmann::adl_serializer<Port>;
 
-     Port() : impl_(new Impl), index_(0) {};
-     Port(const std::shared_ptr<Impl>& impl) : impl_(impl), index_(0) {};
+     Port() : impl_(new Impl), index_(-1) {};
+     Port(const std::shared_ptr<Impl>& impl) : impl_(impl), index_(-1) {};
 
      /**
       * Construct new port for scalar value.
       * @arg k: The key of the port which should be matched with BuildingBlock Input/Output name.
       * @arg t: The type of the value.
       */
-     Port(const std::string& n, Halide::Type t) : impl_(new Impl), index_(0) {
+     Port(const std::string& n, Halide::Type t) : impl_(new Impl), index_(-1) {
          impl_->name = n;
          impl_->type = t;
      }
@@ -53,7 +53,7 @@ class Port {
       * @arg t: The type of the element value.
       * @arg d: The dimension of the port. The range is 1 to 4.
       */
-     Port(const std::string& n, Halide::Type t, int32_t d) : impl_(new Impl), index_(0) {
+     Port(const std::string& n, Halide::Type t, int32_t d) : impl_(new Impl), index_(-1) {
         impl_->name = n;
         impl_->type = t;
         impl_->dimensions = d;
@@ -108,7 +108,7 @@ private:
     /**
      * This port is bound with some node.
      */
-     Port(const std::string& n, const std::string& ni) : impl_(new Impl), index_(0) {
+     Port(const std::string& n, const std::string& ni) : impl_(new Impl), index_(-1) {
          impl_->name = n;
          impl_->node_id = ni;
      }

@@ -67,6 +67,10 @@ public:
     void set(Port port, T v) {
         auto& params(port.params());
         auto i = port.index();
+        if (i == -1) {
+            // TODO: It should be a number of array defined at BuildingBlock
+            i = 0;
+        }
         params.resize(i+1, Halide::Internal::Parameter{port.type(), port.dimensions() != 0, port.dimensions(), argument_name(port.node_id(), port.name())});
         params[i].set_scalar(v);
         params_[argument_name(port.node_id(), port.name())].resize(i+1);
@@ -101,6 +105,10 @@ public:
         } else {
             auto& params(port.params());
             auto i = port.index();
+            if (i == -1) {
+                // TODO: It should be a number of array defined at BuildingBlock
+                i = 0;
+            }
             params.resize(i+1, Halide::Internal::Parameter{port.type(), port.dimensions() != 0, port.dimensions(), argument_name(port.node_id(), port.name())});
             params[i].set_buffer(buf);
             params_[argument_name(port.node_id(), port.name())].resize(i+1);
