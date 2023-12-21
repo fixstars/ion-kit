@@ -65,17 +65,17 @@ public:
      */
     template<typename T>
     void set(Port port, T v) {
-        auto& params(port.params());
-        auto i = port.index();
-        if (i == -1) {
-            // TODO: It should be a number of array defined at BuildingBlock
-            i = 0;
-        }
-        params.resize(i+1, Halide::Internal::Parameter{port.type(), port.dimensions() != 0, port.dimensions(), argument_name(port.node_id(), port.name())});
-        params[i].set_scalar(v);
-        params_[argument_name(port.node_id(), port.name())].resize(i+1);
-        params_[argument_name(port.node_id(), port.name())][i] = params[i];
-
+        // auto& params(port.params());
+        // auto i = port.index();
+        // if (i == -1) {
+        //     // TODO: It should be a number of array defined at BuildingBlock
+        //     i = 0;
+        // }
+        // params.resize(i+1, Halide::Internal::Parameter{port.type(), port.dimensions() != 0, port.dimensions(), argument_name(port.node_id(), port.name())});
+        // params[i].set_scalar(v);
+        // params_[argument_name(port.node_id(), port.name())].resize(i+1);
+        // params_[argument_name(port.node_id(), port.name())][i] = params[i];
+        port.bind(v);
         dirty_ = true;
     }
 
@@ -103,16 +103,17 @@ public:
             // This is just an output.
             output_buffer_[std::make_tuple(port.node_id(), port.name(), port.index())] = { buf };
         } else {
-            auto& params(port.params());
-            auto i = port.index();
-            if (i == -1) {
-                // TODO: It should be a number of array defined at BuildingBlock
-                i = 0;
-            }
-            params.resize(i+1, Halide::Internal::Parameter{port.type(), port.dimensions() != 0, port.dimensions(), argument_name(port.node_id(), port.name())});
-            params[i].set_buffer(buf);
-            params_[argument_name(port.node_id(), port.name())].resize(i+1);
-            params_[argument_name(port.node_id(), port.name())][i] = params[i];
+            // auto& params(port.params());
+            // auto i = port.index();
+            // if (i == -1) {
+            //     // TODO: It should be a number of array defined at BuildingBlock
+            //     i = 0;
+            // }
+            // params.resize(i+1, Halide::Internal::Parameter{port.type(), port.dimensions() != 0, port.dimensions(), argument_name(port.node_id(), port.name())});
+            // params[i].set_buffer(buf);
+            // params_[argument_name(port.node_id(), port.name())].resize(i+1);
+            // params_[argument_name(port.node_id(), port.name())][i] = params[i];
+            port.bind(buf);
         }
 
         dirty_ = true;
@@ -144,13 +145,13 @@ public:
                 output_buffer_[std::make_tuple(port.node_id(), port.name(), port.index())].push_back(buf);
             }
         } else {
-            auto& params(port.params());
-            params.resize(bufs.size(), Halide::Internal::Parameter{port.type(), port.dimensions() != 0, port.dimensions(), argument_name(port.node_id(), port.name())});
-            for (size_t i=0; i<bufs.size(); ++i) {
-                params[i].set_buffer(bufs[i]);
-            }
-            params_[argument_name(port.node_id(), port.name())] = params;
-
+            // auto& params(port.params());
+            // params.resize(bufs.size(), Halide::Internal::Parameter{port.type(), port.dimensions() != 0, port.dimensions(), argument_name(port.node_id(), port.name())});
+            // for (size_t i=0; i<bufs.size(); ++i) {
+            //     params[i].set_buffer(bufs[i]);
+            // }
+            // params_[argument_name(port.node_id(), port.name())] = params;
+            port.bind(bufs);
         }
 
         dirty_ = true;

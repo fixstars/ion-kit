@@ -84,11 +84,11 @@ public:
 
     /**
      * Retrieve output port of the node.
-     * @arg key: The key of port name which is matched with first argument of Output declared in user-defined class deriving BuildingBlock.
-     * @return Port object which is specified by key.
+     * @arg name: The name of port name which is matched with first argument of Output declared in user-defined class deriving BuildingBlock.
+     * @return Port object which is specified by name.
      */
-    Port operator[](const std::string& key) {
-        return Port(key, impl_->id);
+    Port operator[](const std::string& name) {
+        return Port(name, impl_->id);
     }
 
     std::string id() const {

@@ -94,6 +94,28 @@ class Port {
          return port;
      }
 
+     template<typename T>
+     void bind(T v) {
+         auto i = index_ == -1 ? 0 : index_;
+         impl_->params.resize(i+1, Halide::Internal::Parameter{type(), dimensions() != 0, dimensions(), argument_name(node_id(), name())});
+         impl_->params[i].set_scalar(v);
+     }
+
+     template<typename T>
+     void bind(const Halide::Buffer<T>& buf) {
+         auto i = index_ == -1 ? 0 : index_;
+         impl_->params.resize(i+1, Halide::Internal::Parameter{type(), dimensions() != 0, dimensions(), argument_name(node_id(), name())});
+         impl_->params[i].set_buffer(buf);
+     }
+
+     template<typename T>
+     void bind(const std::vector<Halide::Buffer<T>>& bufs) {
+         impl_->params.resize(bufs.size(), Halide::Internal::Parameter{type(), dimensions() != 0, dimensions(), argument_name(node_id(), name())});
+         for (size_t i=0; i<bufs.size(); ++i) {
+             impl_->params[i].set_buffer(bufs[i]);
+         }
+     }
+
      static std::shared_ptr<Impl> find_impl(uintptr_t ptr) {
          static std::unordered_map<uintptr_t, std::shared_ptr<Impl>> impls;
          static std::mutex mutex;

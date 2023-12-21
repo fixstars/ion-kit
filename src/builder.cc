@@ -296,6 +296,7 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
                 }
             } else {
                 if (arginfo.kind == Halide::Internal::ArgInfoKind::Scalar) {
+#if 0
                     if (pm.is_mapped(argument_name(port.node_id(), port.name()))) {
                         // This block should be executed when g.run is called with appropriate PortMap.
                         const auto& params(pm.get_params(argument_name(port.node_id(), port.name())));
@@ -330,7 +331,15 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
                         }
                         bb->bind_input(arginfo.name, es);
                     }
+#else
+                    std::vector<Halide::Expr> es;
+                    for (const auto& p : port.params()) {
+                        es.push_back(Halide::Internal::Variable::make(port.type(), argument_name(port.node_id(), port.name()), p));
+                    }
+                    bb->bind_input(arginfo.name, es);
+#endif
                 } else if (arginfo.kind == Halide::Internal::ArgInfoKind::Function) {
+#if 0
                     if (pm.is_mapped(argument_name(port.node_id(), port.name()))) {
                         // This block should be executed when g.run is called with appropriate PortMap.
                         const auto& params(pm.get_params(argument_name(port.node_id(), port.name())));
@@ -347,6 +356,16 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
                     } else {
                         bb->bind_input(arginfo.name, { Halide::ImageParam(port.type(), port.dimensions(), argument_name(port.node_id(), port.name()))});
                     }
+#else
+                    std::vector<Halide::Func> fs;
+                    for (const auto& p : port.params()) {
+                        auto b(p.buffer());
+                        Halide::Func f;
+                        f(Halide::_) = b(Halide::_);
+                        fs.push_back(f);
+                    }
+                    bb->bind_input(arginfo.name, fs);
+#endif
                 } else {
                     throw std::runtime_error("fixme");
                 }
