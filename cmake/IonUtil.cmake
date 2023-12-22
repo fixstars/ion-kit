@@ -17,7 +17,11 @@ function(ion_compile NAME)
 
     # Build compile
     add_executable(${NAME} ${IEC_SRCS})
-    if(UNIX)
+    if(UNIX AND NOT APPLE)
+        target_compile_options(${NAME} PUBLIC -fno-rtti)  # For Halide::Generator
+        target_link_options(${NAME} PUBLIC -Wl,--export-dynamic) # For JIT compiling
+    endif()
+    IF (APPLE)
         target_compile_options(${NAME}
             PUBLIC -fno-rtti  # For Halide::Generator
             PUBLIC -rdynamic) # For JIT compiling
@@ -104,9 +108,13 @@ function(ion_jit NAME)
     set(multiValueArgs SRCS)
     cmake_parse_arguments(IEJ "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
     add_executable(${NAME} ${IEJ_SRCS})
-    if (UNIX)
-        # For JIT compiling
-        target_compile_options(${NAME} PUBLIC -rdynamic)
+    if (UNIX AND NOT APPLE)
+        target_link_options(${NAME} PUBLIC -Wl,--export-dynamic) # For JIT compiling
+    endif()
+    if (APPLE)
+        target_compile_options(${NAME}
+            PUBLIC -fno-rtti  # For Halide::Generator
+            PUBLIC -rdynamic) # For JIT compiling
     endif()
     find_package(OpenCV 4 REQUIRED)
     target_include_directories(${NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include ${ION_BB_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})

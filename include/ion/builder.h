@@ -10,7 +10,6 @@
 
 #include "def.h"
 #include "buffer.h"
-#include "building_block.h"
 #include "node.h"
 #include "port_map.h"
 
@@ -23,14 +22,16 @@ class DynamicModule;
  */
 class Builder {
 public:
-     /**
-      * CompileOption class holds option field for compilation.
-      */
-     struct CompileOption {
-         std::string output_directory;
-     };
+    /**
+     * CompileOption class holds option field for compilation.
+     */
+    struct CompileOption {
+        std::string output_directory;
+    };
 
     Builder();
+
+    ~Builder();
 
     /**
      * Adding new node to the graph.
@@ -92,6 +93,13 @@ public:
     const std::vector<Node>& nodes() const { return nodes_; }
     std::vector<Node>& nodes() { return nodes_; }
 
+
+    /**
+     * Register disposer hook which will be called from Builder destructor.
+     * This is available only for JIT mode.
+     */
+    void register_disposer(const std::string& bb_id, const std::string& disposer_symbol);
+
 private:
 
     Halide::Pipeline build(ion::PortMap& ports);
@@ -108,6 +116,7 @@ private:
     std::unique_ptr<Halide::JITUserContext> jit_ctx_;
     Halide::JITUserContext* jit_ctx_ptr_;
     std::vector<const void*> args_;
+    std::vector<std::tuple<std::string, std::function<void(const char*)>>> disposers_;
 };
 
 } // namespace ion
