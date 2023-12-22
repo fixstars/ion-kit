@@ -88,7 +88,14 @@ public:
      * @return Port object which is specified by name.
      */
     Port operator[](const std::string& name) {
-        return Port(name, impl_->id);
+        auto it = std::find_if(impl_->ports.begin(), impl_->ports.end(), [&name](const Port& p){ return p.name() == name; });
+        if (it != impl_->ports.end()) {
+            // This is input port, bind myself and create new Port instance
+            return *it;
+        } else {
+            // This is output port, bind myself and create new Port instance
+            return Port(name, impl_->id);
+        }
     }
 
     const std::string& id() const {

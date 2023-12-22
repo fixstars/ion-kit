@@ -45,16 +45,20 @@ int main() {
             }
             pm.set(n["output"], out);
 
+            b.compile("array_input");
             b.run(pm);
 
             for (int y = 0; y < h; ++y) {
                 for (int x = 0; x < w; ++x) {
-                    if ((ins[0](x, y) +
-                         ins[1](x, y) +
-                         ins[2](x, y) +
-                         ins[3](x, y) +
-                         ins[4](x, y))!= out(x, y)) {
-                        throw runtime_error("Unexpected out value");
+                    auto v = (ins[0](x, y) +
+                              ins[1](x, y) +
+                              ins[2](x, y) +
+                              ins[3](x, y) +
+                              ins[4](x, y));
+                    if (v!= out(x, y)) {
+                        throw runtime_error("Unexpected out value at ("  + std::to_string(x) + ", " + std::to_string(y) + "):"
+                                            + " expect=" + std::to_string(v)
+                                            + " actual=" + std::to_string(out(x, y)));
                     }
                 }
             }
@@ -97,12 +101,15 @@ int main() {
 
             for (int y = 0; y < h; ++y) {
                 for (int x = 0; x < w; ++x) {
-                    if ((ins[0](x, y) +
-                         ins[1](x, y) +
-                         ins[2](x, y) +
-                         ins[3](x, y) +
-                         ins[4](x, y))!= out(x, y)) {
-                        throw runtime_error("Unexpected out value");
+                    auto v = (ins[0](x, y) +
+                              ins[1](x, y) +
+                              ins[2](x, y) +
+                              ins[3](x, y) +
+                              ins[4](x, y));
+                    if (v!= out(x, y)) {
+                        throw runtime_error("Unexpected out value at ("  + std::to_string(x) + ", " + std::to_string(y) + "):"
+                                            + " expect=" + std::to_string(v)
+                                            + " actual=" + std::to_string(out(x, y)));
                     }
                 }
             }

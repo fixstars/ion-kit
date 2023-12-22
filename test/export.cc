@@ -8,6 +8,7 @@ using namespace ion;
 int main()
 {
     try {
+#if 0
         // simple_graph
         {
             {
@@ -41,7 +42,7 @@ int main()
                 b.run(pm);
             }
         }
-
+#endif
         // complex_graph
         {
             Halide::Type t = Halide::type_of<int32_t>();
@@ -60,7 +61,6 @@ int main()
 
         {
             Halide::Type t = Halide::type_of<int32_t>();
-            Port input{"input", t, 2}, width{"width", t}, height{"height", t};
             Builder b;
             b.load("complex_graph.json");
 
@@ -74,14 +74,15 @@ int main()
                 }
             }
 
-            PortMap pm;
-            pm.set(input, ibuf);
-            pm.set(width, size);
-            pm.set(height, size);
-
             Halide::Buffer<int32_t> out(std::vector<int>{size, size});
 
             auto nodes = b.nodes();
+
+            PortMap pm;
+            pm.set(nodes[0]["input"], ibuf);
+            pm.set(nodes[1]["width"], size);
+            pm.set(nodes[1]["height"], size);
+            pm.set(nodes[4]["height"], size);
             pm.set(nodes.back()["output"], out);
 
             b.run(pm);

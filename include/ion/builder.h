@@ -111,8 +111,10 @@ private:
                 if (port.is_bound()) {
                     continue;
                 }
-                auto kind = port.dimensions() == 0 ? Halide::Argument::InputScalar : Halide::Argument::InputBuffer;
-                args.push_back(Halide::Argument(argument_name(port.node_id(), port.name()),  kind, port.type(), port.dimensions(), Halide::ArgumentEstimates()));
+                for (const auto& param : port.params()) {
+                    auto kind = port.dimensions() == 0 ? Halide::Argument::InputScalar : Halide::Argument::InputBuffer;
+                    args.push_back(Halide::Argument(argument_name(port.node_id(), port.name()),  kind, port.type(), port.dimensions(), Halide::ArgumentEstimates()));
+                }
             }
         }
         return args;
@@ -125,11 +127,12 @@ private:
                 if (port.is_bound()) {
                     continue;
                 }
-                for (const auto& param : port.params())
-                if (param.is_buffer()) {
-                    args.push_back(param.raw_buffer());
-                } else {
-                    args.push_back(param.scalar_address());
+                for (const auto& param : port.params()) {
+                    if (param.is_buffer()) {
+                        args.push_back(param.raw_buffer());
+                    } else {
+                        args.push_back(param.scalar_address());
+                    }
                 }
             }
         }
