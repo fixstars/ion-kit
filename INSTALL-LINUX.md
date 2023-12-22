@@ -32,7 +32,7 @@ cmake --build . --target install
 ```
 
 ### 3. Install onnxruntime (Optional, if you use ion-bb-dnn)
-**Not currently supported on MacOS.**  If you use only cpu, you can get binary release.  
+If you use only cpu, you can get binary release.  
 Please visit official onnxruntime [github](https://github.com/microsoft/onnxruntime/releases/tag/v1.16.3) for latest release.
 
 ```sh
