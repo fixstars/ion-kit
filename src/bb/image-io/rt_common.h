@@ -9,10 +9,8 @@
 #include <unordered_map>
 #include <vector>
 
-#ifdef __linux__
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
-#endif
 
 #include "log.h"
 

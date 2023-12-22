@@ -17,7 +17,7 @@ if (UNIX AND NOT APPLE)
     ion_run(demo demo_compile SRCS demo_run.cc TARGET_STRING "host-profile")
 endif()
 
-if(WITH_CUDA)
+if(${WITH_CUDA})
     ion_run(producerx3_gpu producerx3_compile SRCS producerx3_run.cc TARGET_STRING "host-cuda-cuda_capability_50-profile")
     if(UNIX AND NOT APPLE)
         ion_run(sgm_gpu sgm_compile SRCS sgm_run.cc TARGET_STRING "host-cuda-cuda_capability_50-profile")
@@ -54,7 +54,7 @@ endif()
 
 ion_register_test(isp isp_jit TARGET_STRING "host-profile")
 ion_register_test(isp_and_sgm isp_and_sgm_jit TARGET_STRING "host-profile")
-if(WITH_CUDA)
+if(${WITH_CUDA})
     ion_register_test(isp_gpu isp_jit TARGET_STRING "host-cuda-cuda_capability_50-profile")
     # Temporaly disabled
     # ion_register_test(isp_and_sgm_gpu isp_and_sgm_jit RUNTIME_ARGS ${CMAKE_SOURCE_DIR}/data/image/OV5647x2-5184x1944-GB10.raw 5184 1944 10 6 TARGET_STRING "host-cuda-cuda_capability_50-profile")

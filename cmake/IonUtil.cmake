@@ -135,7 +135,7 @@ function(ion_register_test TEST_NAME EXEC_NAME)
             set(IERT_RUNTIME_ENVS "LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/src/bb:${CMAKE_BINARY_DIR}/test")
         endif()
     else()
-        set(IERT_RUNTIME_ENVS "PATH=${CMAKE_BINARY_DIR}/src/bb/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>\\\;${CMAKE_BINARY_DIR}/test/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>")
+        set(IERT_RUNTIME_ENVS "PATH=${CMAKE_BINARY_DIR}/Release\;${CMAKE_BINARY_DIR}/src/bb/Release\;${CMAKE_BINARY_DIR}/test/Release\;${Halide_DIR}/../../../bin/Release\;${OpenCV_DIR}/x64/vc15/bin")
     endif()
 
     if (IERT_TARGET_STRING)
