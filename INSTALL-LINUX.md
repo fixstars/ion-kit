@@ -38,6 +38,13 @@ Please visit official onnxruntime [github](https://github.com/microsoft/onnxrunt
 ```sh
 curl -L https://github.com/microsoft/onnxruntime/releases/download/v1.4.0/onnxruntime-linux-x64-1.4.0.tgz | tar zx -C <path-to-onnxruntime-install>
 ```
+
+Add directory to `ldconfig`
+```
+sudo vim /etc/ld.so.conf
+sudo ldconfig
+```
+
 * Please note, latest version of onnxruntime with GPU only supports `CUDA 1.8`
 * `libcudnn8` will also be needed if you run with GPU, please install with:
 ```
