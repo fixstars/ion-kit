@@ -1,4 +1,4 @@
-## ion-kit Linux Install
+## ion-kit Windows Install
 
 ### 1. Install LLVM
 #### a. Using a binary release (Preferred for all systems)
