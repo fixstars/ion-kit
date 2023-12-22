@@ -15,16 +15,15 @@ int main()
         Param vp{"v", std::to_string(1)};
 
         Builder b;
-        b.set_target(Halide::get_host_target()); // CPU
-        //b.set_target(Halide::get_host_target().with_feature(Halide::Target::CUDA)); // GPU
+        b.set_target(Halide::get_host_target().with_feature(Halide::Target::CUDA));
         b.with_bb_module("ion-bb");
 
         Node n;
         Port ip{"input", Halide::type_of<int32_t>(), 2};
         n = b.add("test_extern_inc_i32x2")(ip).set_param(wp, hp, vp);
-        n = b.add("internal_schedule_for_preview")(n["output"]).set_param(Param{"output_name", "preview"}, Param{"compute_level", "compute_root"});
-        auto p = n["output_for_preview"];
-        n = b.add("test_extern_inc_i32x2")(n["output"]).set_param(wp, hp, vp);
+        n = b.add("test_branch")(n["output"]).set_param(Param{"input_width", std::to_string(size)}, Param{"input_height", std::to_string(size)});
+        auto p = n["output1"];
+        n = b.add("test_extern_inc_i32x2")(n["output0"]).set_param(wp, hp, vp);
 
         PortMap pm;
 
