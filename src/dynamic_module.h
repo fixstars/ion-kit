@@ -3,11 +3,15 @@
 
 #include <filesystem>
 
-#ifdef _WIN32
+#if _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #define ION_DYNAMIC_MODULE_PREFIX ""
 #define ION_DYNAMIC_MODULE_EXT ".dll"
+#elif __APPLE__
+#include <dlfcn.h>
+#define ION_DYNAMIC_MODULE_PREFIX "lib"
+#define ION_DYNAMIC_MODULE_EXT ".dylib"
 #else
 #include <dlfcn.h>
 #define ION_DYNAMIC_MODULE_PREFIX "lib"
@@ -46,6 +50,7 @@ class DynamicModule {
              throw std::runtime_error(getErrorString());
          }
 #else
+         std::printf("testing : %s\n",target.c_str());
          handle_ = dlopen(target.c_str(), RTLD_NOW);
          if (handle_ == nullptr) {
              throw std::runtime_error(getErrorString());

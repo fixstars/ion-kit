@@ -187,7 +187,6 @@ private:
 class ArrayOutput : public BuildingBlock<ArrayOutput> {
 public:
     GeneratorParam<int> len{"len", 5};
-
     Input<Halide::Func> input{"input", Int(32), 2};
     Output<Halide::Func[]> array_output{"array_output", Int(32), 2};
 

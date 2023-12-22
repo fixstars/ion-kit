@@ -64,6 +64,7 @@ ion_jit(port-binding SRCS port-binding.cc)
 add_dependencies(port-binding ion-bb-test)
 ion_register_test(port-binding_test port-binding)
 
+if(UNIX AND NOT APPLE)
 # Port index access
 ion_jit(port-access SRCS port-access.cc)
 add_dependencies(port-access  ion-bb-test)
@@ -73,6 +74,7 @@ ion_register_test(port-access_test port-access)
 ion_jit(portmap-access SRCS portmap-access.cc)
 add_dependencies(portmap-access  ion-bb-test)
 ion_register_test(portmap-access_test portmap-access)
+endif()
 
 ion_jit(direct-extern SRCS direct-extern.cc)
 add_dependencies(direct-extern ion-bb-test)

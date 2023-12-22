@@ -220,13 +220,17 @@ int main(int argc, char *argv[]) {
         b.run(pm);
         obuf.copy_to_host();
         save_image(obuf, "output.png");
+
+    } catch (const Halide::Error &e) {
+        std::cerr << e.what() << std::endl;
+        return 1;
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
-        return -1;
+        return 1;
     } catch (...) {
-        return -1;
+        std::cerr << "Unknown exception" << std::endl;
+        return 1;
     }
-
 
     return 0;
 }

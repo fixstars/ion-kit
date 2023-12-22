@@ -17,8 +17,14 @@ function(ion_compile NAME)
 
     # Build compile
     add_executable(${NAME} ${IEC_SRCS})
-    if(UNIX)
+    if(UNIX AND NOT APPLE)
+        target_compile_options(${NAME} PUBLIC -fno-rtti)  # For Halide::Generator
         target_link_options(${NAME} PUBLIC -Wl,--export-dynamic) # For JIT compiling
+    endif()
+    IF (APPLE)
+        target_compile_options(${NAME}
+            PUBLIC -fno-rtti  # For Halide::Generator
+            PUBLIC -rdynamic) # For JIT compiling
     endif()
     target_include_directories(${NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include")
     target_link_libraries(${NAME} PRIVATE ion-core ${PLATFORM_LIBRARIES})
@@ -46,7 +52,17 @@ function(ion_run NAME COMPILE_NAME)
         COMMAND ${CMAKE_COMMAND} -E make_directory ${OUTPUT_PATH}
     )
     if (UNIX)
-        add_custom_command(OUTPUT ${HEADER} ${STATIC_LIB}
+        if(APPLE)
+            add_custom_command(OUTPUT ${HEADER} ${STATIC_LIB}
+            COMMAND ${CMAKE_SOURCE_DIR}/script/invoke.sh $<TARGET_FILE:${COMPILE_NAME}>
+                HL_TARGET ${IER_TARGET_STRING}
+                DYLD_LIBRARY_PATH ${Halide_DIR}/../../../bin
+                DYLD_LIBRARY_PATH ${CMAKE_BINARY_DIR}
+                DYLD_LIBRARY_PATH ${CMAKE_BINARY_DIR}/src/bb
+            DEPENDS ${COMPILE_NAME} ${OUTPUT_PATH}
+            WORKING_DIRECTORY ${OUTPUT_PATH})
+        else()
+            add_custom_command(OUTPUT ${HEADER} ${STATIC_LIB}
             COMMAND ${CMAKE_SOURCE_DIR}/script/invoke.sh $<TARGET_FILE:${COMPILE_NAME}>
                 HL_TARGET ${IER_TARGET_STRING}
                 LD_LIBRARY_PATH ${Halide_DIR}/../../../bin
@@ -54,6 +70,7 @@ function(ion_run NAME COMPILE_NAME)
                 LD_LIBRARY_PATH ${CMAKE_BINARY_DIR}/src/bb
             DEPENDS ${COMPILE_NAME} ${OUTPUT_PATH}
             WORKING_DIRECTORY ${OUTPUT_PATH})
+        endif()
     else()
         add_custom_command(OUTPUT ${HEADER} ${STATIC_LIB}
             COMMAND ${CMAKE_SOURCE_DIR}/script/invoke.bat $<TARGET_FILE:${COMPILE_NAME}>
@@ -91,8 +108,13 @@ function(ion_jit NAME)
     set(multiValueArgs SRCS)
     cmake_parse_arguments(IEJ "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
     add_executable(${NAME} ${IEJ_SRCS})
-    if (UNIX)
+    if (UNIX AND NOT APPLE)
         target_link_options(${NAME} PUBLIC -Wl,--export-dynamic) # For JIT compiling
+    endif()
+    if (APPLE)
+        target_compile_options(${NAME}
+            PUBLIC -fno-rtti  # For Halide::Generator
+            PUBLIC -rdynamic) # For JIT compiling
     endif()
     find_package(OpenCV 4 REQUIRED)
     target_include_directories(${NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include ${ION_BB_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
@@ -107,9 +129,13 @@ function(ion_register_test TEST_NAME EXEC_NAME)
     cmake_parse_arguments(IERT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if (UNIX)
-        set(IERT_RUNTIME_ENVS "LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/src/bb:${CMAKE_BINARY_DIR}/test")
+        if(APPLE)
+            set(IERT_RUNTIME_ENVS "DYLD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/src/bb:${CMAKE_BINARY_DIR}/test")
+        else()
+            set(IERT_RUNTIME_ENVS "LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/src/bb:${CMAKE_BINARY_DIR}/test")
+        endif()
     else()
-        set(IERT_RUNTIME_ENVS "PATH=${CMAKE_BINARY_DIR}/src/bb/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>\\\;${CMAKE_BINARY_DIR}/test/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>")
+        set(IERT_RUNTIME_ENVS "PATH=${CMAKE_BINARY_DIR}/Release\;${CMAKE_BINARY_DIR}/src/bb/Release\;${CMAKE_BINARY_DIR}/test/Release\;${Halide_DIR}/../../../bin/Release\;${OpenCV_DIR}/x64/vc15/bin")
     endif()
 
     if (IERT_TARGET_STRING)
