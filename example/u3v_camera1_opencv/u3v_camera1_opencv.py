@@ -2,15 +2,17 @@ from ionpy import Node, Builder, Buffer, PortMap, Port, Param, Type, TypeCode
 import numpy as np
 import cv2
 
-import os
+from sys import platform
 
 feature_gain_key = 'Gain'
 feature_exposure_key = 'ExposureTime'
 num_bit_shift = 0
 
-if os.name == 'nt':
+if platform == "win32":
     module_name = 'ion-bb.dll'
-elif os.name == 'posix':
+elif platform == "darwin":
+    module_name = 'libion-bb.dylib'
+else:
     module_name = 'libion-bb.so'
 
 if __name__ == "__main__":
