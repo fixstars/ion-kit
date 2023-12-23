@@ -8,7 +8,6 @@ using namespace ion;
 int main()
 {
     try {
-#if 0
         // simple_graph
         {
             {
@@ -42,7 +41,7 @@ int main()
                 b.run(pm);
             }
         }
-#endif
+
         // complex_graph
         {
             Halide::Type t = Halide::type_of<int32_t>();
@@ -92,7 +91,7 @@ int main()
                 for (int x=0; x<size; ++x) {
                     std::cerr << out(x, y) << " ";
                     if (out(x, y) != 41) {
-                        return -1;
+                        return 1;
                     }
                 }
                 std::cerr << std::endl;
@@ -102,7 +101,7 @@ int main()
                 for (int x=0; x<size; ++x) {
                     std::cerr << out(x, y) << " ";
                     if (out(x, y) != 42) {
-                        return -1;
+                        return 1;
                     }
                 }
                 std::cerr << std::endl;
@@ -137,26 +136,30 @@ int main()
 
                 PortMap pm;
                 pm.set(input, in);
-
-                auto nodes = b.nodes();
-                pm.set(nodes.back()["output"][0], out);
+                for (auto& n : b.nodes()) {
+                    if (n.name() == "test_array_output") {
+                        pm.set(n["input"], in);
+                    } else if (n.name() == "test_array_input") {
+                        pm.set(n["output"], out);
+                    }
+                }
 
                 b.run(pm);
 
                 if (out.dimensions() != 2) {
-                    return -1;
+                    return 1;
                 }
                 if (out.extent(0) != h) {
-                    return -1;
+                    return 1;
                 }
                 if (out.extent(1) != w) {
-                    return -1;
+                    return 1;
                 }
 
                 for (int y = 0; y < h; ++y) {
                     for (int x = 0; x < w; ++x) {
                         if (len * in(x, y) != out(x, y)) {
-                            return -1;
+                            return 1;
                         }
                     }
                 }
