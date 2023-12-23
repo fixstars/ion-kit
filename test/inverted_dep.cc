@@ -17,17 +17,17 @@ int main()
                 {
                   "nodes": [
                     {
-                      "id": "dc4b82f0-497c-4f32-b210-3ad5cfd91143",
+                      "id": "158cea31-23df-45ef-a036-8bf209271804",
                       "name": "test_consumer",
                       "params": [],
                       "ports": [
                         {
-                          "dimensions": 0,
-                          "name": "output",
-                          "index" : -1,
-                          "node_id": "1310589d-1448-4107-ac1d-67c32f482906",
                           "array_size": 1,
-                          "impl": 1,
+                          "dimensions": 0,
+                          "impl": 93843319831024,
+                          "index": -1,
+                          "name": "output",
+                          "node_id": "54f036a3-0b98-4d42-a343-6c7421d15f2f",
                           "type": {
                             "bits": 0,
                             "code": 3,
@@ -35,12 +35,12 @@ int main()
                           }
                         },
                         {
+                          "array_size": 1,
                           "dimensions": 0,
+                          "impl": 93843319821872,
+                          "index": -1,
                           "name": "min0",
-                          "index" : -1,
                           "node_id": "",
-                          "array_size": 1,
-                          "impl": 2,
                           "type": {
                             "bits": 32,
                             "code": 0,
@@ -48,12 +48,12 @@ int main()
                           }
                         },
                         {
+                          "array_size": 1,
                           "dimensions": 0,
+                          "impl": 93843319822176,
+                          "index": -1,
                           "name": "extent0",
-                          "index" : -1,
                           "node_id": "",
-                          "array_size": 1,
-                          "impl": 3,
                           "type": {
                             "bits": 32,
                             "code": 0,
@@ -61,12 +61,12 @@ int main()
                           }
                         },
                         {
+                          "array_size": 1,
                           "dimensions": 0,
+                          "impl": 93843319822480,
+                          "index": -1,
                           "name": "min1",
-                          "index" : -1,
                           "node_id": "",
-                          "array_size": 1,
-                          "impl": 5,
                           "type": {
                             "bits": 32,
                             "code": 0,
@@ -74,12 +74,12 @@ int main()
                           }
                         },
                         {
+                          "array_size": 1,
                           "dimensions": 0,
+                          "impl": 93843319822784,
+                          "index": -1,
                           "name": "extent1",
-                          "index" : -1,
                           "node_id": "",
-                          "array_size": 1,
-                          "impl": 6,
                           "type": {
                             "bits": 32,
                             "code": 0,
@@ -87,12 +87,12 @@ int main()
                           }
                         },
                         {
-                          "dimensions": 0,
-                          "name": "v",
-                          "index" : -1,
-                          "node_id": "",
                           "array_size": 1,
-                          "impl": 7,
+                          "dimensions": 0,
+                          "impl": 93843319823088,
+                          "index": -1,
+                          "name": "v",
+                          "node_id": "",
                           "type": {
                             "bits": 32,
                             "code": 0,
@@ -100,19 +100,24 @@ int main()
                           }
                         }
                       ],
-                      "target": "host"
+                      "target": "x86-64-linux-avx-avx2-avx512-avx512_cannonlake-avx512_skylake-debug-f16c-fma-sse41-trace_pipeline"
                     },
                     {
-                      "id": "1310589d-1448-4107-ac1d-67c32f482906",
+                      "id": "54f036a3-0b98-4d42-a343-6c7421d15f2f",
                       "name": "test_producer",
-                      "params": [],
+                      "params": [
+                        {
+                          "key": "v",
+                          "val": "41"
+                        }
+                      ],
                       "ports": [],
-                      "target": "host"
+                      "target": "x86-64-linux-avx-avx2-avx512-avx512_cannonlake-avx512_skylake-debug-f16c-fma-sse41-trace_pipeline"
                     }
                   ],
-                  "target": "host"
+                  "target": "x86-64-linux-avx-avx2-avx512-avx512_cannonlake-avx512_skylake-debug-f16c-fma-sse41-trace_pipeline"
                 }
-                )";
+            )";
             std::ofstream ofs(file_name);
             ofs << graph;
         }
@@ -129,15 +134,15 @@ int main()
         b.load(file_name);
 
         PortMap pm;
-        pm.set(min0, 0);
-        pm.set(extent0, 2);
-        pm.set(min1, 0);
-        pm.set(extent1, 2);
-        pm.set(v, 1);
 
         Halide::Buffer<int32_t> r = Halide::Buffer<int32_t>::make_scalar();
         for (auto& n : b.nodes()) {
             if (n.name() == "test_consumer") {
+                pm.set(n["min0"], 0);
+                pm.set(n["extent0"], 1);
+                pm.set(n["min1"], 0);
+                pm.set(n["extent1"], 2);
+                pm.set(n["v"], 1);
                 pm.set(n["output"], r);
                 break;
             }
