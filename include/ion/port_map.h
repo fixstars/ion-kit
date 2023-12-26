@@ -65,16 +65,6 @@ public:
      */
     template<typename T>
     void set(Port port, T v) {
-        // auto& params(port.params());
-        // auto i = port.index();
-        // if (i == -1) {
-        //     // TODO: It should be a number of array defined at BuildingBlock
-        //     i = 0;
-        // }
-        // params.resize(i+1, Halide::Internal::Parameter{port.type(), port.dimensions() != 0, port.dimensions(), argument_name(port.node_id(), port.name())});
-        // params[i].set_scalar(v);
-        // params_[argument_name(port.node_id(), port.name())].resize(i+1);
-        // params_[argument_name(port.node_id(), port.name())][i] = params[i];
         port.bind(v);
         dirty_ = true;
     }
@@ -103,16 +93,6 @@ public:
             // This is just an output.
             output_buffer_[std::make_tuple(port.node_id(), port.name(), port.index())] = { buf };
         } else {
-            // auto& params(port.params());
-            // auto i = port.index();
-            // if (i == -1) {
-            //     // TODO: It should be a number of array defined at BuildingBlock
-            //     i = 0;
-            // }
-            // params.resize(i+1, Halide::Internal::Parameter{port.type(), port.dimensions() != 0, port.dimensions(), argument_name(port.node_id(), port.name())});
-            // params[i].set_buffer(buf);
-            // params_[argument_name(port.node_id(), port.name())].resize(i+1);
-            // params_[argument_name(port.node_id(), port.name())][i] = params[i];
             port.bind(buf);
         }
 
@@ -145,12 +125,6 @@ public:
                 output_buffer_[std::make_tuple(port.node_id(), port.name(), port.index())].push_back(buf);
             }
         } else {
-            // auto& params(port.params());
-            // params.resize(bufs.size(), Halide::Internal::Parameter{port.type(), port.dimensions() != 0, port.dimensions(), argument_name(port.node_id(), port.name())});
-            // for (size_t i=0; i<bufs.size(); ++i) {
-            //     params[i].set_buffer(bufs[i]);
-            // }
-            // params_[argument_name(port.node_id(), port.name())] = params;
             port.bind(bufs);
         }
 
@@ -167,31 +141,6 @@ public:
 
     std::unordered_map<std::tuple<std::string, std::string, int>, std::vector<Halide::Buffer<>>> get_output_buffer() const {
         return output_buffer_;
-    }
-
-    std::vector<Halide::Argument> get_arguments_stub() const {
-        std::vector<Halide::Argument> args;
-        for (const auto& kv : params_) {
-            for (const auto& p : kv.second) {
-                auto kind = p.is_buffer() ? Halide::Argument::InputBuffer : Halide::Argument::InputScalar;
-                args.push_back(Halide::Argument(kv.first,  kind, p.type(), p.dimensions(), Halide::ArgumentEstimates()));
-            }
-        }
-        return args;
-    }
-
-    std::vector<const void*> get_arguments_instance() const {
-        std::vector<const void*> args;
-        for (const auto& kv : params_) {
-            for (const auto& p : kv.second) {
-                if (p.is_buffer()) {
-                    args.push_back(p.raw_buffer());
-                } else {
-                    args.push_back(p.scalar_address());
-                }
-            }
-        }
-        return args;
     }
 
     void updated() {

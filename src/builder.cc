@@ -296,67 +296,12 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
                 }
             } else {
                 if (arginfo.kind == Halide::Internal::ArgInfoKind::Scalar) {
-#if 0
-                    if (pm.is_mapped(argument_name(port.node_id(), port.name()))) {
-                        // This block should be executed when g.run is called with appropriate PortMap.
-                        const auto& params(pm.get_params(argument_name(port.node_id(), port.name())));
-
-                        // validation
-                        // if (arginfo.types.size() != vs.size()) {
-                        //     log::error("E");
-                        // }
-                        // for (auto i=0; i<vs.size(); ++i) {
-                        //     if (arginfo.types[i] != vs[i].type()) {
-                        //         log::error("Type mismatch: BB {} expects {}, but port {} has {}", bb->name(), Halide::type_to_c_type(arginfo.types[i], false), port.name(), Halide::type_to_c_type(vs[i].type(), false));
-                        //     }
-                        // }
-                        // validation
-
-                        std::vector<Halide::Expr> es;
-                        for (const auto& p : params) {
-                            es.push_back(Halide::Internal::Variable::make(port.type(), argument_name(port.node_id(), port.name()), p));
-                        }
-                        bb->bind_input(arginfo.name, es);
-                    } else {
-                        auto& params(port.params());
-                        auto i = port.index();
-                        if (i == -1) {
-                            // TODO: It should be a number of array defined at BuildingBlock
-                            i = 0;
-                        }
-                        params.resize(i + 1, Halide::Internal::Parameter(port.type(), port.dimensions() != 0, port.dimensions(), argument_name(port.node_id(), port.name())));
-                        std::vector<Halide::Expr> es;
-                        for (const auto& p : params) {
-                            es.push_back(Halide::Internal::Variable::make(port.type(), argument_name(port.node_id(), port.name()), p));
-                        }
-                        bb->bind_input(arginfo.name, es);
-                    }
-#else
                     std::vector<Halide::Expr> es;
                     for (const auto& p : port.params()) {
                         es.push_back(Halide::Internal::Variable::make(port.type(), argument_name(port.node_id(), port.name()), p));
                     }
                     bb->bind_input(arginfo.name, es);
-#endif
                 } else if (arginfo.kind == Halide::Internal::ArgInfoKind::Function) {
-#if 0
-                    if (pm.is_mapped(argument_name(port.node_id(), port.name()))) {
-                        // This block should be executed when g.run is called with appropriate PortMap.
-                        const auto& params(pm.get_params(argument_name(port.node_id(), port.name())));
-
-                        std::vector<Halide::Func> fs;
-                        for (const auto& p : params) {
-                            auto b(p.buffer());
-                            Halide::Func f;
-                            f(Halide::_) = b(Halide::_);
-                            fs.push_back(f);
-                        }
-
-                        bb->bind_input(arginfo.name, fs);
-                    } else {
-                        bb->bind_input(arginfo.name, { Halide::ImageParam(port.type(), port.dimensions(), argument_name(port.node_id(), port.name()))});
-                    }
-#else
                     std::vector<Halide::Func> fs;
                     for (const auto& p : port.params()) {
                         auto b(p.buffer());
@@ -370,7 +315,6 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
                         fs.push_back(f);
                     }
                     bb->bind_input(arginfo.name, fs);
-#endif
                 } else {
                     throw std::runtime_error("fixme");
                 }

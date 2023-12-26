@@ -45,7 +45,6 @@ int main() {
             }
             pm.set(n["output"], out);
 
-            b.compile("array_input");
             b.run(pm);
 
             for (int y = 0; y < h; ++y) {
@@ -114,7 +113,6 @@ int main() {
                 }
             }
         }
-
 
     } catch (Halide::Error &e) {
         std::cerr << e.what() << std::endl;
