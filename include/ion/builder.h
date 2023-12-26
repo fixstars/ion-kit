@@ -73,14 +73,10 @@ public:
      */
     void compile(const std::string& function_name, const CompileOption& option = CompileOption{});
 
-    /**
-     * Compile and execute the pipeline.
-     * @arg r: The list of output.
-     * @arg ports: The mapping of the port and actual value.
-     * @return Execution result of the pipeline.
-     * See https://halide-lang.org/docs/class_halide_1_1_realization.html for more details.
-     */
+    void run();
+
     void run(ion::PortMap& ports);
+
 
     /**
      * Retrieve metadata of Building Block in json format.
@@ -111,9 +107,9 @@ private:
                 if (port.is_bound()) {
                     continue;
                 }
-                for (const auto& param : port.params()) {
+                for (auto i = 0; i<port.params().size(); ++i) {
                     auto kind = port.dimensions() == 0 ? Halide::Argument::InputScalar : Halide::Argument::InputBuffer;
-                    args.push_back(Halide::Argument(argument_name(port.node_id(), port.name()),  kind, port.type(), port.dimensions(), Halide::ArgumentEstimates()));
+                    args.push_back(Halide::Argument(argument_name(port.node_id(), port.name(), i),  kind, port.type(), port.dimensions(), Halide::ArgumentEstimates()));
                 }
             }
         }

@@ -175,6 +175,11 @@ void Builder::compile(const std::string& function_name, const CompileOption& opt
     return;
 }
 
+void Builder::run(void) {
+     PortMap pm;
+     run(pm);
+}
+
 void Builder::run(ion::PortMap& pm) {
      if (!pipeline_.defined()) {
         pipeline_ = build(pm);
@@ -303,15 +308,16 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
                     bb->bind_input(arginfo.name, es);
                 } else if (arginfo.kind == Halide::Internal::ArgInfoKind::Function) {
                     std::vector<Halide::Func> fs;
-                    for (const auto& p : port.params()) {
-                        auto b(p.buffer());
-                        Halide::Func f;
-                        if (b.defined()) {
-                            f(Halide::_) = b(Halide::_);
-                        } else {
+                    //for (const auto& p : port.params()) {
+                    for (size_t i=0; i<port.params().size(); ++i ) {
+                        // auto b(p.buffer());
+                        // Halide::Func f;
+                        // if (b.defined()) {
+                        //     f(Halide::_) = b(Halide::_);
+                        // } else {
                             // TODO: Its' enough to pass ImageParam for any case?
-                            f = Halide::ImageParam(port.type(), port.dimensions(), argument_name(port.node_id(), port.name()));
-                        }
+                            auto f = Halide::ImageParam(port.type(), port.dimensions(), argument_name(port.node_id(), port.name(), i));
+                        // }
                         fs.push_back(f);
                     }
                     bb->bind_input(arginfo.name, fs);

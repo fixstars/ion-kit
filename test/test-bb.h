@@ -120,6 +120,25 @@ private:
 };
 using IncI32x2 = Inc<int32_t,2>;
 
+template<typename T, int D>
+class IncX : public BuildingBlock<IncX<T, D>> {
+public:
+    Input<Halide::Func> input{"input", Halide::type_of<T>(), D};
+    Input<T> v{"v", 0};
+    Output<Halide::Func> output{"output", Halide::type_of<T>(), D};
+
+    void generate() {
+        output(Halide::_) = input(Halide::_) + v;
+    }
+
+    void schedule() {
+    }
+
+private:
+    Halide::Var x, y;
+};
+using IncXI32x2 = IncX<int32_t,2>;
+
 class Dup : public BuildingBlock<Dup> {
 public:
     Input<Halide::Func> input{"input", Int(32), 2};
@@ -252,6 +271,7 @@ ION_REGISTER_BUILDING_BLOCK(ion::bb::test::Consumer, test_consumer);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::test::Branch, test_branch);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::test::Merge, test_merge);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::test::IncI32x2, test_inc_i32x2);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::test::IncXI32x2, test_incx_i32x2);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::test::Dup, test_dup);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::test::Scale2x, test_scale2x);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::test::MultiOut, test_multi_out);

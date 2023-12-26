@@ -5,6 +5,7 @@
 #include <mutex>
 #include <stdexcept>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include <Halide.h>
@@ -26,6 +27,8 @@ class Port {
         int32_t dimensions;
         std::string node_id;
         std::vector<Halide::Internal::Parameter> params;
+
+        std::vector<Halide::ImageParam> fparams;
 
         Impl() {}
 
@@ -71,6 +74,36 @@ class Port {
      const std::vector<Halide::Internal::Parameter>& params() const { return impl_->params; }
      std::vector<Halide::Internal::Parameter>& params() { return impl_->params; }
 
+     std::vector<Halide::Argument> argument() const {
+         std::vector<Halide::Argument> args;
+         if (dimensions() == 0) {
+             for (auto i = 0; i<impl_->params.size(); ++i) {
+                 args.push_back(Halide::Argument(argument_name(node_id(), name(), i),  Halide::Argument::InputScalar, type(), dimensions(), Halide::ArgumentEstimates()));
+             }
+         } else {
+             for (auto i = 0; i<impl_->fparams.size(); ++i) {
+                 args.push_back(Halide::Argument(argument_name(node_id(), name(), i),  Halide::Argument::InputBuffer, type(), dimensions(), Halide::ArgumentEstimates()));
+             }
+         }
+         return args;
+     }
+
+     std::vector<const void *> instance() const {
+         std::vector<const void *> instances;
+         if (dimensions() == 0) {
+             for (const auto& param : params()) {
+                 instances.push_back(param.scalar_address());
+             }
+         } else {
+             for (const auto& fparam : impl_->fparams) {
+                 instances.push_back(fparam.get().raw_buffer());
+             }
+         }
+
+         return instances;
+     }
+
+
      int32_t index() const { return index_; }
      int32_t& index() { return index_; }
 
@@ -94,25 +127,54 @@ class Port {
      template<typename T>
      void bind(T v) {
          auto i = index_ == -1 ? 0 : index_;
-         impl_->params.resize(i+1);
-         impl_->params[i] = Halide::Internal::Parameter{type(), dimensions() != 0, dimensions(), argument_name(node_id(), name())};
+         if (impl_->params.size() <= i) {
+             impl_->params.resize(i+1);
+             impl_->params[i] = Halide::Internal::Parameter{type(), dimensions() != 0, dimensions(), argument_name(node_id(), name())};
+         }
          impl_->params[i].set_scalar(v);
      }
 
      template<typename T>
      void bind(const Halide::Buffer<T>& buf) {
          auto i = index_ == -1 ? 0 : index_;
-         impl_->params.resize(i+1);
-         impl_->params[i] = Halide::Internal::Parameter{type(), dimensions() != 0, dimensions(), argument_name(node_id(), name())};
+         // Old
+         if (impl_->params.size() <= i) {
+             impl_->params.resize(i+1);
+             impl_->params[i] = Halide::Internal::Parameter{type(), dimensions() != 0, dimensions(), argument_name(node_id(), name())};
+         }
          impl_->params[i].set_buffer(buf);
+
+         // New
+         if (impl_->fparams.size() <= i) {
+             impl_->fparams.resize(i+1);
+             impl_->fparams[i] = Halide::ImageParam{type(), dimensions(), argument_name(node_id(), name())};
+         }
+         impl_->fparams[i].set(buf);
      }
 
      template<typename T>
      void bind(const std::vector<Halide::Buffer<T>>& bufs) {
-         impl_->params.resize(bufs.size());
+
+         // Old
+         if (impl_->params.size() != bufs.size()) {
+             impl_->params.resize(bufs.size());
+             for (size_t i=0; i<bufs.size(); ++i) {
+                 impl_->params[i] = Halide::Internal::Parameter{type(), dimensions() != 0, dimensions(), argument_name(node_id(), name())};
+             }
+         }
          for (size_t i=0; i<bufs.size(); ++i) {
-             impl_->params[i] = Halide::Internal::Parameter{type(), dimensions() != 0, dimensions(), argument_name(node_id(), name())};
              impl_->params[i].set_buffer(bufs[i]);
+         }
+
+         // New
+         if (impl_->fparams.size() != bufs.size()) {
+             impl_->fparams.resize(bufs.size());
+             for (size_t i=0; i<bufs.size(); ++i) {
+                 impl_->fparams[i] = Halide::ImageParam{type(), dimensions(), argument_name(node_id(), name())};
+             }
+         }
+         for (size_t i=0; i<bufs.size(); ++i) {
+             impl_->fparams[i].set(bufs[i]);
          }
      }
 
