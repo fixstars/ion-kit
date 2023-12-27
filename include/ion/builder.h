@@ -107,34 +107,25 @@ private:
                 if (port.is_bound()) {
                     continue;
                 }
-                const auto& port_args(port.argument());
+                const auto& port_args(port.as_argument());
                 args.insert(args.end(), port_args.begin(), port_args.end());
-                // for (auto i = 0; i<port.params().size(); ++i) {
-                //     auto kind = port.dimensions() == 0 ? Halide::Argument::InputScalar : Halide::Argument::InputBuffer;
-                //     args.push_back(Halide::Argument(argument_name(port.node_id(), port.name(), i),  kind, port.type(), port.dimensions(), Halide::ArgumentEstimates()));
-                // }
             }
         }
         return args;
     }
 
     std::vector<const void*> get_arguments_instance() const {
-        std::vector<const void*> args;
+        std::vector<const void*> instances;
         for (const auto& node : nodes_) {
             for (const auto& port : node.ports()) {
                 if (port.is_bound()) {
                     continue;
                 }
-                for (const auto& param : port.params()) {
-                    if (param.is_buffer()) {
-                        args.push_back(param.raw_buffer());
-                    } else {
-                        args.push_back(param.scalar_address());
-                    }
-                }
+                const auto& port_instances(port.as_instance());
+                instances.insert(instances.end(), port_instances.begin(), port_instances.end());
             }
         }
-        return args;
+        return instances;
     }
 
     void set_jit_externs(const std::map<std::string, Halide::JITExtern> &externs) {

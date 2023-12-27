@@ -33,11 +33,18 @@ class Port {
         Impl() {}
 
         Impl(const std::string& n, const Halide::Type& t, int32_t d, const std::string& nid)
-            : name(n), type(t), dimensions(d), node_id(nid), params({ Halide::Internal::Parameter(type, dimensions != 0, dimensions, argument_name(node_id, name)) })
-        {}
+            : name(n), type(t), dimensions(d), node_id(nid)
+        {
+            if (dimensions == 0) {
+                params = { Halide::Internal::Parameter(type, dimensions != 0, dimensions, argument_name(node_id, name)) };
+            } else {
+                fparams = { Halide::ImageParam(type, dimensions, argument_name(node_id, name)) };
+            }
+        }
     };
 
  public:
+     friend class Builder;
      friend class Node;
      friend class nlohmann::adl_serializer<Port>;
 
@@ -74,35 +81,7 @@ class Port {
      const std::vector<Halide::Internal::Parameter>& params() const { return impl_->params; }
      std::vector<Halide::Internal::Parameter>& params() { return impl_->params; }
 
-     std::vector<Halide::Argument> argument() const {
-         std::vector<Halide::Argument> args;
-         if (dimensions() == 0) {
-             for (auto i = 0; i<impl_->params.size(); ++i) {
-                 args.push_back(Halide::Argument(argument_name(node_id(), name(), i),  Halide::Argument::InputScalar, type(), dimensions(), Halide::ArgumentEstimates()));
-             }
-         } else {
-             for (auto i = 0; i<impl_->fparams.size(); ++i) {
-                 args.push_back(Halide::Argument(argument_name(node_id(), name(), i),  Halide::Argument::InputBuffer, type(), dimensions(), Halide::ArgumentEstimates()));
-             }
-         }
-         return args;
-     }
-
-     std::vector<const void *> instance() const {
-         std::vector<const void *> instances;
-         if (dimensions() == 0) {
-             for (const auto& param : params()) {
-                 instances.push_back(param.scalar_address());
-             }
-         } else {
-             for (const auto& fparam : impl_->fparams) {
-                 instances.push_back(fparam.get().raw_buffer());
-             }
-         }
-
-         return instances;
-     }
-
+     int32_t size() const { return (impl_->dimensions == 0) ? impl_->params.size() : impl_->fparams.size(); }
 
      int32_t index() const { return index_; }
      int32_t& index() { return index_; }
@@ -129,7 +108,7 @@ class Port {
          auto i = index_ == -1 ? 0 : index_;
          if (impl_->params.size() <= i) {
              impl_->params.resize(i+1);
-             impl_->params[i] = Halide::Internal::Parameter{type(), dimensions() != 0, dimensions(), argument_name(node_id(), name())};
+             impl_->params[i] = Halide::Internal::Parameter{type(), dimensions() != 0, dimensions(), argument_name(node_id(), name(), i)};
          }
          impl_->params[i].set_scalar(v);
      }
@@ -137,40 +116,19 @@ class Port {
      template<typename T>
      void bind(const Halide::Buffer<T>& buf) {
          auto i = index_ == -1 ? 0 : index_;
-         // Old
-         // if (impl_->params.size() <= i) {
-         //     impl_->params.resize(i+1);
-         //     impl_->params[i] = Halide::Internal::Parameter{type(), dimensions() != 0, dimensions(), argument_name(node_id(), name())};
-         // }
-         // impl_->params[i].set_buffer(buf);
-
-         // New
          if (impl_->fparams.size() <= i) {
              impl_->fparams.resize(i+1);
-             impl_->fparams[i] = Halide::ImageParam{type(), dimensions(), argument_name(node_id(), name())};
+             impl_->fparams[i] = Halide::ImageParam{type(), dimensions(), argument_name(node_id(), name(), i)};
          }
          impl_->fparams[i].set(buf);
      }
 
      template<typename T>
      void bind(const std::vector<Halide::Buffer<T>>& bufs) {
-
-         // Old
-         // if (impl_->params.size() != bufs.size()) {
-         //     impl_->params.resize(bufs.size());
-         //     for (size_t i=0; i<bufs.size(); ++i) {
-         //         impl_->params[i] = Halide::Internal::Parameter{type(), dimensions() != 0, dimensions(), argument_name(node_id(), name())};
-         //     }
-         // }
-         // for (size_t i=0; i<bufs.size(); ++i) {
-         //     impl_->params[i].set_buffer(bufs[i]);
-         // }
-
-         // New
          if (impl_->fparams.size() != bufs.size()) {
              impl_->fparams.resize(bufs.size());
              for (size_t i=0; i<bufs.size(); ++i) {
-                 impl_->fparams[i] = Halide::ImageParam{type(), dimensions(), argument_name(node_id(), name())};
+                 impl_->fparams[i] = Halide::ImageParam{type(), dimensions(), argument_name(node_id(), name(), i)};
              }
          }
          for (size_t i=0; i<bufs.size(); ++i) {
@@ -193,6 +151,60 @@ private:
      * This port is bound with some node.
      */
      Port(const std::string& n, const std::string& nid) : impl_(new Impl(n, Halide::Type(), 0, nid)), index_(-1) {}
+
+     std::vector<Halide::Argument> as_argument() const {
+         std::vector<Halide::Argument> args;
+         if (dimensions() == 0) {
+             for (auto i = 0; i<impl_->params.size(); ++i) {
+                 args.push_back(Halide::Argument(argument_name(node_id(), name(), i),  Halide::Argument::InputScalar, type(), dimensions(), Halide::ArgumentEstimates()));
+             }
+         } else {
+             for (auto i = 0; i<impl_->fparams.size(); ++i) {
+                 args.push_back(Halide::Argument(argument_name(node_id(), name(), i),  Halide::Argument::InputBuffer, type(), dimensions(), Halide::ArgumentEstimates()));
+             }
+         }
+         return args;
+     }
+
+     std::vector<const void *> as_instance() const {
+         std::vector<const void *> instances;
+         if (dimensions() == 0) {
+             for (const auto& param : params()) {
+                 instances.push_back(param.scalar_address());
+             }
+         } else {
+             for (const auto& fparam : impl_->fparams) {
+                 instances.push_back(fparam.get().raw_buffer());
+             }
+         }
+
+         return instances;
+     }
+
+     std::vector<Halide::Expr> as_expr() const {
+         if (impl_->dimensions != 0) {
+            throw std::runtime_error("Unreachable");
+         }
+
+         std::vector<Halide::Expr> es;
+         int32_t i = 0;
+         for (const auto& p : impl_->params) {
+             es.push_back(Halide::Internal::Variable::make(impl_->type, argument_name(impl_->node_id, impl_->name, i++), p));
+         }
+         return es;
+     }
+
+     std::vector<Halide::Func> as_func() const {
+         if (impl_->dimensions == 0) {
+            throw std::runtime_error("Unreachable");
+         }
+
+         std::vector<Halide::Func> fs;
+         for (const auto& p : impl_->fparams ) {
+             fs.push_back(p);
+         }
+         return fs;
+     }
 
      std::shared_ptr<Impl> impl_;
 

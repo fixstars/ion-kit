@@ -301,26 +301,9 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
                 }
             } else {
                 if (arginfo.kind == Halide::Internal::ArgInfoKind::Scalar) {
-                    std::vector<Halide::Expr> es;
-                    for (const auto& p : port.params()) {
-                        es.push_back(Halide::Internal::Variable::make(port.type(), argument_name(port.node_id(), port.name()), p));
-                    }
-                    bb->bind_input(arginfo.name, es);
+                    bb->bind_input(arginfo.name, port.as_expr());
                 } else if (arginfo.kind == Halide::Internal::ArgInfoKind::Function) {
-                    std::vector<Halide::Func> fs;
-                    //for (const auto& p : port.params()) {
-                    for (size_t i=0; i<port.params().size(); ++i ) {
-                        // auto b(p.buffer());
-                        // Halide::Func f;
-                        // if (b.defined()) {
-                        //     f(Halide::_) = b(Halide::_);
-                        // } else {
-                            // TODO: Its' enough to pass ImageParam for any case?
-                            auto f = Halide::ImageParam(port.type(), port.dimensions(), argument_name(port.node_id(), port.name(), i));
-                        // }
-                        fs.push_back(f);
-                    }
-                    bb->bind_input(arginfo.name, fs);
+                    bb->bind_input(arginfo.name, port.as_func());
                 } else {
                     throw std::runtime_error("fixme");
                 }
