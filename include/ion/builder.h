@@ -107,10 +107,12 @@ private:
                 if (port.is_bound()) {
                     continue;
                 }
-                for (auto i = 0; i<port.params().size(); ++i) {
-                    auto kind = port.dimensions() == 0 ? Halide::Argument::InputScalar : Halide::Argument::InputBuffer;
-                    args.push_back(Halide::Argument(argument_name(port.node_id(), port.name(), i),  kind, port.type(), port.dimensions(), Halide::ArgumentEstimates()));
-                }
+                const auto& port_args(port.argument());
+                args.insert(args.end(), port_args.begin(), port_args.end());
+                // for (auto i = 0; i<port.params().size(); ++i) {
+                //     auto kind = port.dimensions() == 0 ? Halide::Argument::InputScalar : Halide::Argument::InputBuffer;
+                //     args.push_back(Halide::Argument(argument_name(port.node_id(), port.name(), i),  kind, port.type(), port.dimensions(), Halide::ArgumentEstimates()));
+                // }
             }
         }
         return args;

@@ -138,11 +138,11 @@ class Port {
      void bind(const Halide::Buffer<T>& buf) {
          auto i = index_ == -1 ? 0 : index_;
          // Old
-         if (impl_->params.size() <= i) {
-             impl_->params.resize(i+1);
-             impl_->params[i] = Halide::Internal::Parameter{type(), dimensions() != 0, dimensions(), argument_name(node_id(), name())};
-         }
-         impl_->params[i].set_buffer(buf);
+         // if (impl_->params.size() <= i) {
+         //     impl_->params.resize(i+1);
+         //     impl_->params[i] = Halide::Internal::Parameter{type(), dimensions() != 0, dimensions(), argument_name(node_id(), name())};
+         // }
+         // impl_->params[i].set_buffer(buf);
 
          // New
          if (impl_->fparams.size() <= i) {
@@ -156,15 +156,15 @@ class Port {
      void bind(const std::vector<Halide::Buffer<T>>& bufs) {
 
          // Old
-         if (impl_->params.size() != bufs.size()) {
-             impl_->params.resize(bufs.size());
-             for (size_t i=0; i<bufs.size(); ++i) {
-                 impl_->params[i] = Halide::Internal::Parameter{type(), dimensions() != 0, dimensions(), argument_name(node_id(), name())};
-             }
-         }
-         for (size_t i=0; i<bufs.size(); ++i) {
-             impl_->params[i].set_buffer(bufs[i]);
-         }
+         // if (impl_->params.size() != bufs.size()) {
+         //     impl_->params.resize(bufs.size());
+         //     for (size_t i=0; i<bufs.size(); ++i) {
+         //         impl_->params[i] = Halide::Internal::Parameter{type(), dimensions() != 0, dimensions(), argument_name(node_id(), name())};
+         //     }
+         // }
+         // for (size_t i=0; i<bufs.size(); ++i) {
+         //     impl_->params[i].set_buffer(bufs[i]);
+         // }
 
          // New
          if (impl_->fparams.size() != bufs.size()) {
