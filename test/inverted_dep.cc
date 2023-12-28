@@ -24,7 +24,7 @@ int main()
                         {
                           "array_size": 1,
                           "dimensions": 0,
-                          "impl": 93843319831024,
+                          "impl_ptr": 93843319831024,
                           "index": -1,
                           "name": "output",
                           "node_id": "54f036a3-0b98-4d42-a343-6c7421d15f2f",
@@ -37,7 +37,7 @@ int main()
                         {
                           "array_size": 1,
                           "dimensions": 0,
-                          "impl": 93843319821872,
+                          "impl_ptr": 93843319821872,
                           "index": -1,
                           "name": "min0",
                           "node_id": "",
@@ -50,7 +50,7 @@ int main()
                         {
                           "array_size": 1,
                           "dimensions": 0,
-                          "impl": 93843319822176,
+                          "impl_ptr": 93843319822176,
                           "index": -1,
                           "name": "extent0",
                           "node_id": "",
@@ -63,7 +63,7 @@ int main()
                         {
                           "array_size": 1,
                           "dimensions": 0,
-                          "impl": 93843319822480,
+                          "impl_ptr": 93843319822480,
                           "index": -1,
                           "name": "min1",
                           "node_id": "",
@@ -76,7 +76,7 @@ int main()
                         {
                           "array_size": 1,
                           "dimensions": 0,
-                          "impl": 93843319822784,
+                          "impl_ptr": 93843319822784,
                           "index": -1,
                           "name": "extent1",
                           "node_id": "",
@@ -89,7 +89,7 @@ int main()
                         {
                           "array_size": 1,
                           "dimensions": 0,
-                          "impl": 93843319823088,
+                          "impl_ptr": 93843319823088,
                           "index": -1,
                           "name": "v",
                           "node_id": "",

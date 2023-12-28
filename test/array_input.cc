@@ -45,6 +45,7 @@ int main() {
             }
             pm.set(n["output"], out);
 
+            b.compile("array_input_index");
             b.run(pm);
 
             for (int y = 0; y < h; ++y) {
@@ -96,6 +97,7 @@ int main() {
             pm.set(input, ins);
             pm.set(n["output"], out);
 
+            b.compile("array_input_array");
             b.run(pm);
 
             for (int y = 0; y < h; ++y) {

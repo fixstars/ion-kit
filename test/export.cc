@@ -23,20 +23,19 @@ int main()
             }
             {
                 Halide::Type t = Halide::type_of<int32_t>();
-                Port min0{"min0", t}, extent0{"extent0", t}, min1{"min1", t}, extent1{"extent1", t}, v{"v", t};
                 Builder b;
                 b.load("simple_graph.json");
                 PortMap pm;
-                pm.set(min0, 0);
-                pm.set(extent0, 2);
-                pm.set(min1, 0);
-                pm.set(extent1, 2);
-                pm.set(v, 1);
 
                 Halide::Buffer<int32_t> out = Halide::Buffer<int32_t>::make_scalar();
 
                 auto nodes = b.nodes();
-                pm.set(nodes.back()["output"], out);
+                pm.set(nodes[1]["min0"], 0);
+                pm.set(nodes[1]["extent0"], 2);
+                pm.set(nodes[1]["min1"], 0);
+                pm.set(nodes[1]["extent1"], 2);
+                pm.set(nodes[1]["v"], 1);
+                pm.set(nodes[1]["output"], out);
 
                 b.run(pm);
             }
