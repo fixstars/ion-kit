@@ -99,11 +99,9 @@ class Port {
          auto i = index_ == -1 ? 0 : index_;
          if (has_source()) {
              Halide::Internal::Parameter param{Halide::type_of<T>(), false, 0, argument_name(node_id(), name(), i)};
-             // param.set_scalar(*v);
              impl_->params[i] = param;
          } else {
              Halide::Internal::Parameter param{type(), dimensions() != 0, dimensions(), argument_name(node_id(), name(), i)};
-             // param.set_scalar(*v);
              impl_->params[i] = param;
          }
 
@@ -116,11 +114,9 @@ class Port {
          auto i = index_ == -1 ? 0 : index_;
          if (has_source()) {
              Halide::ImageParam param{buf.type(), buf.dimensions(), argument_name(node_id(), name(), i)};
-             // param.set(buf);
              impl_->params[i] = param;
          } else {
              Halide::ImageParam param{type(), dimensions(), argument_name(node_id(), name(), i)};
-             // param.set(buf);
              impl_->params[i] = param;
          }
 
@@ -132,11 +128,9 @@ class Port {
          for (size_t i=0; i<bufs.size(); ++i) {
              if (has_source()) {
                  Halide::ImageParam param{bufs[i].type(), bufs[i].dimensions(), argument_name(node_id(), name(), i)};
-                 // param.set(bufs[i]);
                  impl_->params[i] = param;
              } else {
                  Halide::ImageParam param{type(), dimensions(), argument_name(node_id(), name(), i)};
-                 // param.set(bufs[i]);
                  impl_->params[i] = param;
              }
 
@@ -177,25 +171,12 @@ private:
 
      std::vector<const void *> as_instance() const {
          std::vector<const void *> instances;
-#if 0
-         for (const auto& [i, param] : impl_->params) {
-             if (instances.size() <= i) {
-                 instances.resize(i+1, nullptr);
-             }
-             if (auto p = std::get_if<Halide::Internal::Parameter>(&param)) {
-                 instances[i] = p->scalar_address();
-             } else if (auto p = std::get_if<Halide::ImageParam>(&param)) {
-                 instances[i] = p->get().raw_buffer();
-             }
-         }
-#else
         for (const auto& [i, instance] : impl_->instances) {
              if (instances.size() <= i) {
                  instances.resize(i+1, nullptr);
              }
              instances[i] = instance;
         }
-#endif
          return instances;
      }
 
