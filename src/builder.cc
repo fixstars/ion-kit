@@ -18,6 +18,8 @@
 #include "metadata.h"
 #include "serializer.h"
 
+#define SW 0
+
 namespace ion {
 
 namespace {
@@ -201,8 +203,19 @@ void Builder::run(ion::PortMap& pm) {
         // pipeline_.infer_arguments();
 
         callable_ = pipeline_.compile_to_callable(get_arguments_stub(), target_);
+
+#if SW
+        args_.clear();
+        args_.push_back(&jit_ctx_ptr_);
+
+        auto args = get_arguments_instance();
+        args_.insert(args_.end(), args.begin(), args.end());
+
+        // TODO: Push output buffer
+#endif
     }
 
+#if !SW
     if (pm.dirty()) {
         args_.clear();
         args_.push_back(&jit_ctx_ptr_);
@@ -219,7 +232,7 @@ void Builder::run(ion::PortMap& pm) {
 
         pm.updated();
     }
-
+#endif
     callable_.call_argv_fast(args_.size(), args_.data());
 }
 
