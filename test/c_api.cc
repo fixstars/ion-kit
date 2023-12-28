@@ -73,7 +73,7 @@ int main()
             if (ret != 0)
                 return ret;
 
-            ret = ion_node_set_param(n0, &v41, 1);
+            ret = ion_node_set_params(n0, &v41, 1);
             if (ret != 0)
                 return ret;
 
@@ -94,7 +94,7 @@ int main()
             ports[4] = extent1;
             ports[5] = v;
 
-            ret = ion_node_set_port(n1, ports, 6);
+            ret = ion_node_set_iports(n1, ports, 6);
             if (ret != 0)
                 return ret;
 
@@ -238,11 +238,11 @@ int main()
             if (ret != 0)
                 return ret;
 
-            ret = ion_node_set_port(n, &ip, 1);
+            ret = ion_node_set_iports(n, &ip, 1);
             if (ret != 0)
                 return ret;
 
-            ret = ion_node_set_param(n, &v41, 1);
+            ret = ion_node_set_params(n, &v41, 1);
             if (ret != 0)
                 return ret;
 

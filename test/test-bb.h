@@ -26,10 +26,10 @@ private:
 class Consumer : public BuildingBlock<Consumer> {
 public:
     Input<Halide::Func> input{"input", Int(32), 2};
-    Input<int32_t> desired_min0{"desired_min0", 0};
-    Input<int32_t> desired_extent0{"desired_extent0", 0};
-    Input<int32_t> desired_min1{"desired_min1", 0};
-    Input<int32_t> desired_extent1{"desired_extent1", 0};
+    Input<int32_t> min0{"min0", 0};
+    Input<int32_t> extent0{"extent0", 0};
+    Input<int32_t> min1{"min1", 0};
+    Input<int32_t> extent1{"extent1", 0};
     Input<int32_t> v{"v", 1};
 
     Output<int> output{"output"};
@@ -38,7 +38,7 @@ public:
         Func in;
         in(x, y) = input(x, y);
         in.compute_root();
-        std::vector<ExternFuncArgument> params{in, get_id(), desired_min0, desired_extent0, desired_min1, desired_extent1, v};
+        std::vector<ExternFuncArgument> params{in, get_id(), min0, extent0, min1, extent1, v};
         Func consume;
         consume.define_extern("consume", params, Int(32), 0);
         consume.compute_root();

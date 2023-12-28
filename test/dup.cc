@@ -12,7 +12,7 @@ int main()
         Builder b;
         b.set_target(Halide::get_host_target());
         Node n;
-        n = b.add("test_producer").set_param(v41);
+        n = b.add("test_producer").set_params(v41);
         Port intm = n["output"];
         n = b.add("test_inc_i32x2")(n["output"]);
 

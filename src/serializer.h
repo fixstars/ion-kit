@@ -43,10 +43,12 @@ template<>
 class adl_serializer<ion::Port> {
  public:
      static void to_json(json& j, const ion::Port& v) {
-         j["name"] = v.impl_->name;
+         j["pred_id"] = v.impl_->pred_id;
+         j["pred_name"] = v.impl_->pred_name;
+         j["succ_id"] = v.impl_->succ_id;
+         j["succ_name"] = v.impl_->succ_name;
          j["type"] = static_cast<halide_type_t>(v.impl_->type);
          j["dimensions"] = v.impl_->dimensions;
-         j["node_id"] = v.impl_->node_id;
          j["size"] = v.impl_->params.size();
          j["impl_ptr"] = reinterpret_cast<uintptr_t>(v.impl_.get());
          j["index"] = v.index_;
@@ -54,12 +56,14 @@ class adl_serializer<ion::Port> {
 
      static void from_json(const json& j, ion::Port& v) {
          v = ion::Port(ion::Port::find_impl(j["impl_ptr"].get<uintptr_t>()));
-         v.impl_->name = j["name"].get<std::string>();
+         v.impl_->pred_id = j["pred_id"].get<std::string>();
+         v.impl_->pred_name = j["pred_name"].get<std::string>();
+         v.impl_->succ_id = j["succ_id"].get<std::string>();
+         v.impl_->succ_name = j["succ_name"].get<std::string>();
          v.impl_->type = j["type"].get<halide_type_t>();
          v.impl_->dimensions = j["dimensions"];
-         v.impl_->node_id = j["node_id"].get<std::string>();
          for (auto i=0; i<j["size"]; ++i) {
-             v.impl_->params[i] = Halide::Internal::Parameter(v.impl_->type, v.impl_->dimensions != 0, v.impl_->dimensions, ion::argument_name(v.impl_->node_id, v.impl_->name, i));
+             v.impl_->params[i] = Halide::Internal::Parameter(v.impl_->type, v.impl_->dimensions != 0, v.impl_->dimensions, ion::argument_name(v.impl_->pred_id, v.impl_->pred_name, v.impl_->succ_id, v.impl_->succ_name, i));
          }
          v.index_ = j["index"];
      }

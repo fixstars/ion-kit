@@ -38,16 +38,16 @@ std::map<Halide::OutputFileType, std::string> compute_output_files(const Halide:
 
 bool is_ready(const std::vector<Node>& sorted, const Node& n) {
     bool ready = true;
-    for (auto port : n.ports()) {
-        // This port has external dependency. Always ready to add.
-        if (port.node_id().empty()) {
+    for (auto port : n.iports()) {
+        // This port has predecessor dependency. Always ready to add.
+        if (!port.has_pred()) {
             continue;
         }
 
         // Check port dependent node is already added
         ready &= std::find_if(sorted.begin(), sorted.end(),
                               [&port](const Node& n) {
-                                return n.id() == port.node_id();
+                                return n.id() == port.pred_id();
                               }) != sorted.end();
     }
     return ready;
@@ -236,25 +236,6 @@ void Builder::run(ion::PortMap& pm) {
     callable_.call_argv_fast(args_.size(), args_.data());
 }
 
-
-bool is_dereferenced(const std::vector<Node>& nodes, const std::string node_id, const std::string& func_name) {
-    for (const auto& node : nodes) {
-        if (node.id() != node_id) {
-            continue;
-        }
-
-        for (const auto& port : node.ports()) {
-            if (port.name() == func_name) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    throw std::runtime_error("Unreachable");
-}
-
 Halide::Pipeline Builder::build(ion::PortMap& pm) {
 
     log::info("Start building pipeline");
@@ -289,24 +270,24 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
         auto n = nodes_[i];
         const auto& bb = bbs[n.id()];
         auto arginfos = bb->arginfos();
-        for (size_t j=0; j<n.ports().size(); ++j) {
-            auto port = n.ports()[j];
+        for (size_t j=0; j<n.iports().size(); ++j) {
+            auto port = n.iports()[j];
             auto index = port.index();
             // Unbounded parameter
             const auto& arginfo = arginfos[j];
-            if (port.has_source()) {
-                auto fs = bbs[port.node_id()]->output_func(port.name());
+            if (port.has_pred()) {
+                auto fs = bbs[port.pred_id()]->output_func(port.pred_name());
                 if (arginfo.kind == Halide::Internal::ArgInfoKind::Scalar) {
                     bb->bind_input(arginfo.name, fs);
                 } else if (arginfo.kind == Halide::Internal::ArgInfoKind::Function) {
-                    auto fs = bbs[port.node_id()]->output_func(port.name());
+                    auto fs = bbs[port.pred_id()]->output_func(port.pred_name());
                     // no specific index provided, direct output Port
                     if (index == -1) {
                         bb->bind_input(arginfo.name, fs);
                     } else {
                         // access to Port[index]
                         if (index>=fs.size()){
-                            throw std::runtime_error("Port index out of range: " + port.name());
+                            throw std::runtime_error("Port index out of range: " + port.pred_name());
                         }
                         bb->bind_input(arginfo.name, {fs[index]});
                     }
@@ -331,14 +312,15 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
 
     if (output_buffers.empty()) {
         // This is implicit mode. Make output list based on unbound output in the graph.
-        // Traverse bbs and bundling all outputs
+        // Traverses bbs and bundles all outputs
+        // TODO: Now this can be more simplified by finding ports which doesn't have succ_id
         std::unordered_map<std::string, std::vector<std::string>> dereferenced;
         for (const auto& n : nodes_) {
-            for (const auto& port : n.ports()) {
-                auto node_id = port.node_id();
-                if (!node_id.empty()) {
-                    for (const auto &f : bbs[node_id]->output_func(port.name())) {
-                        dereferenced[node_id].emplace_back(f.name());
+            for (const auto& port : n.iports()) {
+                auto pred_id = port.pred_id();
+                if (!pred_id.empty()) {
+                    for (const auto &f : bbs[pred_id]->output_func(port.pred_name())) {
+                        dereferenced[pred_id].emplace_back(f.name());
                     }
                 }
             }
@@ -367,18 +349,20 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
     } else {
         // This is expliti mode, mainly used in JIT compilation
         for (auto kv : output_buffers) {
-            auto node_id = std::get<0>(kv.first);
-            auto port_key = std::get<1>(kv.first);
-            auto index = std::get<2>(kv.first);
+            auto pred_id = std::get<0>(kv.first);
+            auto pred_name = std::get<1>(kv.first);
+            auto succ_id = std::get<2>(kv.first);
+            auto succ_name = std::get<3>(kv.first);
+            auto index = std::get<4>(kv.first);
 
             if (index != -1) {
-                auto fs = bbs[node_id]->output_func(port_key);
+                auto fs = bbs[pred_id]->output_func(pred_name);
                 if (index >= fs.size()) {
-                    throw std::runtime_error("Port index out of range: " + node_id + ", " + port_key);
+                    throw std::runtime_error("Port index out of range: " + pred_id + ", " + pred_name);
                 }
                 output_funcs.push_back(fs[index]);
             } else {
-                for (auto f : bbs[node_id]->output_func(port_key)) {
+                for (auto f : bbs[pred_id]->output_func(pred_name)) {
                     output_funcs.push_back(f);
                 }
             }

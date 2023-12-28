@@ -17,17 +17,19 @@ int main()
                 {
                   "nodes": [
                     {
-                      "id": "158cea31-23df-45ef-a036-8bf209271804",
+                      "id": "00a1e8eb-29bd-4cc3-b724-8551e09f60ac",
                       "name": "test_consumer",
                       "params": [],
                       "ports": [
                         {
-                          "size": 1,
                           "dimensions": 0,
-                          "impl_ptr": 93843319831024,
+                          "impl_ptr": 94171704963648,
                           "index": -1,
-                          "name": "output",
-                          "node_id": "54f036a3-0b98-4d42-a343-6c7421d15f2f",
+                          "pred_id": "842e6227-6960-4d05-9f6b-592b63dfd834",
+                          "pred_name": "output",
+                          "size": 1,
+                          "succ_id": "00a1e8eb-29bd-4cc3-b724-8551e09f60ac",
+                          "succ_name": "input",
                           "type": {
                             "bits": 0,
                             "code": 3,
@@ -35,12 +37,14 @@ int main()
                           }
                         },
                         {
-                          "size": 1,
                           "dimensions": 0,
-                          "impl_ptr": 93843319821872,
+                          "impl_ptr": 94171705995072,
                           "index": -1,
-                          "name": "min0",
-                          "node_id": "",
+                          "pred_id": "",
+                          "pred_name": "",
+                          "size": 1,
+                          "succ_id": "00a1e8eb-29bd-4cc3-b724-8551e09f60ac",
+                          "succ_name": "min0",
                           "type": {
                             "bits": 32,
                             "code": 0,
@@ -48,12 +52,14 @@ int main()
                           }
                         },
                         {
-                          "size": 1,
                           "dimensions": 0,
-                          "impl_ptr": 93843319822176,
+                          "impl_ptr": 94171703972800,
                           "index": -1,
-                          "name": "extent0",
-                          "node_id": "",
+                          "pred_id": "",
+                          "pred_name": "",
+                          "size": 1,
+                          "succ_id": "00a1e8eb-29bd-4cc3-b724-8551e09f60ac",
+                          "succ_name": "extent0",
                           "type": {
                             "bits": 32,
                             "code": 0,
@@ -61,12 +67,14 @@ int main()
                           }
                         },
                         {
-                          "size": 1,
                           "dimensions": 0,
-                          "impl_ptr": 93843319822480,
+                          "impl_ptr": 94171703640896,
                           "index": -1,
-                          "name": "min1",
-                          "node_id": "",
+                          "pred_id": "",
+                          "pred_name": "",
+                          "size": 1,
+                          "succ_id": "00a1e8eb-29bd-4cc3-b724-8551e09f60ac",
+                          "succ_name": "min1",
                           "type": {
                             "bits": 32,
                             "code": 0,
@@ -74,12 +82,14 @@ int main()
                           }
                         },
                         {
-                          "size": 1,
                           "dimensions": 0,
-                          "impl_ptr": 93843319822784,
+                          "impl_ptr": 94171703968704,
                           "index": -1,
-                          "name": "extent1",
-                          "node_id": "",
+                          "pred_id": "",
+                          "pred_name": "",
+                          "size": 1,
+                          "succ_id": "00a1e8eb-29bd-4cc3-b724-8551e09f60ac",
+                          "succ_name": "extent1",
                           "type": {
                             "bits": 32,
                             "code": 0,
@@ -87,23 +97,40 @@ int main()
                           }
                         },
                         {
-                          "size": 1,
                           "dimensions": 0,
-                          "impl_ptr": 93843319823088,
+                          "impl_ptr": 94171703962192,
                           "index": -1,
-                          "name": "v",
-                          "node_id": "",
+                          "pred_id": "",
+                          "pred_name": "",
+                          "size": 1,
+                          "succ_id": "00a1e8eb-29bd-4cc3-b724-8551e09f60ac",
+                          "succ_name": "v",
                           "type": {
                             "bits": 32,
                             "code": 0,
                             "lanes": 1
+                          }
+                        },
+                        {
+                          "dimensions": 0,
+                          "impl_ptr": 94171704333952,
+                          "index": -1,
+                          "pred_id": "00a1e8eb-29bd-4cc3-b724-8551e09f60ac",
+                          "pred_name": "output",
+                          "size": 1,
+                          "succ_id": "",
+                          "succ_name": "",
+                          "type": {
+                            "bits": 0,
+                            "code": 3,
+                            "lanes": 0
                           }
                         }
                       ],
-                      "target": "x86-64-linux-avx-avx2-avx512-avx512_cannonlake-avx512_skylake-debug-f16c-fma-sse41-trace_pipeline"
+                      "target": "x86-64-linux-avx-avx2-debug-f16c-fma-sse41-trace_pipeline"
                     },
                     {
-                      "id": "54f036a3-0b98-4d42-a343-6c7421d15f2f",
+                      "id": "842e6227-6960-4d05-9f6b-592b63dfd834",
                       "name": "test_producer",
                       "params": [
                         {
@@ -111,11 +138,27 @@ int main()
                           "val": "41"
                         }
                       ],
-                      "ports": [],
-                      "target": "x86-64-linux-avx-avx2-avx512-avx512_cannonlake-avx512_skylake-debug-f16c-fma-sse41-trace_pipeline"
+                      "ports": [
+                        {
+                          "dimensions": 0,
+                          "impl_ptr": 94171704963648,
+                          "index": -1,
+                          "pred_id": "842e6227-6960-4d05-9f6b-592b63dfd834",
+                          "pred_name": "output",
+                          "size": 1,
+                          "succ_id": "00a1e8eb-29bd-4cc3-b724-8551e09f60ac",
+                          "succ_name": "input",
+                          "type": {
+                            "bits": 0,
+                            "code": 3,
+                            "lanes": 0
+                          }
+                        }
+                      ],
+                      "target": "x86-64-linux-avx-avx2-debug-f16c-fma-sse41-trace_pipeline"
                     }
                   ],
-                  "target": "x86-64-linux-avx-avx2-avx512-avx512_cannonlake-avx512_skylake-debug-f16c-fma-sse41-trace_pipeline"
+                  "target": "x86-64-linux-avx-avx2-debug-f16c-fma-sse41-trace_pipeline"
                 }
             )";
             std::ofstream ofs(file_name);

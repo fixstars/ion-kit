@@ -56,18 +56,18 @@ int main(int argc, char *argv[]) {
         for (int i = 0; i < 6; i++) {
             // IMX219
             Node imx = b.add("image_io_imx219")
-                           .set_param(Param{"index", std::to_string(i)},
+                           .set_params(Param{"index", std::to_string(i)},
                                       Param{"url", "http://ion-kit.s3.us-west-2.amazonaws.com/images/pedestrian.jpg"});
 
             // ISP
             Node downscale = b.add("image_processing_bayer_downscale_uint16")
-                                 .set_param(
+                                 .set_params(
                                      Param{"input_width", std::to_string(raw_width)},
                                      Param{"input_height", std::to_string(raw_height)},
                                      Param{"downscale_factor", std::to_string(downscale_factor)})(
                                      imx["output"]);
             Node normalize = b.add("image_processing_normalize_raw_image")
-                                 .set_param(
+                                 .set_params(
                                      Param{"bit_width", std::to_string(bit_width)},
                                      Param{"bit_shift", std::to_string(bit_shift)})(
                                      downscale["output"]);
@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
                 offset_b,
                 normalize["output"]);
             Node shading_correction = b.add("image_processing_lens_shading_correction_linear")
-                                          .set_param(
+                                          .set_params(
                                               Param{"width", std::to_string(width)},
                                               Param{"height", std::to_string(height)})(
                                               shading_correction_slope_r,
@@ -93,12 +93,12 @@ int main(int argc, char *argv[]) {
                 gain_b,
                 shading_correction["output"]);
             Node demosaic = b.add("image_processing_bayer_demosaic_simple")
-                                .set_param(
+                                .set_params(
                                     Param{"width", std::to_string(width)},
                                     Param{"height", std::to_string(height)})(
                                     white_balance["output"]);
             Node resize = b.add("image_processing_resize_bilinear_3d")
-                              .set_param(
+                              .set_params(
                                   Param{"width", std::to_string(half_width)},
                                   Param{"height", std::to_string(half_height)},
                                   Param{"scale", std::to_string(scale)})(
@@ -109,7 +109,7 @@ int main(int argc, char *argv[]) {
 
             // DNN
             Node fit_image = b.add("image_processing_fit_image_to_center_3d_float")
-                                 .set_param(
+                                 .set_params(
                                      Param{"input_width", std::to_string(scaled_width)},
                                      Param{"input_height", std::to_string(scaled_height)},
                                      Param{"output_width", std::to_string(output_width)},
@@ -118,13 +118,13 @@ int main(int argc, char *argv[]) {
             Node reorder_channel = b.add("image_processing_reorder_color_channel_3d_float")(
                 fit_image["output"]);
             Node reorder_chw2hwc = b.add("base_reorder_buffer_3d_float")
-                                       .set_param(
+                                       .set_params(
                                            Param{"dim0", "2"},
                                            Param{"dim1", "0"},
                                            Param{"dim2", "1"})(
                                            reorder_channel["output"]);
             Node extended = b.add("base_extend_dimension_3d_float")
-                                .set_param(
+                                .set_params(
                                     Param{"new_dim", "3"})(
                                     reorder_chw2hwc["output"]);
 
@@ -134,7 +134,7 @@ int main(int argc, char *argv[]) {
         Port packed_dnn_input = dnn_inputs[0];
         for (int i = 1; i < 6; i++) {
             packed_dnn_input = b.add("base_concat_buffer_4d_float")
-                                   .set_param(
+                                   .set_params(
                                        Param{"dim", "3"},
                                        Param{"input0_extent", std::to_string(i)})(
                                        packed_dnn_input,
@@ -146,7 +146,7 @@ int main(int argc, char *argv[]) {
         Port dnn_outputs[6];
         for (int i = 0; i < 6; i++) {
             dnn_outputs[i] = b.add("base_extract_buffer_4d_float")
-                                 .set_param(
+                                 .set_params(
                                      Param{"dim", "3"},
                                      Param{"index", std::to_string(i)})(
                                      object_detection["output"])["output"];
@@ -157,7 +157,7 @@ int main(int argc, char *argv[]) {
             horizontal_tiled_image[i] = dnn_outputs[i * 3];
             for (int j = 1; j < 3; j++) {
                 horizontal_tiled_image[i] = b.add("image_processing_tile_image_horizontal_3d_float")
-                                                .set_param(
+                                                .set_params(
                                                     Param{"x_dim", "1"},
                                                     Param{"y_dim", "2"},
                                                     Param{"input0_width", std::to_string(output_width * j)},
@@ -170,7 +170,7 @@ int main(int argc, char *argv[]) {
         }
 
         Port tiled_image = b.add("image_processing_tile_image_vertical_3d_float")
-                               .set_param(
+                               .set_params(
                                    Param{"x_dim", "1"},
                                    Param{"y_dim", "2"},
                                    Param{"input0_width", std::to_string(output_width * 3)},
@@ -186,7 +186,7 @@ int main(int argc, char *argv[]) {
         auto d435 = b.add("image_io_d435");
 
         // SGM
-        auto sgm = b.add("sgm_sgm")(d435["output_l"], d435["output_r"]).set_param(Param{"disp", std::to_string(disp)}, Param{"width", std::to_string(d435_width)}, Param{"height", std::to_string(d435_height)});
+        auto sgm = b.add("sgm_sgm")(d435["output_l"], d435["output_r"]).set_params(Param{"disp", std::to_string(disp)}, Param{"width", std::to_string(d435_width)}, Param{"height", std::to_string(d435_height)});
 
         b.compile("demo");
         b.save("demo.json");

@@ -20,8 +20,8 @@ int main()
 
         Node n;
         Port ip{"input", Halide::type_of<int32_t>(), 2};
-        n = b.add("test_extern_inc_i32x2")(ip).set_param(wp, hp, vp);
-        n = b.add("test_extern_inc_i32x2")(n["output"]).set_param(wp, hp, vp);
+        n = b.add("test_extern_inc_i32x2")(ip).set_params(wp, hp, vp);
+        n = b.add("test_extern_inc_i32x2")(n["output"]).set_params(wp, hp, vp);
 
         b.compile("gpu_extern");
 

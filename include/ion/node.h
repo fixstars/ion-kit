@@ -16,6 +16,9 @@ namespace ion {
  * Node class is used to manage node which consists graph structure.
  */
 class Node {
+    friend class Builder;
+    friend class nlohmann::adl_serializer<Node>;
+
     struct Impl {
         std::string id;
         std::string name;
@@ -23,17 +26,14 @@ class Node {
         std::vector<Param> params;
         std::vector<Port> ports;
 
+        std::vector<Halide::Internal::AbstractGenerator::ArgInfo> arginfos;
+
         Impl(): id(), name(), target(), params(), ports() {}
 
-        Impl(const std::string& id_, const std::string& name_, const Halide::Target& target_)
-            : id(id_), name(name_), target(target_), params(), ports() {
-        }
+        Impl(const std::string& id_, const std::string& name_, const Halide::Target& target_);
     };
 
 public:
-    friend class Builder;
-    friend class nlohmann::adl_serializer<Node>;
-
     Node() : impl_(new Impl) {};
 
     /**
@@ -55,12 +55,12 @@ public:
      * @return Node object whose parameter is set.
      */
     template<typename... Args>
-    Node set_param(Args ...args) {
+    Node set_params(Args ...args) {
         impl_->params = std::vector<Param>{args...};
         return *this;
     }
 
-    void set_param(const std::vector<Param>& params) {
+    void set_params(const std::vector<Param>& params) {
         impl_->params = params;
     }
 
@@ -75,27 +75,31 @@ public:
      */
     template<typename... Args>
     Node operator()(Args ...args) {
-        impl_->ports = std::vector<Port>{args...};
+        set_iports({args...});
         return *this;
     }
 
-    void set_port(std::vector<Port>& ports) {
-        impl_->ports = ports;
-    }
+    void set_iports(const std::vector<Port>& ports);
 
     /**
-     * Retrieve output port of the node.
-     * @arg name: The name of port name which is matched with first argument of Output declared in user-defined class deriving BuildingBlock.
+     * Retrieve relevant port of the node.
+     * @arg name: The name of port name which is matched with first argument of Input/Output declared in user-defined class deriving BuildingBlock.
      * @return Port object which is specified by name.
      */
     Port operator[](const std::string& name) {
-        auto it = std::find_if(impl_->ports.begin(), impl_->ports.end(), [&name](const Port& p){ return !p.has_source() && p.name() == name; });
-        if (it != impl_->ports.end()) {
-            // This is input port, bind myself and create new Port instance
-            return *it;
+        auto it = std::find_if(impl_->ports.begin(), impl_->ports.end(),
+                               [&](const Port& p){ return (p.pred_name() == name && p.pred_id() == impl_->id) || (p.succ_name() == name && p.succ_id() == impl_->id); });
+        if (it == impl_->ports.end()) {
+            // This is output port which is never referenced.
+            // Bind myself as a predecessor and register
+
+            // TODO: Validate with arginfo
+            Port port(impl_->id, name, "", "");
+            impl_->ports.push_back(port);
+            return port;
         } else {
-            // This is output port, bind myself and create new Port instance
-            return Port(name, impl_->id);
+            // Port is already registered
+            return *it;
         }
     }
 
@@ -131,12 +135,24 @@ public:
         return impl_->params;
     }
 
-    const std::vector<Port>& ports() const {
-        return impl_->ports;
+    std::vector<Port> iports() const {
+        std::vector<Port> iports;
+        for (const auto& p: impl_->ports) {
+            if (id() == p.succ_id()) {
+                iports.push_back(p);
+            }
+        }
+        return iports;
     }
 
-    std::vector<Port>& ports() {
-        return impl_->ports;
+    std::vector<Port> oports() const {
+        std::vector<Port> oports;
+        for (const auto& p: impl_->ports) {
+            if (id() == p.pred_id()) {
+                oports.push_back(p);
+            }
+        }
+        return oports;
     }
 
 private:

@@ -109,26 +109,26 @@ int main(int argc, char *argv[]) {
         Node debug_output;
 
         loader = b.add("image_io_grayscale_data_loader")
-            .set_param(
+            .set_params(
                 Param{"width", "3264"},
                 Param{"height", "2464"},
                 Param{"url", "http://ion-kit.s3.us-west-2.amazonaws.com/images/IMX219-3264x2464-RG10.raw"});
 
         normalize = b.add("image_processing_normalize_raw_image")
-            .set_param(
+            .set_params(
                 Param{"bit_width", "10"},
                 Param{"bit_shift", "0"})(
                     loader["output"]);
 
         offset = b.add("image_processing_bayer_offset")
-            .set_param(
+            .set_params(
                 bayer_pattern)(
                     offset_r, offset_g,
                     offset_b,
                     normalize["output"]);
 
         shading_correction = b.add("image_processing_lens_shading_correction_linear")
-            .set_param(
+            .set_params(
                 bayer_pattern,
                 Param{"width", std::to_string(width)},
                 Param{"height", std::to_string(height)})(
@@ -140,29 +140,29 @@ int main(int argc, char *argv[]) {
                     shading_correction_offset_b,
                     offset["output"]);
         white_balance = b.add("image_processing_bayer_white_balance")
-            .set_param(
+            .set_params(
                 bayer_pattern)(
                     gain_r,
                     gain_g,
                     gain_b,
                     shading_correction["output"]);
         demosaic = b.add("image_processing_bayer_demosaic_filter")
-            .set_param(
+            .set_params(
                 bayer_pattern,
                 Param{"width", std::to_string(width)},
                 Param{"height", std::to_string(height)})(
                     white_balance["output"]);
         luminance = b.add("image_processing_calc_luminance")
-            .set_param(
+            .set_params(
                 Param{"luminance_method", "Average"})(
                     demosaic["output"]);
         luminance_filter = b.add("base_constant_buffer_2d_float")
-            .set_param(
+            .set_params(
                 Param{"values", "0.04"},
                 Param{"extent0", "5"},
                 Param{"extent1", "5"});
         filtered_luminance = b.add("image_processing_convolution_2d")
-            .set_param(
+            .set_params(
                 Param{"boundary_conditions_method", "MirrorInterior"},
                 Param{"window_size", "2"},
                 Param{"width", std::to_string(width)},
@@ -170,7 +170,7 @@ int main(int argc, char *argv[]) {
                     luminance_filter["output"],
                     luminance["output"]);
         noise_reduction = b.add("image_processing_bilateral_filter_3d")
-            .set_param(
+            .set_params(
                 Param{"color_difference_method", "Average"},
                 Param{"window_size", "2"},
                 Param{"width", std::to_string(width)},
@@ -180,7 +180,7 @@ int main(int argc, char *argv[]) {
                     filtered_luminance["output"],
                     demosaic["output"]);
         color_matrix = b.add("base_constant_buffer_2d_float")
-            .set_param(
+            .set_params(
                 Param{"values", "2.20213000 -1.27425000 0.07212000 "
                 "-0.25650000 1.45961000 -0.20311000 "
                 "0.07458000 -1.35791000 2.28333000"},
@@ -190,7 +190,7 @@ int main(int argc, char *argv[]) {
             color_matrix["output"],
             noise_reduction["output"]);
         distortion_correction = b.add("image_processing_lens_distortion_correction_model_3d")
-            .set_param(
+            .set_params(
                 Param{"width", std::to_string(width)},
                 Param{"height", std::to_string(height)})(
                     k1,
@@ -205,7 +205,7 @@ int main(int argc, char *argv[]) {
                     output_scale,
                     color_conversion["output"]);
         resize = b.add("image_processing_resize_area_average_3d")
-            .set_param(
+            .set_params(
                 Param{"width", std::to_string(width)},
                 Param{"height", std::to_string(height)},
                 Param{"scale", std::to_string(resize_scale)})(

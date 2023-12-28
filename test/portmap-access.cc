@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
         b.with_bb_module("ion-bb");
 
         Node n;
-        n = b.add("image_io_cameraN").set_param(
+        n = b.add("image_io_cameraN").set_params(
                 wparam,
                 hparam,
                 Param{"num_devices", "2"},

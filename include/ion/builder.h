@@ -103,8 +103,8 @@ private:
     std::vector<Halide::Argument> get_arguments_stub() const {
         std::vector<Halide::Argument> args;
         for (const auto& node : nodes_) {
-            for (const auto& port : node.ports()) {
-                if (port.has_source()) {
+            for (const auto& port : node.iports()) {
+                if (port.has_pred()) {
                     continue;
                 }
                 const auto& port_args(port.as_argument());
@@ -117,8 +117,8 @@ private:
     std::vector<const void*> get_arguments_instance() const {
         std::vector<const void*> instances;
         for (const auto& node : nodes_) {
-            for (const auto& port : node.ports()) {
-                if (port.has_source()) {
+            for (const auto& port : node.iports()) {
+                if (port.has_pred()) {
                     continue;
                 }
                 const auto& port_instances(port.as_instance());

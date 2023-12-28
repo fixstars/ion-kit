@@ -14,12 +14,12 @@ int main() {
 
         // Index access
         {
-            Port input{"input", Halide::type_of<int32_t>(), 2};
+            Port array_input{"array_input", Halide::type_of<int32_t>(), 2};
             Builder b;
             b.set_target(Halide::get_host_target());
             Node n;
-            n = b.add("test_array_copy")(input).set_param(Param{"len", std::to_string(len)});
-            n = b.add("test_array_input")(n["array_output"]).set_param(Param{"len", std::to_string(len)});
+            n = b.add("test_array_copy")(array_input).set_params(Param{"len", std::to_string(len)});
+            n = b.add("test_array_input")(n["array_output"]).set_params(Param{"len", std::to_string(len)});
 
             std::vector<Halide::Buffer<int32_t>> ins{
                 Halide::Buffer<int32_t>{w, h},
@@ -41,7 +41,7 @@ int main() {
 
             PortMap pm;
             for (size_t i=0; i<len; ++i) {
-                pm.set(input[i], ins[i]);
+                pm.set(array_input[i], ins[i]);
             }
             pm.set(n["output"], out);
 
@@ -66,12 +66,12 @@ int main() {
 
         // Array access
         {
-            Port input{"input", Halide::type_of<int32_t>(), 2};
+            Port array_input{"array_input", Halide::type_of<int32_t>(), 2};
             Builder b;
             b.set_target(Halide::get_host_target());
             Node n;
-            n = b.add("test_array_copy")(input).set_param(Param{"len", std::to_string(len)});
-            n = b.add("test_array_input")(n["array_output"]).set_param(Param{"len", std::to_string(len)});
+            n = b.add("test_array_copy")(array_input).set_params(Param{"len", std::to_string(len)});
+            n = b.add("test_array_input")(n["array_output"]).set_params(Param{"len", std::to_string(len)});
 
             Halide::Buffer<int32_t> in0(w, h), in1(w, h), in2(w, h), in3(w, h), in4(w, h);
 
@@ -94,7 +94,7 @@ int main() {
             Halide::Buffer<int32_t> out(w, h);
 
             PortMap pm;
-            pm.set(input, ins);
+            pm.set(array_input, ins);
             pm.set(n["output"], out);
 
             b.compile("array_input_array");

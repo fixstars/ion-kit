@@ -12,7 +12,7 @@ int main()
         b.with_bb_module("ion-bb-test");
         b.set_target(Halide::get_host_target().with_feature(Halide::Target::Debug).with_feature(Halide::Target::TracePipeline));
         Node n;
-        n = b.add("test_producer").set_param(v41);
+        n = b.add("test_producer").set_params(v41);
         n = b.add("test_consumer")(n["output"], min0, extent0, min1, extent1, v);
 
         PortMap pm;
@@ -24,6 +24,8 @@ int main()
 
         ion::Buffer<int32_t> r = ion::Buffer<int32_t>::make_scalar();
         pm.set(n["output"], r);
+
+        b.save("simple_graph.graph");
 
         for (int i=0; i<5; ++i) {
             std::cout << i << "'th loop" << std::endl;
