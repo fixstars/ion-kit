@@ -65,7 +65,10 @@ public:
      */
     template<typename T>
     void set(Port port, T v) {
-        port.bind(v);
+        auto& buf(scalar_buffer_[argument_name(port.node_id(), port.name(), port.index())]);
+        buf.resize(sizeof(v));
+        std::memcpy(buf.data(), &v, sizeof(v));
+        port.bind(reinterpret_cast<T*>(buf.data()));
         dirty_ = true;
     }
 
@@ -89,7 +92,7 @@ public:
      */
     template<typename T>
     void set(Port port, Halide::Buffer<T>& buf) {
-        if (port.is_bound()) {
+        if (port.has_source()) {
             // This is just an output.
             output_buffer_[std::make_tuple(port.node_id(), port.name(), port.index())] = { buf };
         } else {
@@ -119,7 +122,7 @@ public:
      */
     template<typename T>
     void set(Port port, const std::vector<Halide::Buffer<T>> &bufs) {
-        if (port.is_bound()) {
+        if (port.has_source()) {
             // This is just an output.
             for (auto buf : bufs) {
                 output_buffer_[std::make_tuple(port.node_id(), port.name(), port.index())].push_back(buf);
@@ -129,14 +132,6 @@ public:
         }
 
         dirty_ = true;
-    }
-
-    bool is_mapped(const std::string& n) const {
-        return params_.count(n);
-    }
-
-    std::vector<Halide::Internal::Parameter> get_params(const std::string& n) const {
-        return params_.at(n);
     }
 
     std::unordered_map<std::tuple<std::string, std::string, int>, std::vector<Halide::Buffer<>>> get_output_buffer() const {
@@ -153,8 +148,9 @@ public:
 
  private:
     bool dirty_;
-    std::unordered_map<std::string, std::vector<Halide::Internal::Parameter>> params_;
     std::unordered_map<std::tuple<std::string, std::string, int>, std::vector<Halide::Buffer<>>> output_buffer_;
+
+    std::unordered_map<std::string, std::vector<uint8_t>> scalar_buffer_;
 };
 
 } // namespace ion

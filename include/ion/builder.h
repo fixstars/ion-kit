@@ -104,7 +104,7 @@ private:
         std::vector<Halide::Argument> args;
         for (const auto& node : nodes_) {
             for (const auto& port : node.ports()) {
-                if (port.is_bound()) {
+                if (port.has_source()) {
                     continue;
                 }
                 const auto& port_args(port.as_argument());
@@ -118,7 +118,7 @@ private:
         std::vector<const void*> instances;
         for (const auto& node : nodes_) {
             for (const auto& port : node.ports()) {
-                if (port.is_bound()) {
+                if (port.has_source()) {
                     continue;
                 }
                 const auto& port_instances(port.as_instance());

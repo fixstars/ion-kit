@@ -22,12 +22,11 @@ class Node {
         Halide::Target target;
         std::vector<Param> params;
         std::vector<Port> ports;
-        Halide::Internal::AbstractGeneratorPtr bb;
 
-        Impl(): id(), name(), target(), params(), ports(), bb() {}
+        Impl(): id(), name(), target(), params(), ports() {}
 
         Impl(const std::string& id_, const std::string& name_, const Halide::Target& target_)
-            : id(id_), name(name_), target(target_), params(), ports(), bb(Halide::Internal::GeneratorRegistry::create(name_, Halide::GeneratorContext(target_))) {
+            : id(id_), name(name_), target(target_), params(), ports() {
         }
     };
 
@@ -90,19 +89,13 @@ public:
      * @return Port object which is specified by name.
      */
     Port operator[](const std::string& name) {
-        auto it = std::find_if(impl_->ports.begin(), impl_->ports.end(), [&name](const Port& p){ return !p.is_bound() && p.name() == name; });
+        auto it = std::find_if(impl_->ports.begin(), impl_->ports.end(), [&name](const Port& p){ return !p.has_source() && p.name() == name; });
         if (it != impl_->ports.end()) {
             // This is input port, bind myself and create new Port instance
             return *it;
         } else {
             // This is output port, bind myself and create new Port instance
-            auto arginfos(impl_->bb->arginfos());
-            auto it = std::find_if(arginfos.begin(), arginfos.end(), [&name](const Halide::Internal::AbstractGenerator::ArgInfo& info){ return info.name == name; });
-            if (it == arginfos.end()) {
-                throw std::runtime_error("Unknown output port");
-            }
-            // TODO: Treat nicely tuple-valued input and output
-            return Port(name, it->types.front(), it->dimensions, impl_->id);
+            return Port(name, impl_->id);
         }
     }
 

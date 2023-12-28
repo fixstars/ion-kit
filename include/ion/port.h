@@ -27,6 +27,7 @@ class Port {
         int32_t dimensions;
         std::string node_id;
         std::unordered_map<int32_t, std::variant<Halide::Internal::Parameter, Halide::ImageParam>> params;
+        std::unordered_map<int32_t, const void *> instances;
 
         Impl() {}
 
@@ -76,7 +77,7 @@ class Port {
 
      int32_t index() const { return index_; }
 
-     bool is_bound() const {
+     bool has_source() const {
          return !node_id().empty();
      }
 
@@ -94,27 +95,52 @@ class Port {
      }
 
      template<typename T>
-     void bind(T v) {
+     void bind(T *v) {
          auto i = index_ == -1 ? 0 : index_;
-         Halide::Internal::Parameter param{type(), dimensions() != 0, dimensions(), argument_name(node_id(), name(), i)};
-         param.set_scalar(v);
-         impl_->params[i] = param;
+         if (has_source()) {
+             Halide::Internal::Parameter param{Halide::type_of<T>(), false, 0, argument_name(node_id(), name(), i)};
+             // param.set_scalar(*v);
+             impl_->params[i] = param;
+         } else {
+             Halide::Internal::Parameter param{type(), dimensions() != 0, dimensions(), argument_name(node_id(), name(), i)};
+             // param.set_scalar(*v);
+             impl_->params[i] = param;
+         }
+
+         impl_->instances[i] = v;
      }
+
 
      template<typename T>
      void bind(const Halide::Buffer<T>& buf) {
          auto i = index_ == -1 ? 0 : index_;
-         Halide::ImageParam param{type(), dimensions(), argument_name(node_id(), name(), i)};
-         param.set(buf);
-         impl_->params[i] = param;
+         if (has_source()) {
+             Halide::ImageParam param{buf.type(), buf.dimensions(), argument_name(node_id(), name(), i)};
+             // param.set(buf);
+             impl_->params[i] = param;
+         } else {
+             Halide::ImageParam param{type(), dimensions(), argument_name(node_id(), name(), i)};
+             // param.set(buf);
+             impl_->params[i] = param;
+         }
+
+         impl_->instances[i] = buf.raw_buffer();
      }
 
      template<typename T>
      void bind(const std::vector<Halide::Buffer<T>>& bufs) {
          for (size_t i=0; i<bufs.size(); ++i) {
-             Halide::ImageParam param{type(), dimensions(), argument_name(node_id(), name(), i)};
-             param.set(bufs[i]);
-             impl_->params[i] = param;
+             if (has_source()) {
+                 Halide::ImageParam param{bufs[i].type(), bufs[i].dimensions(), argument_name(node_id(), name(), i)};
+                 // param.set(bufs[i]);
+                 impl_->params[i] = param;
+             } else {
+                 Halide::ImageParam param{type(), dimensions(), argument_name(node_id(), name(), i)};
+                 // param.set(bufs[i]);
+                 impl_->params[i] = param;
+             }
+
+             impl_->instances[i] = bufs[i].raw_buffer();
          }
      }
 
@@ -132,7 +158,10 @@ private:
     /**
      * This port is bound with some node.
      */
-     Port(const std::string& n, Halide::Type t, int32_t d, const std::string& nid) : impl_(new Impl(n, t, d, nid)), index_(-1) {}
+     Port(const std::string& n, const std::string& nid) : impl_(new Impl), index_(-1) {
+         impl_->name = n;
+         impl_->node_id = nid;
+     }
 
      std::vector<Halide::Argument> as_argument() const {
          std::vector<Halide::Argument> args;
@@ -148,6 +177,7 @@ private:
 
      std::vector<const void *> as_instance() const {
          std::vector<const void *> instances;
+#if 0
          for (const auto& [i, param] : impl_->params) {
              if (instances.size() <= i) {
                  instances.resize(i+1, nullptr);
@@ -158,6 +188,14 @@ private:
                  instances[i] = p->get().raw_buffer();
              }
          }
+#else
+        for (const auto& [i, instance] : impl_->instances) {
+             if (instances.size() <= i) {
+                 instances.resize(i+1, nullptr);
+             }
+             instances[i] = instance;
+        }
+#endif
          return instances;
      }
 

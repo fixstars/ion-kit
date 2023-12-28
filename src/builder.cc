@@ -281,7 +281,7 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
             auto index = port.index();
             // Unbounded parameter
             const auto& arginfo = arginfos[j];
-            if (port.is_bound()) {
+            if (port.has_source()) {
                 auto fs = bbs[port.node_id()]->output_func(port.name());
                 if (arginfo.kind == Halide::Internal::ArgInfoKind::Scalar) {
                     bb->bind_input(arginfo.name, fs);

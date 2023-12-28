@@ -86,7 +86,6 @@ class adl_serializer<ion::Node> {
          v.impl_->target = Halide::Target(j["target"].get<std::string>());
          v.impl_->params = j["params"].get<std::vector<ion::Param>>();
          v.impl_->ports = j["ports"].get<std::vector<ion::Port>>();
-         v.impl_->bb = Halide::Internal::GeneratorRegistry::create(v.impl_->name, Halide::GeneratorContext(v.impl_->target));
      }
 };
 }
