@@ -132,7 +132,7 @@ private:
     /**
      * This port is bound with some node.
      */
-     Port(const std::string& n, const std::string& nid) : impl_(new Impl(n, Halide::Type(), 0, nid)), index_(-1) {}
+     Port(const std::string& n, Halide::Type t, int32_t d, const std::string& nid) : impl_(new Impl(n, t, d, nid)), index_(-1) {}
 
      std::vector<Halide::Argument> as_argument() const {
          std::vector<Halide::Argument> args;

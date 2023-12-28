@@ -94,6 +94,7 @@ Builder::~Builder()
 
 Node Builder::add(const std::string& k)
 {
+    // TODO: Validate bb is existing
     Node n(sole::uuid4().str(), k, target_);
     nodes_.push_back(n);
     return n;

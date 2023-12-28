@@ -22,16 +22,18 @@ class Node {
         Halide::Target target;
         std::vector<Param> params;
         std::vector<Port> ports;
+        Halide::Internal::AbstractGeneratorPtr bb;
 
-        Impl(): id(), name(), target(), params(), ports() {}
+        Impl(): id(), name(), target(), params(), ports(), bb() {}
 
         Impl(const std::string& id_, const std::string& name_, const Halide::Target& target_)
-            : id(id_), name(name_), target(target_), params(), ports() {
+            : id(id_), name(name_), target(target_), params(), ports(), bb(Halide::Internal::GeneratorRegistry::create(name_, Halide::GeneratorContext(target_))) {
         }
     };
 
 public:
     friend class Builder;
+    friend class nlohmann::adl_serializer<Node>;
 
     Node() : impl_(new Impl) {};
 
@@ -94,7 +96,13 @@ public:
             return *it;
         } else {
             // This is output port, bind myself and create new Port instance
-            return Port(name, impl_->id);
+            auto arginfos(impl_->bb->arginfos());
+            auto it = std::find_if(arginfos.begin(), arginfos.end(), [&name](const Halide::Internal::AbstractGenerator::ArgInfo& info){ return info.name == name; });
+            if (it == arginfos.end()) {
+                throw std::runtime_error("Unknown output port");
+            }
+            // TODO: Treat nicely tuple-valued input and output
+            return Port(name, it->types.front(), it->dimensions, impl_->id);
         }
     }
 

@@ -73,19 +73,20 @@ template <>
 class adl_serializer<ion::Node> {
  public:
      static void to_json(json& j, const ion::Node& v) {
-         j["id"] = v.id();
-         j["name"] = v.name();
-         j["target"] = v.target().to_string();
-         j["params"] = v.params();
-         j["ports"] = v.ports();
+         j["id"] = v.impl_->id;
+         j["name"] = v.impl_->name;
+         j["target"] = v.impl_->target.to_string();
+         j["params"] = v.impl_->params;
+         j["ports"] = v.impl_->ports;
      }
 
      static void from_json(const json& j, ion::Node& v) {
-         v.id() = j["id"].get<std::string>();
-         v.name() = j["name"].get<std::string>();
-         v.target() = Halide::Target(j["target"].get<std::string>());
-         v.params() = j["params"].get<std::vector<ion::Param>>();
-         v.ports() = j["ports"].get<std::vector<ion::Port>>();
+         v.impl_->id = j["id"].get<std::string>();
+         v.impl_->name = j["name"].get<std::string>();
+         v.impl_->target = Halide::Target(j["target"].get<std::string>());
+         v.impl_->params = j["params"].get<std::vector<ion::Param>>();
+         v.impl_->ports = j["ports"].get<std::vector<ion::Port>>();
+         v.impl_->bb = Halide::Internal::GeneratorRegistry::create(v.impl_->name, Halide::GeneratorContext(v.impl_->target));
      }
 };
 }

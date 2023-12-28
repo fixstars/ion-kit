@@ -123,7 +123,6 @@ int main()
         }
 
         Halide::Type t = Halide::type_of<int32_t>();
-        Port min0{"min0", t}, extent0{"extent0", t}, min1{"min1", t}, extent1{"extent1", t}, v{"v", t};
 
         Builder b;
 

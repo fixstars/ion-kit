@@ -64,9 +64,9 @@ int main()
             if (ret != 0)
                 return ret;
 
-            // ret = ion_builder_with_bb_module(b, "./libion-bb-test.so");
-            // if (ret != 0)
-            //     return ret;
+            ret = ion_builder_with_bb_module(b, "ion-bb-test");
+            if (ret != 0)
+                return ret;
 
             ion_node_t n0;
             ret = ion_builder_add_node(b, "test_producer", &n0);
