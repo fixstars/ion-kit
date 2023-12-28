@@ -22,7 +22,7 @@ int main()
                       "params": [],
                       "ports": [
                         {
-                          "array_size": 1,
+                          "size": 1,
                           "dimensions": 0,
                           "impl_ptr": 93843319831024,
                           "index": -1,
@@ -35,7 +35,7 @@ int main()
                           }
                         },
                         {
-                          "array_size": 1,
+                          "size": 1,
                           "dimensions": 0,
                           "impl_ptr": 93843319821872,
                           "index": -1,
@@ -48,7 +48,7 @@ int main()
                           }
                         },
                         {
-                          "array_size": 1,
+                          "size": 1,
                           "dimensions": 0,
                           "impl_ptr": 93843319822176,
                           "index": -1,
@@ -61,7 +61,7 @@ int main()
                           }
                         },
                         {
-                          "array_size": 1,
+                          "size": 1,
                           "dimensions": 0,
                           "impl_ptr": 93843319822480,
                           "index": -1,
@@ -74,7 +74,7 @@ int main()
                           }
                         },
                         {
-                          "array_size": 1,
+                          "size": 1,
                           "dimensions": 0,
                           "impl_ptr": 93843319822784,
                           "index": -1,
@@ -87,7 +87,7 @@ int main()
                           }
                         },
                         {
-                          "array_size": 1,
+                          "size": 1,
                           "dimensions": 0,
                           "impl_ptr": 93843319823088,
                           "index": -1,

@@ -47,7 +47,7 @@ class adl_serializer<ion::Port> {
          j["type"] = static_cast<halide_type_t>(v.impl_->type);
          j["dimensions"] = v.impl_->dimensions;
          j["node_id"] = v.impl_->node_id;
-         j["array_size"] = v.impl_->params.size();
+         j["size"] = v.impl_->params.size();
          j["impl_ptr"] = reinterpret_cast<uintptr_t>(v.impl_.get());
          j["index"] = v.index_;
      }
@@ -58,15 +58,11 @@ class adl_serializer<ion::Port> {
          v.impl_->type = j["type"].get<halide_type_t>();
          v.impl_->dimensions = j["dimensions"];
          v.impl_->node_id = j["node_id"].get<std::string>();
-         v.impl_->params = std::vector<Halide::Internal::Parameter>(
-             j["array_size"],
-             Halide::Internal::Parameter(v.impl_->type, v.impl_->dimensions != 0, v.impl_->dimensions, ion::argument_name(v.impl_->node_id, v.impl_->name))
-         );
-         for (auto i=0; i<j["array_size"]; ++i) {
+         for (auto i=0; i<j["size"]; ++i) {
              if (v.impl_->dimensions == 0) {
-                 v.impl_->vparams[i] = Halide::Internal::Parameter(v.impl_->type, v.impl_->dimensions != 0, v.impl_->dimensions, ion::argument_name(v.impl_->node_id, v.impl_->name, i));
+                 v.impl_->params[i] = Halide::Internal::Parameter(v.impl_->type, v.impl_->dimensions != 0, v.impl_->dimensions, ion::argument_name(v.impl_->node_id, v.impl_->name, i));
              } else {
-                 v.impl_->vparams[i] = Halide::ImageParam(v.impl_->type, v.impl_->dimensions, ion::argument_name(v.impl_->node_id, v.impl_->name, i));
+                 v.impl_->params[i] = Halide::ImageParam(v.impl_->type, v.impl_->dimensions, ion::argument_name(v.impl_->node_id, v.impl_->name, i));
              }
          }
          v.index_ = j["index"];
