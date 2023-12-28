@@ -5,6 +5,8 @@
 
 #include <HalideBuffer.h>
 
+#include "log.h"
+
 using namespace ion;
 
 namespace {
@@ -25,12 +27,15 @@ int ion_port_create(ion_port_t *ptr, const char *key, ion_type_t type, int dim)
 {
     try {
         *ptr = reinterpret_cast<ion_port_t>(new Port(key, halide_type_t(static_cast<halide_type_code_t>(type.code), type.bits, type.lanes), dim));
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        log::error(e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown exception was happened." << std::endl;
-        return -1;
+        log::error("Unknown exception was happened");
+        return 1;
     }
 
     return 0;
@@ -43,12 +48,15 @@ int ion_port_create_with_index(ion_port_t *ptr, ion_port_t obj, int index)
         p->set_index(index);
         *ptr = reinterpret_cast<ion_port_t>(p);
         reinterpret_cast<ion::Port*>(obj)->set_index(index);
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        log::error(e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown exception was happened." << std::endl;
-        return -1;
+        log::error("Unknown exception was happened");
+        return 1;
     }
 
     return 0;
@@ -58,12 +66,15 @@ int ion_port_destroy(ion_port_t obj)
 {
     try {
         delete reinterpret_cast<Port*>(obj);
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        log::error(e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown exception was happened." << std::endl;
-        return -1;
+        log::error("Unknown exception was happened");
+        return 1;
     }
 
     return 0;
@@ -76,12 +87,15 @@ int ion_param_create(ion_param_t *ptr, const char *key, const char *value)
 {
     try {
         *ptr = reinterpret_cast<ion_param_t>(new Param(key, value));
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        log::error(e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown exception was happened." << std::endl;
-        return -1;
+        log::error("Unknown exception was happened");
+        return 1;
     }
 
     return 0;
@@ -91,12 +105,15 @@ int ion_param_destroy(ion_param_t obj)
 {
     try {
         delete reinterpret_cast<Param*>(obj);
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        log::error(e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown exception was happened." << std::endl;
-        return -1;
+        log::error("Unknown exception was happened");
+        return 1;
     }
 
     return 0;
@@ -109,12 +126,15 @@ int ion_node_create(ion_node_t *ptr)
 {
     try {
         *ptr = reinterpret_cast<ion_node_t>(new Node);
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        log::error(e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown exception was happened." << std::endl;
-        return -1;
+        log::error("Unknown exception was happened");
+        return 1;
     }
 
     return 0;
@@ -124,12 +144,15 @@ int ion_node_destroy(ion_node_t obj)
 {
     try {
         delete reinterpret_cast<Node*>(obj);
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        log::error(e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown exception was happened." << std::endl;
-        return -1;
+        log::error("Unknown exception was happened");
+        return 1;
     }
 
     return 0;
@@ -140,12 +163,15 @@ int ion_node_get_port(ion_node_t obj, const char *key, ion_port_t *port_ptr)
 {
     try {
         *port_ptr = reinterpret_cast<ion_port_t>(new Port((*reinterpret_cast<Node*>(obj))[key]));
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        log::error(e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown exception was happened." << std::endl;
-        return -1;
+        log::error("Unknown exception was happened");
+        return 1;
     }
 
     return 0;
@@ -159,12 +185,15 @@ int ion_node_set_port(ion_node_t obj, ion_port_t *ports_ptr, int ports_num)
             ports[i] = *reinterpret_cast<Port*>(ports_ptr[i]);
         }
         reinterpret_cast<Node*>(obj)->set_port(ports);
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        log::error(e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown exception was happened." << std::endl;
-        return -1;
+        log::error("Unknown exception was happened");
+        return 1;
     }
 
     return 0;
@@ -178,12 +207,15 @@ int ion_node_set_param(ion_node_t obj, ion_param_t *params_ptr, int params_num)
             params[i] = *reinterpret_cast<Param*>(params_ptr[i]);
         }
         reinterpret_cast<Node*>(obj)->set_param(params);
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        log::error(e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown exception was happened." << std::endl;
-        return -1;
+        log::error("Unknown exception was happened");
+        return 1;
     }
 
     return 0;
@@ -196,12 +228,15 @@ int ion_builder_create(ion_builder_t *ptr)
 {
     try {
         *ptr = reinterpret_cast<ion_builder_t>(new Builder);
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        log::error(e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown exception was happened." << std::endl;
-        return -1;
+        log::error("Unknown exception was happened");
+        return 1;
     }
 
     return 0;
@@ -211,12 +246,15 @@ int ion_builder_destroy(ion_builder_t obj)
 {
     try {
         delete reinterpret_cast<Builder*>(obj);
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        log::error(e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown exception was happened." << std::endl;
-        return -1;
+        log::error("Unknown exception was happened");
+        return 1;
     }
 
     return 0;
@@ -226,12 +264,15 @@ int ion_builder_set_target(ion_builder_t obj, const char *target)
 {
     try {
         reinterpret_cast<Builder *>(obj)->set_target(Halide::Target(target));
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        log::error(e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown exception was happened." << std::endl;
-        return -1;
+        log::error("Unknown exception was happened");
+        return 1;
     }
 
     return 0;
@@ -241,12 +282,15 @@ int ion_builder_with_bb_module(ion_builder_t obj, const char *module_name)
 {
     try {
         reinterpret_cast<Builder *>(obj)->with_bb_module(module_name);
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        log::error(e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown exception was happened." << std::endl;
-        return -1;
+        log::error("Unknown exception was happened");
+        return 1;
     }
 
     return 0;
@@ -256,12 +300,15 @@ int ion_builder_add_node(ion_builder_t obj, const char *key, ion_node_t *node_pt
 {
     try {
         *node_ptr = reinterpret_cast<ion_node_t>(new Node(reinterpret_cast<Builder*>(obj)->add(key)));
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        log::error(e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown exception was happened." << std::endl;
-        return -1;
+        log::error("Unknown exception was happened");
+        return 1;
     }
 
     return 0;
@@ -271,12 +318,15 @@ int ion_builder_compile(ion_builder_t obj, const char *function_name, ion_builde
 {
     try {
         reinterpret_cast<Builder*>(obj)->compile(function_name, Builder::CompileOption{option.output_directory});
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        log::error(e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown exception was happened." << std::endl;
-        return -1;
+        log::error("Unknown exception was happened");
+        return 1;
     }
 
     return 0;
@@ -285,12 +335,15 @@ int ion_builder_load(ion_builder_t obj, const char *file_name)
 {
     try {
         reinterpret_cast<Builder*>(obj)->load(file_name);
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        log::error(e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown exception was happened." << std::endl;
-        return -1;
+        log::error("Unknown exception was happened");
+        return 1;
     }
 
     return 0;
@@ -300,12 +353,15 @@ int ion_builder_save(ion_builder_t obj, const char *file_name)
 {
     try {
         reinterpret_cast<Builder*>(obj)->save(file_name);
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        log::error(e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown exception was happened." << std::endl;
-        return -1;
+        log::error("Unknown exception was happened");
+        return 1;
     }
 
     return 0;
@@ -338,12 +394,15 @@ int ion_builder_run(ion_builder_t obj, ion_port_map_t pm)
 {
     try {
         reinterpret_cast<Builder*>(obj)->run(*reinterpret_cast<PortMap*>(pm));
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        log::error(e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown exception was happened." << std::endl;
-        return -1;
+        log::error("Unknown exception was happened");
+        return 1;
     }
 
     return 0;
@@ -405,12 +464,15 @@ int ion_buffer_create(ion_buffer_t *ptr, ion_type_t type, int *sizes_, int dim)
         } else {
             throw std::runtime_error("Unsupported type code");
         }
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        log::error(e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown exception was happened." << std::endl;
-        return -1;
+        log::error("Unknown exception was happened");
+        return 1;
     }
 
     return 0;
@@ -421,12 +483,15 @@ int ion_buffer_destroy(ion_buffer_t obj)
     try {
         // NOTE: Halide::Buffer class layout is safe to be deleted as T=void
         delete reinterpret_cast<Halide::Buffer<void>*>(obj);
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        log::error(e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown exception was happened." << std::endl;
-        return -1;
+        log::error("Unknown exception was happened");
+        return 1;
     }
 
     return 0;
@@ -474,12 +539,15 @@ int ion_buffer_write(ion_buffer_t obj, void *ptr, int size)
         } else {
             throw std::runtime_error("Unsupported type code");
         }
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        log::error(e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown exception was happened." << std::endl;
-        return -1;
+        log::error("Unknown exception was happened");
+        return 1;
     }
 
     return 0;
@@ -527,12 +595,15 @@ int ion_buffer_read(ion_buffer_t obj, void *ptr, int size)
         } else {
             throw std::runtime_error("Unsupported type code");
         }
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        log::error(e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown exception was happened." << std::endl;
-        return -1;
+        log::error("Unknown exception was happened");
+        return 1;
     }
 
     return 0;
@@ -542,12 +613,15 @@ int ion_port_map_create(ion_port_map_t *ptr)
 {
     try {
         *ptr = reinterpret_cast<ion_port_map_t>(new PortMap);
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        log::error(e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown exception was happened." << std::endl;
-        return -1;
+        log::error("Unknown exception was happened");
+        return 1;
     }
 
     return 0;
@@ -557,12 +631,15 @@ int ion_port_map_destroy(ion_port_map_t obj)
 {
     try {
         delete reinterpret_cast<PortMap*>(obj);
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        log::error(e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown exception was happened." << std::endl;
-        return -1;
+        log::error("Unknown exception was happened");
+        return 1;
     }
 
     return 0;
@@ -573,15 +650,18 @@ int ion_port_map_destroy(ion_port_map_t obj)
     int ion_port_map_set_##POSTFIX(ion_port_map_t obj, ion_port_t p, T v) {       \
         try {                                                                     \
             reinterpret_cast<PortMap*>(obj)->set(*reinterpret_cast<Port*>(p), v); \
-        } catch (const std::exception& e) {                                 \
-            std::cerr << e.what() << std::endl;                             \
-            return -1;                                                      \
-        } catch (...) {                                                     \
-            std::cerr << "Unknown exception was happened." << std::endl;    \
-            return -1;                                                      \
-        }                                                                   \
-                                                                            \
-        return 0;                                                           \
+        } catch (const Halide::Error& e) {                                        \
+            log::error(e.what());                                                 \
+            return 1;                                                             \
+        } catch (const std::exception& e) {                                       \
+            log::error(e.what());                                                 \
+            return 1;                                                             \
+        } catch (...) {                                                           \
+            log::error("Unknown exception was happened");                         \
+            return 1;                                                             \
+        }                                                                         \
+                                                                                  \
+        return 0;                                                                 \
     }
 
 ION_PORT_MAP_SET_IMPL(int8_t, i8)
@@ -640,13 +720,17 @@ int ion_port_map_set_buffer(ion_port_map_t obj, ion_port_t p, ion_buffer_t b)
         } else {
             throw std::runtime_error("Unsupported type code");
         }
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        log::error(e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown exception was happened." << std::endl;
-        return -1;
+        log::error("Unknown exception was happened");
+        return 1;
     }
+
 
     return 0;
 }
@@ -694,13 +778,17 @@ int ion_port_map_set_buffer_array(ion_port_map_t obj, ion_port_t p, ion_buffer_t
         } else {
             throw std::runtime_error("Unsupported type code");
         }
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
     } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return -1;
+        log::error(e.what());
+        return 1;
     } catch (...) {
-        std::cerr << "Unknown exception was happened." << std::endl;
-        return -1;
+        log::error("Unknown exception was happened");
+        return 1;
     }
+
 
     return 0;
 }

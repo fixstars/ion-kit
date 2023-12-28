@@ -242,8 +242,8 @@ private:
              if (es.size() <= i) {
                  es.resize(i+1, Halide::Expr());
              }
-             es.push_back(Halide::Internal::Variable::make(impl_->type, argument_name(impl_->node_id, impl_->name, i),
-                                                           *std::get_if<Halide::Internal::Parameter>(&param)));
+             es[i] = Halide::Internal::Variable::make(impl_->type, argument_name(impl_->node_id, impl_->name, i),
+                                                      *std::get_if<Halide::Internal::Parameter>(&param));
          }
 #endif
          return es;
@@ -264,7 +264,7 @@ private:
              if (fs.size() <= i) {
                  fs.resize(i+1, Halide::Func());
              }
-             fs.push_back(*std::get_if<Halide::ImageParam>(&param));
+             fs[i] = *std::get_if<Halide::ImageParam>(&param);
          }
 #endif
          return fs;
