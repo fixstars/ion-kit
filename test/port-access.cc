@@ -82,5 +82,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    std::cout << "Passed" << std::endl;
+
     return 0;
 }

@@ -156,6 +156,7 @@ int main()
         return 1;
     }
 
+    std::cout << "Passed" << std::endl;
 
     return 0;
 }

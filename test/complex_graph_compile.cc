@@ -28,6 +28,12 @@ int main()
     } catch (const Halide::Error& e) {
         std::cerr << e.what() << std::endl;
         return 1;
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        return 1;
     }
+
+    std::cout << "Passed" << std::endl;
+
     return 0;
 }
