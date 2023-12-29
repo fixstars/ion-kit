@@ -25,7 +25,6 @@ class Node {
         Halide::Target target;
         std::vector<Param> params;
         std::vector<Port> ports;
-
         std::vector<Halide::Internal::AbstractGenerator::ArgInfo> arginfos;
 
         Impl(): id(), name(), target(), params(), ports() {}
@@ -86,22 +85,7 @@ public:
      * @arg name: The name of port name which is matched with first argument of Input/Output declared in user-defined class deriving BuildingBlock.
      * @return Port object which is specified by name.
      */
-    Port operator[](const std::string& name) {
-        auto it = std::find_if(impl_->ports.begin(), impl_->ports.end(),
-                               [&](const Port& p){ return (p.pred_name() == name && p.pred_id() == impl_->id) || p.has_succ({.node_id=impl_->id, .name=name}); });
-        if (it == impl_->ports.end()) {
-            // This is output port which is never referenced.
-            // Bind myself as a predecessor and register
-
-            // TODO: Validate with arginfo
-            Port port(impl_->id, name);
-            impl_->ports.push_back(port);
-            return port;
-        } else {
-            // Port is already registered
-            return *it;
-        }
-    }
+    Port operator[](const std::string& name);
 
     const std::string& id() const {
         return impl_->id;

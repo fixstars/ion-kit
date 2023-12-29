@@ -31,12 +31,35 @@ void Node::set_iports(const std::vector<Port>& ports) {
 
         auto& port(ports[i]);
 
-        port.impl_->succ_chans.insert({.node_id=id(), .name=info.name});
+        port.impl_->succ_chans.insert({id(), info.name});
 
         impl_->ports.push_back(port);
 
         i++;
     }
 }
+
+Port Node::operator[](const std::string& name) {
+        if (std::find_if(impl_->arginfos.begin(), impl_->arginfos.end(),
+                         [&](const Halide::Internal::AbstractGenerator::ArgInfo& info) { return info.name == name; }) == impl_->arginfos.end()) {
+            log::error("Port {} is not found", name);
+            throw std::runtime_error("Failed to find port");
+        }
+
+        auto it = std::find_if(impl_->ports.begin(), impl_->ports.end(),
+                               [&](const Port& p){ return (p.pred_name() == name && p.pred_id() == impl_->id) || p.has_succ({impl_->id, name}); });
+        if (it == impl_->ports.end()) {
+            // This is output port which is never referenced.
+            // Bind myself as a predecessor and register
+
+            // TODO: Validate with arginfo
+            Port port(impl_->id, name);
+            impl_->ports.push_back(port);
+            return port;
+        } else {
+            // Port is already registered
+            return *it;
+        }
+    }
 
 } // namespace ion

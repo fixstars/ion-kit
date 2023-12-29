@@ -18,7 +18,7 @@
 #include "metadata.h"
 #include "serializer.h"
 
-#define SW 0
+#define SW 1
 
 namespace ion {
 
@@ -83,6 +83,9 @@ using json = nlohmann::json;
 Builder::Builder()
     : jit_ctx_(new Halide::JITUserContext), jit_ctx_ptr_(jit_ctx_.get())
 {
+#if SW
+    args_.push_back(&jit_ctx_ptr_);
+#endif
 }
 
 Builder::~Builder()
@@ -137,6 +140,11 @@ void Builder::compile(const std::string& function_name, const CompileOption& opt
     // Build pipeline and module first
     PortMap pm;
     Pipeline p = build(pm);
+    if (!p.defined()) {
+        log::warn("This pipeline doesn't produce any outputs. Please bind a buffer with output port.");
+        return;
+    }
+
     Module m = p.compile_to_module(p.infer_arguments(), function_name, target_);
 
     // Tailor prefix
@@ -186,6 +194,10 @@ void Builder::run(void) {
 void Builder::run(ion::PortMap& pm) {
      if (!pipeline_.defined()) {
         pipeline_ = build(pm);
+        if (!pipeline_.defined()) {
+            log::warn("This pipeline doesn't produce any outputs. Please bind a buffer with output port.");
+            return;
+        }
     }
 
     if (!callable_.defined()) {
@@ -200,19 +212,9 @@ void Builder::run(ion::PortMap& pm) {
         pipeline_.set_jit_externs(jit_externs);
 
         // TODO: Validate argument list
-        // pipeline_.infer_arguments();
+        // pipeline_.infer_arguments()) {
 
         callable_ = pipeline_.compile_to_callable(get_arguments_stub(), target_);
-
-#if SW
-        args_.clear();
-        args_.push_back(&jit_ctx_ptr_);
-
-        auto args = get_arguments_instance();
-        args_.insert(args_.end(), args.begin(), args.end());
-
-        // TODO: Push output buffer
-#endif
     }
 
 #if !SW
@@ -223,7 +225,6 @@ void Builder::run(ion::PortMap& pm) {
         auto args = get_arguments_instance();
         args_.insert(args_.end(), args.begin(), args.end());
 
-        auto output_funcs = pipeline_.outputs();
         for (auto kv : pm.get_output_buffer()) {
             for (auto b : kv.second) {
                 args_.push_back(b.raw_buffer());
@@ -266,6 +267,7 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
     }
 
     // Assigning ports
+    std::set<Port::Channel> added_args;
     for (size_t i=0; i<nodes_.size(); ++i) {
         auto n = nodes_[i];
         const auto& bb = bbs[n.id()];
@@ -302,14 +304,41 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
                 } else {
                     throw std::runtime_error("fixme");
                 }
+#if SW
+                // Adding input args
+                if (added_args.count(port.impl_->pred_chan)) {
+                    continue;
+                }
+                added_args.insert(port.impl_->pred_chan);
+
+                const auto& port_instances(port.as_instance());
+                args_.insert(args_.end(), port_instances.begin(), port_instances.end());
+#endif
             }
         }
         bb->build_pipeline();
     }
 
     std::vector<Halide::Func> output_funcs;
-    const auto& output_buffers(pm.get_output_buffer());
+#if SW
+    for (const auto& node : nodes_) {
+        for (const auto& port : node.oports()) {
+            // if (port.has_succ()) {
+            //     continue;
+            // }
 
+            const auto& port_instances(port.as_instance());
+            if (port_instances.empty()) {
+                continue;
+            }
+
+            auto fs(bbs[port.pred_id()]->output_func(port.pred_name()));
+            output_funcs.insert(output_funcs.end(), fs.begin(), fs.end());
+            args_.insert(args_.end(), port_instances.begin(), port_instances.end());
+        }
+    }
+#else
+    const auto& output_buffers(pm.get_output_buffer());
     if (output_buffers.empty()) {
         // This is implicit mode. Make output list based on unbound output in the graph.
         // Traverses bbs and bundles all outputs
@@ -365,6 +394,11 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
                 }
             }
         }
+    }
+#endif
+
+    if (output_funcs.empty()) {
+        return Halide::Pipeline();
     }
 
     return Halide::Pipeline(output_funcs);

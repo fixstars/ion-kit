@@ -116,7 +116,6 @@ private:
 
                 const auto& port_args(port.as_argument());
                 args.insert(args.end(), port_args.begin(), port_args.end());
-
             }
         }
         return args;

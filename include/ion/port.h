@@ -43,7 +43,7 @@ private:
         Impl() {}
 
         Impl(const std::string& pid, const std::string& pn, const Halide::Type& t, int32_t d)
-            : pred_chan{.node_id=pid, .name=pn}, succ_chans{}, type(t), dimensions(d)
+            : pred_chan{pid, pn}, succ_chans{}, type(t), dimensions(d)
         {
             params[0] = Halide::Internal::Parameter(type, dimensions != 0, dimensions, argument_name(pid, pn, 0));
         }

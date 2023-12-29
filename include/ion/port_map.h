@@ -95,6 +95,7 @@ public:
         if (port.has_pred()) {
             // This is just an output.
             output_buffer_[std::make_tuple(port.pred_id(), port.pred_name(), port.index())] = { buf };
+            port.bind(buf);
         } else {
             port.bind(buf);
         }
@@ -127,6 +128,7 @@ public:
             for (auto buf : bufs) {
                 output_buffer_[std::make_tuple(port.pred_id(), port.pred_name(), port.index())].push_back(buf);
             }
+            port.bind(bufs);
         } else {
             port.bind(bufs);
         }

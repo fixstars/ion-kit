@@ -17,6 +17,9 @@ int main()
         n = b.add("test_branch")(input, width, height);
         n = b.add("test_merge")(n["output0"], n["output1"], height);
 
+        ion::Buffer<int32_t> obuf(16, 16);
+        n["output"].bind(obuf);
+
         b.compile("complex_graph");
     } catch (const Halide::Error& e) {
         std::cerr << e.what() << std::endl;
