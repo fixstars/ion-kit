@@ -20,13 +20,19 @@ namespace ion {
  * Port class is used to create dynamic i/o for each node.
  */
 class Port {
+public:
+    using Channel = std::tuple<std::string, std::string>;
 
+private:
     struct Impl {
-        std::string pred_id;
-        std::string pred_name;
+        // std::string pred_id;
+        // std::string pred_name;
 
-        std::string succ_id;
-        std::string succ_name;
+        // std::string succ_id;
+        // std::string succ_name;
+
+        Channel pred_chan;
+        std::set<Channel> succ_chans;
 
         Halide::Type type;
         int32_t dimensions;
@@ -36,10 +42,10 @@ class Port {
 
         Impl() {}
 
-        Impl(const std::string& pid, const std::string& pn, const std::string& sid, const std::string& sn, const Halide::Type& t, int32_t d)
-            : pred_id(pid), pred_name(pn), succ_id(sid), succ_name(sn), type(t), dimensions(d)
+        Impl(const std::string& pid, const std::string& pn, const Halide::Type& t, int32_t d)
+            : pred_chan{.node_id=pid, .name=pn}, succ_chans{}, type(t), dimensions(d)
         {
-            params[0] = Halide::Internal::Parameter(type, dimensions != 0, dimensions, argument_name(pid, pn, sid, sn, 0));
+            params[0] = Halide::Internal::Parameter(type, dimensions != 0, dimensions, argument_name(pid, pn, 0));
         }
     };
 
@@ -48,7 +54,7 @@ class Port {
      friend class Node;
      friend class nlohmann::adl_serializer<Port>;
 
-     Port() : impl_(new Impl("", "", "", "", Halide::Type(), 0)), index_(-1) {}
+     Port() : impl_(new Impl("", "", Halide::Type(), 0)), index_(-1) {}
      Port(const std::shared_ptr<Impl>& impl) : impl_(impl), index_(-1) {}
 
      /**
@@ -56,7 +62,7 @@ class Port {
       * @arg k: The key of the port which should be matched with BuildingBlock Input/Output name.
       * @arg t: The type of the value.
       */
-     Port(const std::string& n, Halide::Type t) : impl_(new Impl("", "", "", n, t, 0)), index_(-1) {}
+     Port(const std::string& n, Halide::Type t) : impl_(new Impl("", n, t, 0)), index_(-1) {}
 
      /**
       * Construct new port for vector value.
@@ -64,26 +70,25 @@ class Port {
       * @arg t: The type of the element value.
       * @arg d: The dimension of the port. The range is 1 to 4.
       */
-     Port(const std::string& n, Halide::Type t, int32_t d) : impl_(new Impl("", "", "", n, t, d)), index_(-1) {}
+     Port(const std::string& n, Halide::Type t, int32_t d) : impl_(new Impl("", n, t, d)), index_(-1) {}
 
-     const std::string& pred_name() const { return impl_->pred_name; }
-     const std::string& succ_name() const { return impl_->succ_name; }
+     const std::string& pred_id() const { return std::get<0>(impl_->pred_chan); }
+     const std::string& pred_name() const { return std::get<1>(impl_->pred_chan); }
 
      const Halide::Type& type() const { return impl_->type; }
 
      int32_t dimensions() const { return impl_->dimensions; }
 
-     const std::string& pred_id() const { return impl_->pred_id; }
-
-     const std::string& succ_id() const { return impl_->succ_id; }
+     // const std::string& succ_id() const { return impl_->succ_id; }
 
      int32_t size() const { return impl_->params.size(); }
 
      int32_t index() const { return index_; }
 
-     bool has_pred() const { return !pred_id().empty(); }
+     bool has_pred() const { return !std::get<0>(impl_->pred_chan).empty(); }
 
-     bool has_succ() const { return !succ_id().empty(); }
+     bool has_succ() const { return !impl_->succ_chans.empty(); }
+     bool has_succ(const Channel& c) const { return impl_->succ_chans.count(c); }
 
      void set_index(int index) { index_ = index; }
 
@@ -100,9 +105,9 @@ class Port {
      void bind(T *v) {
          auto i = index_ == -1 ? 0 : index_;
          if (has_pred()) {
-             impl_->params[i] = Halide::Internal::Parameter{Halide::type_of<T>(), false, 0, argument_name(pred_id(), pred_name(), succ_id(), succ_name(), i)};
+             impl_->params[i] = Halide::Internal::Parameter{Halide::type_of<T>(), false, 0, argument_name(pred_id(), pred_name(), i)};
          } else {
-             impl_->params[i] = Halide::Internal::Parameter{type(), false, dimensions(), argument_name(pred_id(), pred_name(), succ_id(), succ_name(), i)};
+             impl_->params[i] = Halide::Internal::Parameter{type(), false, dimensions(), argument_name(pred_id(), pred_name(), i)};
          }
 
          impl_->instances[i] = v;
@@ -113,9 +118,9 @@ class Port {
      void bind(const Halide::Buffer<T>& buf) {
          auto i = index_ == -1 ? 0 : index_;
          if (has_pred()) {
-             impl_->params[i] = Halide::Internal::Parameter{buf.type(), true, buf.dimensions(), argument_name(pred_id(), pred_name(), succ_id(), succ_name(), i)};
+             impl_->params[i] = Halide::Internal::Parameter{buf.type(), true, buf.dimensions(), argument_name(pred_id(), pred_name(), i)};
          } else {
-             impl_->params[i] = Halide::Internal::Parameter{type(), true, dimensions(), argument_name(pred_id(), pred_name(), succ_id(), succ_name(), i)};
+             impl_->params[i] = Halide::Internal::Parameter{type(), true, dimensions(), argument_name(pred_id(), pred_name(), i)};
          }
 
          impl_->instances[i] = buf.raw_buffer();
@@ -125,9 +130,9 @@ class Port {
      void bind(const std::vector<Halide::Buffer<T>>& bufs) {
          for (size_t i=0; i<bufs.size(); ++i) {
              if (has_pred()) {
-                 impl_->params[i] = Halide::Internal::Parameter{bufs[i].type(), true, bufs[i].dimensions(), argument_name(pred_id(), pred_name(), succ_id(), succ_name(), i)};
+                 impl_->params[i] = Halide::Internal::Parameter{bufs[i].type(), true, bufs[i].dimensions(), argument_name(pred_id(), pred_name(), i)};
              } else {
-                 impl_->params[i] = Halide::Internal::Parameter{type(), true, dimensions(), argument_name(pred_id(), pred_name(), succ_id(), succ_name(), i)};
+                 impl_->params[i] = Halide::Internal::Parameter{type(), true, dimensions(), argument_name(pred_id(), pred_name(), i)};
              }
 
              impl_->instances[i] = bufs[i].raw_buffer();
@@ -148,7 +153,7 @@ private:
     /**
      * This port is created from another node
      */
-     Port(const std::string& pid, const std::string& pn, const std::string& sid, const std::string& sn) : impl_(new Impl(pid, pn, sid, sn, Halide::Type(), 0)), index_(-1) {}
+     Port(const std::string& pid, const std::string& pn) : impl_(new Impl(pid, pn, Halide::Type(), 0)), index_(-1) {}
 
 
      std::vector<Halide::Argument> as_argument() const {
@@ -158,7 +163,7 @@ private:
                  args.resize(i+1, Halide::Argument());
              }
              auto kind = dimensions() == 0 ? Halide::Argument::InputScalar : Halide::Argument::InputBuffer;
-             args[i] = Halide::Argument(argument_name(pred_id(), pred_name(), succ_id(), succ_name(), i),  kind, type(), dimensions(), Halide::ArgumentEstimates());
+             args[i] = Halide::Argument(argument_name(pred_id(), pred_name(), i),  kind, type(), dimensions(), Halide::ArgumentEstimates());
          }
          return args;
      }
@@ -184,7 +189,7 @@ private:
              if (es.size() <= i) {
                  es.resize(i+1, Halide::Expr());
              }
-             es[i] = Halide::Internal::Variable::make(type(), argument_name(pred_id(), pred_name(), succ_id(), succ_name(), i), param);
+             es[i] = Halide::Internal::Variable::make(type(), argument_name(pred_id(), pred_name(), i), param);
          }
          return es;
      }
@@ -205,7 +210,7 @@ private:
                  args.push_back(Halide::Var::implicit(i));
                  args_expr.push_back(Halide::Var::implicit(i));
              }
-             Halide::Func f(param.type(), param.dimensions(), argument_name(pred_id(), pred_name(), succ_id(), succ_name(), i) + "_im");
+             Halide::Func f(param.type(), param.dimensions(), argument_name(pred_id(), pred_name(), i) + "_im");
              f(args) = Halide::Internal::Call::make(param, args_expr);
              fs[i] = f;
          }

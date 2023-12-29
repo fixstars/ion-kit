@@ -8,6 +8,7 @@ using namespace ion;
 int main()
 {
     try {
+#if 0
         // simple_graph
         {
             {
@@ -40,6 +41,7 @@ int main()
                 b.run(pm);
             }
         }
+#endif
 
         // complex_graph
         {

@@ -351,9 +351,7 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
         for (auto kv : output_buffers) {
             auto pred_id = std::get<0>(kv.first);
             auto pred_name = std::get<1>(kv.first);
-            auto succ_id = std::get<2>(kv.first);
-            auto succ_name = std::get<3>(kv.first);
-            auto index = std::get<4>(kv.first);
+            auto index = std::get<2>(kv.first);
 
             if (index != -1) {
                 auto fs = bbs[pred_id]->output_func(pred_name);

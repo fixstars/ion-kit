@@ -16,20 +16,27 @@ int main()
             std::string graph = R"(
                 {
                   "nodes": [
+
                     {
-                      "id": "00a1e8eb-29bd-4cc3-b724-8551e09f60ac",
+                      "id": "9ebf9c1e-25bf-451d-b92e-54322c72476f",
                       "name": "test_consumer",
                       "params": [],
                       "ports": [
                         {
                           "dimensions": 0,
-                          "impl_ptr": 94171704963648,
+                          "impl_ptr": 94067312766832,
                           "index": -1,
-                          "pred_id": "842e6227-6960-4d05-9f6b-592b63dfd834",
-                          "pred_name": "output",
+                          "pred_chan": [
+                            "2c706f47-6f51-4f1e-82de-f87f2dd0e9ab",
+                            "output"
+                          ],
                           "size": 1,
-                          "succ_id": "00a1e8eb-29bd-4cc3-b724-8551e09f60ac",
-                          "succ_name": "input",
+                          "succ_chans": [
+                            [
+                              "9ebf9c1e-25bf-451d-b92e-54322c72476f",
+                              "input"
+                            ]
+                          ],
                           "type": {
                             "bits": 0,
                             "code": 3,
@@ -38,13 +45,19 @@ int main()
                         },
                         {
                           "dimensions": 0,
-                          "impl_ptr": 94171705995072,
+                          "impl_ptr": 94067313268224,
                           "index": -1,
-                          "pred_id": "",
-                          "pred_name": "",
+                          "pred_chan": [
+                            "",
+                            "min0"
+                          ],
                           "size": 1,
-                          "succ_id": "00a1e8eb-29bd-4cc3-b724-8551e09f60ac",
-                          "succ_name": "min0",
+                          "succ_chans": [
+                            [
+                              "9ebf9c1e-25bf-451d-b92e-54322c72476f",
+                              "min0"
+                            ]
+                          ],
                           "type": {
                             "bits": 32,
                             "code": 0,
@@ -53,13 +66,19 @@ int main()
                         },
                         {
                           "dimensions": 0,
-                          "impl_ptr": 94171703972800,
+                          "impl_ptr": 94067313265008,
                           "index": -1,
-                          "pred_id": "",
-                          "pred_name": "",
+                          "pred_chan": [
+                            "",
+                            "extent0"
+                          ],
                           "size": 1,
-                          "succ_id": "00a1e8eb-29bd-4cc3-b724-8551e09f60ac",
-                          "succ_name": "extent0",
+                          "succ_chans": [
+                            [
+                              "9ebf9c1e-25bf-451d-b92e-54322c72476f",
+                              "extent0"
+                            ]
+                          ],
                           "type": {
                             "bits": 32,
                             "code": 0,
@@ -68,13 +87,19 @@ int main()
                         },
                         {
                           "dimensions": 0,
-                          "impl_ptr": 94171703640896,
+                          "impl_ptr": 94067313264752,
                           "index": -1,
-                          "pred_id": "",
-                          "pred_name": "",
+                          "pred_chan": [
+                            "",
+                            "min1"
+                          ],
                           "size": 1,
-                          "succ_id": "00a1e8eb-29bd-4cc3-b724-8551e09f60ac",
-                          "succ_name": "min1",
+                          "succ_chans": [
+                            [
+                              "9ebf9c1e-25bf-451d-b92e-54322c72476f",
+                              "min1"
+                            ]
+                          ],
                           "type": {
                             "bits": 32,
                             "code": 0,
@@ -83,13 +108,19 @@ int main()
                         },
                         {
                           "dimensions": 0,
-                          "impl_ptr": 94171703968704,
+                          "impl_ptr": 94067312830512,
                           "index": -1,
-                          "pred_id": "",
-                          "pred_name": "",
+                          "pred_chan": [
+                            "",
+                            "extent1"
+                          ],
                           "size": 1,
-                          "succ_id": "00a1e8eb-29bd-4cc3-b724-8551e09f60ac",
-                          "succ_name": "extent1",
+                          "succ_chans": [
+                            [
+                              "9ebf9c1e-25bf-451d-b92e-54322c72476f",
+                              "extent1"
+                            ]
+                          ],
                           "type": {
                             "bits": 32,
                             "code": 0,
@@ -98,13 +129,19 @@ int main()
                         },
                         {
                           "dimensions": 0,
-                          "impl_ptr": 94171703962192,
+                          "impl_ptr": 94067312767360,
                           "index": -1,
-                          "pred_id": "",
-                          "pred_name": "",
+                          "pred_chan": [
+                            "",
+                            "v"
+                          ],
                           "size": 1,
-                          "succ_id": "00a1e8eb-29bd-4cc3-b724-8551e09f60ac",
-                          "succ_name": "v",
+                          "succ_chans": [
+                            [
+                              "9ebf9c1e-25bf-451d-b92e-54322c72476f",
+                              "v"
+                            ]
+                          ],
                           "type": {
                             "bits": 32,
                             "code": 0,
@@ -113,13 +150,14 @@ int main()
                         },
                         {
                           "dimensions": 0,
-                          "impl_ptr": 94171704333952,
+                          "impl_ptr": 94067312830256,
                           "index": -1,
-                          "pred_id": "00a1e8eb-29bd-4cc3-b724-8551e09f60ac",
-                          "pred_name": "output",
+                          "pred_chan": [
+                            "9ebf9c1e-25bf-451d-b92e-54322c72476f",
+                            "output"
+                          ],
                           "size": 1,
-                          "succ_id": "",
-                          "succ_name": "",
+                          "succ_chans": [],
                           "type": {
                             "bits": 0,
                             "code": 3,
@@ -130,7 +168,7 @@ int main()
                       "target": "x86-64-linux-avx-avx2-debug-f16c-fma-sse41-trace_pipeline"
                     },
                     {
-                      "id": "842e6227-6960-4d05-9f6b-592b63dfd834",
+                      "id": "2c706f47-6f51-4f1e-82de-f87f2dd0e9ab",
                       "name": "test_producer",
                       "params": [
                         {
@@ -141,13 +179,19 @@ int main()
                       "ports": [
                         {
                           "dimensions": 0,
-                          "impl_ptr": 94171704963648,
+                          "impl_ptr": 94067312766832,
                           "index": -1,
-                          "pred_id": "842e6227-6960-4d05-9f6b-592b63dfd834",
-                          "pred_name": "output",
+                          "pred_chan": [
+                            "2c706f47-6f51-4f1e-82de-f87f2dd0e9ab",
+                            "output"
+                          ],
                           "size": 1,
-                          "succ_id": "00a1e8eb-29bd-4cc3-b724-8551e09f60ac",
-                          "succ_name": "input",
+                          "succ_chans": [
+                            [
+                              "9ebf9c1e-25bf-451d-b92e-54322c72476f",
+                              "input"
+                            ]
+                          ],
                           "type": {
                             "bits": 0,
                             "code": 3,

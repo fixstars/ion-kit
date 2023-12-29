@@ -31,14 +31,8 @@ void Node::set_iports(const std::vector<Port>& ports) {
 
         auto& port(ports[i]);
 
-        if (port.succ_name().empty()) {
-            port.impl_->succ_name = info.name;
-        }  else if (port.succ_name() != info.name) {
-            log::error("Port {} does not match name", port.succ_name());
-            throw std::runtime_error("Failed to validate input port");
-        }
+        port.impl_->succ_chans.insert({.node_id=id(), .name=info.name});
 
-        port.impl_->succ_id = impl_->id;
         impl_->ports.push_back(port);
 
         i++;

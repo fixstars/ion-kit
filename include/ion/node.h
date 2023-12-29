@@ -88,13 +88,13 @@ public:
      */
     Port operator[](const std::string& name) {
         auto it = std::find_if(impl_->ports.begin(), impl_->ports.end(),
-                               [&](const Port& p){ return (p.pred_name() == name && p.pred_id() == impl_->id) || (p.succ_name() == name && p.succ_id() == impl_->id); });
+                               [&](const Port& p){ return (p.pred_name() == name && p.pred_id() == impl_->id) || p.has_succ({.node_id=impl_->id, .name=name}); });
         if (it == impl_->ports.end()) {
             // This is output port which is never referenced.
             // Bind myself as a predecessor and register
 
             // TODO: Validate with arginfo
-            Port port(impl_->id, name, "", "");
+            Port port(impl_->id, name);
             impl_->ports.push_back(port);
             return port;
         } else {
@@ -138,7 +138,8 @@ public:
     std::vector<Port> iports() const {
         std::vector<Port> iports;
         for (const auto& p: impl_->ports) {
-            if (id() == p.succ_id()) {
+            if (std::count_if(p.impl_->succ_chans.begin(), p.impl_->succ_chans.end(),
+                              [&](const Port::Channel& c) { return std::get<0>(c) == impl_->id; })) {
                 iports.push_back(p);
             }
         }
