@@ -83,7 +83,6 @@ using json = nlohmann::json;
 Builder::Builder()
     : jit_ctx_(new Halide::JITUserContext), jit_ctx_ptr_(jit_ctx_.get())
 {
-    args_.push_back(&jit_ctx_ptr_);
 }
 
 Builder::~Builder()
@@ -212,6 +211,12 @@ void Builder::run(ion::PortMap& pm) {
         // pipeline_.infer_arguments()) {
 
         callable_ = pipeline_.compile_to_callable(get_arguments_stub(), target_);
+
+        args_.clear();
+        args_.push_back(&jit_ctx_ptr_);
+
+        const auto& args(get_arguments_instance());
+        args_.insert(args_.end(), args.begin(), args.end());
     }
 
     callable_.call_argv_fast(args_.size(), args_.data());
@@ -247,7 +252,6 @@ Halide::Pipeline Builder::build(bool implicit_output) {
     }
 
     // Assigning ports
-    std::set<Port::Channel> added_args;
     for (size_t i=0; i<nodes_.size(); ++i) {
         auto n = nodes_[i];
         const auto& bb = bbs[n.id()];
@@ -284,15 +288,6 @@ Halide::Pipeline Builder::build(bool implicit_output) {
                 } else {
                     throw std::runtime_error("fixme");
                 }
-
-                // Adding input args
-                if (added_args.count(port.impl_->pred_chan)) {
-                    continue;
-                }
-                added_args.insert(port.impl_->pred_chan);
-
-                const auto& port_instances(port.as_instance());
-                args_.insert(args_.end(), port_instances.begin(), port_instances.end());
             }
         }
         bb->build_pipeline();
@@ -346,7 +341,6 @@ Halide::Pipeline Builder::build(bool implicit_output) {
 
                 auto fs(bbs[port.pred_id()]->output_func(port.pred_name()));
                 output_funcs.insert(output_funcs.end(), fs.begin(), fs.end());
-                args_.insert(args_.end(), port_instances.begin(), port_instances.end());
             }
         }
     }
@@ -379,6 +373,59 @@ void Builder::register_disposer(const std::string& bb_id, const std::string& dis
             disposers_.push_back(std::make_tuple(bb_id, disposer_ptr));
         }
     }
+}
+
+std::vector<Halide::Argument> Builder::get_arguments_stub() const {
+    std::set<Port::Channel> added_ports;
+    std::vector<Halide::Argument> args;
+    for (const auto& node : nodes_) {
+        for (const auto& port : node.iports()) {
+            if (port.has_pred()) {
+                continue;
+            }
+
+            if (added_ports.count(port.impl_->pred_chan)) {
+                continue;
+            }
+            added_ports.insert(port.impl_->pred_chan);
+
+            const auto& port_args(port.as_argument());
+            args.insert(args.end(), port_args.begin(), port_args.end());
+        }
+    }
+    return args;
+}
+
+std::vector<const void*> Builder::get_arguments_instance() const {
+    std::set<Port::Channel> added_args;
+    std::vector<const void*> instances;
+
+    // Input
+    for (const auto& node : nodes_) {
+        for (const auto& port : node.iports()) {
+            if (port.has_pred()) {
+                continue;
+            }
+
+            if (added_args.count(port.impl_->pred_chan)) {
+                continue;
+            }
+            added_args.insert(port.impl_->pred_chan);
+
+            const auto& port_instances(port.as_instance());
+            instances.insert(instances.end(), port_instances.begin(), port_instances.end());
+        }
+    }
+
+    // Output
+    for (const auto& node : nodes_) {
+        for (const auto& port : node.oports()) {
+            const auto& port_instances(port.as_instance());
+            instances.insert(instances.end(), port_instances.begin(), port_instances.end());
+        }
+    }
+
+    return instances;
 }
 
 } //namespace ion

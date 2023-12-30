@@ -100,47 +100,8 @@ private:
 
     Halide::Pipeline build(bool implicit_output = false);
 
-    std::vector<Halide::Argument> get_arguments_stub() const {
-        std::set<Port::Channel> added_ports;
-        std::vector<Halide::Argument> args;
-        for (const auto& node : nodes_) {
-            for (const auto& port : node.iports()) {
-                if (port.has_pred()) {
-                    continue;
-                }
-
-                if (added_ports.count(port.impl_->pred_chan)) {
-                    continue;
-                }
-                added_ports.insert(port.impl_->pred_chan);
-
-                const auto& port_args(port.as_argument());
-                args.insert(args.end(), port_args.begin(), port_args.end());
-            }
-        }
-        return args;
-    }
-
-    std::vector<const void*> get_arguments_instance() const {
-        std::set<Port::Channel> added_ports;
-        std::vector<const void*> instances;
-        for (const auto& node : nodes_) {
-            for (const auto& port : node.iports()) {
-                if (port.has_pred()) {
-                    continue;
-                }
-
-                if (added_ports.count(port.impl_->pred_chan)) {
-                    continue;
-                }
-                added_ports.insert(port.impl_->pred_chan);
-
-                const auto& port_instances(port.as_instance());
-                instances.insert(instances.end(), port_instances.begin(), port_instances.end());
-            }
-        }
-        return instances;
-    }
+    std::vector<Halide::Argument> get_arguments_stub() const;
+    std::vector<const void*> get_arguments_instance() const;
 
     void set_jit_externs(const std::map<std::string, Halide::JITExtern> &externs) {
         pipeline_.set_jit_externs(externs);
