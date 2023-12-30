@@ -91,15 +91,7 @@ public:
         return impl_->id;
     }
 
-    std::string& id() {
-        return impl_->id;
-    }
-
     const std::string& name() const {
-        return impl_->name;
-    }
-
-    std::string& name(){
         return impl_->name;
     }
 
@@ -107,19 +99,11 @@ public:
         return impl_->target;
     }
 
-    Halide::Target& target() {
-        return impl_->target;
-    }
-
     const std::vector<Param>& params() const {
         return impl_->params;
     }
 
-    std::vector<Param>& params() {
-        return impl_->params;
-    }
-
-    std::vector<Port> iports() const {
+   std::vector<Port> iports() const {
         std::vector<Port> iports;
         for (const auto& p: impl_->ports) {
             if (std::count_if(p.impl_->succ_chans.begin(), p.impl_->succ_chans.end(),
