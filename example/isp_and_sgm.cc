@@ -415,11 +415,15 @@ int main(int argc, char *argv[]) {
         // cv::imwrite("isp-out_l.png", img1);
         // cv::imwrite("isp-out_r.png", img2);
 
+    } catch (const Halide::Error &e) {
+        std::cerr << e.what() << std::endl;
+        return 1;
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
-        return -1;
+        return 1;
     } catch (...) {
-        return -1;
+        std::cerr << "Unknown exception" << std::endl;
+        return 1;
     }
 
     return 0;

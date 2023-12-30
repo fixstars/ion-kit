@@ -24,6 +24,8 @@ double exposure = 400;
 
 #ifdef _WIN32
     #define MODULE_NAME "ion-bb.dll"
+#elif __APPLE__
+    #define MODULE_NAME "libion-bb.dylib"
 #else
     #define MODULE_NAME "libion-bb.so"
 #endif

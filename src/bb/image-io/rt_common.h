@@ -9,10 +9,8 @@
 #include <unordered_map>
 #include <vector>
 
-#ifndef _WIN32
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
-#endif
 
 #include "log.h"
 
@@ -154,7 +152,7 @@ std::tuple<std::string, std::string> parse_url(const std::string &url) {
     return std::tuple<std::string, std::string>(host_name, path_name);
 }
 
-#ifndef _WIN32
+
 cv::Mat get_image(const std::string &url) {
     if (url.empty()) {
         return {};
@@ -291,7 +289,7 @@ class ImageSequence {
     int32_t idx_;
     std::vector<std::filesystem::path> paths_;
 };
-#endif // _WIN32
+
 
 struct rawHeader {
 
