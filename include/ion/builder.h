@@ -98,7 +98,7 @@ public:
 
 private:
 
-    Halide::Pipeline build(ion::PortMap& ports);
+    Halide::Pipeline build(bool implicit_output = false);
 
     std::vector<Halide::Argument> get_arguments_stub() const {
         std::set<Port::Channel> added_ports;
