@@ -172,29 +172,28 @@ class U3V {
         }
     }
 
-    static U3V & get_instance(const std::string& session_id, int32_t num_sensor, bool frame_sync, bool realtime_display_mode)
+
+    
+
+    static U3V & get_instance(const std::string& id, int32_t num_sensor, bool frame_sync, bool realtime_display_mode)
     {
 
-        if (instances_.count(session_id) == 0) {
-             instances_[session_id] = std::unique_ptr<U3V>(new U3V(num_sensor, frame_sync, realtime_display_mode));
-         }
+      
+        if (instances_.count(id) == 0) {
+              ion::log::info("Create U3V instance: {}", id);
+             instances_[id] = std::unique_ptr<U3V>(new U3V(num_sensor, frame_sync, realtime_display_mode));
+         }else{
+              ion::log::info("U3V instance already exist: {}", id);
+        }
 
-        return *instances_[session_id].get();
-        // if (instance_ == nullptr){
+        return *instances_[id].get();
+        //if (instance_ == nullptr){
         //     instance_ = std::unique_ptr<U3V>(new U3V(num_sensor, frame_sync, realtime_display_mode));
         // }
         // return *instance_;
     }
 
-    void release_instance(const ::std::string& session_id) {
-        if (instances_.count(session_id) == 0) {
-             log::debug("U3V::dispose() :: is called but already beed disposed, do nothing");
-             return;
-        }
-        instances_[session_id].reset(nullptr);
-        instances_.erase(session_id);
 
-    }
 
     void dispose(){
         log::debug("U3V::dispose() :: is called");
@@ -230,6 +229,19 @@ class U3V {
         log::debug("U3V::dispose() :: Instance is deleted");
     }
 
+      static void release_instance(const char * id) {
+        log::debug("U3V::release_instance() :: is called");
+        if (instances_.count(id) == 0) {
+             return;
+        }
+
+        U3V & u3v = *instances_[id].get();
+        u3v.dispose();
+        instances_[id].reset(nullptr);
+        instances_.erase(id);
+        log::debug("U3V::release_instance() :: is finished");
+
+       }
 
     void SetGain(int32_t sensor_idx, const std::string key, double v) {
 
@@ -1128,13 +1140,19 @@ class U3V {
 std::unique_ptr<U3V> U3V::instance_;
 std::map<std::string, std::unique_ptr<U3V>>  U3V::instances_;
 
+extern "C"
+int ION_EXPORT u3v_dispose(const char *id) {
+    ion::bb::image_io::U3V::release_instance(id);
+    return 0;
+}
+
 int u3v_camera_frame_count(
-    const std::string& session_id, bool dispose, int32_t num_sensor, bool frame_sync, bool realtime_display_mode,
+    const std::string& id, int32_t num_sensor, bool frame_sync, bool realtime_display_mode,
     halide_buffer_t* out)
 {
     try {
 
-        auto &u3v(ion::bb::image_io::U3V::get_instance(session_id, num_sensor, frame_sync, realtime_display_mode));
+        auto &u3v(ion::bb::image_io::U3V::get_instance(id, num_sensor, frame_sync, realtime_display_mode));
         if (out->is_bounds_query()) {
             out->dim[0].min = 0;
             out->dim[0].extent = num_sensor;
@@ -1142,9 +1160,6 @@ int u3v_camera_frame_count(
         }
         else {
             u3v.get_frame_count(reinterpret_cast<uint32_t*>(out->host));
-            if(dispose){
-                u3v.dispose();
-            }
         }
 
         return 0;
@@ -1163,18 +1178,17 @@ int u3v_camera_frame_count(
 
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_camera1(
-    bool dispose,
     bool frame_sync, bool realtime_display_mode, double gain0, double exposure0,
-    halide_buffer_t * session_id_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
+    halide_buffer_t * id_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
     halide_buffer_t * out0)
 {
     using namespace Halide;
     try {
-        const ::std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
+        const ::std::string id(reinterpret_cast<const char *>(id_buf->host));
         const ::std::string gain_key(reinterpret_cast<const char*>(gain_key_buf->host));
         const ::std::string exposure_key(reinterpret_cast<const char*>(exposure_key_buf->host));
 
-        auto &u3v(ion::bb::image_io::U3V::get_instance(session_id, 1, frame_sync, realtime_display_mode));
+        auto &u3v(ion::bb::image_io::U3V::get_instance(id, 1, frame_sync, realtime_display_mode));
         if (out0->is_bounds_query()) {
             //bounds query
             return 0;
@@ -1185,10 +1199,11 @@ int ION_EXPORT ion_bb_image_io_u3v_camera1(
 
             std::vector<void *> obufs{out0->host};
             u3v.get(obufs);
-
-            if(dispose){
-                u3v.dispose();
             }
+            }
+        }
+
+        }
         }
 
         return 0;
@@ -1205,15 +1220,15 @@ ION_REGISTER_EXTERN(ion_bb_image_io_u3v_camera1);
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_camera2(
     bool frame_sync, bool realtime_display_mode, double gain0, double gain1, double exposure0, double exposure1,
-    halide_buffer_t * session_id_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
+    halide_buffer_t * id_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
     halide_buffer_t * out0, halide_buffer_t * out1)
 {
     using namespace Halide;
     try {
-        const ::std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
+        const ::std::string id(reinterpret_cast<const char *>(id_buf->host));
         const ::std::string gain_key(reinterpret_cast<const char*>(gain_key_buf->host));
         const ::std::string exposure_key(reinterpret_cast<const char*>(exposure_key_buf->host));
-        auto &u3v(ion::bb::image_io::U3V::get_instance(session_id, 2, frame_sync, realtime_display_mode));
+        auto &u3v(ion::bb::image_io::U3V::get_instance(id, 2, frame_sync, realtime_display_mode));
         if (out0->is_bounds_query() || out1->is_bounds_query()) {
             //bounds query
             return 0;
@@ -1243,12 +1258,12 @@ ION_REGISTER_EXTERN(ion_bb_image_io_u3v_camera2);
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_camera1_frame_count(
     halide_buffer_t *,
-    bool dispose, int32_t num_sensor, bool frame_sync, bool realtime_display_mode,
-    halide_buffer_t * session_id_buf, halide_buffer_t* out)
+    int32_t num_sensor, bool frame_sync, bool realtime_display_mode,
+    halide_buffer_t * id_buf, halide_buffer_t* out)
 {
 
-    const ::std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
-    return ion::bb::image_io::u3v_camera_frame_count(session_id, dispose, num_sensor, frame_sync, realtime_display_mode, out);
+    const ::std::string id(reinterpret_cast<const char *>(id_buf->host));
+    return ion::bb::image_io::u3v_camera_frame_count(id, num_sensor, frame_sync, realtime_display_mode, out);
 }
 ION_REGISTER_EXTERN(ion_bb_image_io_u3v_camera1_frame_count);
 
@@ -1256,29 +1271,28 @@ extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_camera2_frame_count(
     halide_buffer_t *,
     halide_buffer_t *,
-    bool dispose, int32_t num_sensor, bool frame_sync, bool realtime_display_mode,
-    halide_buffer_t * session_id_buf, halide_buffer_t* out)
-{    const ::std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
-    return ion::bb::image_io::u3v_camera_frame_count(session_id, dispose, num_sensor, frame_sync, realtime_display_mode, out);
+    int32_t num_sensor, bool frame_sync, bool realtime_display_mode,
+    halide_buffer_t * id_buf, halide_buffer_t* out)
+{    const ::std::string id(reinterpret_cast<const char *>(id_buf->host));
+    return ion::bb::image_io::u3v_camera_frame_count(id, num_sensor, frame_sync, realtime_display_mode, out);
 }
 ION_REGISTER_EXTERN(ion_bb_image_io_u3v_camera2_frame_count);
 
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_gendc_camera1(
-    bool dispose,
     bool frame_sync, bool realtime_display_mode,
     halide_buffer_t* gain, halide_buffer_t* exposure,
-    halide_buffer_t * session_id_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
+    halide_buffer_t * id_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
     halide_buffer_t * out_gendc
     )
 {
     using namespace Halide;
     int num_output = 1;
     try {
-        const ::std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
+        const ::std::string id(reinterpret_cast<const char *>(id_buf->host));
         const ::std::string gain_key(reinterpret_cast<const char*>(gain_key_buf->host));
         const ::std::string exposure_key(reinterpret_cast<const char*>(exposure_key_buf->host));
-        auto &u3v(ion::bb::image_io::U3V::get_instance(session_id, num_output, false, realtime_display_mode));
+        auto &u3v(ion::bb::image_io::U3V::get_instance(id, num_output, false, realtime_display_mode));
         if (out_gendc->is_bounds_query() || gain->is_bounds_query() || exposure->is_bounds_query()) {
             gain->dim[0].min = 0;
             gain->dim[0].extent = num_output;
@@ -1294,9 +1308,6 @@ int ION_EXPORT ion_bb_image_io_u3v_gendc_camera1(
             std::vector<void *> obufs{out_gendc->host};
             u3v.get_gendc(obufs);
 
-            if(dispose){
-                u3v.dispose();
-            }
         }
 
         return 0;
@@ -1312,20 +1323,19 @@ ION_REGISTER_EXTERN(ion_bb_image_io_u3v_gendc_camera1);
 
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_gendc_camera2(
-    bool dispose,
     bool frame_sync, bool realtime_display_mode,
     halide_buffer_t* gain, halide_buffer_t* exposure,
-    halide_buffer_t * session_id_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
+    halide_buffer_t * id_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
     halide_buffer_t * gendc0, halide_buffer_t * gendc1
     )
 {
     using namespace Halide;
     try {
         int num_output = 2;
-        const ::std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
+        const ::std::string id(reinterpret_cast<const char *>(id_buf->host));
         const ::std::string gain_key(reinterpret_cast<const char*>(gain_key_buf->host));
         const ::std::string exposure_key(reinterpret_cast<const char*>(exposure_key_buf->host));
-        auto &u3v(ion::bb::image_io::U3V::get_instance(session_id, 2, frame_sync, realtime_display_mode));
+        auto &u3v(ion::bb::image_io::U3V::get_instance(id, 2, frame_sync, realtime_display_mode));
         if (gendc0->is_bounds_query() || gendc1->is_bounds_query() || gain->is_bounds_query() || exposure->is_bounds_query()) {
             gain->dim[0].min = 0;
             gain->dim[0].extent = num_output;
@@ -1342,9 +1352,6 @@ int ION_EXPORT ion_bb_image_io_u3v_gendc_camera2(
             std::vector<void *> obufs{gendc0->host, gendc1->host};
             u3v.get_gendc(obufs);
 
-            if(dispose){
-                u3v.dispose();
-            }
         }
         return 0;
     } catch (const std::exception &e) {
@@ -1360,17 +1367,17 @@ ION_REGISTER_EXTERN(ion_bb_image_io_u3v_gendc_camera2);
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_device_info1(
     halide_buffer_t *,
-    bool dispose, int32_t num_sensor,
+    int32_t num_sensor,
     bool frame_sync, bool realtime_display_mode,
-    halide_buffer_t * session_id_buf,
+    halide_buffer_t * id_buf,
     halide_buffer_t * out_deviceinfo
     )
 {
     using namespace Halide;
     int num_output = 1;
     try {
-        const ::std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
-        auto &u3v(ion::bb::image_io::U3V::get_instance(session_id, num_sensor, false, realtime_display_mode));
+        const ::std::string id(reinterpret_cast<const char *>(id_buf->host));
+        auto &u3v(ion::bb::image_io::U3V::get_instance(id, num_sensor, false, realtime_display_mode));
 
         if (out_deviceinfo->is_bounds_query()){
             out_deviceinfo->dim[0].min = 0;
@@ -1380,9 +1387,7 @@ int ION_EXPORT ion_bb_image_io_u3v_device_info1(
             std::vector<void *> obufs{out_deviceinfo->host};
             u3v.get_device_info(obufs);
 
-            if(dispose){
-                u3v.dispose();
-            }
+
         }
         return 0;
     } catch (const std::exception &e) {
@@ -1398,17 +1403,17 @@ ION_REGISTER_EXTERN(ion_bb_image_io_u3v_device_info1);
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_device_info2(
     halide_buffer_t *, halide_buffer_t *,
-    bool dispose, int32_t num_sensor,
+    int32_t num_sensor,
     bool frame_sync, bool realtime_display_mode,
-    halide_buffer_t * session_id_buf,
+    halide_buffer_t * id_buf,
     halide_buffer_t * deviceinfo0, halide_buffer_t * deviceinfo1
     )
 {
     using namespace Halide;
     try {
-        const ::std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
+        const ::std::string id(reinterpret_cast<const char *>(id_buf->host));
         int num_output = 2;
-        auto &u3v(ion::bb::image_io::U3V::get_instance(session_id, num_sensor, frame_sync, realtime_display_mode));
+        auto &u3v(ion::bb::image_io::U3V::get_instance(id, num_sensor, frame_sync, realtime_display_mode));
         if (deviceinfo0->is_bounds_query() || deviceinfo1->is_bounds_query()) {
             if (deviceinfo0->is_bounds_query()){
                 deviceinfo0->dim[0].min = 0;
@@ -1423,9 +1428,7 @@ int ION_EXPORT ion_bb_image_io_u3v_device_info2(
             std::vector<void *> obufs{deviceinfo0->host, deviceinfo1->host};
             u3v.get_device_info(obufs);
 
-            if(dispose){
-                u3v.dispose();
-            }
+ 
         }
         return 0;
     } catch (const std::exception &e) {
@@ -1440,18 +1443,17 @@ ION_REGISTER_EXTERN(ion_bb_image_io_u3v_device_info2);
 
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_multiple_camera1(
-    bool dispose,
     bool frame_sync, bool realtime_display_mode, halide_buffer_t * gain, halide_buffer_t * exposure,
-    halide_buffer_t * session_id_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
+    halide_buffer_t * id_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
     halide_buffer_t * out0)
 {
     using namespace Halide;
     int num_output = 1;
     try {
-        const ::std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
+        const ::std::string id(reinterpret_cast<const char *>(id_buf->host));
         const ::std::string gain_key(reinterpret_cast<const char*>(gain_key_buf->host));
         const ::std::string exposure_key(reinterpret_cast<const char*>(exposure_key_buf->host));
-        auto &u3v(ion::bb::image_io::U3V::get_instance(session_id, num_output, false, realtime_display_mode));
+        auto &u3v(ion::bb::image_io::U3V::get_instance(id, num_output, false, realtime_display_mode));
         if (out0->is_bounds_query() || gain->is_bounds_query() || exposure->is_bounds_query()) {
             gain->dim[0].min = 0;
             gain->dim[0].extent = num_output;
@@ -1467,9 +1469,6 @@ int ION_EXPORT ion_bb_image_io_u3v_multiple_camera1(
 
             std::vector<void *> obufs{out0->host};
             u3v.get(obufs);
-            if(dispose){
-                u3v.dispose();
-            }
         }
 
         return 0;
@@ -1485,18 +1484,17 @@ ION_REGISTER_EXTERN(ion_bb_image_io_u3v_multiple_camera1);
 
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_multiple_camera2(
-    bool dispose,
     bool frame_sync, bool realtime_display_mode, halide_buffer_t * gain, halide_buffer_t * exposure,
-    halide_buffer_t * session_id_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
+    halide_buffer_t * id_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
     halide_buffer_t * out0, halide_buffer_t * out1)
 {
     using namespace Halide;
     int num_output = 2;
     try {
-        const ::std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
+        const ::std::string id(reinterpret_cast<const char *>(id_buf->host));
         const ::std::string gain_key(reinterpret_cast<const char*>(gain_key_buf->host));
         const ::std::string exposure_key(reinterpret_cast<const char*>(exposure_key_buf->host));
-        auto &u3v(ion::bb::image_io::U3V::get_instance(session_id, 2, frame_sync, realtime_display_mode));
+        auto &u3v(ion::bb::image_io::U3V::get_instance(id, 2, frame_sync, realtime_display_mode));
         if (out0->is_bounds_query() || out1->is_bounds_query() || gain->is_bounds_query() || exposure->is_bounds_query()) {
             gain->dim[0].min = 0;
             gain->dim[0].extent = num_output;
@@ -1511,9 +1509,6 @@ int ION_EXPORT ion_bb_image_io_u3v_multiple_camera2(
             }
             std::vector<void *> obufs{out0->host, out1->host};
             u3v.get(obufs);
-            if(dispose){
-                u3v.dispose();
-            }
         }
 
         return 0;
@@ -1529,10 +1524,10 @@ ION_REGISTER_EXTERN(ion_bb_image_io_u3v_multiple_camera2);
 
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_multiple_camera_frame_count1(
-    bool dispose, int32_t num_sensor, bool frame_sync, bool realtime_display_mode,
-    halide_buffer_t* session_id_buf, halide_buffer_t* out)
-{   const ::std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
-    return ion::bb::image_io::u3v_camera_frame_count(session_id, dispose, num_sensor, frame_sync, realtime_display_mode, out);
+    int32_t num_sensor, bool frame_sync, bool realtime_display_mode,
+    halide_buffer_t* id_buf, halide_buffer_t* out)
+{   const ::std::string id(reinterpret_cast<const char *>(id_buf->host));
+    return ion::bb::image_io::u3v_camera_frame_count(id, num_sensor, frame_sync, realtime_display_mode, out);
 }
 ION_REGISTER_EXTERN(ion_bb_image_io_u3v_multiple_camera_frame_count1);
 
@@ -1540,11 +1535,11 @@ extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_multiple_camera_frame_count2(
     halide_buffer_t *,
     halide_buffer_t *,
-    bool dispose, int32_t num_sensor, bool frame_sync, bool realtime_display_mode,
-    halide_buffer_t* session_id_buf, halide_buffer_t* out)
+    int32_t num_sensor, bool frame_sync, bool realtime_display_mode,
+    halide_buffer_t* id_buf, halide_buffer_t* out)
 {
-    const ::std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
-    return ion::bb::image_io::u3v_camera_frame_count(session_id, dispose, num_sensor, frame_sync, realtime_display_mode, out);
+    const ::std::string id(reinterpret_cast<const char *>(id_buf->host));
+    return ion::bb::image_io::u3v_camera_frame_count(id, num_sensor, frame_sync, realtime_display_mode, out);
 }
 ION_REGISTER_EXTERN(ion_bb_image_io_u3v_multiple_camera_frame_count2);
 
