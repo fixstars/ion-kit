@@ -15,7 +15,7 @@ int main() {
         Port input{"input", Halide::type_of<int32_t>(), 2};
         Builder b;
         b.set_target(Halide::get_host_target());
-        auto n = b.add("test_array_output")(input).set_params(Param{"len", std::to_string(len)});
+        auto n = b.add("test_array_output")(input).set_param(Param{"len", std::to_string(len)});
         n = b.add("test_array_input")(n["array_output"]);
 
         Halide::Buffer<int32_t> in(w, h);

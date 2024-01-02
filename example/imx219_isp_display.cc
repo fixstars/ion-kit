@@ -27,16 +27,16 @@ int main(int argc, char *argv[]) {
     Node n;
     Node ns[num];
     for (int i=0; i<num; ++i) {
-        n = b.add("image_io_imx219").set_params(Param{"index", std::to_string(i)});
-        n = b.add("image_processing_bayer_downscale_uint16")(n["output"]).set_params(Param{"width", std::to_string(width_v)}, Param{"height", std::to_string(height_v)}, Param{"downscale_factor", "2"});
-        n = b.add("image_processing_normalize_raw_image")(n["output"]).set_params(Param{"bit_width", "10"}, Param{"bit_shift", "6"});
-        n = b.add("image_processing_bayer_demosaic_simple")(n["output"]).set_params(Param{"width", std::to_string(half_width_v)}, Param{"height", std::to_string(half_height_v)});
+        n = b.add("image_io_imx219").set_param(Param{"index", std::to_string(i)});
+        n = b.add("image_processing_bayer_downscale_uint16")(n["output"]).set_param(Param{"width", std::to_string(width_v)}, Param{"height", std::to_string(height_v)}, Param{"downscale_factor", "2"});
+        n = b.add("image_processing_normalize_raw_image")(n["output"]).set_param(Param{"bit_width", "10"}, Param{"bit_shift", "6"});
+        n = b.add("image_processing_bayer_demosaic_simple")(n["output"]).set_param(Param{"width", std::to_string(half_width_v)}, Param{"height", std::to_string(half_height_v)});
         ns[i] = n;
     }
 
-    n = b.add("image_processing_tile_image_horizontal_3d_float")(ns[0]["output"], ns[1]["output"]).set_params(Param{"input0_width", std::to_string(quad_width_v)}, Param{"input0_height", std::to_string(quad_height_v)}, Param{"input1_width", std::to_string(quad_width_v)}, Param{"input1_height", std::to_string(quad_height_v)});
+    n = b.add("image_processing_tile_image_horizontal_3d_float")(ns[0]["output"], ns[1]["output"]).set_param(Param{"input0_width", std::to_string(quad_width_v)}, Param{"input0_height", std::to_string(quad_height_v)}, Param{"input1_width", std::to_string(quad_width_v)}, Param{"input1_height", std::to_string(quad_height_v)});
     n = b.add("base_denormalize_3d_uint8")(n["output"]);
-    n = b.add("image_io_gui_display")(n["output"]).set_params(Param{"width", std::to_string(half_width_v)}, Param{"height", std::to_string(quad_height_v)});
+    n = b.add("image_io_gui_display")(n["output"]).set_param(Param{"width", std::to_string(half_width_v)}, Param{"height", std::to_string(quad_height_v)});
 
     PortMap pm;
 

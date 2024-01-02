@@ -17,7 +17,7 @@ int main()
                 Builder b;
                 b.set_target(Halide::get_host_target());
                 Node n;
-                n = b.add("test_producer").set_params(v41);
+                n = b.add("test_producer").set_param(v41);
                 n = b.add("test_consumer")(n["output"], min0, extent0, min1, extent1, v);
                 b.save("simple_graph.json");
             }
@@ -49,10 +49,10 @@ int main()
             Builder b;
             b.set_target(Halide::get_host_target());
             Node n;
-            n = b.add("test_inc_i32x2")(input).set_params(v1);
+            n = b.add("test_inc_i32x2")(input).set_param(v1);
             n = b.add("test_branch")(n["output"], width, height);
             auto ln = b.add("test_inc_i32x2")(n["output0"]);
-            auto rn = b.add("test_inc_i32x2")(n["output1"]).set_params(v1);
+            auto rn = b.add("test_inc_i32x2")(n["output1"]).set_param(v1);
             n = b.add("test_merge")(ln["output"], rn["output"], height);
             b.save("complex_graph.json");
         }
@@ -117,7 +117,7 @@ int main()
                 Port input{"input", Halide::type_of<int32_t>(), 2};
                 Builder b;
                 b.set_target(Halide::get_host_target());
-                auto n = b.add("test_array_output")(input).set_params(Param{"len", std::to_string(len)});
+                auto n = b.add("test_array_output")(input).set_param(Param{"len", std::to_string(len)});
                 n = b.add("test_array_input")(n["array_output"]);
                 b.save("array_inout.json");
             }

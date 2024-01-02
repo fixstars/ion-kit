@@ -18,8 +18,8 @@ int main() {
             Builder b;
             b.set_target(Halide::get_host_target());
             Node n;
-            n = b.add("test_array_copy")(input).set_params(Param{"len", std::to_string(len)});
-            n = b.add("test_array_input")(n["array_output"]).set_params(Param{"len", std::to_string(len)});
+            n = b.add("test_array_copy")(input).set_param(Param{"len", std::to_string(len)});
+            n = b.add("test_array_input")(n["array_output"]).set_param(Param{"len", std::to_string(len)});
 
             std::vector<Halide::Buffer<int32_t>> ins{
                 Halide::Buffer<int32_t>{w, h},
@@ -71,8 +71,8 @@ int main() {
             Builder b;
             b.set_target(Halide::get_host_target());
             Node n;
-            n = b.add("test_array_copy")(input).set_params(Param{"len", std::to_string(len)});
-            n = b.add("test_array_input")(n["array_output"]).set_params(Param{"len", std::to_string(len)});
+            n = b.add("test_array_copy")(input).set_param(Param{"len", std::to_string(len)});
+            n = b.add("test_array_input")(n["array_output"]).set_param(Param{"len", std::to_string(len)});
 
             Halide::Buffer<int32_t> in0(w, h), in1(w, h), in2(w, h), in3(w, h), in4(w, h);
 

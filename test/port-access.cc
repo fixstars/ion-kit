@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
         b.with_bb_module("ion-bb");
 
         Node n;
-        n = b.add("image_io_cameraN").set_params(
+        n = b.add("image_io_cameraN").set_param(
                 wparam,
                 hparam,
                 Param{"num_devices", "2"},
@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
                 //input urls split by ';'
         );
         n = b.add("base_normalize_3d_uint8")(n["output"][1]);  // access only port[1]
-        n = b.add("image_processing_resize_nearest_3d")(n["output"]).set_params(
+        n = b.add("image_processing_resize_nearest_3d")(n["output"]).set_param(
                 Param{"width", std::to_string(width)},
                 Param{"height", std::to_string(height)},
                 Param{"scale", std::to_string(2)});

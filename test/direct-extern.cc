@@ -18,10 +18,10 @@ int main()
 
         Node n;
         Port ip{"input", Halide::type_of<int32_t>(), 2};
-        n = b.add("test_extern_inc_i32x2")(ip).set_params(wp, hp, vp);
-        n = b.add("base_schedule")(n["output"]).set_params(Param{"output_name", "b1"}, Param{"compute_level", "compute_inline"});
-        n = b.add("test_extern_inc_i32x2")(n["output"]).set_params(wp, hp, vp);
-        n = b.add("base_schedule")(n["output"]).set_params(Param{"output_name", "b2"}, Param{"compute_level", "compute_inline"});
+        n = b.add("test_extern_inc_i32x2")(ip).set_param(wp, hp, vp);
+        n = b.add("base_schedule")(n["output"]).set_param(Param{"output_name", "b1"}, Param{"compute_level", "compute_inline"});
+        n = b.add("test_extern_inc_i32x2")(n["output"]).set_param(wp, hp, vp);
+        n = b.add("base_schedule")(n["output"]).set_param(Param{"output_name", "b2"}, Param{"compute_level", "compute_inline"});
 
         PortMap pm;
 

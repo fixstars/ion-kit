@@ -43,7 +43,7 @@ void display_and_save(int32_t width, int32_t height, std::string directory_path,
 
     // obtain sensor images
     auto n = b.add("image_io_u3v_camera2_u16x2")(dispose_camera, gain0_p, gain1_p, exposure0_p, exposure1_p)
-        .set_params(
+        .set_param(
             Param{"pixel_format_ptr", PIXEL_FORMAT},
             Param{"frame_sync", "true"},
             Param{"gain_key", FEATURE_GAIN_KEY},
@@ -53,26 +53,26 @@ void display_and_save(int32_t width, int32_t height, std::string directory_path,
     Port rp = n["output1"];
     Port fcp = n["frame_count"];
 
-    n = b.add("image_io_binarysaver")(rp, lp, fcp, dispose_writer, wp, hp).set_params(
+    n = b.add("image_io_binarysaver")(rp, lp, fcp, dispose_writer, wp, hp).set_param(
             Param{"output_directory", directory_path},
             Param{"fps", "60.0"});
     Port terminator = n["output"];
 
     /* image processing on the iamge obtained from the left sensor */
-    n = b.add("image_processing_normalize_raw_image")(lp).set_params(Param{"bit_width", "12"}, Param{"bit_shift", "0"});
-    n = b.add("image_processing_bayer_white_balance")(r_gain0_p, g_gain0_p, b_gain0_p, n["output"]).set_params(Param{"bayer_pattern", "GBRG"});
-    n = b.add("image_processing_bayer_demosaic_simple")(n["output"]).set_params(
+    n = b.add("image_processing_normalize_raw_image")(lp).set_param(Param{"bit_width", "12"}, Param{"bit_shift", "0"});
+    n = b.add("image_processing_bayer_white_balance")(r_gain0_p, g_gain0_p, b_gain0_p, n["output"]).set_param(Param{"bayer_pattern", "GBRG"});
+    n = b.add("image_processing_bayer_demosaic_simple")(n["output"]).set_param(
         Param{"bayer_pattern", "GBRG"},
         Param{"width", std::to_string(width)},
         Param{"height", std::to_string(height)}
     );
-    n = b.add("image_processing_resize_bilinear_3d")(n["output"]).set_params(
+    n = b.add("image_processing_resize_bilinear_3d")(n["output"]).set_param(
         Param{"width", std::to_string(width)},
         Param{"height", std::to_string(height)},
         Param{"scale", std::to_string(2.0f)}
     );
     n = b.add("base_denormalize_3d_uint8")(n["output"]);
-    n = b.add("image_processing_crop_image_3d_uint8")(n["output"]).set_params(
+    n = b.add("image_processing_crop_image_3d_uint8")(n["output"]).set_param(
         Param{"input_width", std::to_string(width)},
         Param{"input_height", std::to_string(height)},
         Param{"output_width", std::to_string(width)},
@@ -81,20 +81,20 @@ void display_and_save(int32_t width, int32_t height, std::string directory_path,
     lp = n["output"];
 
     /* image processing on the iamge obtained from the right sensor */
-    n = b.add("image_processing_normalize_raw_image")(rp).set_params(Param{"bit_width", "12"}, Param{"bit_shift", "0"});
-    n = b.add("image_processing_bayer_white_balance")(r_gain1_p, g_gain1_p, b_gain1_p, n["output"]).set_params(Param{"bayer_pattern", "GBRG"});
-    n = b.add("image_processing_bayer_demosaic_simple")(n["output"]).set_params(
+    n = b.add("image_processing_normalize_raw_image")(rp).set_param(Param{"bit_width", "12"}, Param{"bit_shift", "0"});
+    n = b.add("image_processing_bayer_white_balance")(r_gain1_p, g_gain1_p, b_gain1_p, n["output"]).set_param(Param{"bayer_pattern", "GBRG"});
+    n = b.add("image_processing_bayer_demosaic_simple")(n["output"]).set_param(
         Param{"bayer_pattern", "GBRG"},
         Param{"width", std::to_string(width)},
         Param{"height", std::to_string(height)}
     );
-    n = b.add("image_processing_resize_bilinear_3d")(n["output"]).set_params(
+    n = b.add("image_processing_resize_bilinear_3d")(n["output"]).set_param(
         Param{"width", std::to_string(width)},
         Param{"height", std::to_string(height)},
         Param{"scale", std::to_string(2.0f)}
     );
     n = b.add("base_denormalize_3d_uint8")(n["output"]);
-    n = b.add("image_processing_crop_image_3d_uint8")(n["output"]).set_params(
+    n = b.add("image_processing_crop_image_3d_uint8")(n["output"]).set_param(
         Param{"input_width", std::to_string(width)},
         Param{"input_height", std::to_string(height)},
         Param{"output_width", std::to_string(width)},
@@ -103,13 +103,13 @@ void display_and_save(int32_t width, int32_t height, std::string directory_path,
     rp = n["output"];
 
     // display images
-    n = b.add("image_io_gui_display")(lp).set_params(
+    n = b.add("image_io_gui_display")(lp).set_param(
       Param{"idx", "0"},
       Param{"width", std::to_string(width)},
       Param{"height", std::to_string(height)}
       );
     Port display_output0_p = n["output"];
-    n = b.add("image_io_gui_display")(rp).set_params(
+    n = b.add("image_io_gui_display")(rp).set_param(
       Param{"idx", "1"},
       Param{"width", std::to_string(width)},
       Param{"height", std::to_string(height)});

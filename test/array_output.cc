@@ -16,8 +16,8 @@ int main() {
         Builder b;
         b.set_target(Halide::get_host_target());
         Node n;
-        n = b.add("test_array_output")(input).set_params(Param{"len", std::to_string(len)});
-        n = b.add("test_array_copy")(n["array_output"]).set_params(Param{"len", std::to_string(len)});
+        n = b.add("test_array_output")(input).set_param(Param{"len", std::to_string(len)});
+        n = b.add("test_array_copy")(n["array_output"]).set_param(Param{"len", std::to_string(len)});
 
         Halide::Buffer<int32_t> in(w, h);
         for (int y = 0; y < h; ++y) {

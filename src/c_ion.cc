@@ -177,14 +177,14 @@ int ion_node_get_port(ion_node_t obj, const char *key, ion_port_t *port_ptr)
     return 0;
 }
 
-int ion_node_set_iports(ion_node_t obj, ion_port_t *ports_ptr, int ports_num)
+int ion_node_set_iport(ion_node_t obj, ion_port_t *ports_ptr, int ports_num)
 {
     try {
         std::vector<Port> ports(ports_num);
         for (int i=0; i<ports_num; ++i) {
             ports[i] = *reinterpret_cast<Port*>(ports_ptr[i]);
         }
-        reinterpret_cast<Node*>(obj)->set_iports(ports);
+        reinterpret_cast<Node*>(obj)->set_iport(ports);
     } catch (const Halide::Error& e) {
         log::error(e.what());
         return 1;
@@ -199,14 +199,14 @@ int ion_node_set_iports(ion_node_t obj, ion_port_t *ports_ptr, int ports_num)
     return 0;
 }
 
-int ion_node_set_params(ion_node_t obj, ion_param_t *params_ptr, int params_num)
+int ion_node_set_param(ion_node_t obj, ion_param_t *params_ptr, int params_num)
 {
     try {
         std::vector<Param> params(params_num);
         for (int i=0; i<params_num; ++i) {
             params[i] = *reinterpret_cast<Param*>(params_ptr[i]);
         }
-        reinterpret_cast<Node*>(obj)->set_params(params);
+        reinterpret_cast<Node*>(obj)->set_param(params);
     } catch (const Halide::Error& e) {
         log::error(e.what());
         return 1;

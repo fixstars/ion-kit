@@ -12,19 +12,19 @@ int main(int argc, char *argv[]) {
     b.set_target(Halide::get_target_from_environment());
 
     Node imx219 = b.add("image_io_imx219")
-                      .set_params(
+                      .set_param(
                           Param{"force_sim_mode", "true"},
                           Param{"url", "http://ion-kit.s3.us-west-2.amazonaws.com/images/pedestrian.jpg"});
 
     Node downscale = b.add("image_processing_bayer_downscale_uint16")
-                         .set_params(
+                         .set_param(
                              Param{"input_width", "3264"},
                              Param{"input_height", "2464"},
                              Param{"downscale_factor", "2"})(
                              imx219["output"]);
 
     Node isp = b.add("fpga_simple_isp_with_unsharp_mask")
-                   .set_params(
+                   .set_param(
                        Param{"bayer_pattern", "0"},
                        Param{"width", "1632"},
                        Param{"height", "1232"},
@@ -41,14 +41,14 @@ int main(int argc, char *argv[]) {
                        downscale["output"]);
 
     Node reorder = b.add("base_reorder_buffer_3d_uint8")
-                       .set_params(
+                       .set_param(
                            Param{"dim0", "1"},
                            Param{"dim1", "2"},
                            Param{"dim2", "0"})(
                            isp["output"]);
 
     Node output = b.add("image_io_image_saver")
-                      .set_params(
+                      .set_param(
                           Param{"width", "816"},
                           Param{"height", "616"},
                           Param{"path", "out.png"})(
