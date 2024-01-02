@@ -5,6 +5,7 @@ from .native import (
     c_ion_buffer_t,
 
     ion_buffer_create,
+    ion_buffer_create_with_data,
     ion_buffer_destroy,
 
     ion_buffer_write,
@@ -15,13 +16,18 @@ from .Type import Type
 
 
 class Buffer:
-    def __init__(self, type: Type, sizes: List[int]):
+    def __init__(self, type: Type=None, sizes: List[int]=None, array=None):
         c_buffer = c_ion_buffer_t()
 
-        num_sizes = len(sizes)
-        c_sizes = (ctypes.c_int * num_sizes)(*sizes)
+        if array is None:
+            num_sizes = len(sizes)
+            c_sizes = (ctypes.c_int * num_sizes)(*sizes)
+            ret = ion_buffer_create(ctypes.byref(c_buffer), type.to_cobj(), c_sizes, num_sizes)
+        else:
+            type = Type.from_dtype(array.dtype)
+            c_sizes = (ctypes.c_int * array.ndim)(*reversed(array.shape))
+            ret = ion_buffer_create_with_data(ctypes.byref(c_buffer), type.to_cobj(), array.ctypes.data_as(ctypes.c_void_p), c_sizes, array.ndim)
 
-        ret = ion_buffer_create(ctypes.byref(c_buffer), type.to_cobj(), c_sizes, num_sizes)
         if ret != 0:
             raise Exception('Invalid operation')
 

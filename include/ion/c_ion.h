@@ -70,7 +70,7 @@ int ion_builder_bb_metadata(ion_builder_t, char *, int, int *);
 int ion_builder_run(ion_builder_t, ion_port_map_t);
 
 int ion_buffer_create(ion_buffer_t *, ion_type_t, int *, int);
-int ion_buffer_create_with_ptr(ion_buffer_t *, ion_type_t, void *, int *, int);
+int ion_buffer_create_with_data(ion_buffer_t *, ion_type_t, void *, int *, int);
 int ion_buffer_destroy(ion_buffer_t);
 int ion_buffer_write(ion_buffer_t, void *, int size);
 int ion_buffer_read(ion_buffer_t, void *, int size);
