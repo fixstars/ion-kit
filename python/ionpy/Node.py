@@ -8,7 +8,7 @@ from .native import (
     ion_node_create,
     ion_node_destroy,
     ion_node_get_port,
-    ion_node_set_port,
+    ion_node_set_iport,
     ion_node_set_param,
 )
 from .Type import Type
@@ -42,7 +42,7 @@ class Node:
 
         return Port(obj_=c_port)
 
-    def set_port(self, ports: List[Port]) -> 'Node':
+    def set_iport(self, ports: List[Port]) -> 'Node':
         num_ports = len(ports)
         c_ion_port_sized_array_t = c_ion_port_t * num_ports # arraysize == num_ports
         c_ports = c_ion_port_sized_array_t() # instance
@@ -50,7 +50,7 @@ class Node:
         for i in range(num_ports):
             c_ports[i] = ports[i].obj
 
-        ret = ion_node_set_port(self.obj, c_ports, num_ports)
+        ret = ion_node_set_iport(self.obj, c_ports, num_ports)
         if ret != 0:
             raise Exception('Invalid operation')
 

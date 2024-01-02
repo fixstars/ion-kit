@@ -14,7 +14,7 @@ def test_all():
     builder.with_bb_module(path='ion-bb-test')
     # builder.with_bb_module(path='ion-bb-test.dll') # for Windows
 
-    node = builder.add('test_inc_i32x2').set_port(ports=[ input_port, ]).set_param(params=[ value41, ])
+    node = builder.add('test_inc_i32x2').set_iport(ports=[ input_port, ]).set_param(params=[ value41, ])
 
     port_map = PortMap()
 

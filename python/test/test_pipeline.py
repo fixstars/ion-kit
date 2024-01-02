@@ -20,8 +20,8 @@ def test_pipeline():
     builder.with_bb_module(path='ion-bb')
 
     node = builder.add('image_io_cameraN').set_param(params=[width, height, urls])
-    node1 = builder.add("base_normalize_3d_uint8").set_port(ports=[node.get_port(name='output')[0], ]);
-    node2 = builder.add("base_normalize_3d_uint8").set_port(ports=[node.get_port(name='output')[1], ]);
+    node1 = builder.add("base_normalize_3d_uint8").set_iport(ports=[node.get_port(name='output')[0], ]);
+    node2 = builder.add("base_normalize_3d_uint8").set_iport(ports=[node.get_port(name='output')[1], ]);
 
     port_map = PortMap()
 

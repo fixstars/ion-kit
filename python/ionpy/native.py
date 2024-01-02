@@ -77,10 +77,10 @@ ion_node_get_port = ion_core.ion_node_get_port
 ion_node_get_port.restype = ctypes.c_int
 ion_node_get_port.argtypes = [ c_ion_node_t, ctypes.c_char_p, ctypes.POINTER(c_ion_port_t) ]
 
-# int ion_node_set_port(ion_node_t, ion_port_t *, int);
-ion_node_set_port = ion_core.ion_node_set_port
-ion_node_set_port.restype = ctypes.c_int
-ion_node_set_port.argtypes = [ c_ion_node_t, ctypes.POINTER(c_ion_port_t), ctypes.c_int ]
+# int ion_node_set_iport(ion_node_t, ion_port_t *, int);
+ion_node_set_iport = ion_core.ion_node_set_iport
+ion_node_set_iport.restype = ctypes.c_int
+ion_node_set_iport.argtypes = [ c_ion_node_t, ctypes.POINTER(c_ion_port_t), ctypes.c_int ]
 
 # int ion_node_set_param(ion_node_t, ion_param_t *, int);
 ion_node_set_param = ion_core.ion_node_set_param

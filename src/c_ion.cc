@@ -80,6 +80,151 @@ int ion_port_destroy(ion_port_t obj)
     return 0;
 }
 
+#define ION_PORT_BIND_IMPL(T, POSTFIX)                    \
+    int ion_port_bind_##POSTFIX(ion_port_t obj, T v) {    \
+        try {                                             \
+            reinterpret_cast<Port*>(obj)->bind(v);        \
+        } catch (const Halide::Error& e) {                \
+            log::error(e.what());                         \
+            return 1;                                     \
+        } catch (const std::exception& e) {               \
+            log::error(e.what());                         \
+            return 1;                                     \
+        } catch (...) {                                   \
+            log::error("Unknown exception was happened"); \
+            return 1;                                     \
+        }                                                 \
+                                                          \
+        return 0;                                         \
+    }
+
+ION_PORT_BIND_IMPL(int8_t*, i8)
+ION_PORT_BIND_IMPL(int16_t*, i16)
+ION_PORT_BIND_IMPL(int32_t*, i32)
+ION_PORT_BIND_IMPL(int64_t*, i64)
+ION_PORT_BIND_IMPL(bool*, u1)
+ION_PORT_BIND_IMPL(uint8_t*, u8)
+ION_PORT_BIND_IMPL(uint16_t*, u16)
+ION_PORT_BIND_IMPL(uint32_t*, u32)
+ION_PORT_BIND_IMPL(uint64_t*, u64)
+ION_PORT_BIND_IMPL(float*, f32)
+ION_PORT_BIND_IMPL(double*, f64)
+
+#undef ION_PORT_BIND_IMPL
+
+int ion_port_bind_buffer(ion_port_t obj, ion_buffer_t b)
+{
+    try {
+        // NOTE: Halide::Buffer class layout is safe to call Halide::Buffer<void>::type()
+        auto type = reinterpret_cast<Halide::Buffer<void>*>(b)->type();
+        if (type.is_int()) {
+            if (type.bits() == 8) {
+                reinterpret_cast<Port*>(obj)->bind(*reinterpret_cast<Halide::Buffer<int8_t>*>(b));
+            } else if (type.bits() == 16) {
+                reinterpret_cast<Port*>(obj)->bind(*reinterpret_cast<Halide::Buffer<int16_t>*>(b));
+            } else if (type.bits() == 32) {
+                reinterpret_cast<Port*>(obj)->bind(*reinterpret_cast<Halide::Buffer<int32_t>*>(b));
+            } else if (type.bits() == 64) {
+                reinterpret_cast<Port*>(obj)->bind(*reinterpret_cast<Halide::Buffer<int64_t>*>(b));
+            } else {
+                throw std::runtime_error("Unsupported bits number");
+            }
+        } else if (type.is_uint()) {
+            if (type.bits() == 1) {
+                reinterpret_cast<Port*>(obj)->bind(*reinterpret_cast<Halide::Buffer<bool>*>(b));
+            } else if (type.bits() == 8) {
+                reinterpret_cast<Port*>(obj)->bind(*reinterpret_cast<Halide::Buffer<uint8_t>*>(b));
+            } else if (type.bits() == 16) {
+                reinterpret_cast<Port*>(obj)->bind(*reinterpret_cast<Halide::Buffer<uint16_t>*>(b));
+            } else if (type.bits() == 32) {
+                reinterpret_cast<Port*>(obj)->bind(*reinterpret_cast<Halide::Buffer<uint32_t>*>(b));
+            } else if (type.bits() == 64) {
+                reinterpret_cast<Port*>(obj)->bind(*reinterpret_cast<Halide::Buffer<uint64_t>*>(b));
+            } else {
+                throw std::runtime_error("Unsupported bits number");
+            }
+        } else if (type.is_float()) {
+            if (type.bits() == 32) {
+                reinterpret_cast<Port*>(obj)->bind(*reinterpret_cast<Halide::Buffer<float>*>(b));
+            } else if (type.bits() == 64) {
+                reinterpret_cast<Port*>(obj)->bind(*reinterpret_cast<Halide::Buffer<double>*>(b));
+            } else {
+                throw std::runtime_error("Unsupported bits number");
+            }
+        } else {
+            throw std::runtime_error("Unsupported type code");
+        }
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
+    } catch (const std::exception& e) {
+        log::error(e.what());
+        return 1;
+    } catch (...) {
+        log::error("Unknown exception was happened");
+        return 1;
+    }
+
+
+    return 0;
+}
+
+int ion_port_bind_buffer_array(ion_port_t obj, ion_buffer_t *bs, int n)
+{
+    try {
+        // NOTE: Halide::Buffer class layout is safe to call Halide::Buffer<void>::type()
+        auto type = reinterpret_cast<Halide::Buffer<void>*>(*bs)->type();
+        if (type.is_int()) {
+            if (type.bits() == 8) {
+                reinterpret_cast<Port*>(obj)->bind(convert<int8_t>(bs, n));
+            } else if (type.bits() == 16) {
+                reinterpret_cast<Port*>(obj)->bind(convert<int16_t>(bs, n));
+            } else if (type.bits() == 32) {
+                reinterpret_cast<Port*>(obj)->bind(convert<int32_t>(bs, n));
+            } else if (type.bits() == 64) {
+                reinterpret_cast<Port*>(obj)->bind(convert<int64_t>(bs, n));
+            } else {
+                throw std::runtime_error("Unsupported bits number");
+            }
+        } else if (type.is_uint()) {
+            if (type.bits() == 1) {
+                reinterpret_cast<Port*>(obj)->bind(convert<bool>(bs, n));
+            } else if (type.bits() == 8) {
+                reinterpret_cast<Port*>(obj)->bind(convert<uint8_t>(bs, n));
+            } else if (type.bits() == 16) {
+                reinterpret_cast<Port*>(obj)->bind(convert<uint16_t>(bs, n));
+            } else if (type.bits() == 32) {
+                reinterpret_cast<Port*>(obj)->bind(convert<uint32_t>(bs, n));
+            } else if (type.bits() == 64) {
+                reinterpret_cast<Port*>(obj)->bind(convert<uint64_t>(bs, n));
+            } else {
+                throw std::runtime_error("Unsupported bits number");
+            }
+        } else if (type.is_float()) {
+            if (type.bits() == 32) {
+                reinterpret_cast<Port*>(obj)->bind(convert<float>(bs, n));
+            } else if (type.bits() == 64) {
+                reinterpret_cast<Port*>(obj)->bind(convert<double>(bs, n));
+            } else {
+                throw std::runtime_error("Unsupported bits number");
+            }
+        } else {
+            throw std::runtime_error("Unsupported type code");
+        }
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
+    } catch (const std::exception& e) {
+        log::error(e.what());
+        return 1;
+    } catch (...) {
+        log::error("Unknown exception was happened");
+        return 1;
+    }
+
+
+    return 0;
+}
 //
 // ion_param_t
 //
