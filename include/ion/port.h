@@ -55,6 +55,7 @@ private:
      friend class nlohmann::adl_serializer<Port>;
 
      Port() : impl_(new Impl("", "", Halide::Type(), 0)), index_(-1) {}
+
      Port(const std::shared_ptr<Impl>& impl) : impl_(impl), index_(-1) {}
 
      /**
@@ -71,6 +72,23 @@ private:
       * @arg d: The dimension of the port. The range is 1 to 4.
       */
      Port(const std::string& n, Halide::Type t, int32_t d) : impl_(new Impl("", n, t, d)), index_(-1) {}
+
+
+     /**
+      * Construct new port from scalar pointer
+      */
+     template<typename T>
+     Port(T *vptr) : impl_(new Impl("", Halide::Internal::unique_name("ion_port"), Halide::type_of<T>(), 0)), index_(-1) {
+         this->bind(vptr);
+     }
+
+     /**
+      * Construct new port from buffer
+      */
+     template<typename T>
+     Port(const Halide::Buffer<T>& buf) : impl_(new Impl("", buf.name(), buf.type(), buf.dimensions())), index_(-1) {
+         this->bind(buf);
+     }
 
      const std::string& pred_id() const { return std::get<0>(impl_->pred_chan); }
      const std::string& pred_name() const { return std::get<1>(impl_->pred_chan); }
