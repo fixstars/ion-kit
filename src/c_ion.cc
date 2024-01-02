@@ -564,6 +564,17 @@ Halide::Buffer<T> *make_buffer(const std::vector<int>& sizes) {
     }
 }
 
+template<typename T>
+Halide::Buffer<T> *make_buffer(void *data, const std::vector<int>& sizes) {
+    if (sizes.empty()) {
+        auto p = new Halide::Buffer<T>();
+        *p = Halide::Buffer<T>::make_scalar(reinterpret_cast<T*>(data));
+        return p;
+    } else {
+        return new Halide::Buffer<T>(reinterpret_cast<T *>(data), sizes);
+    }
+}
+
 int ion_buffer_create(ion_buffer_t *ptr, ion_type_t type, int *sizes_, int dim)
 {
     try {
@@ -622,6 +633,66 @@ int ion_buffer_create(ion_buffer_t *ptr, ion_type_t type, int *sizes_, int dim)
 
     return 0;
 }
+
+int ion_buffer_create_with_data(ion_buffer_t *ptr, ion_type_t type, void *data, int *sizes_, int dim)
+{
+    try {
+        std::vector<int> sizes(dim);
+        std::memcpy(sizes.data(), sizes_, dim * sizeof(int));
+        if (type.lanes != 1) {
+            throw std::runtime_error("Unsupported lane number");
+        }
+        if (type.code == ion_type_int) {
+            if (type.bits == 8) {
+                *ptr = reinterpret_cast<ion_buffer_t>(make_buffer<int8_t>(data, sizes));
+            } else if (type.bits == 16) {
+                *ptr = reinterpret_cast<ion_buffer_t>(make_buffer<int16_t>(data, sizes));
+            } else if (type.bits == 32) {
+                *ptr = reinterpret_cast<ion_buffer_t>(make_buffer<int32_t>(data, sizes));
+            } else if (type.bits == 64) {
+                *ptr = reinterpret_cast<ion_buffer_t>(make_buffer<int64_t>(data, sizes));
+            } else {
+                throw std::runtime_error("Unsupported bits number");
+            }
+        } else if (type.code == ion_type_uint) {
+            if (type.bits == 1) {
+                *ptr = reinterpret_cast<ion_buffer_t>(make_buffer<bool>(data, sizes));
+            } else if (type.bits == 8) {
+                *ptr = reinterpret_cast<ion_buffer_t>(make_buffer<uint8_t>(data, sizes));
+            } else if (type.bits == 16) {
+                *ptr = reinterpret_cast<ion_buffer_t>(make_buffer<uint16_t>(data, sizes));
+            } else if (type.bits == 32) {
+                *ptr = reinterpret_cast<ion_buffer_t>(make_buffer<uint32_t>(data, sizes));
+            } else if (type.bits == 64) {
+                *ptr = reinterpret_cast<ion_buffer_t>(make_buffer<uint64_t>(data, sizes));
+            } else {
+                throw std::runtime_error("Unsupported bits number");
+            }
+        } else if (type.code == ion_type_float) {
+            if (type.bits == 32) {
+                *ptr = reinterpret_cast<ion_buffer_t>(make_buffer<float>(data, sizes));
+            } else if (type.bits == 64) {
+                *ptr = reinterpret_cast<ion_buffer_t>(make_buffer<double>(data, sizes));
+            } else {
+                throw std::runtime_error("Unsupported bits number");
+            }
+        } else {
+            throw std::runtime_error("Unsupported type code");
+        }
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
+    } catch (const std::exception& e) {
+        log::error(e.what());
+        return 1;
+    } catch (...) {
+        log::error("Unknown exception was happened");
+        return 1;
+    }
+
+    return 0;
+}
+
 
 int ion_buffer_destroy(ion_buffer_t obj)
 {

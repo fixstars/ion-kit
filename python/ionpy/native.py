@@ -153,6 +153,12 @@ ion_buffer_create = ion_core.ion_buffer_create
 ion_buffer_create.restype = ctypes.c_int
 ion_buffer_create.argtypes = [ ctypes.POINTER(c_ion_buffer_t), c_ion_type_t, ctypes.POINTER(ctypes.c_int), ctypes.c_int ]
 
+# int ion_buffer_create_with_data(ion_buffer_t *, ion_type_t, void *, int *, int);
+ion_buffer_create_with_data = ion_core.ion_buffer_create_with_data
+ion_buffer_create_with_data.restype = ctypes.c_int
+ion_buffer_create_with_data.argtypes = [ ctypes.POINTER(c_ion_buffer_t), c_ion_type_t, ctypes.c_void_p, ctypes.POINTER(ctypes.c_int), ctypes.c_int ]
+
+
 # int ion_buffer_destroy(ion_buffer_t);
 ion_buffer_destroy = ion_core.ion_buffer_destroy
 ion_buffer_destroy.restype = ctypes.c_int

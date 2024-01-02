@@ -33,6 +33,10 @@ class Node:
         if self.obj: # check not nullptr
             ion_node_destroy(self.obj)
 
+    # TODO: Make it work well
+    # def __call__(self, *args):
+    #     self.set_iport(list(*args))
+
     def get_port(self, name: str) -> Port:
         c_port = c_ion_port_t()
 
