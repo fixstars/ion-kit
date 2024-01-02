@@ -9,121 +9,241 @@ using namespace ion;
 
 int main()
 {
-    const char *file_name = "test.graph";
+    try {
+        const char *file_name = "test.graph";
 
-    {
-        std::string graph = R"(
-            {
-              "nodes": [
+        {
+            std::string graph = R"(
                 {
-                  "id": "dc4b82f0-497c-4f32-b210-3ad5cfd91143",
-                  "name": "test_consumer",
-                  "params": [],
-                  "ports": [
+                  "nodes": [
+
                     {
-                      "dimensions_": 0,
-                      "key_": "output",
-                      "node_id_": "1310589d-1448-4107-ac1d-67c32f482906",
-                      "type_": {
-                        "bits": 0,
-                        "code": 3,
-                        "lanes": 0
-                      }
+                      "id": "9ebf9c1e-25bf-451d-b92e-54322c72476f",
+                      "name": "test_consumer",
+                      "params": [],
+                      "ports": [
+                        {
+                          "dimensions": 0,
+                          "impl_ptr": 94067312766832,
+                          "index": -1,
+                          "pred_chan": [
+                            "2c706f47-6f51-4f1e-82de-f87f2dd0e9ab",
+                            "output"
+                          ],
+                          "size": 1,
+                          "succ_chans": [
+                            [
+                              "9ebf9c1e-25bf-451d-b92e-54322c72476f",
+                              "input"
+                            ]
+                          ],
+                          "type": {
+                            "bits": 0,
+                            "code": 3,
+                            "lanes": 0
+                          }
+                        },
+                        {
+                          "dimensions": 0,
+                          "impl_ptr": 94067313268224,
+                          "index": -1,
+                          "pred_chan": [
+                            "",
+                            "min0"
+                          ],
+                          "size": 1,
+                          "succ_chans": [
+                            [
+                              "9ebf9c1e-25bf-451d-b92e-54322c72476f",
+                              "min0"
+                            ]
+                          ],
+                          "type": {
+                            "bits": 32,
+                            "code": 0,
+                            "lanes": 1
+                          }
+                        },
+                        {
+                          "dimensions": 0,
+                          "impl_ptr": 94067313265008,
+                          "index": -1,
+                          "pred_chan": [
+                            "",
+                            "extent0"
+                          ],
+                          "size": 1,
+                          "succ_chans": [
+                            [
+                              "9ebf9c1e-25bf-451d-b92e-54322c72476f",
+                              "extent0"
+                            ]
+                          ],
+                          "type": {
+                            "bits": 32,
+                            "code": 0,
+                            "lanes": 1
+                          }
+                        },
+                        {
+                          "dimensions": 0,
+                          "impl_ptr": 94067313264752,
+                          "index": -1,
+                          "pred_chan": [
+                            "",
+                            "min1"
+                          ],
+                          "size": 1,
+                          "succ_chans": [
+                            [
+                              "9ebf9c1e-25bf-451d-b92e-54322c72476f",
+                              "min1"
+                            ]
+                          ],
+                          "type": {
+                            "bits": 32,
+                            "code": 0,
+                            "lanes": 1
+                          }
+                        },
+                        {
+                          "dimensions": 0,
+                          "impl_ptr": 94067312830512,
+                          "index": -1,
+                          "pred_chan": [
+                            "",
+                            "extent1"
+                          ],
+                          "size": 1,
+                          "succ_chans": [
+                            [
+                              "9ebf9c1e-25bf-451d-b92e-54322c72476f",
+                              "extent1"
+                            ]
+                          ],
+                          "type": {
+                            "bits": 32,
+                            "code": 0,
+                            "lanes": 1
+                          }
+                        },
+                        {
+                          "dimensions": 0,
+                          "impl_ptr": 94067312767360,
+                          "index": -1,
+                          "pred_chan": [
+                            "",
+                            "v"
+                          ],
+                          "size": 1,
+                          "succ_chans": [
+                            [
+                              "9ebf9c1e-25bf-451d-b92e-54322c72476f",
+                              "v"
+                            ]
+                          ],
+                          "type": {
+                            "bits": 32,
+                            "code": 0,
+                            "lanes": 1
+                          }
+                        },
+                        {
+                          "dimensions": 0,
+                          "impl_ptr": 94067312830256,
+                          "index": -1,
+                          "pred_chan": [
+                            "9ebf9c1e-25bf-451d-b92e-54322c72476f",
+                            "output"
+                          ],
+                          "size": 1,
+                          "succ_chans": [],
+                          "type": {
+                            "bits": 0,
+                            "code": 3,
+                            "lanes": 0
+                          }
+                        }
+                      ],
+                      "target": "x86-64-linux-avx-avx2-debug-f16c-fma-sse41-trace_pipeline"
                     },
                     {
-                      "dimensions_": 0,
-                      "key_": "min0",
-                      "node_id_": "",
-                      "type_": {
-                        "bits": 32,
-                        "code": 0,
-                        "lanes": 1
-                      }
-                    },
-                    {
-                      "dimensions_": 0,
-                      "key_": "extent0",
-                      "node_id_": "",
-                      "type_": {
-                        "bits": 32,
-                        "code": 0,
-                        "lanes": 1
-                      }
-                    },
-                    {
-                      "dimensions_": 0,
-                      "key_": "min1",
-                      "node_id_": "",
-                      "type_": {
-                        "bits": 32,
-                        "code": 0,
-                        "lanes": 1
-                      }
-                    },
-                    {
-                      "dimensions_": 0,
-                      "key_": "extent1",
-                      "node_id_": "",
-                      "type_": {
-                        "bits": 32,
-                        "code": 0,
-                        "lanes": 1
-                      }
-                    },
-                    {
-                      "dimensions_": 0,
-                      "key_": "v",
-                      "node_id_": "",
-                      "type_": {
-                        "bits": 32,
-                        "code": 0,
-                        "lanes": 1
-                      }
+                      "id": "2c706f47-6f51-4f1e-82de-f87f2dd0e9ab",
+                      "name": "test_producer",
+                      "params": [
+                        {
+                          "key": "v",
+                          "val": "41"
+                        }
+                      ],
+                      "ports": [
+                        {
+                          "dimensions": 0,
+                          "impl_ptr": 94067312766832,
+                          "index": -1,
+                          "pred_chan": [
+                            "2c706f47-6f51-4f1e-82de-f87f2dd0e9ab",
+                            "output"
+                          ],
+                          "size": 1,
+                          "succ_chans": [
+                            [
+                              "9ebf9c1e-25bf-451d-b92e-54322c72476f",
+                              "input"
+                            ]
+                          ],
+                          "type": {
+                            "bits": 0,
+                            "code": 3,
+                            "lanes": 0
+                          }
+                        }
+                      ],
+                      "target": "x86-64-linux-avx-avx2-debug-f16c-fma-sse41-trace_pipeline"
                     }
                   ],
-                  "target": "host"
-                },
-                {
-                  "id": "1310589d-1448-4107-ac1d-67c32f482906",
-                  "name": "test_producer",
-                  "params": [],
-                  "ports": [],
-                  "target": "host"
+                  "target": "x86-64-linux-avx-avx2-debug-f16c-fma-sse41-trace_pipeline"
                 }
-              ],
-              "target": "host"
-            }
             )";
-        std::ofstream ofs(file_name);
-        ofs << graph;
-    }
-
-    Halide::Type t = Halide::type_of<int32_t>();
-    Port min0{"min0", t}, extent0{"extent0", t}, min1{"min1", t}, extent1{"extent1", t}, v{"v", t};
-
-    Builder b;
-
-    b.set_target(Halide::get_host_target());
-
-    b.with_bb_module("ion-bb-test");
-
-    b.load(file_name);
-
-    PortMap pm;
-    pm.set(min0, 0);
-    pm.set(extent0, 2);
-    pm.set(min1, 0);
-    pm.set(extent1, 2);
-    pm.set(v, 1);
-
-    Halide::Buffer<int32_t> r = Halide::Buffer<int32_t>::make_scalar();
-    for (auto& n : b.nodes()) {
-        if (n.name() == "test_consumer") {
-            pm.set(n["output"], r);
-            break;
+            std::ofstream ofs(file_name);
+            ofs << graph;
         }
+
+        Halide::Type t = Halide::type_of<int32_t>();
+
+        Builder b;
+
+        b.set_target(Halide::get_host_target());
+
+        b.with_bb_module("ion-bb-test");
+
+        b.load(file_name);
+
+        PortMap pm;
+
+        Halide::Buffer<int32_t> r = Halide::Buffer<int32_t>::make_scalar();
+        for (auto& n : b.nodes()) {
+            if (n.name() == "test_consumer") {
+                pm.set(n["min0"], 0);
+                pm.set(n["extent0"], 1);
+                pm.set(n["min1"], 0);
+                pm.set(n["extent1"], 2);
+                pm.set(n["v"], 1);
+                pm.set(n["output"], r);
+                break;
+            }
+        }
+
+        b.run(pm);
+    } catch (const Halide::Error &e) {
+        std::cerr << e.what() << std::endl;
+        return 1;
+    } catch (const std::exception &e) {
+        std::cerr << e.what() << std::endl;
+        return 1;
     }
 
-    b.run(pm);
+    std::cout << "Passed" << std::endl;
+
     return 0;
 }

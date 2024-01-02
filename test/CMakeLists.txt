@@ -59,7 +59,12 @@ ion_jit(dup SRCS dup.cc)
 add_dependencies(dup ion-bb-test)
 ion_register_test(dup_test dup)
 
-# Output error handling
+# Port binding in compatible style
+ion_jit(port-binding-compat SRCS port-binding-compat.cc)
+add_dependencies(port-binding-compat ion-bb-test)
+ion_register_test(port-binding-compat_test port-binding-compat)
+
+# Port binding
 ion_jit(port-binding SRCS port-binding.cc)
 add_dependencies(port-binding ion-bb-test)
 ion_register_test(port-binding_test port-binding)
@@ -93,6 +98,7 @@ ion_register_test(dup-port-name_test dup-port-name)
 
 # Export test
 ion_jit(export SRCS export.cc)
+ion_register_test(export_test export)
 
 #
 # Pipeline testing

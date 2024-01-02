@@ -73,14 +73,10 @@ public:
      */
     void compile(const std::string& function_name, const CompileOption& option = CompileOption{});
 
-    /**
-     * Compile and execute the pipeline.
-     * @arg r: The list of output.
-     * @arg ports: The mapping of the port and actual value.
-     * @return Execution result of the pipeline.
-     * See https://halide-lang.org/docs/class_halide_1_1_realization.html for more details.
-     */
+    void run();
+
     void run(ion::PortMap& ports);
+
 
     /**
      * Retrieve metadata of Building Block in json format.
@@ -102,7 +98,10 @@ public:
 
 private:
 
-    Halide::Pipeline build(ion::PortMap& ports);
+    Halide::Pipeline build(bool implicit_output = false);
+
+    std::vector<Halide::Argument> get_arguments_stub() const;
+    std::vector<const void*> get_arguments_instance() const;
 
     void set_jit_externs(const std::map<std::string, Halide::JITExtern> &externs) {
         pipeline_.set_jit_externs(externs);

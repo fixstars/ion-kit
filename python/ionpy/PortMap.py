@@ -23,7 +23,6 @@ from .native import (
     ion_port_map_set_f64,
 
     ion_port_map_set_buffer,
-    ion_port_map_set_buffer_array,
 )
 
 from .Port import Port
@@ -94,15 +93,4 @@ class PortMap:
 
     def set_buffer(self, port: Port, buffer: Buffer):
         if ion_port_map_set_buffer(self.obj, port.obj, buffer.obj) != 0:
-            raise Exception('Invalid operation')
-
-    def set_buffer_array(self, port: Port, buffers: List[Buffer]):
-        num_buffers = len(buffers)
-        c_buffers = (c_ion_buffer_t * num_buffers)()
-
-        for i in range(num_buffers):
-            c_buffers[i] = buffers[i].obj
-
-
-        if ion_port_map_set_buffer_array(self.obj, port.obj, c_buffers, num_buffers) != 0:
             raise Exception('Invalid operation')

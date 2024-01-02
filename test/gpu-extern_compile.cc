@@ -55,13 +55,14 @@ int main()
 
         // std::cout << "OK" << std::endl;
 
-    } catch (const std::range_error& e) {
-        std::cout << e.what() << std::endl;
+    } catch (const Halide::Error& e) {
+        std::cerr << e.what() << std::endl;
         return 1;
     } catch (const std::exception& e) {
-        std::cout << e.what() << std::endl;
+        std::cerr << e.what() << std::endl;
         return 1;
     }
 
+    std::cout << "Passed" << std::endl;
     return 0;
 }

@@ -6,17 +6,27 @@ using namespace ion;
 
 int main()
 {
-    Halide::Type t = Halide::type_of<int32_t>();
-    Port input{"input", t, 2}, width{"width", t}, height{"height", t};
+    try {
+        Halide::Type t = Halide::type_of<int32_t>();
+        Port input{"input", t, 2}, width{"width", t}, height{"height", t};
 
-    Builder b;
-    b.set_target(Halide::get_target_from_environment());
+        Builder b;
+        b.set_target(Halide::get_target_from_environment());
 
-    Node n;
-    n = b.add("test_branch")(input, width, height);
-    n = b.add("test_merge")(n["output0"], n["output1"], height);
+        Node n;
+        n = b.add("test_branch")(input, width, height);
+        n = b.add("test_merge")(n["output0"], n["output1"], height);
 
-    b.compile("complex_graph");
+        b.compile("complex_graph");
+    } catch (const Halide::Error& e) {
+        std::cerr << e.what() << std::endl;
+        return 1;
+    } catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        return 1;
+    }
+
+    std::cout << "Passed" << std::endl;
 
     return 0;
 }

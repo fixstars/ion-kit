@@ -50,7 +50,6 @@ class DynamicModule {
              throw std::runtime_error(getErrorString());
          }
 #else
-         std::printf("testing : %s\n",target.c_str());
          handle_ = dlopen(target.c_str(), RTLD_NOW);
          if (handle_ == nullptr) {
              throw std::runtime_error(getErrorString());

@@ -5,16 +5,16 @@ import numpy as np # TODO: rewrite with pure python
 
 def test_all():
     t = Type(code_=TypeCode.Int, bits_=32, lanes_=1)
-    input_port = Port(key='input', type=t, dim=2)
+    input_port = Port(name='input', type=t, dim=2)
     value41 = Param(key='v', val='41')
 
     builder = Builder()
     builder.set_target(target='host')
     # make sure path includes libion-bb-test.so
-    builder.with_bb_module(path='libion-bb-test.so')
+    builder.with_bb_module(path='ion-bb-test')
     # builder.with_bb_module(path='ion-bb-test.dll') # for Windows
 
-    node = builder.add('test_inc_i32x2').set_port(ports=[ input_port, ]).set_param(params=[ value41, ])
+    node = builder.add('test_inc_i32x2').set_iport(ports=[ input_port, ]).set_param(params=[ value41, ])
 
     port_map = PortMap()
 
@@ -32,7 +32,7 @@ def test_all():
     obuf.write(data=odata_bytes)
 
     port_map.set_buffer(port=input_port, buffer=ibuf)
-    port_map.set_buffer(port=node.get_port(key='output'), buffer=obuf)
+    port_map.set_buffer(port=node.get_port(name='output'), buffer=obuf)
 
     builder.run(port_map=port_map)
 
