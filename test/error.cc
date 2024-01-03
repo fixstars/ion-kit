@@ -8,13 +8,13 @@ using namespace ion;
 
 int main()
 {
-    Builder b;
-    b.add("sonzai_shinai_bb");
     try {
+        Builder b;
+        b.add("sonzai_shinai_bb");
         b.compile("sonzai_shinai_graph");
     } catch (const exception&) {
         // Expected
         return 0;
     }
-    return -1;
+    return 1;
 }

@@ -2,11 +2,17 @@
 #define ION_PORT_H
 
 #include <functional>
+#include <mutex>
 #include <stdexcept>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include <Halide.h>
+
+#include "json/json.hpp"
+
+#include "util.h"
 
 namespace ion {
 
@@ -14,21 +20,49 @@ namespace ion {
  * Port class is used to create dynamic i/o for each node.
  */
 class Port {
- public:
-     friend class Node;
+public:
+    using Channel = std::tuple<std::string, std::string>;
 
-     Port()
-         : key_(), type_(), dimensions_(0), index_(-1), node_id_() {}
+private:
+    struct Impl {
+        // std::string pred_id;
+        // std::string pred_name;
+
+        // std::string succ_id;
+        // std::string succ_name;
+
+        Channel pred_chan;
+        std::set<Channel> succ_chans;
+
+        Halide::Type type;
+        int32_t dimensions;
+
+        std::unordered_map<int32_t, Halide::Internal::Parameter> params;
+        std::unordered_map<int32_t, const void *> instances;
+
+        Impl() {}
+
+        Impl(const std::string& pid, const std::string& pn, const Halide::Type& t, int32_t d)
+            : pred_chan{pid, pn}, succ_chans{}, type(t), dimensions(d)
+        {
+            params[0] = Halide::Internal::Parameter(type, dimensions != 0, dimensions, argument_name(pid, pn, 0));
+        }
+    };
+
+ public:
+     friend class Builder;
+     friend class Node;
+     friend class nlohmann::adl_serializer<Port>;
+
+     Port() : impl_(new Impl("", "", Halide::Type(), 0)), index_(-1) {}
+     Port(const std::shared_ptr<Impl>& impl) : impl_(impl), index_(-1) {}
 
      /**
       * Construct new port for scalar value.
       * @arg k: The key of the port which should be matched with BuildingBlock Input/Output name.
       * @arg t: The type of the value.
       */
-     Port(const std::string& k, Halide::Type t)
-         : key_(k), type_(t), dimensions_(0), index_(-1), node_id_(),
-           expr_(Halide::Internal::Variable::make(t, k, Halide::Internal::Parameter(t, false, 0, k)))
-    {}
+     Port(const std::string& n, Halide::Type t) : impl_(new Impl("", n, t, 0)), index_(-1) {}
 
      /**
       * Construct new port for vector value.
@@ -36,65 +70,159 @@ class Port {
       * @arg t: The type of the element value.
       * @arg d: The dimension of the port. The range is 1 to 4.
       */
-     Port(const std::string& k, Halide::Type t, int32_t d)
-         : key_(k), type_(t), dimensions_(d), index_(-1), node_id_(),
-           func_(Halide::ImageParam(t, d, k))
-    {}
+     Port(const std::string& n, Halide::Type t, int32_t d) : impl_(new Impl("", n, t, d)), index_(-1) {}
 
-     std::string key() const { return key_; }
-     std::string& key() { return key_; }
+     const std::string& pred_id() const { return std::get<0>(impl_->pred_chan); }
+     const std::string& pred_name() const { return std::get<1>(impl_->pred_chan); }
 
-     Halide::Type type() const { return type_; }
-     Halide::Type& type() { return type_; }
+     const Halide::Type& type() const { return impl_->type; }
 
-     int32_t dimensions() const { return dimensions_; }
-     int32_t& dimensions() { return dimensions_; }
+     int32_t dimensions() const { return impl_->dimensions; }
+
+     // const std::string& succ_id() const { return impl_->succ_id; }
+
+     int32_t size() const { return impl_->params.size(); }
 
      int32_t index() const { return index_; }
-     int32_t& index() { return index_; }
 
-     std::string node_id() const { return node_id_; }
-     std::string& node_id() { return node_id_; }
+     bool has_pred() const { return !std::get<0>(impl_->pred_chan).empty(); }
 
-     Halide::Expr& expr() {
-         return expr_;
-     }
+     bool has_succ() const { return !impl_->succ_chans.empty(); }
+     bool has_succ(const Channel& c) const { return impl_->succ_chans.count(c); }
 
-     Halide::Func& func() {
-         return func_;
-     }
-
-     bool bound() const {
-         return !node_id_.empty();
-     }
-
-
-     void set_index(int idx) {
-         this->index_ = idx;
-     }
+     void set_index(int index) { index_ = index; }
 
     /**
      * Overloaded operator to set the port index and return a reference to the current port. eg. port[0]
      */
-     Port operator[](int idx) {
-         this->set_index(idx);
-         return *this;
+     Port operator[](int index) {
+         Port port(*this);
+         port.index_ = index;
+         return port;
+     }
+
+     template<typename T>
+     void bind(T *v) {
+         auto i = index_ == -1 ? 0 : index_;
+         if (has_pred()) {
+             impl_->params[i] = Halide::Internal::Parameter{Halide::type_of<T>(), false, 0, argument_name(pred_id(), pred_name(), i)};
+         } else {
+             impl_->params[i] = Halide::Internal::Parameter{type(), false, dimensions(), argument_name(pred_id(), pred_name(), i)};
+         }
+
+         impl_->instances[i] = v;
+     }
+
+
+     template<typename T>
+     void bind(const Halide::Buffer<T>& buf) {
+         auto i = index_ == -1 ? 0 : index_;
+         if (has_pred()) {
+             impl_->params[i] = Halide::Internal::Parameter{buf.type(), true, buf.dimensions(), argument_name(pred_id(), pred_name(), i)};
+         } else {
+             impl_->params[i] = Halide::Internal::Parameter{type(), true, dimensions(), argument_name(pred_id(), pred_name(), i)};
+         }
+
+         impl_->instances[i] = buf.raw_buffer();
+     }
+
+     template<typename T>
+     void bind(const std::vector<Halide::Buffer<T>>& bufs) {
+         for (size_t i=0; i<bufs.size(); ++i) {
+             if (has_pred()) {
+                 impl_->params[i] = Halide::Internal::Parameter{bufs[i].type(), true, bufs[i].dimensions(), argument_name(pred_id(), pred_name(), i)};
+             } else {
+                 impl_->params[i] = Halide::Internal::Parameter{type(), true, dimensions(), argument_name(pred_id(), pred_name(), i)};
+             }
+
+             impl_->instances[i] = bufs[i].raw_buffer();
+         }
+     }
+
+     static std::shared_ptr<Impl> find_impl(uintptr_t ptr) {
+         static std::unordered_map<uintptr_t, std::shared_ptr<Impl>> impls;
+         static std::mutex mutex;
+         std::scoped_lock lock(mutex);
+         if (!impls.count(ptr)) {
+             impls[ptr] = std::make_shared<Impl>();
+         }
+         return impls[ptr];
      }
 
 private:
     /**
-     * This port is bound with some node.
+     * This port is created from another node
      */
-     Port(const std::string& k, const std::string& ni) : key_(k), type_(), index_(-1), dimensions_(0), node_id_(ni) {}
+     Port(const std::string& pid, const std::string& pn) : impl_(new Impl(pid, pn, Halide::Type(), 0)), index_(-1) {}
 
-     std::string key_;
-     Halide::Type type_;
-     int32_t dimensions_;
+
+     std::vector<Halide::Argument> as_argument() const {
+         std::vector<Halide::Argument> args;
+         for (const auto& [i, param] : impl_->params) {
+             if (args.size() <= i) {
+                 args.resize(i+1, Halide::Argument());
+             }
+             auto kind = dimensions() == 0 ? Halide::Argument::InputScalar : Halide::Argument::InputBuffer;
+             args[i] = Halide::Argument(argument_name(pred_id(), pred_name(), i),  kind, type(), dimensions(), Halide::ArgumentEstimates());
+         }
+         return args;
+     }
+
+     std::vector<const void *> as_instance() const {
+         std::vector<const void *> instances;
+        for (const auto& [i, instance] : impl_->instances) {
+             if (instances.size() <= i) {
+                 instances.resize(i+1, nullptr);
+             }
+             instances[i] = instance;
+        }
+         return instances;
+     }
+
+     std::vector<Halide::Expr> as_expr() const {
+         if (dimensions() != 0) {
+            throw std::runtime_error("Unreachable");
+         }
+
+         std::vector<Halide::Expr> es;
+         for (const auto& [i, param] : impl_->params) {
+             if (es.size() <= i) {
+                 es.resize(i+1, Halide::Expr());
+             }
+             es[i] = Halide::Internal::Variable::make(type(), argument_name(pred_id(), pred_name(), i), param);
+         }
+         return es;
+     }
+
+     std::vector<Halide::Func> as_func() const {
+         if (dimensions() == 0) {
+            throw std::runtime_error("Unreachable");
+         }
+
+         std::vector<Halide::Func> fs;
+         for (const auto& [i, param] : impl_->params ) {
+             if (fs.size() <= i) {
+                 fs.resize(i+1, Halide::Func());
+             }
+             std::vector<Halide::Var> args;
+             std::vector<Halide::Expr> args_expr;
+             for (int i = 0; i < dimensions(); ++i) {
+                 args.push_back(Halide::Var::implicit(i));
+                 args_expr.push_back(Halide::Var::implicit(i));
+             }
+             Halide::Func f(param.type(), param.dimensions(), argument_name(pred_id(), pred_name(), i) + "_im");
+             f(args) = Halide::Internal::Call::make(param, args_expr);
+             fs[i] = f;
+         }
+         return fs;
+     }
+
+     std::shared_ptr<Impl> impl_;
+
+     // NOTE:
+     // The reasons why index sits outside of the impl_ is because
+     // index is tentatively used to hold index of params.
      int32_t index_;
-     std::string node_id_;
-
-     Halide::Expr expr_; // If portdlfkj is scalar, hold as Expr
-     Halide::Func func_; // If port is not scalar, hold as Func
 };
 
 } // namespace ion

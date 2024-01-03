@@ -2,7 +2,7 @@
 #define ION_BB_IMAGE_IO_BB_H
 
 #include <ion/ion.h>
-#ifndef _WIN32
+#ifdef __linux__
 #include <linux/videodev2.h>
 #endif
 
@@ -60,7 +60,7 @@ const int BayerMap::bayer_map[4][4]{
     {1, 2, 0, 1}   // GBRG
 };
 
-#ifndef _WIN32
+#ifdef __linux__
 uint32_t make_pixel_format(BayerMap::Pattern bayer_pattern, int32_t bit_width)
 {
     uint32_t pix_format;
@@ -110,87 +110,6 @@ uint32_t make_pixel_format(BayerMap::Pattern bayer_pattern, int32_t bit_width)
 
 int instance_id = 0;
 
-class IMX219 : public ion::BuildingBlock<IMX219> {
-public:
-    GeneratorParam<std::string> gc_title{"gc_title", "IMX219"};
-    GeneratorParam<std::string> gc_description{"gc_description", "This captures IMX219 image."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "input,sensor"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.width), parseInt(v.height)] }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
-    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
-
-    GeneratorParam<int32_t> fps{"fps", 24};
-    GeneratorParam<int32_t> width{"width", 3264};
-    GeneratorParam<int32_t> height{"height", 2464};
-    GeneratorParam<int32_t> index{"index", 0};
-    GeneratorParam<std::string> url{"url", ""};
-    GeneratorParam<bool> force_sim_mode{"force_sim_mode", false};
-
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint16_t>(), 2};
-
-    void generate() {
-        using namespace Halide;
-        std::string url_str = url;
-        Halide::Buffer<uint8_t> url_buf(url_str.size() + 1);
-        url_buf.fill(0);
-        std::memcpy(url_buf.data(), url_str.c_str(), url_str.size());
-
-        std::vector<ExternFuncArgument> params = {
-            instance_id++,
-            cast<int32_t>(index),
-            cast<int32_t>(fps),
-            cast<int32_t>(width),
-            cast<int32_t>(height),
-            cast<uint32_t>(Expr(V4L2_PIX_FMT_SRGGB10)),
-            cast<uint32_t>(force_sim_mode),
-            url_buf,
-            0.4f, 0.5f, 0.3125f,
-            0.0625f,
-            10, 6
-        };
-        Func v4l2_imx219(static_cast<std::string>(gc_prefix) + "output");
-        v4l2_imx219.define_extern("ion_bb_image_io_v4l2", params, type_of<uint16_t>(), 2);
-        v4l2_imx219.compute_root();
-
-        output = v4l2_imx219;
-    }
-};
-
-class D435 : public ion::BuildingBlock<D435> {
-public:
-    GeneratorParam<std::string> gc_title{"gc_title", "D435"};
-    GeneratorParam<std::string> gc_description{"gc_description", "This captures D435 stereo image and depth."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "input,sensor"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output_l: [1280, 720], output_r: [1280, 720], output_d: [1280, 720] }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
-    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
-
-    GeneratorOutput<Halide::Func> output_l{"output_l", Halide::type_of<uint8_t>(), 2};
-    GeneratorOutput<Halide::Func> output_r{"output_r", Halide::type_of<uint8_t>(), 2};
-    GeneratorOutput<Halide::Func> output_d{"output_d", Halide::type_of<uint16_t>(), 2};
-
-    void generate() {
-        using namespace Halide;
-        Func realsense_d435_frameset(static_cast<std::string>(gc_prefix) + "frameset");
-        realsense_d435_frameset.define_extern("ion_bb_image_io_realsense_d435_frameset", {}, type_of<uint64_t>(), 0);
-        realsense_d435_frameset.compute_root();
-
-        // TODO: Seperate channel
-        Func realsense_d435_infrared(static_cast<std::string>(gc_prefix) + "output_lr");
-        realsense_d435_infrared.define_extern("ion_bb_image_io_realsense_d435_infrared", {realsense_d435_frameset}, {type_of<uint8_t>(), type_of<uint8_t>()}, 2);
-        realsense_d435_infrared.compute_root();
-
-        Func realsense_d435_depth(static_cast<std::string>(gc_prefix) + "output_d");
-        realsense_d435_depth.define_extern("ion_bb_image_io_realsense_d435_depth", {realsense_d435_frameset}, type_of<uint16_t>(), 2);
-        realsense_d435_depth.compute_root();
-
-        output_l(_) = realsense_d435_infrared(_)[0];
-        output_r(_) = realsense_d435_infrared(_)[1];
-        output_d = realsense_d435_depth;
-    }
-};
 
 class Camera : public ion::BuildingBlock<Camera> {
 public:
@@ -319,7 +238,6 @@ public:
 };
 
 
-
 class CameraN : public ion::BuildingBlock<CameraN> {
 public:
     GeneratorParam<int32_t> num_devices{"num_devices", 2};
@@ -399,6 +317,87 @@ public:
     }
 };
 
+class IMX219 : public ion::BuildingBlock<IMX219> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "IMX219"};
+    GeneratorParam<std::string> gc_description{"gc_description", "This captures IMX219 image."};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "input,sensor"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.width), parseInt(v.height)] }}))"};
+    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
+    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+
+    GeneratorParam<int32_t> fps{"fps", 24};
+    GeneratorParam<int32_t> width{"width", 3264};
+    GeneratorParam<int32_t> height{"height", 2464};
+    GeneratorParam<int32_t> index{"index", 0};
+    GeneratorParam<std::string> url{"url", ""};
+    GeneratorParam<bool> force_sim_mode{"force_sim_mode", false};
+
+    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint16_t>(), 2};
+
+    void generate() {
+        using namespace Halide;
+        std::string url_str = url;
+        Halide::Buffer<uint8_t> url_buf(url_str.size() + 1);
+        url_buf.fill(0);
+        std::memcpy(url_buf.data(), url_str.c_str(), url_str.size());
+
+        std::vector<ExternFuncArgument> params = {
+            instance_id++,
+            cast<int32_t>(index),
+            cast<int32_t>(fps),
+            cast<int32_t>(width),
+            cast<int32_t>(height),
+            cast<uint32_t>(Expr(V4L2_PIX_FMT_SRGGB10)),
+            cast<uint32_t>(force_sim_mode),
+            url_buf,
+            0.4f, 0.5f, 0.3125f,
+            0.0625f,
+            10, 6
+        };
+        Func v4l2_imx219(static_cast<std::string>(gc_prefix) + "output");
+        v4l2_imx219.define_extern("ion_bb_image_io_v4l2", params, type_of<uint16_t>(), 2);
+        v4l2_imx219.compute_root();
+
+        output = v4l2_imx219;
+    }
+};
+
+class D435 : public ion::BuildingBlock<D435> {
+public:
+    GeneratorParam<std::string> gc_title{"gc_title", "D435"};
+    GeneratorParam<std::string> gc_description{"gc_description", "This captures D435 stereo image and depth."};
+    GeneratorParam<std::string> gc_tags{"gc_tags", "input,sensor"};
+    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output_l: [1280, 720], output_r: [1280, 720], output_d: [1280, 720] }}))"};
+    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
+    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
+    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+
+    GeneratorOutput<Halide::Func> output_l{"output_l", Halide::type_of<uint8_t>(), 2};
+    GeneratorOutput<Halide::Func> output_r{"output_r", Halide::type_of<uint8_t>(), 2};
+    GeneratorOutput<Halide::Func> output_d{"output_d", Halide::type_of<uint16_t>(), 2};
+
+    void generate() {
+        using namespace Halide;
+        Func realsense_d435_frameset(static_cast<std::string>(gc_prefix) + "frameset");
+        realsense_d435_frameset.define_extern("ion_bb_image_io_realsense_d435_frameset", {}, type_of<uint64_t>(), 0);
+        realsense_d435_frameset.compute_root();
+
+        // TODO: Seperate channel
+        Func realsense_d435_infrared(static_cast<std::string>(gc_prefix) + "output_lr");
+        realsense_d435_infrared.define_extern("ion_bb_image_io_realsense_d435_infrared", {realsense_d435_frameset}, {type_of<uint8_t>(), type_of<uint8_t>()}, 2);
+        realsense_d435_infrared.compute_root();
+
+        Func realsense_d435_depth(static_cast<std::string>(gc_prefix) + "output_d");
+        realsense_d435_depth.define_extern("ion_bb_image_io_realsense_d435_depth", {realsense_d435_frameset}, type_of<uint16_t>(), 2);
+        realsense_d435_depth.compute_root();
+
+        output_l(_) = realsense_d435_infrared(_)[0];
+        output_r(_) = realsense_d435_infrared(_)[1];
+        output_d = realsense_d435_depth;
+    }
+};
 
 
 class GenericV4L2Bayer : public ion::BuildingBlock<GenericV4L2Bayer> {
@@ -502,6 +501,7 @@ public:
 };
 #endif
 
+
 class GUIDisplay : public ion::BuildingBlock<GUIDisplay> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "GUI Display"};
@@ -544,7 +544,7 @@ public:
     }
 };
 
-#ifndef _WIN32
+#ifdef __linux__
 class FBDisplay : public ion::BuildingBlock<FBDisplay> {
 public:
     GeneratorParam<std::string> gc_title{"gc_title", "FBDisplay"};
@@ -585,6 +585,7 @@ public:
         output = display;
     }
 };
+#endif
 
 class GrayscaleDataLoader : public ion::BuildingBlock<GrayscaleDataLoader> {
 public:
@@ -660,7 +661,7 @@ public:
         output = color_data_loader;
     }
 };
-#endif
+
 
 class ImageSaver : public ion::BuildingBlock<ImageSaver> {
 public:
@@ -1219,20 +1220,22 @@ public:
 }  // namespace bb
 }  // namespace ion
 
-#ifndef _WIN32
+#ifdef __linux__
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::IMX219, image_io_imx219);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::D435, image_io_d435);
-
-ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::Camera, image_io_camera);
-ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::Camera2, image_io_camera2);
-ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::CameraN, image_io_cameraN);
 
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::GenericV4L2Bayer, image_io_generic_v4l2_bayer);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::CameraSimulation, image_io_camera_simulation);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::FBDisplay, image_io_fb_display);
+
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::Camera, image_io_camera);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::Camera2, image_io_camera2);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::CameraN, image_io_cameraN);
+#endif
+
+
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::ColorDataLoader, image_io_color_data_loader);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::GrayscaleDataLoader, image_io_grayscale_data_loader);
-#endif
 
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::GUIDisplay, image_io_gui_display);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::ImageSaver, image_io_image_saver);

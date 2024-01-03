@@ -39,10 +39,10 @@ ion_port_create = ion_core.ion_port_create
 ion_port_create.restype = ctypes.c_int
 ion_port_create.argtypes = [ ctypes.POINTER(c_ion_port_t), ctypes.c_char_p, c_ion_type_t, ctypes.c_int ]
 
-# ion_port_index_access(ion_port_t, int);
-ion_port_index_access = ion_core.ion_port_index_access
-ion_port_index_access.restype = ctypes.c_int
-ion_port_index_access.argtypes =[c_ion_port_t, ctypes.c_int ]
+# ion_port_create_with_index(ion_port_t*, ion_port_t, int);
+ion_port_create_with_index = ion_core.ion_port_create_with_index
+ion_port_create_with_index.restype = ctypes.c_int
+ion_port_create_with_index.argtypes =[ctypes.POINTER(c_ion_port_t), c_ion_port_t, ctypes.c_int ]
 
 # int ion_port_destroy(ion_port_t);
 ion_port_destroy = ion_core.ion_port_destroy
@@ -77,10 +77,10 @@ ion_node_get_port = ion_core.ion_node_get_port
 ion_node_get_port.restype = ctypes.c_int
 ion_node_get_port.argtypes = [ c_ion_node_t, ctypes.c_char_p, ctypes.POINTER(c_ion_port_t) ]
 
-# int ion_node_set_port(ion_node_t, ion_port_t *, int);
-ion_node_set_port = ion_core.ion_node_set_port
-ion_node_set_port.restype = ctypes.c_int
-ion_node_set_port.argtypes = [ c_ion_node_t, ctypes.POINTER(c_ion_port_t), ctypes.c_int ]
+# int ion_node_set_iport(ion_node_t, ion_port_t *, int);
+ion_node_set_iport = ion_core.ion_node_set_iport
+ion_node_set_iport.restype = ctypes.c_int
+ion_node_set_iport.argtypes = [ c_ion_node_t, ctypes.POINTER(c_ion_port_t), ctypes.c_int ]
 
 # int ion_node_set_param(ion_node_t, ion_param_t *, int);
 ion_node_set_param = ion_core.ion_node_set_param
@@ -152,6 +152,12 @@ ion_builder_run.argtypes = [ c_ion_builder_t, c_ion_port_map_t ]
 ion_buffer_create = ion_core.ion_buffer_create
 ion_buffer_create.restype = ctypes.c_int
 ion_buffer_create.argtypes = [ ctypes.POINTER(c_ion_buffer_t), c_ion_type_t, ctypes.POINTER(ctypes.c_int), ctypes.c_int ]
+
+# int ion_buffer_create_with_data(ion_buffer_t *, ion_type_t, void *, int *, int);
+ion_buffer_create_with_data = ion_core.ion_buffer_create_with_data
+ion_buffer_create_with_data.restype = ctypes.c_int
+ion_buffer_create_with_data.argtypes = [ ctypes.POINTER(c_ion_buffer_t), c_ion_type_t, ctypes.c_void_p, ctypes.POINTER(ctypes.c_int), ctypes.c_int ]
+
 
 # int ion_buffer_destroy(ion_buffer_t);
 ion_buffer_destroy = ion_core.ion_buffer_destroy

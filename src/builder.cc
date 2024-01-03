@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <fstream>
 
 #ifdef __linux__
@@ -7,16 +8,17 @@
 #include <Halide.h>
 
 #include "ion/builder.h"
-// #include "ion/generator.h"
 #include "ion/util.h"
 
 #include "json/json.hpp"
 #include "uuid/sole.hpp"
 
-#include "log.h"
 #include "dynamic_module.h"
+#include "log.h"
 #include "metadata.h"
 #include "serializer.h"
+
+#define SW 1
 
 namespace ion {
 
@@ -36,16 +38,16 @@ std::map<Halide::OutputFileType, std::string> compute_output_files(const Halide:
 
 bool is_ready(const std::vector<Node>& sorted, const Node& n) {
     bool ready = true;
-    for (auto p : n.ports()) {
-        // This port has external dependency. Always ready to add.
-        if (p.node_id().empty()) {
+    for (auto port : n.iports()) {
+        // This port has predecessor dependency. Always ready to add.
+        if (!port.has_pred()) {
             continue;
         }
 
         // Check port dependent node is already added
         ready &= std::find_if(sorted.begin(), sorted.end(),
-                              [&p](const Node& n) {
-                                  return n.id() == p.node_id();
+                              [&port](const Node& n) {
+                                return n.id() == port.pred_id();
                               }) != sorted.end();
     }
     return ready;
@@ -94,6 +96,7 @@ Builder::~Builder()
 
 Node Builder::add(const std::string& k)
 {
+    // TODO: Validate bb is existing
     Node n(sole::uuid4().str(), k, target_);
     nodes_.push_back(n);
     return n;
@@ -132,8 +135,12 @@ void Builder::compile(const std::string& function_name, const CompileOption& opt
     using namespace Halide;
 
     // Build pipeline and module first
-    PortMap pm;
-    Pipeline p = build(pm);
+    Pipeline p = build(true);
+    if (!p.defined()) {
+        log::warn("This pipeline doesn't produce any outputs. Please bind a buffer with output port.");
+        return;
+    }
+
     Module m = p.compile_to_module(p.infer_arguments(), function_name, target_);
 
     // Tailor prefix
@@ -175,9 +182,18 @@ void Builder::compile(const std::string& function_name, const CompileOption& opt
     return;
 }
 
+void Builder::run(void) {
+     PortMap pm;
+     run(pm);
+}
+
 void Builder::run(ion::PortMap& pm) {
      if (!pipeline_.defined()) {
-        pipeline_ = build(pm);
+        pipeline_ = build();
+        if (!pipeline_.defined()) {
+            log::warn("This pipeline doesn't produce any outputs. Please bind a buffer with output port.");
+            return;
+        }
     }
 
     if (!callable_.defined()) {
@@ -192,51 +208,21 @@ void Builder::run(ion::PortMap& pm) {
         pipeline_.set_jit_externs(jit_externs);
 
         // TODO: Validate argument list
-        // pipeline_.infer_arguments();
+        // pipeline_.infer_arguments()) {
 
-        callable_ = pipeline_.compile_to_callable(pm.get_arguments_stub(), target_);
-    }
+        callable_ = pipeline_.compile_to_callable(get_arguments_stub(), target_);
 
-    if (pm.dirty()) {
         args_.clear();
         args_.push_back(&jit_ctx_ptr_);
 
-        auto args = pm.get_arguments_instance();
+        const auto& args(get_arguments_instance());
         args_.insert(args_.end(), args.begin(), args.end());
-
-        auto output_funcs = pipeline_.outputs();
-        for (auto kv : pm.get_output_buffer()) {
-            for (auto b : kv.second) {
-                args_.push_back(b.raw_buffer());
-            }
-        }
-
-        pm.updated();
     }
 
     callable_.call_argv_fast(args_.size(), args_.data());
 }
 
-
-bool is_dereferenced(const std::vector<Node>& nodes, const std::string node_id, const std::string& func_name) {
-    for (const auto& node : nodes) {
-        if (node.id() != node_id) {
-            continue;
-        }
-
-        for (const auto& port : node.ports()) {
-            if (port.key() == func_name) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    throw std::runtime_error("Unreachable");
-}
-
-Halide::Pipeline Builder::build(ion::PortMap& pm) {
+Halide::Pipeline Builder::build(bool implicit_output) {
 
     log::info("Start building pipeline");
 
@@ -270,56 +256,35 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
         auto n = nodes_[i];
         const auto& bb = bbs[n.id()];
         auto arginfos = bb->arginfos();
-        for (size_t j=0; j<n.ports().size(); ++j) {
-            auto p = n.ports()[j];
-            auto index = p.index();
+        for (size_t j=0; j<n.iports().size(); ++j) {
+            auto port = n.iports()[j];
+            auto index = port.index();
             // Unbounded parameter
             const auto& arginfo = arginfos[j];
-            if (p.node_id().empty()) {
-                if (arginfo.kind == Halide::Internal::ArgInfoKind::Scalar) {
-                    Halide::Expr e;
-                    if (pm.mapped(p.key())) {
-                        // This block should be executed when g.run is called with appropriate PortMap.
-                        e = pm.get_param_expr(p.key());
-                        bb->bind_input(arginfo.name, {e});
-                    } else {
-                        Halide::Internal::Parameter param(p.type(), false, p.dimensions(), "_" + n.id() + "_" + p.key());
-                        bb->bind_input(arginfo.name, { p.expr() });
-                        //e = p.expr();
-                    }
-                    //bb->bind_input(arginfo.name, {e});
-                } else if (arginfo.kind == Halide::Internal::ArgInfoKind::Function) {
-                    Halide::Func f;
-                    if (pm.mapped(p.key())) {
-                        // This block should be executed when g.run is called with appropriate PortMap.
-                        f = pm.get_param_func(p.key());
-                        bb->bind_input(arginfo.name, {f});
-                    } else {
-                        Halide::ImageParam param(p.type(), p.dimensions(), "_" + n.id() + "_" + p.key());
-                        bb->bind_input(arginfo.name, { p.func() });
-                        //f = p.func();
-                    }
-                    //args.push_back(bb->build_input(j, f));
-                        // bb->bind_input(arginfo.name, {f});
-                } else {
-                    throw std::runtime_error("fixme");
-                }
-            } else {
-                auto fs = bbs[p.node_id()]->output_func(p.key());
+            if (port.has_pred()) {
+                auto fs = bbs[port.pred_id()]->output_func(port.pred_name());
                 if (arginfo.kind == Halide::Internal::ArgInfoKind::Scalar) {
                     bb->bind_input(arginfo.name, fs);
                 } else if (arginfo.kind == Halide::Internal::ArgInfoKind::Function) {
-                    auto fs = bbs[p.node_id()]->output_func(p.key());
+                    auto fs = bbs[port.pred_id()]->output_func(port.pred_name());
                     // no specific index provided, direct output Port
                     if (index == -1) {
                         bb->bind_input(arginfo.name, fs);
                     } else {
                         // access to Port[index]
                         if (index>=fs.size()){
-                            throw std::runtime_error("Port index out of range: " + p.key());
+                            throw std::runtime_error("Port index out of range: " + port.pred_name());
                         }
                         bb->bind_input(arginfo.name, {fs[index]});
                     }
+                } else {
+                    throw std::runtime_error("fixme");
+                }
+            } else {
+                if (arginfo.kind == Halide::Internal::ArgInfoKind::Scalar) {
+                    bb->bind_input(arginfo.name, port.as_expr());
+                } else if (arginfo.kind == Halide::Internal::ArgInfoKind::Function) {
+                    bb->bind_input(arginfo.name, port.as_func());
                 } else {
                     throw std::runtime_error("fixme");
                 }
@@ -329,32 +294,31 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
     }
 
     std::vector<Halide::Func> output_funcs;
-    const auto& output_buffers(pm.get_output_buffer());
 
-    if (output_buffers.empty()) {
-        // This is implicit mode. Make output list based on unbound output in the graph.
-        // Traverse bbs and bundling all outputs
-        std::unordered_map<std::string, std::vector<std::string>> dereferenced;
+    if (implicit_output) {
+        // Collects all output which is never referenced.
+        // This mode is used for AOT compilation
+        std::unordered_map<std::string, std::vector<std::string>> referenced;
         for (const auto& n : nodes_) {
-            for (const auto& p : n.ports()) {
-                auto node_id = p.node_id();
-                if (!node_id.empty()) {
-                    for (const auto &f : bbs[node_id]->output_func(p.key())) {
-                        dereferenced[node_id].emplace_back(f.name());
+            for (const auto& port : n.iports()) {
+                if (port.has_pred()) {
+                    for (const auto &f : bbs[port.pred_id()]->output_func(port.pred_name())) {
+                        referenced[port.pred_id()].emplace_back(f.name());
                     }
                 }
             }
         }
-        for (int i=0; i<nodes_.size(); ++i) {
-            auto node_id = nodes_[i].id();
+
+        for (const auto& node : nodes_) {
+            auto node_id = node.id();
             for (auto arginfo : bbs[node_id]->arginfos()) {
                 if (arginfo.dir != Halide::Internal::ArgInfoDirection::Output) {
-                    // This is not output
                     continue;
                 }
 
+                // This is not output
                 // It is not dereferenced, then treat as outputs
-                const auto& dv = dereferenced[node_id];
+                const auto& dv = referenced[node_id];
 
                 for (auto f : bbs[node_id]->output_func(arginfo.name)) {
                     auto it = std::find(dv.begin(), dv.end(), f.name());
@@ -365,26 +329,24 @@ Halide::Pipeline Builder::build(ion::PortMap& pm) {
                 }
             }
         }
-
     } else {
-        // This is expliti mode, mainly used in JIT compilation
-        for (auto kv : output_buffers) {
-            auto node_id = std::get<0>(kv.first);
-            auto port_key = std::get<1>(kv.first);
-            auto index = std::get<2>(kv.first);
+        // Collects all output which is bound with buffer.
+        // This mode is used for JIT
+        for (const auto& node : nodes_) {
+            for (const auto& port : node.oports()) {
+                const auto& port_instances(port.as_instance());
+                if (port_instances.empty()) {
+                    continue;
+                }
 
-            if (index != -1) {
-                auto fs = bbs[node_id]->output_func(port_key);
-                if (index >= fs.size()) {
-                    throw std::runtime_error("Port index out of range: " + node_id + ", " + port_key);
-                }
-                output_funcs.push_back(fs[index]);
-            } else {
-                for (auto f : bbs[node_id]->output_func(port_key)) {
-                    output_funcs.push_back(f);
-                }
+                auto fs(bbs[port.pred_id()]->output_func(port.pred_name()));
+                output_funcs.insert(output_funcs.end(), fs.begin(), fs.end());
             }
         }
+    }
+
+    if (output_funcs.empty()) {
+        return Halide::Pipeline();
     }
 
     return Halide::Pipeline(output_funcs);
@@ -411,6 +373,59 @@ void Builder::register_disposer(const std::string& bb_id, const std::string& dis
             disposers_.push_back(std::make_tuple(bb_id, disposer_ptr));
         }
     }
+}
+
+std::vector<Halide::Argument> Builder::get_arguments_stub() const {
+    std::set<Port::Channel> added_ports;
+    std::vector<Halide::Argument> args;
+    for (const auto& node : nodes_) {
+        for (const auto& port : node.iports()) {
+            if (port.has_pred()) {
+                continue;
+            }
+
+            if (added_ports.count(port.impl_->pred_chan)) {
+                continue;
+            }
+            added_ports.insert(port.impl_->pred_chan);
+
+            const auto& port_args(port.as_argument());
+            args.insert(args.end(), port_args.begin(), port_args.end());
+        }
+    }
+    return args;
+}
+
+std::vector<const void*> Builder::get_arguments_instance() const {
+    std::set<Port::Channel> added_args;
+    std::vector<const void*> instances;
+
+    // Input
+    for (const auto& node : nodes_) {
+        for (const auto& port : node.iports()) {
+            if (port.has_pred()) {
+                continue;
+            }
+
+            if (added_args.count(port.impl_->pred_chan)) {
+                continue;
+            }
+            added_args.insert(port.impl_->pred_chan);
+
+            const auto& port_instances(port.as_instance());
+            instances.insert(instances.end(), port_instances.begin(), port_instances.end());
+        }
+    }
+
+    // Output
+    for (const auto& node : nodes_) {
+        for (const auto& port : node.oports()) {
+            const auto& port_instances(port.as_instance());
+            instances.insert(instances.end(), port_instances.begin(), port_instances.end());
+        }
+    }
+
+    return instances;
 }
 
 } //namespace ion

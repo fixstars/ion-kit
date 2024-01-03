@@ -29,9 +29,9 @@ class RegisterExtern {
 
 #include "rt_u3v.h"
 #include "rt_file.h"
-
-#ifndef _WIN32
 #include "rt_display.h"
+
+#ifdef __linux__
 #include "rt_realsense.h"
 #include "rt_v4l2.h"
 #endif
