@@ -776,7 +776,6 @@ public:
     GeneratorParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
     GeneratorParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
 
-
     GeneratorInput<double> gain0{ "gain0" };
     GeneratorInput<double> gain1{ "gain1" };
     GeneratorInput<double> exposure0{ "exposure0" };

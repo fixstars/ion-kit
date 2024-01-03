@@ -172,9 +172,6 @@ class U3V {
         }
     }
 
-
-    
-
     static U3V & get_instance(const std::string& id, int32_t num_sensor, bool frame_sync, bool realtime_display_mode)
     {
 
@@ -192,8 +189,6 @@ class U3V {
         // }
         // return *instance_;
     }
-
-
 
     void dispose(){
         log::debug("U3V::dispose() :: is called");
@@ -1150,7 +1145,6 @@ int u3v_camera_frame_count(
     halide_buffer_t* out)
 {
     try {
-
         auto &u3v(ion::bb::image_io::U3V::get_instance(id, num_sensor, frame_sync, realtime_display_mode));
         if (out->is_bounds_query()) {
             out->dim[0].min = 0;
@@ -1256,7 +1250,6 @@ int ION_EXPORT ion_bb_image_io_u3v_camera1_frame_count(
     int32_t num_sensor, bool frame_sync, bool realtime_display_mode,
     halide_buffer_t * id_buf, halide_buffer_t* out)
 {
-
     const ::std::string id(reinterpret_cast<const char *>(id_buf->host));
     return ion::bb::image_io::u3v_camera_frame_count(id, num_sensor, frame_sync, realtime_display_mode, out);
 }
@@ -1422,8 +1415,6 @@ int ION_EXPORT ion_bb_image_io_u3v_device_info2(
         }else{
             std::vector<void *> obufs{deviceinfo0->host, deviceinfo1->host};
             u3v.get_device_info(obufs);
-
- 
         }
         return 0;
     } catch (const std::exception &e) {
@@ -1519,6 +1510,7 @@ ION_REGISTER_EXTERN(ion_bb_image_io_u3v_multiple_camera2);
 
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_multiple_camera_frame_count1(
+    halide_buffer_t *,
     int32_t num_sensor, bool frame_sync, bool realtime_display_mode,
     halide_buffer_t* id_buf, halide_buffer_t* out)
 {   const ::std::string id(reinterpret_cast<const char *>(id_buf->host));
