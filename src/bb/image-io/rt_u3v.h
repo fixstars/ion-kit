@@ -177,12 +177,9 @@ class U3V {
 
       
         if (instances_.count(id) == 0) {
-              ion::log::info("Create U3V instance: {}", id);
-             instances_[id] = std::unique_ptr<U3V>(new U3V(num_sensor, frame_sync, realtime_display_mode));
-         }else{
-              ion::log::info("U3V instance already exist: {}", id);
+            ion::log::info("Create U3V instance: {}", id);
+            instances_[id] = std::unique_ptr<U3V>(new U3V(num_sensor, frame_sync, realtime_display_mode));
         }
-
         return *instances_[id].get();
         //if (instance_ == nullptr){
         //     instance_ = std::unique_ptr<U3V>(new U3V(num_sensor, frame_sync, realtime_display_mode));
