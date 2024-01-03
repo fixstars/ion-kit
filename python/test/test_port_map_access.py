@@ -17,7 +17,7 @@ def test_portmap_access():
     builder = Builder()
     builder.set_target(target='host')
     # make sure path includes libion-bb.so
-    builder.with_bb_module(path='/home/xinyu.li/dependency/ion-kit-install/lib/libion-bb.so')
+    builder.with_bb_module(path='ion-bb')
 
     node = builder.add('image_io_cameraN').set_param(params=[width, height, urls])
 
@@ -32,8 +32,8 @@ def test_portmap_access():
     obuf2.write(data=odata_bytes2)
 
     port_map = PortMap()
-    port_map.set_buffer(port=node.get_port(key='output')[0], buffer=obuf1)
-    port_map.set_buffer(port=node.get_port(key='output')[1], buffer=obuf2)
+    port_map.set_buffer(port=node.get_port(name='output')[0], buffer=obuf1)
+    port_map.set_buffer(port=node.get_port(name='output')[1], buffer=obuf2)
 
     builder.run(port_map=port_map)
 

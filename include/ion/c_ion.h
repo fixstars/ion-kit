@@ -33,8 +33,21 @@ typedef struct ion_buffer_t_ *ion_buffer_t;
 typedef struct ion_port_map_t_ *ion_port_map_t;
 
 int ion_port_create(ion_port_t *, const char *, ion_type_t, int);
-int ion_port_index_access(ion_port_t , int);
+int ion_port_create_with_index(ion_port_t *, ion_port_t , int);
 int ion_port_destroy(ion_port_t);
+int ion_port_bind_i8(ion_port_t, int8_t*);
+int ion_port_bind_i16(ion_port_t, int16_t*);
+int ion_port_bind_i32(ion_port_t, int32_t*);
+int ion_port_bind_i64(ion_port_t, int64_t*);
+int ion_port_bind_u1(ion_port_t, bool*);
+int ion_port_bind_u8(ion_port_t, uint8_t*);
+int ion_port_bind_u16(ion_port_t, uint16_t*);
+int ion_port_bind_u32(ion_port_t, uint32_t*);
+int ion_port_bind_u64(ion_port_t, uint64_t*);
+int ion_port_bind_f32(ion_port_t, float*);
+int ion_port_bind_f64(ion_port_t, double*);
+int ion_port_bind_buffer(ion_port_t, ion_buffer_t);
+int ion_port_bind_buffer_array(ion_port_t, ion_buffer_t *, int);
 
 int ion_param_create(ion_param_t *, const char *, const char *);
 int ion_param_destroy(ion_param_t);
@@ -42,7 +55,7 @@ int ion_param_destroy(ion_param_t);
 int ion_node_create(ion_node_t *);
 int ion_node_destroy(ion_node_t);
 int ion_node_get_port(ion_node_t, const char *, ion_port_t *);
-int ion_node_set_port(ion_node_t, ion_port_t *, int);
+int ion_node_set_iport(ion_node_t, ion_port_t *, int);
 int ion_node_set_param(ion_node_t, ion_param_t *, int);
 
 int ion_builder_create(ion_builder_t *);
@@ -57,24 +70,40 @@ int ion_builder_bb_metadata(ion_builder_t, char *, int, int *);
 int ion_builder_run(ion_builder_t, ion_port_map_t);
 
 int ion_buffer_create(ion_buffer_t *, ion_type_t, int *, int);
+int ion_buffer_create_with_data(ion_buffer_t *, ion_type_t, void *, int *, int);
 int ion_buffer_destroy(ion_buffer_t);
 int ion_buffer_write(ion_buffer_t, void *, int size);
 int ion_buffer_read(ion_buffer_t, void *, int size);
 
+[[deprecated("ion_port_bind* can be used instead of ion_port_map.")]]
 int ion_port_map_create(ion_port_map_t *);
+[[deprecated("ion_port_bind* can be used instead of ion_port_map.")]]
 int ion_port_map_destroy(ion_port_map_t);
+[[deprecated("ion_port_bind* can be used instead of ion_port_map.")]]
 int ion_port_map_set_i8(ion_port_map_t, ion_port_t, int8_t);
+[[deprecated("ion_port_bind* can be used instead of ion_port_map.")]]
 int ion_port_map_set_i16(ion_port_map_t, ion_port_t, int16_t);
+[[deprecated("ion_port_bind* can be used instead of ion_port_map.")]]
 int ion_port_map_set_i32(ion_port_map_t, ion_port_t, int32_t);
+[[deprecated("ion_port_bind* can be used instead of ion_port_map.")]]
 int ion_port_map_set_i64(ion_port_map_t, ion_port_t, int64_t);
+[[deprecated("ion_port_bind* can be used instead of ion_port_map.")]]
 int ion_port_map_set_u1(ion_port_map_t, ion_port_t, bool);
+[[deprecated("ion_port_bind* can be used instead of ion_port_map.")]]
 int ion_port_map_set_u8(ion_port_map_t, ion_port_t, uint8_t);
+[[deprecated("ion_port_bind* can be used instead of ion_port_map.")]]
 int ion_port_map_set_u16(ion_port_map_t, ion_port_t, uint16_t);
+[[deprecated("ion_port_bind* can be used instead of ion_port_map.")]]
 int ion_port_map_set_u32(ion_port_map_t, ion_port_t, uint32_t);
+[[deprecated("ion_port_bind* can be used instead of ion_port_map.")]]
 int ion_port_map_set_u64(ion_port_map_t, ion_port_t, uint64_t);
+[[deprecated("ion_port_bind* can be used instead of ion_port_map.")]]
 int ion_port_map_set_f32(ion_port_map_t, ion_port_t, float);
+[[deprecated("ion_port_bind* can be used instead of ion_port_map.")]]
 int ion_port_map_set_f64(ion_port_map_t, ion_port_t, double);
+[[deprecated("ion_port_bind* can be used instead of ion_port_map.")]]
 int ion_port_map_set_buffer(ion_port_map_t, ion_port_t, ion_buffer_t);
+[[deprecated("ion_port_bind* can be used instead of ion_port_map.")]]
 int ion_port_map_set_buffer_array(ion_port_map_t, ion_port_t, ion_buffer_t *, int);
 
 #if defined __cplusplus

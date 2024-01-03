@@ -16,24 +16,24 @@ namespace ion {
  * Node class is used to manage node which consists graph structure.
  */
 class Node {
-    struct Node_ {
+    friend class Builder;
+    friend class nlohmann::adl_serializer<Node>;
+
+    struct Impl {
         std::string id;
         std::string name;
         Halide::Target target;
         std::vector<Param> params;
         std::vector<Port> ports;
+        std::vector<Halide::Internal::AbstractGenerator::ArgInfo> arginfos;
 
-        Node_(): id(), name(), target(), params(), ports() {}
+        Impl(): id(), name(), target(), params(), ports() {}
 
-        Node_(const std::string& id_, const std::string& name_, const Halide::Target& target_)
-            : id(id_), name(name_), target(target_), params(), ports() {
-        }
+        Impl(const std::string& id_, const std::string& name_, const Halide::Target& target_);
     };
 
 public:
-    friend class Builder;
-
-    Node() : impl_(new Node_) {};
+    Node() : impl_(new Impl) {};
 
     /**
      * Set the target of the node.
@@ -74,70 +74,63 @@ public:
      */
     template<typename... Args>
     Node operator()(Args ...args) {
-        impl_->ports = std::vector<Port>{args...};
+        set_iport({args...});
         return *this;
     }
 
-    void operator()(const std::vector<Port>& ports) {
-        impl_->ports = ports;
-    }
+    void set_iport(const std::vector<Port>& ports);
 
     /**
-     * Retrieve output port of the node.
-     * @arg key: The key of port name which is matched with first argument of Output declared in user-defined class deriving BuildingBlock.
-     * @return Port object which is specified by key.
+     * Retrieve relevant port of the node.
+     * @arg name: The name of port name which is matched with first argument of Input/Output declared in user-defined class deriving BuildingBlock.
+     * @return Port object which is specified by name.
      */
-    Port operator[](const std::string& key) {
-        return Port(key, impl_->id);
-    }
+    Port operator[](const std::string& name);
 
-    std::string id() const {
+    const std::string& id() const {
         return impl_->id;
     }
 
-    std::string& id() {
-        return impl_->id;
-    }
-
-    std::string name() const {
+    const std::string& name() const {
         return impl_->name;
     }
 
-    std::string& name(){
-        return impl_->name;
-    }
-
-    Halide::Target target() const {
+    const Halide::Target& target() const {
         return impl_->target;
     }
 
-    Halide::Target& target() {
-        return impl_->target;
-    }
-
-    std::vector<Param> params() const {
+    const std::vector<Param>& params() const {
         return impl_->params;
     }
 
-    std::vector<Param>& params() {
-        return impl_->params;
+   std::vector<Port> iports() const {
+        std::vector<Port> iports;
+        for (const auto& p: impl_->ports) {
+            if (std::count_if(p.impl_->succ_chans.begin(), p.impl_->succ_chans.end(),
+                              [&](const Port::Channel& c) { return std::get<0>(c) == impl_->id; })) {
+                iports.push_back(p);
+            }
+        }
+        return iports;
     }
 
-    std::vector<Port> ports() const {
-        return impl_->ports;
-    }
-
-    std::vector<Port>& ports() {
-        return impl_->ports;
+    std::vector<Port> oports() const {
+        std::vector<Port> oports;
+        for (const auto& p: impl_->ports) {
+            if (id() == p.pred_id()) {
+                oports.push_back(p);
+            }
+        }
+        return oports;
     }
 
 private:
     Node(const std::string& id, const std::string& name, const Halide::Target& target)
-        : impl_(new Node_{id, name, target})
+        : impl_(new Impl{id, name, target})
     {
     }
 
-    std::shared_ptr<Node_> impl_;
+    std::shared_ptr<Impl> impl_;
 };
 
 } // namespace ion

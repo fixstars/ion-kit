@@ -4,8 +4,8 @@ from typing import Optional
 from .native import (
     c_ion_port_t,
     ion_port_create,
+    ion_port_create_with_index,
     ion_port_destroy,
-    ion_port_index_access,
 )
 
 from .Type import Type
@@ -13,7 +13,7 @@ from .Type import Type
 
 class Port:
     def __init__(self,
-        key: Optional[str] = None,
+        name: Optional[str] = None,
         type: Optional[Type] = None,
         dim: Optional[int] = None,
         # -- or
@@ -23,17 +23,18 @@ class Port:
             obj_ = c_ion_port_t()
             type_cobj = type.to_cobj()
 
-            ret = ion_port_create(ctypes.byref(obj_), key.encode(), type_cobj, dim)
+            ret = ion_port_create(ctypes.byref(obj_), name.encode(), type_cobj, dim)
             if ret != 0:
                 raise Exception('Invalid operation')
 
         self.obj = obj_
 
-    def __getitem__(self,index):
-        ret = ion_port_index_access(self.obj, index)
+    def __getitem__(self, index):
+        new_obj = c_ion_port_t()
+        ret = ion_port_create_with_index(ctypes.byref(new_obj), self.obj, index)
         if ret != 0:
             raise Exception('Invalid operation')
-        return self
+        return Port(obj_=new_obj)
 
     def __del__(self):
         if self.obj: # check not nullptr

@@ -126,4 +126,4 @@ void from_json(const json& j, Metadata& v) {
     v.params = j["params"].get<std::vector<ParamMD>>();
 }
 
-} //namespace ion
+} // namespace ion
