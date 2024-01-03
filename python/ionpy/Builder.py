@@ -19,6 +19,7 @@ from .native import (
     ion_builder_load,
 
     ion_builder_run,
+    ion_builder_run_with_port_map,
 )
 
 from .Node import Node
@@ -82,6 +83,6 @@ class Builder:
             raise Exception('Invalid operation')
 
     def run(self, port_map: PortMap):
-        ret = ion_builder_run(self.obj, port_map.obj)
+        ret = ion_builder_run_with_port_map(self.obj, port_map.obj)
         if ret != 0:
             raise Exception('Invalid operation')

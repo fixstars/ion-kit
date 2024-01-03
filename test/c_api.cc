@@ -246,11 +246,6 @@ int main()
             if (ret != 0)
                 return ret;
 
-            ion_port_map_t pm;
-            ret = ion_port_map_create(&pm);
-            if (ret != 0)
-                return ret;
-
             int sizes[] = {16, 16};
             ion_buffer_t ibuf;
             ret = ion_buffer_create(&ibuf, t, sizes, 2);
@@ -275,15 +270,15 @@ int main()
             if (ret != 0)
                 return ret;
 
-            ret = ion_port_map_set_buffer(pm, ip, ibuf);
+            ret = ion_port_bind_buffer(ip, ibuf);
             if (ret != 0)
                 return ret;
 
-            ret = ion_port_map_set_buffer(pm, op, obuf);
+            ret = ion_port_bind_buffer(op, obuf);
             if (ret != 0)
                 return ret;
 
-            ret = ion_builder_run(b, pm);
+            ret = ion_builder_run(b);
             if (ret != 0)
                 return ret;
 
@@ -309,10 +304,6 @@ int main()
                 return ret;
 
             ret = ion_node_destroy(n);
-            if (ret != 0)
-                return ret;
-
-            ret = ion_port_map_destroy(pm);
             if (ret != 0)
                 return ret;
 

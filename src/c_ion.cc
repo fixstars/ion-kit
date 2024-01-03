@@ -535,7 +535,25 @@ int ion_builder_bb_metadata(ion_builder_t obj, char *ptr, int n, int *ret_n)
     return 0;
 }
 
-int ion_builder_run(ion_builder_t obj, ion_port_map_t pm)
+int ion_builder_run(ion_builder_t obj)
+{
+    try {
+        reinterpret_cast<Builder*>(obj)->run();
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
+    } catch (const std::exception& e) {
+        log::error(e.what());
+        return 1;
+    } catch (...) {
+        log::error("Unknown exception was happened");
+        return 1;
+    }
+
+    return 0;
+}
+
+int ion_builder_run_with_port_map(ion_builder_t obj, ion_port_map_t pm)
 {
     try {
         reinterpret_cast<Builder*>(obj)->run(*reinterpret_cast<PortMap*>(pm));

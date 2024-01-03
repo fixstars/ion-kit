@@ -5,6 +5,7 @@
 #include <mutex>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <variant>
 #include <vector>
 
@@ -15,6 +16,31 @@
 #include "util.h"
 
 namespace ion {
+
+template<typename T>
+std::string unify_name(const std::vector<Halide::Buffer<T>>& bufs) {
+    std::stringstream ss;
+    for (auto i=0; i<bufs.size(); ++i) {
+        ss << bufs[i].name();
+        if (i < bufs.size()) {
+            ss << "_";
+        }
+    }
+    return ss.str();
+}
+
+template<typename T>
+int32_t unify_dimension(const std::vector<Halide::Buffer<T>>& bufs) {
+    int32_t dimension = 0;
+    for (auto i=0; i<bufs.size(); ++i) {
+        if (i == 0) {
+            dimension = bufs[i].dimensions();
+        } else if (dimension != bufs[i].dimensions()) {
+            throw std::runtime_error("Buffer dimensions should be same");
+        }
+    }
+    return dimension;
+}
 
 /**
  * Port class is used to create dynamic i/o for each node.
@@ -77,7 +103,8 @@ private:
      /**
       * Construct new port from scalar pointer
       */
-     template<typename T>
+     template<typename T,
+              typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
      Port(T *vptr) : impl_(new Impl("", Halide::Internal::unique_name("ion_port"), Halide::type_of<T>(), 0)), index_(-1) {
          this->bind(vptr);
      }
@@ -86,8 +113,16 @@ private:
       * Construct new port from buffer
       */
      template<typename T>
-     Port(const Halide::Buffer<T>& buf) : impl_(new Impl("", buf.name(), buf.type(), buf.dimensions())), index_(-1) {
+     Port(const Halide::Buffer<T>& buf) : impl_(new Impl("", buf.name(), Halide::type_of<T>(), buf.dimensions())), index_(-1) {
          this->bind(buf);
+     }
+
+     /**
+      * Construct new port from array of buffer
+      */
+     template<typename T>
+     Port(const std::vector<Halide::Buffer<T>>& bufs) : impl_(new Impl("", unify_name(bufs), Halide::type_of<T>(), unify_dimension(bufs))), index_(-1) {
+         this->bind(bufs);
      }
 
      const std::string& pred_id() const { return std::get<0>(impl_->pred_chan); }

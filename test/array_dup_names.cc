@@ -12,14 +12,6 @@ int main() {
     try {
         constexpr size_t h = 12, w = 10, len = 5;
 
-        Port input{"input", Halide::type_of<int32_t>(), 2};
-        Builder b;
-        b.set_target(Halide::get_host_target());
-        auto n = b.add("test_array_output")(input).set_param(Param{"len", std::to_string(len)});
-        n = b.add("test_array_input")(n["array_output"]);
-        n = b.add("test_array_output")(n["output"]).set_param(Param{"len", std::to_string(len)});
-        n = b.add("test_array_input")(n["array_output"]);
-
         Halide::Buffer<int32_t> in(w, h);
         for (int y = 0; y < h; ++y) {
             for (int x = 0; x < w; ++x) {
@@ -27,13 +19,18 @@ int main() {
             }
         }
 
+        Builder b;
+        b.set_target(Halide::get_host_target());
+        auto n = b.add("test_array_output")(in).set_param(Param("len", len));
+        n = b.add("test_array_input")(n["array_output"]);
+        n = b.add("test_array_output")(n["output"]).set_param(Param("len", len));
+        n = b.add("test_array_input")(n["array_output"]);
+
         Halide::Buffer<int32_t> out(w, h);
         out.fill(0);
+        n["output"].bind(out);
 
-        PortMap pm;
-        pm.set(input, in);
-        pm.set(n["output"], out);
-        b.run(pm);
+        b.run();
 
         if (out.dimensions() != 2) {
             throw runtime_error("Unexpected out dimension");

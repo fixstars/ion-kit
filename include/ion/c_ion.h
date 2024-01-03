@@ -67,7 +67,8 @@ int ion_builder_compile(ion_builder_t, const char *, ion_builder_compile_option_
 int ion_builder_save(ion_builder_t, const char *);
 int ion_builder_load(ion_builder_t, const char *);
 int ion_builder_bb_metadata(ion_builder_t, char *, int, int *);
-int ion_builder_run(ion_builder_t, ion_port_map_t);
+int ion_builder_run(ion_builder_t);
+int ion_builder_run_with_port_map(ion_builder_t, ion_port_map_t);
 
 int ion_buffer_create(ion_buffer_t *, ion_type_t, int *, int);
 int ion_buffer_create_with_data(ion_buffer_t *, ion_type_t, void *, int *, int);
