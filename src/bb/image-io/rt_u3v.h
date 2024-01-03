@@ -237,7 +237,6 @@ class U3V {
 
         U3V & u3v = *instances_[id].get();
         u3v.dispose();
-        instances_[id].reset(nullptr);
         instances_.erase(id);
         log::debug("U3V::release_instance() :: is finished");
 
@@ -1107,7 +1106,7 @@ class U3V {
     arv_shutdown_t arv_shutdown;
 
     static std::unique_ptr<U3V> instance_;
-    static std::map<std::string, std::unique_ptr<U3V>> instances_;
+    static std::map<std::string, std::shared_ptr<U3V>> instances_;
 
     int32_t num_sensor_;
 
@@ -1138,7 +1137,7 @@ class U3V {
 }; // class U3V
 
 std::unique_ptr<U3V> U3V::instance_;
-std::map<std::string, std::unique_ptr<U3V>>  U3V::instances_;
+std::map<std::string, std::shared_ptr<U3V>>  U3V::instances_;
 
 extern "C"
 int ION_EXPORT u3v_dispose(const char *id) {
@@ -1164,6 +1163,7 @@ int u3v_camera_frame_count(
 
         return 0;
     } catch (const std::exception &e) {
+        ion::log::error("frame_count");
         ion::log::error("Exception was thrown: {}", e.what());
         return 1;
     } catch (...) {
@@ -1199,11 +1199,6 @@ int ION_EXPORT ion_bb_image_io_u3v_camera1(
 
             std::vector<void *> obufs{out0->host};
             u3v.get(obufs);
-            }
-            }
-        }
-
-        }
         }
 
         return 0;

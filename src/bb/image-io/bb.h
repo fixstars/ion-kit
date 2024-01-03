@@ -716,7 +716,6 @@ public:
     GeneratorParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
     GeneratorParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
 
-
     GeneratorInput<double> gain0{ "gain0" };
     GeneratorInput<double> exposure0{ "exposure0" };
 
@@ -820,6 +819,7 @@ public:
             camera2_frame_count.compute_root();
             frame_count(_) = camera2_frame_count(_);
         }
+        ion::BuildingBlock<U3VCamera2<T, D>>::register_disposer("u3v_dispose");
     }
 };
 
@@ -836,7 +836,6 @@ public:
     GeneratorParam<std::string> gain_key_ptr{"gain_key", "Gain"};
     GeneratorParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
     GeneratorParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
-
 
     GeneratorInput<Halide::Func> gain{ "gain", Halide::type_of<double>(), 1};
     GeneratorInput<Halide::Func> exposure{ "exposure", Halide::type_of<double>(), 1};
@@ -934,7 +933,9 @@ public:
             cameraN_fc.compute_root();
             frame_count(_) = cameraN_fc(_);
         }
+        ion::BuildingBlock<U3VCameraN<T, D>>::register_disposer("u3v_dispose");
     }
+  
 };
 
 using U3VCameraN_U8x3 = U3VCameraN<uint8_t, 3>;
@@ -1027,6 +1028,7 @@ public:
             }
         }
 
+    ion::BuildingBlock<U3VGenDC>::register_disposer("u3v_dispose");
     }
 };
 
