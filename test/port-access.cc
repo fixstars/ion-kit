@@ -35,12 +35,11 @@ void display_image_float(Halide::Buffer<float> buffer, std::string filename) {
 
 int main(int argc, char *argv[]) {
     try {
-        // TODO: Test with FullHD
-        const int width = 200;
-        const int height = 150;
+        int width = 200;
+        int height = 150;
 
-        Param wparam("width", std::to_string(width));
-        Param hparam("height", std::to_string(height));
+        Param wparam("width", width);
+        Param hparam("height", height);
 
         Port wport("width", Halide::type_of<int32_t>());
         Port hport("height", Halide::type_of<int32_t>());
@@ -53,25 +52,20 @@ int main(int argc, char *argv[]) {
         n = b.add("image_io_cameraN").set_param(
                 wparam,
                 hparam,
-                Param{"num_devices", "2"},
-                Param{"urls", "http://optipng.sourceforge.net/pngtech/img/lena.png;http://upload.wikimedia.org/wikipedia/commons/0/05/Cat.png"}
-                //input urls split by ';'
+                Param("num_devices", 2),
+                Param("urls", "http://optipng.sourceforge.net/pngtech/img/lena.png;http://upload.wikimedia.org/wikipedia/commons/0/05/Cat.png")
         );
         n = b.add("base_normalize_3d_uint8")(n["output"][1]);  // access only port[1]
         n = b.add("image_processing_resize_nearest_3d")(n["output"]).set_param(
-                Param{"width", std::to_string(width)},
-                Param{"height", std::to_string(height)},
-                Param{"scale", std::to_string(2)});
+                Param("width", width),
+                Param("height", height),
+                Param("scale", 2));
         Port output = n["output"];
 
-        PortMap pm;
-
-        pm.set(wport, width);
-        pm.set(hport, height);
         Halide::Buffer<float> out_buf( width, height,3);
-        pm.set(output, out_buf);
+        output.bind(out_buf);
 
-        b.run(pm);
+        b.run();
         display_image_float(out_buf, "display.png");
         std::cout << "Success" << std::endl;
     } catch (const Halide::Error &e) {

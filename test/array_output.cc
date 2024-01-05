@@ -12,37 +12,37 @@ int main() {
     try {
         constexpr size_t h = 12, w = 10, len = 5;
 
-        Port input{"input", Halide::type_of<int32_t>(), 2};
-        Builder b;
-        b.set_target(Halide::get_host_target());
-        Node n;
-        n = b.add("test_array_output")(input).set_param(Param{"len", std::to_string(len)});
-        n = b.add("test_array_copy")(n["array_output"]).set_param(Param{"len", std::to_string(len)});
-
-        Halide::Buffer<int32_t> in(w, h);
+        ion::Buffer<int32_t> in(w, h);
         for (int y = 0; y < h; ++y) {
             for (int x = 0; x < w; ++x) {
                 in(x, y) = y * w + x;
             }
         }
 
-        std::vector<Halide::Buffer<int32_t>> outs{
-            Halide::Buffer<int32_t>{w, h},
-            Halide::Buffer<int32_t>{w, h},
-            Halide::Buffer<int32_t>{w, h},
-            Halide::Buffer<int32_t>{w, h},
-            Halide::Buffer<int32_t>{w, h}
+        std::vector<ion::Buffer<int32_t>> outs{
+            ion::Buffer<int32_t>{w, h},
+            ion::Buffer<int32_t>{w, h},
+            ion::Buffer<int32_t>{w, h},
+            ion::Buffer<int32_t>{w, h},
+            ion::Buffer<int32_t>{w, h}
         };
+
         for (auto &b : outs) {
             b.fill(0);
         }
 
-        PortMap pm;
-        pm.set(input, in);
+        Builder b;
+        b.set_target(ion::get_host_target());
+
+        Node n;
+        n = b.add("test_array_output")(in).set_param(Param("len", len));
+        n = b.add("test_array_copy")(n["array_output"]).set_param(Param("len", len));
+
         for (size_t i=0; i<len; ++i) {
-            pm.set(n["array_output"][i], outs[i]);
+            n["array_output"][i].bind(outs[i]);
         }
-        b.run(pm);
+
+        b.run();
 
         for (auto &b : outs) {
             if (b.dimensions() != 2) {
