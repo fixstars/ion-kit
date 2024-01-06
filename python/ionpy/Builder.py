@@ -82,7 +82,10 @@ class Builder:
         if ret != 0:
             raise Exception('Invalid operation')
 
-    def run(self, port_map: PortMap):
-        ret = ion_builder_run_with_port_map(self.obj, port_map.obj)
+    def run(self, port_map: PortMap = None):
+        if port_map is None:
+            ret = ion_builder_run(self.obj)
+        else:
+            ret = ion_builder_run_with_port_map(self.obj, port_map.obj)
         if ret != 0:
             raise Exception('Invalid operation')

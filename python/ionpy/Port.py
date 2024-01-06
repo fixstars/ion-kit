@@ -6,10 +6,25 @@ from .native import (
     ion_port_create,
     ion_port_create_with_index,
     ion_port_destroy,
+    
+    ion_port_bind_i8,
+    ion_port_bind_i16,
+    ion_port_bind_i32,
+    ion_port_bind_i64,
+
+    ion_port_bind_u1,
+    ion_port_bind_u8,
+    ion_port_bind_u16,
+    ion_port_bind_u32,
+    ion_port_bind_u64,
+
+    ion_port_bind_f32,
+    ion_port_bind_f64,
+    ion_port_bind_buffer
 )
 
 from .Type import Type
-
+from .Buffer import Buffer
 
 class Port:
     def __init__(self,
@@ -39,3 +54,53 @@ class Port:
     def __del__(self):
         if self.obj: # check not nullptr
             ion_port_destroy(self.obj)
+
+    
+        # should use numpy type?
+    def bind_i8(self, v: int):
+        if ion_port_bind_i8(self.obj,  ctypes.byref(v)) != 0:
+            raise Exception('Invalid operation')
+
+    def bind_i16(self, v: int):
+        if ion_port_bind_i16(self.obj, ctypes.byref(v)) != 0:
+            raise Exception('Invalid operation')
+
+    def bind_i32(self, v: int):
+        if ion_port_bind_i32(self.obj, ctypes.byref(v)) != 0:
+            raise Exception('Invalid operation')
+
+    def bind_i64(self, v: int):
+        if ion_port_bind_i64(self.obj, ctypes.byref(v)) != 0:
+            raise Exception('Invalid operation')
+
+    def bind_u1(self, v: bool):
+        if ion_port_bind_u1(self.obj, ctypes.byref(v))!= 0:
+            raise Exception('Invalid operation')
+
+    def bind_u8(self, v: int):
+        if ion_port_bind_u8(self.obj,  ctypes.byref(v))!= 0:
+            raise Exception('Invalid operation')
+
+    def bind_u16(self, v: int):
+        if ion_port_bind_u16(self.obj, ctypes.byref(v)) != 0:
+            raise Exception('Invalid operation')
+
+    def bind_u32(self, v: int):
+        if ion_port_bind_u32(self.obj,  ctypes.byref(v)) != 0:
+            raise Exception('Invalid operation')
+
+    def bind_u64(self, v: int):
+        if ion_port_bind_u64(self.obj, ctypes.byref(v)) != 0:
+            raise Exception('Invalid operation')
+
+    def bind_f32(self,  v: float):
+        if ion_port_bind_f32(self.obj,ctypes.byref(v)) != 0:
+            raise Exception('Invalid operation')
+
+    def bind_f64(self, v: float):
+        if ion_port_bind_f64(self.obj, ctypes.byref(v))!= 0:
+            raise Exception('Invalid operation')
+    
+    def bind_buffer(self, buffer: Buffer):
+        if ion_port_bind_buffer(self.obj, buffer.obj) != 0:
+            raise Exception('Invalid operation')
