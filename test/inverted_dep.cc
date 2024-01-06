@@ -219,22 +219,22 @@ int main()
 
         b.load(file_name);
 
-        PortMap pm;
-
+        int32_t min0 = 0, extent0 = 1, min1 = 0, extent1 = 2, v = 1;
         Halide::Buffer<int32_t> r = Halide::Buffer<int32_t>::make_scalar();
+
         for (auto& n : b.nodes()) {
             if (n.name() == "test_consumer") {
-                pm.set(n["min0"], 0);
-                pm.set(n["extent0"], 1);
-                pm.set(n["min1"], 0);
-                pm.set(n["extent1"], 2);
-                pm.set(n["v"], 1);
-                pm.set(n["output"], r);
+                n["min0"].bind(&min0);
+                n["extent0"].bind(&extent0);
+                n["min1"].bind(&min1);
+                n["extent1"].bind(&extent1);
+                n["v"].bind(&v);
+                n["output"].bind(r);
                 break;
             }
         }
 
-        b.run(pm);
+        b.run();
     } catch (const Halide::Error &e) {
         std::cerr << e.what() << std::endl;
         return 1;

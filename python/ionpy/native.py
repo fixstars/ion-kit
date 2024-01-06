@@ -145,7 +145,12 @@ ion_builder_bb_metadata.argtypes = [ c_ion_builder_t, ctypes.c_char_p, ctypes.c_
 # int ion_builder_run(ion_builder_t, ion_port_map_t);
 ion_builder_run = ion_core.ion_builder_run
 ion_builder_run.restype = ctypes.c_int
-ion_builder_run.argtypes = [ c_ion_builder_t, c_ion_port_map_t ]
+ion_builder_run.argtypes = [ c_ion_builder_t ]
+
+# int ion_builder_run(ion_builder_t, ion_port_map_t);
+ion_builder_run_with_port_map = ion_core.ion_builder_run_with_port_map
+ion_builder_run_with_port_map.restype = ctypes.c_int
+ion_builder_run_with_port_map.argtypes = [ c_ion_builder_t, c_ion_port_map_t ]
 
 
 # int ion_buffer_create(ion_buffer_t *, ion_type_t, int *, int);

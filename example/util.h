@@ -1,16 +1,16 @@
 #ifndef ION_KIT_EXAMPLE_UTIL_H
 #define ION_KIT_EXAMPLE_UTIL_H
 
-#include <string>
+#include <ion/ion.h>
 
 namespace ion {
 
-std::string get_target_from_cmdline(int argc, char *argv[]) {
+Target get_target_from_cmdline(int argc, char *argv[]) {
     if (argc < 2) {
-        return "host";
+        return Target("host");
     }
 
-    return argv[1];
+    return Target(argv[1]);
 }
 
 }  // namespace ion

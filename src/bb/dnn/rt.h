@@ -92,6 +92,7 @@ extern "C" ION_EXPORT int ion_bb_dnn_generic_object_detection(halide_buffer_t *i
         return -1;
     }
 }
+ION_REGISTER_EXTERN(ion_bb_dnn_generic_object_detection)
 
 extern "C" ION_EXPORT int ion_bb_dnn_tlt_object_detection_ssd(halide_buffer_t *in,
                                                               halide_buffer_t *session_id_buf,
@@ -134,6 +135,7 @@ extern "C" ION_EXPORT int ion_bb_dnn_tlt_object_detection_ssd(halide_buffer_t *i
         return -1;
     }
 }
+ION_REGISTER_EXTERN(ion_bb_dnn_tlt_object_detection_ssd)
 
 extern "C" ION_EXPORT int ion_bb_dnn_tlt_peoplenet(halide_buffer_t *in,
                                                    halide_buffer_t *session_id_buf,
@@ -178,6 +180,7 @@ extern "C" ION_EXPORT int ion_bb_dnn_tlt_peoplenet(halide_buffer_t *in,
         return -1;
     }
 }
+ION_REGISTER_EXTERN(ion_bb_dnn_tlt_peoplenet)
 
 extern "C" ION_EXPORT int ion_bb_dnn_tlt_peoplenet_md(halide_buffer_t *in,
                                                       int32_t input_width,
@@ -228,6 +231,7 @@ extern "C" ION_EXPORT int ion_bb_dnn_tlt_peoplenet_md(halide_buffer_t *in,
         return -1;
     }
 }
+ION_REGISTER_EXTERN(ion_bb_dnn_tlt_peoplenet_md)
 
 extern "C" ION_EXPORT int ion_bb_dnn_classify_gender(halide_buffer_t *in_img,
                                                      uint32_t input_img_width,
@@ -282,6 +286,7 @@ extern "C" ION_EXPORT int ion_bb_dnn_classify_gender(halide_buffer_t *in_img,
         return -1;
     }
 }
+ION_REGISTER_EXTERN(ion_bb_dnn_classify_gender)
 
 extern "C" ION_EXPORT int ion_bb_dnn_json_dict_average_regurator(halide_buffer_t *in,
                                                                  uint32_t io_md_size,
@@ -321,6 +326,7 @@ extern "C" ION_EXPORT int ion_bb_dnn_json_dict_average_regurator(halide_buffer_t
         return -1;
     }
 }
+ION_REGISTER_EXTERN(ion_bb_dnn_json_dict_average_regurator)
 
 extern "C" ION_EXPORT int ion_bb_dnn_ifttt_webhook_uploader(halide_buffer_t *in_md,
                                                             uint32_t input_md_size,
@@ -355,6 +361,8 @@ extern "C" ION_EXPORT int ion_bb_dnn_ifttt_webhook_uploader(halide_buffer_t *in_
         return -1;
     }
 }
+ION_REGISTER_EXTERN(ion_bb_dnn_ifttt_webhook_uploader)
+
 
 #undef ION_EXPORT
 #undef ION_REGISTER_EXTERN

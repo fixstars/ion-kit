@@ -74,11 +74,6 @@ if(UNIX AND NOT APPLE)
 ion_jit(port-access SRCS port-access.cc)
 add_dependencies(port-access  ion-bb-test)
 ion_register_test(port-access_test port-access)
-
-# PortMap index access
-ion_jit(portmap-access SRCS portmap-access.cc)
-add_dependencies(portmap-access  ion-bb-test)
-ion_register_test(portmap-access_test portmap-access)
 endif()
 
 ion_jit(direct-extern SRCS direct-extern.cc)

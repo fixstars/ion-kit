@@ -11,6 +11,7 @@
 #include "def.h"
 #include "buffer.h"
 #include "node.h"
+#include "target.h"
 #include "port_map.h"
 
 namespace ion {
@@ -44,7 +45,7 @@ public:
      * @arg target: The target ofject which consists of OS, Architecture, and sets of Features.
      * See https://halide-lang.org/docs/struct_halide_1_1_target.html for more details.
      */
-    Builder& set_target(const Halide::Target& target);
+    Builder& set_target(const Target& target);
 
     /**
      * Load bb module dynamically and enable it to compile your pipeline.

@@ -13,25 +13,19 @@ int main()
     try {
         // From same node
         {
-            Port input{"input", Halide::type_of<int32_t>(), 2};
-            Builder b;
-            b.set_target(Halide::get_host_target());
-            Node n;
-            n = b.add("test_multi_out")(input);
-
-            int ny = 8;//16;
-            int nx = 4;//8;
-            int nc = 2;//4;
-            Halide::Buffer<int32_t> in(std::vector<int>{nx, ny});
+            constexpr int ny = 8;//16;
+            constexpr int nx = 4;//8;
+            constexpr int nc = 2;//4;
+            ion::Buffer<int32_t> in(std::vector<int>{nx, ny});
             for (int y=0; y<ny; ++y) {
                 for (int x=0; x<nx; ++x) {
                     in(x, y) = y * nx + x;
                 }
             }
 
-            Halide::Buffer<int32_t> o0(std::vector<int>{nx});
-            Halide::Buffer<int32_t> o1(std::vector<int>{nx, ny});
-            Halide::Buffer<int32_t> o2(std::vector<int>{nx, ny, nc});
+            ion::Buffer<int32_t> o0(std::vector<int>{nx});
+            ion::Buffer<int32_t> o1(std::vector<int>{nx, ny});
+            ion::Buffer<int32_t> o2(std::vector<int>{nx, ny, nc});
             for (int c=0; c<nc; ++c) {
                 for (int y=0; y<ny; ++y) {
                     for (int x=0; x<nx; ++x) {
@@ -42,13 +36,16 @@ int main()
                 }
             }
 
-            PortMap pm;
-            pm.set(input, in);
-            pm.set(n["output0"], o0);
-            pm.set(n["output1"], o1);
-            pm.set(n["output2"], o2);
+            Builder b;
+            b.set_target(Halide::get_host_target());
+            Node n;
+            n = b.add("test_multi_out")(in);
 
-            b.run(pm);
+            n["output0"].bind(o0);
+            n["output1"].bind(o1);
+            n["output2"].bind(o2);
+
+            b.run();
 
             if (o0.dimensions() != 1) { throw runtime_error("Unexpected o0 dimension"); }
             if (o0.extent(0) != nx) { throw runtime_error("Unexpected o0 extent(0)"); }
@@ -109,11 +106,35 @@ int main()
 
         // Differnet node
         {
-            Port input{"input", Halide::type_of<int32_t>(), 2};
+            constexpr int ny = 8;
+            constexpr int nx = 4;
+            ion::Buffer<int32_t> in(std::vector<int>{nx, ny});
+            for (int y=0; y<ny; ++y) {
+                for (int x=0; x<nx; ++x) {
+                    in(x, y) = y * nx + x;
+                }
+            }
+
+            constexpr int nx2 = nx * 2;
+            constexpr int ny2 = ny * 2;
+            ion::Buffer<int32_t> o0(std::vector<int>{nx2, ny2});
+            for (int y=0; y<ny2; ++y) {
+                for (int x=0; x<nx2; ++x) {
+                    o0(x, y) = 0;
+                }
+            }
+
+            ion::Buffer<int32_t> o1(std::vector<int>{nx, ny});
+            for (int y=0; y<ny; ++y) {
+                for (int x=0; x<nx; ++x) {
+                    o1(x, y) = 0;
+                }
+            }
+
             Builder b;
             b.set_target(Halide::get_host_target());
             Node n;
-            n = b.add("test_dup")(input);
+            n = b.add("test_dup")(in);
 
             // Before one come last
             Port op1 = n["output1"];
@@ -123,37 +144,10 @@ int main()
             // Later one come first
             Port op0 = n["output"];
 
-            int ny = 8;
-            int nx = 4;
-            Halide::Buffer<int32_t> in(std::vector<int>{nx, ny});
-            for (int y=0; y<ny; ++y) {
-                for (int x=0; x<nx; ++x) {
-                    in(x, y) = y * nx + x;
-                }
-            }
+            op0.bind(o0);
+            op1.bind(o1);
 
-            int nx2 = nx * 2;
-            int ny2 = ny * 2;
-            Halide::Buffer<int32_t> o0(std::vector<int>{nx2, ny2});
-            for (int y=0; y<ny2; ++y) {
-                for (int x=0; x<nx2; ++x) {
-                    o0(x, y) = 0;
-                }
-            }
-
-            Halide::Buffer<int32_t> o1(std::vector<int>{nx, ny});
-            for (int y=0; y<ny; ++y) {
-                for (int x=0; x<nx; ++x) {
-                    o1(x, y) = 0;
-                }
-            }
-
-            PortMap pm;
-            pm.set(input, in);
-            pm.set(op0, o0);
-            pm.set(op1, o1);
-
-            b.run(pm);
+            b.run();
 
             if (o0.dimensions() != 2) { throw runtime_error("Unexpected o0 dimension"); }
             if (o0.extent(0) != nx2) { throw runtime_error("Unexpected o0 extent(0)"); }
