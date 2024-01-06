@@ -88,3 +88,5 @@ def case2():
 def test_all():
     case1()
     case2()
+
+test_all()
