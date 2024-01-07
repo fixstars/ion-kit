@@ -2,6 +2,7 @@
 #define ION_PARAM_H
 
 #include <string>
+#include <type_traits>
 
 namespace ion {
 
@@ -20,6 +21,10 @@ class Param {
       * It can be string representation which is able to convert through std::istringstream.
       */
      Param(const std::string& key, const std::string& val) : key_(key), val_(val) {}
+
+     template<typename T,
+              typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
+     Param(const std::string& key, T val) : key_(key), val_(std::to_string(val)) {}
 
      std::string key() const { return key_; }
      std::string& key() { return key_; }

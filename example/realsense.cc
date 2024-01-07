@@ -16,20 +16,20 @@ using namespace ion;
 
 int main(int argc, char *argv[]) {
     Builder b;
-    b.set_target(Halide::Target{get_target_from_cmdline(argc, argv)});
+    b.set_target(get_target_from_cmdline(argc, argv));
     b.with_bb_module("ion-bb");
 
     Node n = b.add("image_io_d435");
 
-    PortMap pm;
-    Halide::Buffer<uint8_t> obuf_l(1280, 720);
-    Halide::Buffer<uint8_t> obuf_r(1280, 720);
-    Halide::Buffer<uint16_t> obuf_d(1280, 720);
-    pm.set(n["output_l"], obuf_l);
-    pm.set(n["output_r"], obuf_r);
-    pm.set(n["output_d"], obuf_d);
+    Buffer<uint8_t> obuf_l(1280, 720);
+    Buffer<uint8_t> obuf_r(1280, 720);
+    Buffer<uint16_t> obuf_d(1280, 720);
 
-    b.run(pm);
+    n["output_l"].bind(obuf_l);
+    n["output_r"].bind(obuf_r);
+    n["output_d"].bind(obuf_d);
+
+    b.run();
 
     {
         std::ofstream ofs("out_stereo.bin", std::ios::binary);

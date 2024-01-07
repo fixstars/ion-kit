@@ -3,7 +3,11 @@
 
 #include "ion/ion.h"
 
-class Producer : public ion::BuildingBlock<Producer> {
+namespace ion {
+namespace bb {
+namespace test {
+
+class Producer : public BuildingBlock<Producer> {
 public:
     Output<Halide::Func> output{"output", Int(32), 2};
     GeneratorParam<std::string> string_param{"string_param", "string value"};
@@ -18,15 +22,14 @@ public:
 private:
     Halide::Var x, y;
 };
-ION_REGISTER_BUILDING_BLOCK(Producer, test_producer);
 
-class Consumer : public ion::BuildingBlock<Consumer> {
+class Consumer : public BuildingBlock<Consumer> {
 public:
     Input<Halide::Func> input{"input", Int(32), 2};
-    Input<int32_t> desired_min0{"desired_min0", 0};
-    Input<int32_t> desired_extent0{"desired_extent0", 0};
-    Input<int32_t> desired_min1{"desired_min1", 0};
-    Input<int32_t> desired_extent1{"desired_extent1", 0};
+    Input<int32_t> min0{"min0", 0};
+    Input<int32_t> extent0{"extent0", 0};
+    Input<int32_t> min1{"min1", 0};
+    Input<int32_t> extent1{"extent1", 0};
     Input<int32_t> v{"v", 1};
 
     Output<int> output{"output"};
@@ -35,11 +38,13 @@ public:
         Func in;
         in(x, y) = input(x, y);
         in.compute_root();
-        std::vector<ExternFuncArgument> params{in, desired_min0, desired_extent0, desired_min1, desired_extent1, v};
+        std::vector<ExternFuncArgument> params{in, get_id(), min0, extent0, min1, extent1, v};
         Func consume;
         consume.define_extern("consume", params, Int(32), 0);
         consume.compute_root();
         output() = consume();
+
+        register_disposer("consume_dispose");
     }
 
     void schedule() {
@@ -47,9 +52,8 @@ public:
 private:
     Halide::Var x, y;
 };
-ION_REGISTER_BUILDING_BLOCK(Consumer, test_consumer);
 
-class Branch : public ion::BuildingBlock<Branch> {
+class Branch : public BuildingBlock<Branch> {
 public:
     Input<Halide::Func> input{"input", Int(32), 2};
     Input<int32_t> input_width{"input_width", 0};
@@ -78,9 +82,8 @@ public:
 private:
     Halide::Var x, y;
 };
-ION_REGISTER_BUILDING_BLOCK(Branch, test_branch);
 
-class Merge : public ion::BuildingBlock<Merge> {
+class Merge : public BuildingBlock<Merge> {
 public:
     Input<Halide::Func> input0{"input0", Int(32), 2};
     Input<Halide::Func> input1{"input1", Int(32), 2};
@@ -97,14 +100,13 @@ public:
 private:
     Halide::Var x, y;
 };
-ION_REGISTER_BUILDING_BLOCK(Merge, test_merge);
 
 template<typename T, int D>
-class Inc : public ion::BuildingBlock<Inc<T, D>> {
+class Inc : public BuildingBlock<Inc<T, D>> {
 public:
-    ion::GeneratorParam<T> v{"v", 0};
-    ion::GeneratorInput<Halide::Func> input{"input", Halide::type_of<T>(), D};
-    ion::GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), D};
+    GeneratorParam<T> v{"v", 0};
+    Input<Halide::Func> input{"input", Halide::type_of<T>(), D};
+    Output<Halide::Func> output{"output", Halide::type_of<T>(), D};
 
     void generate() {
         output(Halide::_) = input(Halide::_) + v;
@@ -117,13 +119,31 @@ private:
     Halide::Var x, y;
 };
 using IncI32x2 = Inc<int32_t,2>;
-ION_REGISTER_BUILDING_BLOCK(IncI32x2, test_inc_i32x2);
 
-class Dup : public ion::BuildingBlock<Dup> {
+template<typename T, int D>
+class IncX : public BuildingBlock<IncX<T, D>> {
 public:
-    ion::GeneratorInput<Halide::Func> input{"input", Int(32), 2};
-    ion::GeneratorOutput<Halide::Func> output0{"output0", Int(32), 2};
-    ion::GeneratorOutput<Halide::Func> output1{"output1", Int(32), 2};
+    Input<Halide::Func> input{"input", Halide::type_of<T>(), D};
+    Input<T> v{"v", 0};
+    Output<Halide::Func> output{"output", Halide::type_of<T>(), D};
+
+    void generate() {
+        output(Halide::_) = input(Halide::_) + v;
+    }
+
+    void schedule() {
+    }
+
+private:
+    Halide::Var x, y;
+};
+using IncXI32x2 = IncX<int32_t,2>;
+
+class Dup : public BuildingBlock<Dup> {
+public:
+    Input<Halide::Func> input{"input", Int(32), 2};
+    Output<Halide::Func> output0{"output0", Int(32), 2};
+    Output<Halide::Func> output1{"output1", Int(32), 2};
 
     void generate() {
         output0(x, y) = input(x, y);
@@ -133,12 +153,11 @@ public:
 private:
     Halide::Var x, y;
 };
-ION_REGISTER_BUILDING_BLOCK(Dup, test_dup);
 
-class Scale2x : public ion::BuildingBlock<Scale2x> {
+class Scale2x : public BuildingBlock<Scale2x> {
 public:
-    ion::GeneratorInput<Halide::Func> input{"input", Int(32), 2};
-    ion::GeneratorOutput<Halide::Func> output{"output", Int(32), 2};
+    Input<Halide::Func> input{"input", Int(32), 2};
+    Output<Halide::Func> output{"output", Int(32), 2};
 
     void generate() {
         output(x, y) = input(x/2, y/2);
@@ -147,14 +166,13 @@ public:
 private:
     Halide::Var x, y;
 };
-ION_REGISTER_BUILDING_BLOCK(Scale2x, test_scale2x);
 
-class MultiOut : public ion::BuildingBlock<MultiOut> {
+class MultiOut : public BuildingBlock<MultiOut> {
 public:
-    ion::GeneratorInput<Halide::Func> input{"input", Int(32), 2};
-    ion::GeneratorOutput<Halide::Func> output0{"output0", Int(32), 1};
-    ion::GeneratorOutput<Halide::Func> output1{"output1", Int(32), 2};
-    ion::GeneratorOutput<Halide::Func> output2{"output2", Int(32), 3};
+    Input<Halide::Func> input{"input", Int(32), 2};
+    Output<Halide::Func> output0{"output0", Int(32), 1};
+    Output<Halide::Func> output1{"output1", Int(32), 2};
+    Output<Halide::Func> output2{"output2", Int(32), 3};
 
     void generate() {
         output0(x) = input(x, 0);
@@ -165,18 +183,35 @@ public:
 private:
     Halide::Var x, y, c;
 };
-ION_REGISTER_BUILDING_BLOCK(MultiOut, test_multi_out);
 
-class ArrayOutput : public ion::BuildingBlock<ArrayOutput> {
+class ArrayInput : public BuildingBlock<ArrayInput> {
 public:
-    ion::GeneratorParam<std::size_t> len{"len", 5};
+    GeneratorParam<int> len{"len", 5};
 
-    ion::GeneratorInput<Halide::Func> input{"input", Int(32), 2};
-    ion::GeneratorOutput<Halide::Func[]> array_output{"array_output", Int(32), 2};
+    Input<Halide::Func[]> array_input{"array_input", Int(32), 2};
+    Output<Halide::Func> output{"output", Int(32), 2};
+
+    void generate() {
+        Halide::Expr v = 0;
+        for (int i = 0; i < len; ++i) {
+             v += array_input[i](x, y);
+        }
+        output(x, y) = v;
+    }
+
+private:
+    Halide::Var x, y;
+};
+
+class ArrayOutput : public BuildingBlock<ArrayOutput> {
+public:
+    GeneratorParam<int> len{"len", 5};
+    Input<Halide::Func> input{"input", Int(32), 2};
+    Output<Halide::Func[]> array_output{"array_output", Int(32), 2};
 
     void generate() {
         array_output.resize(len);
-        for (std::size_t i = 0; i < array_output.size(); ++i) {
+        for (int i = 0; i < len; ++i) {
             array_output[i](x, y) = input(x, y);
         }
     }
@@ -184,31 +219,33 @@ public:
 private:
     Halide::Var x, y;
 };
-ION_REGISTER_BUILDING_BLOCK(ArrayOutput, test_array_output);
 
-class ArrayInput : public ion::BuildingBlock<ArrayInput> {
+class ArrayCopy : public BuildingBlock<ArrayCopy> {
 public:
-    ion::GeneratorInput<Halide::Func[]> array_input{"array_input", Int(32), 2};
-    ion::GeneratorOutput<Halide::Func> output{"output", Int(32), 2};
+    GeneratorParam<int> len{"len", 5};
+
+    Input<Halide::Func[]> array_input{"array_input", Int(32), 2};
+    Output<Halide::Func[]> array_output{"array_output", Int(32), 2};
 
     void generate() {
-        for (std::size_t i = 0; i < array_input.size(); ++i) {
-            output(x, y) += array_input[i](x, y);
+        array_output.resize(len);
+        for (int i = 0; i < len; ++i) {
+            array_output[i](x, y) = array_input[i](x, y);
         }
     }
 
 private:
     Halide::Var x, y;
 };
-ION_REGISTER_BUILDING_BLOCK(ArrayInput, test_array_input);
 
-class ExternIncI32x2 : public ion::BuildingBlock<ExternIncI32x2> {
+
+class ExternIncI32x2 : public BuildingBlock<ExternIncI32x2> {
 public:
-    ion::GeneratorParam<int32_t> v{"v", 0};
-    ion::GeneratorParam<int32_t> width{"width", 0};
-    ion::GeneratorParam<int32_t> height{"height", 0};
-    ion::GeneratorInput<Halide::Func> input{"input", Halide::type_of<int32_t>(), 2};
-    ion::GeneratorOutput<Halide::Func> output{"output", Halide::type_of<int32_t>(), 2};
+    GeneratorParam<int32_t> v{"v", 0};
+    GeneratorParam<int32_t> width{"width", 0};
+    GeneratorParam<int32_t> height{"height", 0};
+    Input<Halide::Func> input{"input", Halide::type_of<int32_t>(), 2};
+    Output<Halide::Func> output{"output", Halide::type_of<int32_t>(), 2};
 
     void generate() {
         using namespace Halide;
@@ -224,6 +261,23 @@ public:
         output = inc;
     }
 };
-ION_REGISTER_BUILDING_BLOCK(ExternIncI32x2, test_extern_inc_i32x2);
+
+} // test
+} // bb
+} // ion
+
+ION_REGISTER_BUILDING_BLOCK(ion::bb::test::Producer, test_producer);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::test::Consumer, test_consumer);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::test::Branch, test_branch);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::test::Merge, test_merge);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::test::IncI32x2, test_inc_i32x2);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::test::IncXI32x2, test_incx_i32x2);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::test::Dup, test_dup);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::test::Scale2x, test_scale2x);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::test::MultiOut, test_multi_out);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::test::ArrayInput, test_array_input);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::test::ArrayOutput, test_array_output);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::test::ArrayCopy, test_array_copy);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::test::ExternIncI32x2, test_extern_inc_i32x2);
 
 #endif

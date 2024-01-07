@@ -24,7 +24,7 @@ namespace dnn {
 #define ORT_API_VERSION 5
 
 // SAL2 Definitions
-#ifndef _WIN32
+#if defined(__unix__) || defined(__APPLE__)
 #define _In_
 #define _In_z_
 #define _In_opt_

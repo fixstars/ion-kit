@@ -1,4 +1,5 @@
 
+__version__ = "0.3.5"
 from .Port import Port
 from .Param import Param
 from .Node import Node

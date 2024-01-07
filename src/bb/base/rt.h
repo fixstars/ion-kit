@@ -41,10 +41,12 @@ namespace bb {
 namespace base {
 
 std::tuple<std::string, std::string> parse_url(const std::string &url) {
-    if (url.rfind("http://", 0) != 0) {  // not starts_with
+    auto protocol_end_pos = url.find("://");
+    if (protocol_end_pos == std::string::npos) {
         return std::tuple<std::string, std::string>("", "");
     }
-    auto path_name_pos = url.find("/", 7);
+    auto host_name_pos = protocol_end_pos + 3;
+    auto path_name_pos = url.find("/", host_name_pos);
     auto host_name = url.substr(0, path_name_pos);
     auto path_name = url.substr(path_name_pos);
     return std::tuple<std::string, std::string>(host_name, path_name);

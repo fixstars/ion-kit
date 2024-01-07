@@ -112,13 +112,20 @@ private:
 };
 
 extern "C" DLLEXPORT
-int consume(halide_buffer_t *in, int desired_min0, int desired_extent0, int desired_min1, int desired_extent1, int32_t v, halide_buffer_t *out) {
+int consume_dispose(const char *id) {
+    ion::log::info("consume_dispose is called with id={}", id);
+    return 0;
+}
+
+extern "C" DLLEXPORT
+int consume(halide_buffer_t *in, halide_buffer_t *id_buf, int desired_min0, int desired_extent0, int desired_min1, int desired_extent1, int32_t v, halide_buffer_t *out) {
     if (in->is_bounds_query()) {
         in->dim[0].min = desired_min0;
         in->dim[0].extent = desired_extent0;
         in->dim[1].min = desired_min1;
         in->dim[1].extent = desired_extent1;
     } else {
+        ion::log::info("consume is called with id={}", reinterpret_cast<const char*>(id_buf->host));
         Halide::Runtime::Buffer<int32_t> ibuf(*in);
         for (int y=0; y<in->dim[1].extent; ++y) {
             for (int x=0; x<in->dim[0].extent; ++x) {
