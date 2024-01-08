@@ -22,14 +22,14 @@ Please follow the instructions provided for your preferred platform.
 #### a. Unix
 ```sh
 mkdir build && cd build
-cmake -GNinja -DCMAKE_INSTALL_PREFIX=<path-to-ion-kit-install> -DHalide_DIR=<path-to-HalideConfig.cmake> -DONNXRUNTIME_ROOT=<path-to-onnxruntime-root> -DOPENCV_DIR=<path-to-opencv-cmake> ../
+cmake -GNinja -DCMAKE_INSTALL_PREFIX=<path-to-ion-kit-install> -DHalide_DIR=<path-to-HalideConfig.cmake> -DHalideHelpers_DIR=<path-to-halide-helpers> -DONNXRUNTIME_ROOT=<path-to-onnxruntime-root> -DOPENCV_DIR=<path-to-opencv-cmake> ../
 cmake --build .
 ```
 #### b. Windows
 ```
 mkdir build
 cd build
-cmake -G "Visual Studio 17 2022" -A x64 -DHalide_DIR=<path-to-HalideConfig.cmake> -DOpenCV_DIR=<path-to-opencv-cmake> ../
+cmake -G "Visual Studio 17 2022" -A x64 -DHalideHelpers_DIR=<> -DHalide_DIR=<path-to-HalideConfig.cmake> -DOpenCV_DIR=<path-to-opencv-cmake> -D ION_BUILD_ALL_BB=OFF -DION_BBS_TO_BUILD="ion-bb-core;ion-bb-image-processing;ion-bb-sgm;ion-bb-image-io" ../
 cmake --build . --config Release
 ```
 
