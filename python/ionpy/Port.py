@@ -30,12 +30,12 @@ from .TypeCode import TypeCode
 
 class Port:
     def __init__(self,
-             name: Optional[str] = None,
-             type: Optional[Type] = None,
-             dim: Optional[int] = None,
-             # -- or
-             obj_: Optional[c_ion_port_t] = None,
-        ):
+        name: Optional[str] = None,
+        type: Optional[Type] = None,
+        dim: Optional[int] = None,
+        # -- or
+        obj_: Optional[c_ion_port_t] = None,
+    ):
         if obj_ is None:
             obj_ = c_ion_port_t()
             type_cobj = type.to_cobj()
@@ -57,15 +57,15 @@ class Port:
         return Port(obj_=new_obj)
 
     def __del__(self):
-        if self.obj:  # check not nullptr
+        if self.obj: # check not nullptr
             ion_port_destroy(self.obj)
 
     def bind(self, v: Union[int, float, Buffer]):
         if self.dim == 0:
             if self.bind_value is None:
                 self.bind_value = np.ctypeslib.as_ctypes_type(self.type.to_dtype())(v)
-            self.bind_value.value = v
-
+            else:
+                self.bind_value.value = v
             # scalar
             if self.type.code_ == TypeCode.Int:
                 if self.type.bits_ == 8 and ion_port_bind_i8(self.obj, ctypes.byref(self.bind_value)) != 0:
@@ -76,7 +76,6 @@ class Port:
                     raise Exception('Invalid operation')
                 elif self.type.bits_ == 64 and ion_port_bind_i64(self.obj, ctypes.byref(self.bind_value)) != 0:
                     raise Exception('Invalid operation')
-
             elif self.type.code_ == TypeCode.Uint:
                 if self.type.bits_ == 1 and ion_port_bind_u1(self.obj, ctypes.byref(self.bind_value)) != 0:
                     raise Exception('Invalid operation')
@@ -88,7 +87,6 @@ class Port:
                     raise Exception('Invalid operation')
                 if self.type.bits_ == 64 and ion_port_bind_u64(self.obj, ctypes.byref(self.bind_value)) != 0:
                     raise Exception('Invalid operation')
-
             elif self.type.bits_ == 32 and self.type.code_ == TypeCode.Float:
                 if ion_port_bind_f32(self.obj, ctypes.byref(self.bind_value)) != 0:
                     raise Exception('Invalid operation')
@@ -98,4 +96,3 @@ class Port:
         else:
             if ion_port_bind_buffer(self.obj, v.obj) != 0:
                 raise Exception('Invalid operation')
-

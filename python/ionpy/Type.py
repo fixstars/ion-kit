@@ -46,14 +46,13 @@ class Type:
                 return np.int32
             elif self.bits_ == 64:
                 return np.int64
-
         elif self.code_ == TypeCode.Uint:
             if self.bits_ == 1:
-                return np.uint8
+                return np.bool_
             if self.bits_ == 8:
                 return np.uint8
             if self.bits_ == 16:
-                return np.int16
+                return np.uint16
             if self.bits_ == 32:
                 return np.uint32
             if self.bits_ == 64:
