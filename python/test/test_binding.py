@@ -10,7 +10,7 @@ def test_binding():
 
     builder = Builder()
     builder.set_target(target='host')
-    builder.with_bb_module(path='/Users/xinyuli/Desktop/ion-kit/build/test/libion-bb-test.dylib')
+    builder.with_bb_module(path='ion-bb-test')
 
     node = builder.add('test_incx_i32x2').set_iport([input_port, value_port])
 
@@ -27,18 +27,15 @@ def test_binding():
     # First run
     value_port.bind(0)
     builder.run()
-    print("//", odata)
     assert odata[0][0] == 42
 
     # Second run
     value_port.bind(1)
     builder.run()
-    print("//", odata)
     assert odata[0][0] == 43
 
     # Third run
     value_port.bind(2)
-    builder.run()
     assert odata[0][0] == 44
 
 
