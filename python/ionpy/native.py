@@ -7,7 +7,7 @@ import platform
 if platform.system()  == 'Windows':
     ion_core_module = find_library('ion-core.dll')
 elif platform.system() == 'Darwin':
-    ion_core_module = 'libion-core.dylib'
+    ion_core_module = '/Users/xinyuli/Desktop/ion-kit-install/lib/libion-core.dylib'
 elif platform.system() == 'Linux':
     ion_core_module = 'libion-core.so'
 
@@ -37,8 +37,6 @@ c_ion_builder_t = ctypes.POINTER(ctypes.c_int)
 c_ion_buffer_t = ctypes.POINTER(ctypes.c_int)
 c_ion_port_map_t = ctypes.POINTER(ctypes.c_int)
 
-c_ion_port_bind_t = ctypes.POINTER(ctypes.c_int)
-
 # int ion_port_create(ion_port_t *, const char *, ion_type_t, int);
 ion_port_create = ion_core.ion_port_create
 ion_port_create.restype = ctypes.c_int
@@ -54,57 +52,57 @@ ion_port_destroy = ion_core.ion_port_destroy
 ion_port_destroy.restype = ctypes.c_int
 ion_port_destroy.argtypes = [ c_ion_port_t ]
 
-# int ion_port_bind_i8(ion_port_t, int8_t);
+# int ion_port_bind_i8(ion_port_t, int8_t*);
 ion_port_bind_i8 = ion_core.ion_port_bind_i8
 ion_port_bind_i8.restype = ctypes.c_int
 ion_port_bind_i8.argtypes = [c_ion_port_t, ctypes.POINTER(ctypes.c_int8) ]
 
-# int ion_port_bind_i16(ion_port_t, int16_t);
+# int ion_port_bind_i16(ion_port_t, int16_t*);
 ion_port_bind_i16 = ion_core.ion_port_bind_i16
 ion_port_bind_i16.restype = ctypes.c_int
 ion_port_bind_i16.argtypes = [c_ion_port_t, ctypes.POINTER(ctypes.c_int16) ]
 
-# int ion_port_bind_i32(ion_port_t, int32_t);
+# int ion_port_bind_i32(ion_port_t, int32_t*);
 ion_port_bind_i32 = ion_core.ion_port_bind_i32
 ion_port_bind_i32.restype = ctypes.c_int
 ion_port_bind_i32.argtypes = [c_ion_port_t, ctypes.POINTER(ctypes.c_int32)]
 
-# int ion_port_bind_i64(ion_port_t, int64_t);
+# int ion_port_bind_i64(ion_port_t, int64_t*);
 ion_port_bind_i64 = ion_core.ion_port_bind_i64
 ion_port_bind_i64.restype = ctypes.c_int
 ion_port_bind_i64.argtypes = [ c_ion_port_t, ctypes.POINTER(ctypes.c_int64) ]
 
-# int ion_port_map_set_u1(ion_port_t, bool);
+# int ion_port_map_set_u1(ion_port_t, bool*);
 ion_port_bind_u1 = ion_core.ion_port_bind_u1
 ion_port_bind_u1.restype = ctypes.c_int
 ion_port_bind_u1.argtypes = [ c_ion_port_t, ctypes.POINTER(ctypes.c_bool) ]
 
-# int ion_port_bind_u8(ion_port_t, uint8_t);
+# int ion_port_bind_u8(ion_port_t, uint8_t*);
 ion_port_bind_u8 = ion_core.ion_port_bind_u8
 ion_port_bind_u8.restype = ctypes.c_int
 ion_port_bind_u8.argtypes = [ c_ion_port_t, ctypes.POINTER(ctypes.c_uint8) ]
 
-# int ion_port_bind_u16(ion_port_t, uint16_t);
+# int ion_port_bind_u16(ion_port_t, uint16_t*);
 ion_port_bind_u16 = ion_core.ion_port_bind_u16
 ion_port_bind_u16.restype = ctypes.c_int
 ion_port_bind_u16.argtypes = [ c_ion_port_t, ctypes.POINTER(ctypes.c_uint16) ]
 
-# int ion_port_bind_u32(ion_port_t, uint32_t);
+# int ion_port_bind_u32(ion_port_t, uint32_t*);
 ion_port_bind_u32 = ion_core.ion_port_bind_u32
 ion_port_bind_u32.restype = ctypes.c_int
 ion_port_bind_u32.argtypes = [ c_ion_port_t, ctypes.POINTER(ctypes.c_uint32) ]
 
-# int ion_port_bind_u64(ion_port_t, uint64_t);
+# int ion_port_bind_u64(ion_port_t, uint64_t*);
 ion_port_bind_u64 = ion_core.ion_port_bind_u64
 ion_port_bind_u64.restype = ctypes.c_int
 ion_port_bind_u64.argtypes = [ c_ion_port_t, ctypes.POINTER(ctypes.c_uint64) ]
 
-# int ion_port_bind_f32(ion_port_t, float);
+# int ion_port_bind_f32(ion_port_t, float*);
 ion_port_bind_f32 = ion_core.ion_port_bind_f32
 ion_port_bind_f32.restype = ctypes.c_int
 ion_port_bind_f32.argtypes = [ c_ion_port_t, ctypes.POINTER(ctypes.c_float) ]
 
-# int ion_port_bind_f64(ion_port_map_t, ion_port_t, double);
+# int ion_port_bind_f64(ion_port_t, double*;
 ion_port_bind_f64 = ion_core.ion_port_bind_f64
 ion_port_bind_f64.restype = ctypes.c_int
 ion_port_bind_f64.argtypes = [ c_ion_port_t, ctypes.POINTER(ctypes.c_double) ]
