@@ -728,7 +728,7 @@ public:
 
         Func camera1("u3v_camera1");
         {
-            Buffer<uint8_t> id_buf = this->get_id();
+            Buffer<uint8_t> id_buf = ion::BuildingBlock<U3VCamera1<T, D>>::get_id();
            
             const std::string gain_key(gain_key_ptr);
             Buffer<uint8_t> gain_key_buf(static_cast<int>(gain_key.size() + 1));
@@ -752,13 +752,13 @@ public:
     
         Func camera1_frame_count;
         {
-            Buffer<uint8_t> id_buf = this->get_id();
+            Buffer<uint8_t> id_buf = ion::BuildingBlock<U3VCamera1<T, D>>::get_id();
             camera1_frame_count.define_extern("ion_bb_image_io_u3v_camera1_frame_count",{camera1, 1, static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode), id_buf}, type_of<uint32_t>(), 1);
             camera1_frame_count.compute_root();
             frame_count(_) = camera1_frame_count(_);
         }     
 
-        this->register_disposer("u3v_dispose");
+        ion::BuildingBlock<U3VCamera1<T, D>>::register_disposer("u3v_dispose");
 
     }
 };
@@ -790,7 +790,7 @@ public:
 
         Func camera2("u3v_camera2");
         {
-            Buffer<uint8_t> id_buf = this->get_id();
+            Buffer<uint8_t> id_buf = ion::BuildingBlock<U3VCamera2<T, D>>::get_id();
 
             const std::string gain_key(gain_key_ptr);
             Buffer<uint8_t> gain_key_buf(static_cast<int>(gain_key.size() + 1));
@@ -814,12 +814,12 @@ public:
         }
         
         Func camera2_frame_count;{
-            Buffer<uint8_t> id_buf = this->get_id();
+            Buffer<uint8_t> id_buf = ion::BuildingBlock<U3VCamera2<T, D>>::get_id();
             camera2_frame_count.define_extern("ion_bb_image_io_u3v_camera2_frame_count", { camera2,  2, static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode), id_buf}, type_of<uint32_t>(), 1);
             camera2_frame_count.compute_root();
             frame_count(_) = camera2_frame_count(_);
         }
-        this->register_disposer("u3v_dispose");
+        ion::BuildingBlock<U3VCamera2<T, D>>::register_disposer("u3v_dispose");
     }
 };
 
@@ -858,7 +858,7 @@ public:
 
         Func cameraN("u3v_cameraN");
         {
-            Buffer<uint8_t> id_buf = this->get_id();
+            Buffer<uint8_t> id_buf = ion::BuildingBlock<U3VCameraN<T, D>>::get_id();
 
             const std::string gain_key(gain_key_ptr);
             Buffer<uint8_t> gain_key_buf(static_cast<int>(gain_key.size() + 1));
@@ -900,7 +900,7 @@ public:
         Func u3v_device_info("u3v_device_info");
         {
 
-            Buffer<uint8_t> id_buf = this->get_id();
+            Buffer<uint8_t> id_buf = ion::BuildingBlock<U3VCameraN<T, D>>::get_id();
             std::vector<ExternFuncArgument> params{
                 cameraN, static_cast<int32_t>(num_devices), static_cast<bool>(frame_sync),
                 static_cast<bool>(realtime_diaplay_mode), id_buf
@@ -924,7 +924,7 @@ public:
 
         Func cameraN_fc("u3v_cameraN_fc");
         {
-            Buffer<uint8_t> id_buf = this->get_id();
+            Buffer<uint8_t> id_buf = ion::BuildingBlock<U3VCameraN<T, D>>::get_id();
             std::vector<ExternFuncArgument> params{
                 cameraN, static_cast<int32_t>(output.size()), static_cast<bool>(frame_sync),
                 static_cast<bool>(realtime_diaplay_mode), id_buf
@@ -933,7 +933,7 @@ public:
             cameraN_fc.compute_root();
             frame_count(_) = cameraN_fc(_);
         }
-        this->register_disposer("u3v_dispose");
+        ion::BuildingBlock<U3VCameraN<T, D>>::register_disposer("u3v_dispose");
     }
   
 };
@@ -970,7 +970,7 @@ public:
 
         Func u3v_gendc("u3v_gendc");
         {
-            Buffer<uint8_t> id_buf =  this->get_id();
+            Buffer<uint8_t> id_buf =  ion::BuildingBlock<U3VGenDC>::get_id();
 
             const std::string gain_key(gain_key_ptr);
             Buffer<uint8_t> gain_key_buf(static_cast<int>(gain_key.size() + 1));
@@ -1006,7 +1006,7 @@ public:
 
         Func u3v_device_info("u3v_device_info");
         {
-            Buffer<uint8_t> id_buf =  this->get_id();
+            Buffer<uint8_t> id_buf =  ion::BuildingBlock<U3VGenDC>::get_id();
             std::vector<ExternFuncArgument> params{
                 u3v_gendc, static_cast<int32_t>(num_devices), static_cast<bool>(frame_sync),
                 static_cast<bool>(realtime_diaplay_mode), id_buf
@@ -1028,7 +1028,7 @@ public:
             }
         }
 
-        this->register_disposer("u3v_dispose");
+    ion::BuildingBlock<U3VGenDC>::register_disposer("u3v_dispose");
     }
 };
 
