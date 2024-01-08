@@ -38,6 +38,3 @@ def test_binding():
     value_port.bind(2)
     builder.run()
     assert odata[0][0] == 44
-
-
-test_binding()
