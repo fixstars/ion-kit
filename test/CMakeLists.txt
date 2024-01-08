@@ -80,6 +80,10 @@ ion_jit(direct-extern SRCS direct-extern.cc)
 add_dependencies(direct-extern ion-bb-test)
 ion_register_test(direct-extern_test direct-extern)
 
+ion_jit(display SRCS display.cc)
+add_dependencies(display ion-bb)
+ion_register_test(display_test display)
+
 if (WITH_CUDA)
     ion_jit(gpu-extern SRCS gpu-extern.cc)
     cuda_add_library(gpu-extern-lib SHARED gpu-extern-lib.cu)

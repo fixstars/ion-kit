@@ -739,7 +739,7 @@ public:
 
         std::vector<ExternFuncArgument> params{
             static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
-            gain0, exposure0, 
+            gain0, exposure0,
             gain_key_buf, exposure_key_buf
          };
 
@@ -793,7 +793,7 @@ public:
 
         std::vector<ExternFuncArgument> params{
             static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
-            gain0, gain1, exposure0, exposure1, 
+            gain0, gain1, exposure0, exposure1,
             gain_key_buf, exposure_key_buf
          };
 
@@ -857,7 +857,7 @@ public:
 
             std::vector<ExternFuncArgument> params{
                 dispose, static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
-                    gain_func, exposure_func, 
+                    gain_func, exposure_func,
                     gain_key_buf, exposure_key_buf
             };
 
@@ -885,7 +885,7 @@ public:
         Func u3v_device_info("u3v_device_info");
         {
             std::vector<ExternFuncArgument> params{
-                cameraN, dispose, static_cast<int32_t>(num_devices), static_cast<bool>(frame_sync), 
+                cameraN, dispose, static_cast<int32_t>(num_devices), static_cast<bool>(frame_sync),
                 static_cast<bool>(realtime_diaplay_mode)
             };
 
@@ -908,8 +908,8 @@ public:
         Func cameraN_fc("u3v_cameraN_fc");
         {
             std::vector<ExternFuncArgument> params{
-                cameraN, dispose, static_cast<int32_t>(output.size()), static_cast<bool>(frame_sync), 
-                static_cast<bool>(realtime_diaplay_mode), 
+                cameraN, dispose, static_cast<int32_t>(output.size()), static_cast<bool>(frame_sync),
+                static_cast<bool>(realtime_diaplay_mode),
             };
             cameraN_fc.define_extern("ion_bb_image_io_u3v_multiple_camera_frame_count" + std::to_string(output.size()), params, type_of<uint32_t>(), 1);
             cameraN_fc.compute_root();
@@ -963,7 +963,7 @@ public:
 
             std::vector<ExternFuncArgument> params{
                 dispose, static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
-                gain_func, exposure_func, 
+                gain_func, exposure_func,
                 gain_key_buf, exposure_key_buf
             };
 
@@ -986,7 +986,7 @@ public:
         Func u3v_device_info("u3v_device_info");
         {
             std::vector<ExternFuncArgument> params{
-                u3v_gendc, dispose, static_cast<int32_t>(num_devices), static_cast<bool>(frame_sync), 
+                u3v_gendc, dispose, static_cast<int32_t>(num_devices), static_cast<bool>(frame_sync),
                 static_cast<bool>(realtime_diaplay_mode)
             };
 
@@ -1019,7 +1019,7 @@ public:
 
     GeneratorInput<Halide::Func[]> input_deviceinfo{ "input_deviceinfo", Halide::type_of<uint8_t>(), 1 };
     GeneratorInput<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
-    
+
     GeneratorInput<bool> dispose{ "dispose" };
     GeneratorInput<int32_t> width{ "width" };
     GeneratorInput<int32_t> height{ "height" };

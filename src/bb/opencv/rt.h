@@ -36,7 +36,8 @@ class RegisterExtern {
 
 extern "C" ION_EXPORT
 int median_blur(halide_buffer_t *in, int ksize, halide_buffer_t *out) {
-    if (!ion::bb::OpenCV::get_instance().is_available()) {
+    auto& cv(ion::bb::OpenCV::get_instance());
+    if (!cv.is_available()) {
         ion::log::error("OpenCV is not available");
         return -1;
     }
@@ -54,16 +55,16 @@ int median_blur(halide_buffer_t *in, int ksize, halide_buffer_t *out) {
             return -1;
         }
 
-        CvMat *src = cvCreateMatHeader(height, width, cv_type);
-        cvSetData(src, in->host, 3*width*sizeof(uint8_t));
+        auto src = cv.cvCreateMatHeader(height, width, cv_type);
+        cv.cvSetData(src, in->host, 3*width*sizeof(uint8_t));
 
-        CvMat *dst = cvCreateMatHeader(height, width, cv_type);
-        cvSetData(dst, out->host, 3*width*sizeof(uint8_t));
+        auto dst = cv.cvCreateMatHeader(height, width, cv_type);
+        cv.cvSetData(dst, out->host, 3*width*sizeof(uint8_t));
 
-        cvSmooth(src, dst, CV_MEDIAN, ksize, ksize, 0, 0);
+        cv.cvSmooth(src, dst, CV_MEDIAN, ksize, ksize, 0, 0);
 
-        cvReleaseMat(&src);
-        cvReleaseMat(&dst);
+        cv.cvReleaseMat(&src);
+        cv.cvReleaseMat(&dst);
     }
 
     return 0;
@@ -72,7 +73,8 @@ ION_REGISTER_EXTERN(median_blur);
 
 extern "C" ION_EXPORT
 int display(halide_buffer_t *in, int width, int height, int idx, halide_buffer_t *out) {
-    if (!ion::bb::OpenCV::get_instance().is_available()) {
+    auto& cv(ion::bb::OpenCV::get_instance());
+    if (!cv.is_available()) {
         ion::log::error("OpenCV is not available");
         return -1;
     }
@@ -85,14 +87,14 @@ int display(halide_buffer_t *in, int width, int height, int idx, halide_buffer_t
         in->dim[2].min = 0;
         in->dim[2].extent = height;
     } else {
-        CvMat *img = cvCreateMatHeader(height, width, CV_MAKETYPE(CV_8U, 3));
-        cvSetData(img, in->host, 3*width*sizeof(uint8_t));
+        auto img = cv.cvCreateMatHeader(height, width, CV_MAKETYPE(CV_8U, 3));
+        cv.cvSetData(img, in->host, 3*width*sizeof(uint8_t));
 
         auto name = "img" + std::to_string(idx);
-        cvShowImage(name.c_str(), img);
-        cvWaitKey(1);
+        cv.cvShowImage(name.c_str(), img);
+        cv.cvWaitKey(1);
 
-        cvReleaseMat(&img);
+        cv.cvReleaseMat(&img);
     }
 
     return 0;
