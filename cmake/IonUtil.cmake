@@ -83,10 +83,9 @@ function(ion_run NAME COMPILE_NAME)
     endif()
 
     # Build run
-    find_package(OpenCV 4 REQUIRED)
     add_executable(${NAME} ${IER_SRCS} ${HEADER})
-    target_include_directories(${NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include ${OpenCV_INCLUDE_DIRS} ${OUTPUT_PATH})
-    target_link_libraries(${NAME} PRIVATE ${STATIC_LIB} ion-bb Halide::Halide Halide::Runtime ${OpenCV_LIBS} ${PLATFORM_LIBRARIES})
+    target_include_directories(${NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include ${OUTPUT_PATH})
+    target_link_libraries(${NAME} PRIVATE ${STATIC_LIB} ion-bb Halide::Halide Halide::Runtime ${PLATFORM_LIBRARIES})
 
     add_test(NAME ${NAME} COMMAND $<TARGET_FILE:${NAME}> ${IER_RUNTIME_ARGS})
 endfunction()
@@ -116,9 +115,8 @@ function(ion_jit NAME)
             PUBLIC -fno-rtti  # For Halide::Generator
             PUBLIC -rdynamic) # For JIT compiling
     endif()
-    find_package(OpenCV 4 REQUIRED)
-    target_include_directories(${NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include ${ION_BB_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
-    target_link_libraries(${NAME} PRIVATE ion-core ${ION_BB_LIBRARIES} ${PLATFORM_LIBRARIES} ${OpenCV_LIBS})
+    target_include_directories(${NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include ${ION_BB_INCLUDE_DIRS})
+    target_link_libraries(${NAME} PRIVATE ion-core ${ION_BB_LIBRARIES} ${PLATFORM_LIBRARIES})
     set_target_properties(${NAME} PROPERTIES ENABLE_EXPORTS ON)
 endfunction()
 
@@ -135,7 +133,7 @@ function(ion_register_test TEST_NAME EXEC_NAME)
             set(IERT_RUNTIME_ENVS "LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/src/bb:${CMAKE_BINARY_DIR}/test")
         endif()
     else()
-        set(IERT_RUNTIME_ENVS "PATH=${CMAKE_BINARY_DIR}/Release\;${CMAKE_BINARY_DIR}/src/bb/Release\;${CMAKE_BINARY_DIR}/test/Release\;${Halide_DIR}/../../../bin/Release\;${OpenCV_DIR}/x64/vc15/bin")
+        set(IERT_RUNTIME_ENVS "PATH=${CMAKE_BINARY_DIR}/Release\;${CMAKE_BINARY_DIR}/src/bb/Release\;${CMAKE_BINARY_DIR}/test/Release\;${Halide_DIR}/../../../bin/Release")
     endif()
 
     if (IERT_TARGET_STRING)

@@ -66,8 +66,9 @@ int main(int argc, char *argv[]) {
         output.bind(out_buf);
 
         b.run();
+
         display_image_float(out_buf, "display.png");
-        std::cout << "Success" << std::endl;
+
     } catch (const Halide::Error &e) {
         std::cerr << e.what() << std::endl;
         return 1;

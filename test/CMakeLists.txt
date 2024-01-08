@@ -69,18 +69,18 @@ ion_jit(port-binding SRCS port-binding.cc)
 add_dependencies(port-binding ion-bb-test)
 ion_register_test(port-binding_test port-binding)
 
-if(UNIX AND NOT APPLE)
 # Port index access
-ion_jit(port-access SRCS port-access.cc)
-add_dependencies(port-access  ion-bb-test)
-ion_register_test(port-access_test port-access)
+if(${OpenCV_DIR})
+    ion_jit(port-access SRCS port-access.cc)
+    add_dependencies(port-access ion-bb-test)
+    ion_register_test(port-access_test port-access)
 endif()
 
 ion_jit(direct-extern SRCS direct-extern.cc)
 add_dependencies(direct-extern ion-bb-test)
 ion_register_test(direct-extern_test direct-extern)
 
-if (WITH_CUDA)
+if (${CUDA_FOUND})
     ion_jit(gpu-extern SRCS gpu-extern.cc)
     cuda_add_library(gpu-extern-lib SHARED gpu-extern-lib.cu)
     add_dependencies(gpu-extern ion-bb-test gpu-extern-lib)
