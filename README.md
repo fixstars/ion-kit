@@ -29,7 +29,7 @@ cmake --build .
 ```
 mkdir build
 cd build
-cmake -G "Visual Studio 17 2022" -A x64 -DHalideHelpers_DIR=<> -DHalide_DIR=<path-to-HalideConfig.cmake> -DOpenCV_DIR=<path-to-opencv-cmake> -D ION_BUILD_ALL_BB=OFF -DION_BBS_TO_BUILD="ion-bb-core;ion-bb-image-processing;ion-bb-sgm;ion-bb-image-io" ../
+cmake -G "Visual Studio 17 2022" -A x64 -DHalideHelpers_DIR=<path-to-halide-helpers> -DHalide_DIR=<path-to-HalideConfig.cmake> -DOpenCV_DIR=<path-to-opencv-cmake> -D ION_BUILD_ALL_BB=OFF -DION_BBS_TO_BUILD="ion-bb-core;ion-bb-image-processing;ion-bb-sgm;ion-bb-image-io" ../
 cmake --build . --config Release
 ```
 
