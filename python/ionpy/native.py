@@ -7,7 +7,7 @@ import platform
 if platform.system()  == 'Windows':
     ion_core_module = find_library('ion-core.dll')
 elif platform.system() == 'Darwin':
-    ion_core_module = '/Users/xinyuli/Desktop/ion-kit-install/lib/libion-core.dylib'
+    ion_core_module = 'libion-core.dylib'
 elif platform.system() == 'Linux':
     ion_core_module = 'libion-core.so'
 

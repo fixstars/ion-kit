@@ -30,12 +30,12 @@ from .TypeCode import TypeCode
 
 class Port:
     def __init__(self,
-                 name: Optional[str] = None,
-                 type: Optional[Type] = None,
-                 dim: Optional[int] = None,
-                 # -- or
-                 obj_: Optional[c_ion_port_t] = None,
-                 ):
+             name: Optional[str] = None,
+             type: Optional[Type] = None,
+             dim: Optional[int] = None,
+             # -- or
+             obj_: Optional[c_ion_port_t] = None,
+        ):
         if obj_ is None:
             obj_ = c_ion_port_t()
             type_cobj = type.to_cobj()
