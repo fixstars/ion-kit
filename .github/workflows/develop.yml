@@ -15,15 +15,12 @@ jobs:
     # well on Windows or Mac.  You can convert this to a matrix build if you need
     # cross-platform coverage.
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
 
     steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@v4
 
       - name: Install dependencies
-        shell: bash
         run: |
             sudo apt-get update
             sudo apt-get install -y curl cmake build-essential libopencv-dev zlib1g-dev
@@ -31,7 +28,6 @@ jobs:
             sudo rm -rf /var/lib/apt/lists/*
 
       - name: Download Halide package
-        shell: bash
         run: |
             mkdir ${HOME}/halide
             curl -L https://github.com/halide/Halide/releases/download/v16.0.0/Halide-16.0.0-x86-64-linux-1e963ff817ef0968cc25d811a25a7350c8953ee6.tar.gz | tar zx -C ${HOME}/halide --strip-components 1
@@ -39,7 +35,6 @@ jobs:
             sudo cp -r ${HOME}/halide/* /usr/
 
       - name: Download onnxruntime package
-        shell: bash
         run: |
             mkdir ${HOME}/onnxruntime
             curl -L https://github.com/microsoft/onnxruntime/releases/download/v1.16.3/onnxruntime-linux-x64-1.16.3.tgz | tar zx -C ${HOME}/onnxruntime --strip-components 1
@@ -54,7 +49,6 @@ jobs:
       - name: Configure CMake
         # Use a bash shell so we can use the same syntax for environment variable
         # access regardless of the host operating system
-        shell: bash
         working-directory: ${{runner.workspace}}/ion-kit/build
         # Note the current convention is to use the -S and -B options here to specify source
         # and build directories, but this is only available with CMake 3.13 and higher.
