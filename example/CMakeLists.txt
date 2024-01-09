@@ -3,7 +3,7 @@
 # Examples
 #
 
-find_package(OpenCV)
+find_package(OpenCV 4 QUIET)
 
 if(${ION_BB_BUILD_base})
     ion_compile(producerx3_compile SRCS producerx3_compile.cc PIPELINE_NAME producerx3)
