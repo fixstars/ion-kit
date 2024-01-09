@@ -10,7 +10,7 @@ using namespace ion;
 
 int main() {
     try {
-        constexpr size_t h = 12, w = 10, len = 5;
+        constexpr int h = 12, w = 10, len = 5;
 
         ion::Buffer<int32_t> in(w, h);
         for (int y = 0; y < h; ++y) {
@@ -38,7 +38,7 @@ int main() {
         n = b.add("test_array_output")(in).set_param(Param("len", len));
         n = b.add("test_array_copy")(n["array_output"]).set_param(Param("len", len));
 
-        for (size_t i=0; i<len; ++i) {
+        for (int i=0; i<len; ++i) {
             n["array_output"][i].bind(outs[i]);
         }
 
