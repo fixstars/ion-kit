@@ -36,22 +36,15 @@ jobs:
           rm Halide.zip
           mv Halide*/* ${HOME}/Halide
 
-      - name: Create Build Directory
-        shell: bash
-        run: cmake -E make_directory ${{runner.workspace}}\ion-kit\build
-
       - name: Configure
-        working-directory: ${{runner.workspace}}\ion-kit\build
         shell: bash
         run: cmake -G "Visual Studio 16 2019" -A x64 -D ION_BUILD_TEST=ON -D ION_BUILD_EXAMPLE=ON -D HalideHelpers_DIR=${HOME}/Halide/lib/cmake/HalideHelpers -D Halide_DIR=${HOME}/Halide/lib/cmake/Halide $GITHUB_WORKSPACE
 
       - name: Build
-        working-directory: ${{runner.workspace}}\ion-kit\build
         shell: bash
         run: cmake --build . --config $BUILD_TYPE
 
       - name: Test
-        working-directory: ${{runner.workspace}}\ion-kit\build
         shell: bash
         run: |
           ctest --verbose -v -C $BUILD_TYPE

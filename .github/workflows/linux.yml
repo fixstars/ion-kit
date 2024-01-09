@@ -41,22 +41,15 @@ jobs:
             find ${HOME}/onnxruntime -type d | xargs chmod 755
             sudo cp -r ${HOME}/onnxruntime/* /usr/
 
-      - name: Create Build Directory
-        shell: bash
-        run: cmake -E make_directory ${{runner.workspace}}/ion-kit/build
-
       - name: Configure
-        working-directory: ${{runner.workspace}}/ion-kit/build
         shell: bash
         run: cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -D ION_BUILD_TEST=ON -D ION_BUILD_EXAMPLE=ON $GITHUB_WORKSPACE
 
       - name: Build
-        working-directory: ${{runner.workspace}}/ion-kit/build
         shell: bash
         run: cmake --build . --config $BUILD_TYPE
 
       - name: Test
-        working-directory: ${{runner.workspace}}/ion-kit/build
         shell: bash
         run: |
           ctest --verbose -v -C $BUILD_TYPE

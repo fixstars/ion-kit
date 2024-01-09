@@ -30,10 +30,6 @@ jobs:
             curl -L https://github.com/halide/Halide/releases/download/v16.0.0/Halide-16.0.0-x86-64-osx-1e963ff817ef0968cc25d811a25a7350c8953ee6.tar.gz | tar zx -C ${HOME}/Halide --strip-components 1
             find ${HOME}/Halide -type d | xargs chmod 755
 
-      - name: Create Build Directory
-        shell: bash
-        run: cmake -E make_directory ${{runner.workspace}}/ion-kit/build
-
       - name: Configure
         shell: bash
         run: cmake -D CMAKE_BUILD_TYPE=$BUILD_TYPE -D ION_BUILD_TEST=ON -D ION_BUILD_EXAMPLE=ON -D HalideHelpers_DIR=${HOME}/Halide/lib/cmake/HalideHelpers -D Halide_DIR=${HOME}/Halide/lib/cmake/Halide $GITHUB_WORKSPACE
@@ -43,7 +39,6 @@ jobs:
         run: cmake --build . --config $BUILD_TYPE
 
       - name: Test
-        working-directory: ${{runner.workspace}}/ion-kit/build
         shell: bash
         run: |
           ctest --verbose -v -C $BUILD_TYPE
