@@ -1,22 +1,14 @@
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.12)
 project(ion-kit LANGUAGES C CXX)
 
 #
 # Options
 #
-if (UNIX)
-  set(DEFAULT_TARGET_BB "base;dnn;image-io;image-processing;opencv;sgm")
-else()
-  set(DEFAULT_TARGET_BB "base;image-io;image-processing;opencv;sgm")
-endif()
-set(ION_TARGET_BB ${DEFAULT_TARGET_BB} CACHE STRING "A List of building blocks to build (This overrides ION_BUILD_ALL_BB)")
 option(ION_BUILD_DOC "Build documents." OFF)
 option(ION_BUILD_TEST "Enable to build tests" ON)
 option(ION_BUILD_EXAMPLE "Enable to build examples" ON)
 option(ION_BUNDLE_HALIDE "Enable to bundle Halide binary into package" OFF)
-#TODO: Enable define HALIDE_FOR_FPGA into compile option if it is ON
 option(ION_ENABLE_HALIDE_FPGA_BACKEND "Enable to Halide FPGA backend" OFF)
-option(WITH_CUDA "Enable CUDA with buliding examples." ON)
 
 #
 # CMake common settings
@@ -24,6 +16,7 @@ option(WITH_CUDA "Enable CUDA with buliding examples." ON)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON) # This is required to export symbols on windows platform
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
@@ -31,10 +24,13 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 #
 # Dependent libraries
 #
+# NOTE: WIP: It's for static linking
+# set(ZLIB_USE_STATIC_LIBS "ON")
+# find_package(ZLIB REQUIRED)
+# find_package(LLVM REQUIRED)
+# find_package(Halide REQUIRED COMPONENTS static)
 find_package(Halide REQUIRED COMPONENTS shared)
-if (${WITH_CUDA})
-    find_package(CUDA REQUIRED)
-endif()
+find_package(CUDA)
 
 #
 # Version
@@ -183,11 +179,7 @@ endif()
 # Packaging
 #
 if (UNIX)
-    set(CPACK_GENERATOR "TGZ" "DEB")
-    set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
-    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Fixstars Corporation Inc.")
-    configure_file(${CMAKE_SOURCE_DIR}/ion-kit.pc.in ${CMAKE_BINARY_DIR}/ion-kit.pc @ONLY)
-    install(FILES ${CMAKE_BINARY_DIR}/ion-kit.pc DESTINATION lib/pkgconfig/)
+    set(CPACK_GENERATOR "TGZ")
 else ()
     set(CPACK_GENERATOR "ZIP")
 endif ()

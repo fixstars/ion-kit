@@ -87,7 +87,7 @@ class adl_serializer<ion::Node> {
          auto bb(Halide::Internal::GeneratorRegistry::create(v.impl_->name, Halide::GeneratorContext(v.impl_->target)));
          if (!bb) {
              ion::log::error("BuildingBlock {} is not found", v.impl_->name);
-             throw std::runtime_error("Failed to create building block");
+             throw std::runtime_error("Failed to create building block object");
          }
          v.impl_->arginfos = bb->arginfos();
      }

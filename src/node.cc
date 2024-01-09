@@ -10,7 +10,7 @@ Node::Impl::Impl(const std::string& id_, const std::string& name_, const Halide:
     auto bb(Halide::Internal::GeneratorRegistry::create(name_, Halide::GeneratorContext(target_)));
     if (!bb) {
         log::error("BuildingBlock {} is not found", name_);
-        throw std::runtime_error("Failed to create building block");
+        throw std::runtime_error("Failed to create building block object");
     }
 
     arginfos = bb->arginfos();

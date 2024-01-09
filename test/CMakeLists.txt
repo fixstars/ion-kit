@@ -4,6 +4,7 @@
 
 # Test BB module
 add_library(ion-bb-test SHARED ion-bb-test.cc)
+target_include_directories(ion-bb-test PUBLIC ${PROJECT_SOURCE_DIR}/src)
 if(UNIX)
     target_compile_options(ion-bb-test PUBLIC -fno-rtti)
 endif()
@@ -69,18 +70,18 @@ ion_jit(port-binding SRCS port-binding.cc)
 add_dependencies(port-binding ion-bb-test)
 ion_register_test(port-binding_test port-binding)
 
-if(UNIX AND NOT APPLE)
 # Port index access
-ion_jit(port-access SRCS port-access.cc)
-add_dependencies(port-access  ion-bb-test)
-ion_register_test(port-access_test port-access)
+if(${OpenCV_DIR})
+    ion_jit(port-access SRCS port-access.cc)
+    add_dependencies(port-access ion-bb-test)
+    ion_register_test(port-access_test port-access)
 endif()
 
 ion_jit(direct-extern SRCS direct-extern.cc)
 add_dependencies(direct-extern ion-bb-test)
 ion_register_test(direct-extern_test direct-extern)
 
-if (WITH_CUDA)
+if (${CUDA_FOUND})
     ion_jit(gpu-extern SRCS gpu-extern.cc)
     cuda_add_library(gpu-extern-lib SHARED gpu-extern-lib.cu)
     add_dependencies(gpu-extern ion-bb-test gpu-extern-lib)
@@ -99,11 +100,11 @@ ion_register_test(export_test export)
 # Pipeline testing
 #
 ion_compile(simple_graph_compile SRCS simple_graph_compile.cc PIPELINE_NAME simple_graph)
-ion_run(simple_graph_aot_test simple_graph_compile SRCS simple_graph_run.cc test-rt.h TARGET_STRING "host-profile")
+ion_run(simple_graph_aot_test simple_graph_compile SRCS simple_graph_run.cc test-rt.h LIBS ion-bb-test TARGET_STRING "host-profile")
 ion_jit(simple_graph_jit SRCS simple_graph_jit.cc test-rt.h)
 ion_register_test(simple_graph_jit_test simple_graph_jit TARGET_STRING "host-profile")
 
 ion_compile(complex_graph_compile SRCS complex_graph_compile.cc PIPELINE_NAME complex_graph)
-ion_run(complex_graph_aot_test complex_graph_compile SRCS complex_graph_run.cc test-rt.h TARGET_STRING "host-profile")
+ion_run(complex_graph_aot_test complex_graph_compile SRCS complex_graph_run.cc test-rt.h LIBS ion-bb-test TARGET_STRING "host-profile")
 ion_jit(complex_graph_jit SRCS complex_graph_jit.cc test-rt.h)
 ion_register_test(complex_graph_jit_test complex_graph_jit TARGET_STRING "host-profile")

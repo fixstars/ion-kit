@@ -35,7 +35,7 @@ endfunction()
 function(ion_run NAME COMPILE_NAME)
     set(options)
     set(oneValueArgs TARGET_STRING)
-    set(multiValueArgs SRCS COMPILE_ARGS RUNTIME_ARGS)
+    set(multiValueArgs SRCS INCS LIBS COMPILE_ARGS RUNTIME_ARGS)
     cmake_parse_arguments(IER "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if(NOT IER_TARGET_STRING)
@@ -83,29 +83,17 @@ function(ion_run NAME COMPILE_NAME)
     endif()
 
     # Build run
-    find_package(OpenCV 4 REQUIRED)
     add_executable(${NAME} ${IER_SRCS} ${HEADER})
-    target_include_directories(${NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include ${OpenCV_INCLUDE_DIRS} ${OUTPUT_PATH})
-    target_link_libraries(${NAME} PRIVATE ${STATIC_LIB} ion-bb Halide::Halide Halide::Runtime ${OpenCV_LIBS} ${PLATFORM_LIBRARIES})
+    target_include_directories(${NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include ${OUTPUT_PATH} ${IER_INCS})
+    target_link_libraries(${NAME} PRIVATE ${STATIC_LIB} Halide::Halide Halide::Runtime ${PLATFORM_LIBRARIES} ${IER_LIBS})
 
     add_test(NAME ${NAME} COMMAND $<TARGET_FILE:${NAME}> ${IER_RUNTIME_ARGS})
-endfunction()
-
-# For multiple target, don't use this function.
-function(ion_compile_and_run NAME)
-    set(options)
-    set(oneValueArgs TARGET_STRING)
-    set(multiValueArgs COMPILE_SRCS RUN_SRCS RUNTIME_ARGS)
-    cmake_parse_arguments(IECR "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-
-    ion_compile(${NAME}_compile SRCS ${IECR_COMPILE_SRCS} PIPELINE_NAME ${NAME})
-    ion_run(${NAME} ${NAME}_compile SRCS ${IECR_RUN_SRCS} RUNTIME_ARGS ${IECR_RUNTIME_ARGS} TARGET_STRING ${IECR_TARGET_STRING})
 endfunction()
 
 function(ion_jit NAME)
     set(options)
     set(oneValueArgs)
-    set(multiValueArgs SRCS)
+    set(multiValueArgs SRCS INCS LIBS)
     cmake_parse_arguments(IEJ "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
     add_executable(${NAME} ${IEJ_SRCS})
     if (UNIX AND NOT APPLE)
@@ -116,9 +104,8 @@ function(ion_jit NAME)
             PUBLIC -fno-rtti  # For Halide::Generator
             PUBLIC -rdynamic) # For JIT compiling
     endif()
-    find_package(OpenCV 4 REQUIRED)
-    target_include_directories(${NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include ${ION_BB_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
-    target_link_libraries(${NAME} PRIVATE ion-core ${ION_BB_LIBRARIES} ${PLATFORM_LIBRARIES} ${OpenCV_LIBS})
+    target_include_directories(${NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include ${ION_BB_INCLUDE_DIRS} ${IEJ_INCS})
+    target_link_libraries(${NAME} PRIVATE ion-core ${ION_BB_LIBRARIES} ${PLATFORM_LIBRARIES} ${IEJ_LIBS})
     set_target_properties(${NAME} PROPERTIES ENABLE_EXPORTS ON)
 endfunction()
 
@@ -135,7 +122,7 @@ function(ion_register_test TEST_NAME EXEC_NAME)
             set(IERT_RUNTIME_ENVS "LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/src/bb:${CMAKE_BINARY_DIR}/test")
         endif()
     else()
-        set(IERT_RUNTIME_ENVS "PATH=${CMAKE_BINARY_DIR}/Release\;${CMAKE_BINARY_DIR}/src/bb/Release\;${CMAKE_BINARY_DIR}/test/Release\;${Halide_DIR}/../../../bin/Release\;${OpenCV_DIR}/x64/vc15/bin")
+        set(IERT_RUNTIME_ENVS "PATH=${CMAKE_BINARY_DIR}/Release\;${CMAKE_BINARY_DIR}/src/bb/Release\;${CMAKE_BINARY_DIR}/test/Release\;${Halide_DIR}/../../../bin/Release")
     endif()
 
     if (IERT_TARGET_STRING)
