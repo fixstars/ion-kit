@@ -1,18 +1,13 @@
 #ifndef ION_BB_OPENCV_RT_H
 #define ION_BB_OPENCV_RT_H
 
-#include <HalideBuffer.h>
+#include <Halide.h>
 
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 
-#ifdef _WIN32
-#define ION_EXPORT __declspec(dllexport)
-#else
-#define ION_EXPORT
-#endif
+#include "ion/export.h"
 
-#include <Halide.h>
 namespace ion {
 namespace bb {
 namespace opencv {
@@ -87,7 +82,6 @@ int display(halide_buffer_t *in, int width, int height, int idx, halide_buffer_t
     return 0;
 }
 
-#undef ION_EXPORT
 #undef ION_REGISTER_EXTERN
 
 #endif // ION_BB_OPENCV_RT_H
