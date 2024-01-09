@@ -35,7 +35,7 @@ endfunction()
 function(ion_run NAME COMPILE_NAME)
     set(options)
     set(oneValueArgs TARGET_STRING)
-    set(multiValueArgs SRCS COMPILE_ARGS RUNTIME_ARGS)
+    set(multiValueArgs SRCS INCS LIBS COMPILE_ARGS RUNTIME_ARGS)
     cmake_parse_arguments(IER "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if(NOT IER_TARGET_STRING)
@@ -84,27 +84,16 @@ function(ion_run NAME COMPILE_NAME)
 
     # Build run
     add_executable(${NAME} ${IER_SRCS} ${HEADER})
-    target_include_directories(${NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include ${OUTPUT_PATH})
-    target_link_libraries(${NAME} PRIVATE ${STATIC_LIB} ion-bb Halide::Halide Halide::Runtime ${PLATFORM_LIBRARIES})
+    target_include_directories(${NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include ${OUTPUT_PATH} ${IER_INCS})
+    target_link_libraries(${NAME} PRIVATE ${STATIC_LIB} Halide::Halide Halide::Runtime ${PLATFORM_LIBRARIES} ${IER_LIBS})
 
     add_test(NAME ${NAME} COMMAND $<TARGET_FILE:${NAME}> ${IER_RUNTIME_ARGS})
-endfunction()
-
-# For multiple target, don't use this function.
-function(ion_compile_and_run NAME)
-    set(options)
-    set(oneValueArgs TARGET_STRING)
-    set(multiValueArgs COMPILE_SRCS RUN_SRCS RUNTIME_ARGS)
-    cmake_parse_arguments(IECR "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-
-    ion_compile(${NAME}_compile SRCS ${IECR_COMPILE_SRCS} PIPELINE_NAME ${NAME})
-    ion_run(${NAME} ${NAME}_compile SRCS ${IECR_RUN_SRCS} RUNTIME_ARGS ${IECR_RUNTIME_ARGS} TARGET_STRING ${IECR_TARGET_STRING})
 endfunction()
 
 function(ion_jit NAME)
     set(options)
     set(oneValueArgs)
-    set(multiValueArgs SRCS;INCS;LIBS)
+    set(multiValueArgs SRCS INCS LIBS)
     cmake_parse_arguments(IEJ "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
     add_executable(${NAME} ${IEJ_SRCS})
     if (UNIX AND NOT APPLE)
