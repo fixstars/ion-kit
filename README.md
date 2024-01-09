@@ -1,5 +1,5 @@
-[![Ubuntu](https://github.com/fixstars/ion-kit/workflows/Linux/badge.svg)](https://github.com/fixstars/ion-kit/actions?query=workflow%3ALinux)
-[![macOS](https://github.com/fixstars/ion-kit/workflows/MacOS/badge.svg)](https://github.com/fixstars/ion-kit/actions?query=workflow%3AMacOS)
+[![Linux](https://github.com/fixstars/ion-kit/workflows/Linux/badge.svg)](https://github.com/fixstars/ion-kit/actions?query=workflow%3ALinux)
+[![MacOS](https://github.com/fixstars/ion-kit/workflows/MacOS/badge.svg)](https://github.com/fixstars/ion-kit/actions?query=workflow%3AMacOS)
 [![Windows](https://github.com/fixstars/ion-kit/workflows/Windows/badge.svg)](https://github.com/fixstars/ion-kit/actions?query=workflow%3AWindows)
 
 # ion-kit
