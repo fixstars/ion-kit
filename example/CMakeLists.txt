@@ -51,10 +51,9 @@ if(${ION_BB_BUILD_base} AND ${ION_BB_BUILD_image-io} AND ${ION_BB_BUILD_dnn})
     ion_jit_executable(gender_count SRCS gender_count.cc)
 endif()
 
-if(${ION_BB_BUILD_image-io})
-    ion_jit_executable(io SRCS io.cc)
-    # ion_jit_executable(u3v_jit SRCS u3v.cc)
-endif()
+#if(${ION_BB_BUILD_image-io})
+#    ion_jit_executable(u3v_jit SRCS u3v.cc)
+#endif()
 
 if(${ION_BB_BUILD_image-io} AND UNIX AND NOT APPLE)
     ion_jit_executable(v4l2_jit SRCS v4l2.cc)
