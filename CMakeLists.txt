@@ -179,11 +179,7 @@ endif()
 # Packaging
 #
 if (UNIX)
-    set(CPACK_GENERATOR "TGZ" "DEB")
-    set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
-    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Fixstars Corporation Inc.")
-    configure_file(${CMAKE_SOURCE_DIR}/ion-kit.pc.in ${CMAKE_BINARY_DIR}/ion-kit.pc @ONLY)
-    install(FILES ${CMAKE_BINARY_DIR}/ion-kit.pc DESTINATION lib/pkgconfig/)
+    set(CPACK_GENERATOR "TGZ")
 else ()
     set(CPACK_GENERATOR "ZIP")
 endif ()

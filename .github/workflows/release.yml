@@ -40,7 +40,6 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            ion-kit*.deb
             ion-kit*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -82,3 +81,42 @@ jobs:
                 ion-kit*.zip
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release-macos:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get latest CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Install dependencies
+        run: |
+          # Packages
+          # sudo apt-get update
+          # sudo apt-get install -y doxygen curl build-essential zlib1g-dev
+          # sudo apt-get clean
+          # sudo rm -rf /var/lib/apt/lists/*
+
+      - name: Download Halide package
+        run: |
+            mkdir ${HOME}/halide
+            curl -L https://github.com/halide/Halide/releases/download/v16.0.0/Halide-16.0.0-x86-64-osx-1e963ff817ef0968cc25d811a25a7350c8953ee6.tar.gz | tar zx -C ${HOME}/halide --strip-components 1
+            find ${HOME}/halide -type d | xargs chmod 755
+            sudo cp -r ${HOME}/halide/* /usr/
+
+      - name: Configure
+        run: cmake -D CMAKE_BUILD_TYPE=Release -D ION_BUILD_TEST=OFF -D ION_BUILD_EXAMPLE=OFF -D ION_BUNDLE_HALIDE=ON $GITHUB_WORKSPACE
+
+      - name: Build
+        run: cmake --build . --config Release --target package
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ion-kit*.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
