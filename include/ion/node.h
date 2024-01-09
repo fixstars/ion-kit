@@ -17,7 +17,7 @@ namespace ion {
  */
 class Node {
     friend class Builder;
-    friend class nlohmann::adl_serializer<Node>;
+    friend struct nlohmann::adl_serializer<Node>;
 
     struct Impl {
         std::string id;

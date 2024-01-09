@@ -78,7 +78,7 @@ private:
  public:
      friend class Builder;
      friend class Node;
-     friend class nlohmann::adl_serializer<Port>;
+     friend struct nlohmann::adl_serializer<Port>;
 
      Port() : impl_(new Impl("", "", Halide::Type(), 0)), index_(-1) {}
 
