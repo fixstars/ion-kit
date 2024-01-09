@@ -20,13 +20,14 @@ if(${ION_BB_BUILD_image-processing} AND ${ION_BB_BUILD_image-io} AND ${ION_BB_BU
 endif()
 
 if(${ION_BB_BUILD_base} AND ${ION_BB_BUILD_image-io} AND ${ION_BB_BUILD_dnn})
+    find_package(OpenCV)
+
     ion_compile(dnn_compile SRCS dnn_compile.cc PIPELINE_NAME dnn)
     ion_run(dnn dnn_compile SRCS dnn_run.cc TARGET_STRING "host-profile")
     if(${CUDA_FOUND})
         ion_run(dnn_gpu dnn_compile SRCS dnn_run.cc TARGET_STRING "host-cuda-cuda_capability_50-profile")
     endif()
-
-    ion_jit(dnn_jit SRCS dnn.cc)
+    ion_jit(dnn_jit SRCS dnn.cc INCS ${OpenCV_INCLUDE_DIRS} LIBS ${OpenCV_LIBRARIES})
 endif()
 
 if(${ION_BB_BUILD_base} AND ${ION_BB_BUILD_image-processing} AND ${ION_BB_BUILD_image-io})
