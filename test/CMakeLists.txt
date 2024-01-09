@@ -100,11 +100,11 @@ ion_register_test(export_test export)
 # Pipeline testing
 #
 ion_compile(simple_graph_compile SRCS simple_graph_compile.cc PIPELINE_NAME simple_graph)
-ion_run(simple_graph_aot_test simple_graph_compile SRCS simple_graph_run.cc test-rt.h LIBS TARGET_STRING "host-profile")
+ion_run(simple_graph_aot_test simple_graph_compile SRCS simple_graph_run.cc test-rt.h LIBS ion-bb-test TARGET_STRING "host-profile")
 ion_jit(simple_graph_jit SRCS simple_graph_jit.cc test-rt.h)
 ion_register_test(simple_graph_jit_test simple_graph_jit TARGET_STRING "host-profile")
 
 ion_compile(complex_graph_compile SRCS complex_graph_compile.cc PIPELINE_NAME complex_graph)
-ion_run(complex_graph_aot_test complex_graph_compile SRCS complex_graph_run.cc test-rt.h LIBS TARGET_STRING "host-profile")
+ion_run(complex_graph_aot_test complex_graph_compile SRCS complex_graph_run.cc test-rt.h LIBS ion-bb-test TARGET_STRING "host-profile")
 ion_jit(complex_graph_jit SRCS complex_graph_jit.cc test-rt.h)
 ion_register_test(complex_graph_jit_test complex_graph_jit TARGET_STRING "host-profile")

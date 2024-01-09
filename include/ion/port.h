@@ -134,7 +134,7 @@ private:
 
      // const std::string& succ_id() const { return impl_->succ_id; }
 
-     int32_t size() const { return impl_->params.size(); }
+     int32_t size() const { return static_cast<int32_t>(impl_->params.size()); }
 
      int32_t index() const { return index_; }
 
@@ -181,7 +181,7 @@ private:
 
      template<typename T>
      void bind(const std::vector<Halide::Buffer<T>>& bufs) {
-         for (size_t i=0; i<bufs.size(); ++i) {
+         for (int i=0; i<static_cast<int>(bufs.size()); ++i) {
              if (has_pred()) {
                  impl_->params[i] = Halide::Internal::Parameter{bufs[i].type(), true, bufs[i].dimensions(), argument_name(pred_id(), pred_name(), i)};
              } else {
