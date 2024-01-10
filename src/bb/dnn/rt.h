@@ -1,10 +1,19 @@
 #ifndef ION_BB_DNN_RT_H
 #define ION_BB_DNN_RT_H
 
-#include <HalideBuffer.h>
 #include <Halide.h>
 
+#include "ion/export.h"
+
 #include "log.h"
+#include "json/json.hpp"
+
+#include "rt_dnndk.h"
+#include "rt_json.h"
+#include "rt_opencv.h"
+#include "rt_ort.h"
+#include "rt_tfl.h"
+#include "rt_trt.h"
 
 namespace ion {
 namespace bb {
@@ -23,20 +32,6 @@ class RegisterExtern {
 } // bb
 } // ion
 #define ION_REGISTER_EXTERN(NAME) static auto ion_register_extern_##NAME = ion::bb::dnn::RegisterExtern(#NAME, NAME);
-
-#include "json/json.hpp"
-#include "rt_dnndk.h"
-#include "rt_json.h"
-#include "rt_opencv.h"
-#include "rt_ort.h"
-#include "rt_tfl.h"
-#include "rt_trt.h"
-
-#ifdef _WIN32
-#define ION_EXPORT __declspec(dllexport)
-#else
-#define ION_EXPORT
-#endif
 
 extern "C" ION_EXPORT int ion_bb_dnn_generic_object_detection(halide_buffer_t *in,
                                                               halide_buffer_t *session_id_buf,
@@ -363,8 +358,6 @@ extern "C" ION_EXPORT int ion_bb_dnn_ifttt_webhook_uploader(halide_buffer_t *in_
 }
 ION_REGISTER_EXTERN(ion_bb_dnn_ifttt_webhook_uploader)
 
-
-#undef ION_EXPORT
 #undef ION_REGISTER_EXTERN
 
 #endif  // ION_BB_DNN_BB_H

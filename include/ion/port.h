@@ -97,7 +97,6 @@ public:
      */
     Port(const std::string& n, Halide::Type t, int32_t d) : impl_(new Impl("", n, t, d)), index_(-1) {}
 
-
     /**
      * Construct new port from scalar pointer
      */
@@ -178,7 +177,7 @@ public:
 
      template<typename T>
      void bind(const std::vector<Halide::Buffer<T>>& bufs) {
-         for (size_t i=0; i<bufs.size(); ++i) {
+         for (int i=0; i<static_cast<int>(bufs.size()); ++i) {
              if (has_pred()) {
                  impl_->params[i] = Halide::Internal::Parameter{bufs[i].type(), true, bufs[i].dimensions(), argument_name(pred_id(), pred_name(), i)};
              } else {

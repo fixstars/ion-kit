@@ -34,13 +34,12 @@ int main(int argc, char *argv[]) {
         n = b.add("dnn_ifttt_webhook_uploader")(n["output"]).set_param(Param("ifttt_webhook_url", "http://maker.ifttt.com/trigger/gender_count/with/key/buf--6AoUjTGu868Pva_Q9"));
         Port out_p2 = n["output"];
 
-        PortMap pm;
         Halide::Buffer<int32_t> out1 = Halide::Buffer<int32_t>::make_scalar();
         out_p1.bind(out1);
         Halide::Buffer<int32_t> out2 = Halide::Buffer<int32_t>::make_scalar();
         out_p2.bind(out2);
-        for (int i=0; i<1000; ++i) {
-            b.run(pm);
+        for (int i=0; i<100; ++i) {
+            b.run();
         }
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;

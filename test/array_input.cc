@@ -10,7 +10,7 @@ using namespace ion;
 
 int main() {
     try {
-        constexpr size_t h = 12, w = 10, len = 5;
+        constexpr int h = 12, w = 10, len = 5;
 
         // Index access style
         {
@@ -40,7 +40,7 @@ int main() {
                 }
             }
 
-            for (size_t i=0; i<len; ++i) {
+            for (int i=0; i<len; ++i) {
                 input[i].bind(ins[i]);
             }
             n["output"].bind(out);

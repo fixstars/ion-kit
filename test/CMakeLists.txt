@@ -11,100 +11,61 @@ endif()
 target_link_libraries(ion-bb-test ion-core)
 
 # C interface test
-ion_jit(c_api SRCS c_api.cc)
-add_dependencies(c_api ion-bb-test)
-ion_register_test(c_api_test c_api)
+ion_jit_executable(c_api SRCS c_api.cc)
 
 # Error case test
-ion_jit(error SRCS error.cc)
-add_dependencies(error ion-bb-test)
-ion_register_test(error_test error)
+ion_jit_executable(error SRCS error.cc)
 
 # Metadata test
-ion_jit(metadata SRCS metadata.cc)
-add_dependencies(metadata ion-bb-test)
-ion_register_test(metadata_test metadata)
+ion_jit_executable(metadata SRCS metadata.cc)
 
 # Multi-out test
-ion_jit(multi_out SRCS multi_out.cc)
-add_dependencies(multi_out ion-bb-test)
-ion_register_test(multi_out_test multi_out)
+ion_jit_executable(multi_out SRCS multi_out.cc)
 
 # Array In/Out test
-ion_jit(array_inout SRCS array_inout.cc)
-add_dependencies(array_inout ion-bb-test)
-ion_register_test(array_inout_test array_inout)
+ion_jit_executable(array_inout SRCS array_inout.cc)
 
 # Array Input test
-ion_jit(array_input SRCS array_input.cc)
-add_dependencies(array_input ion-bb-test)
-ion_register_test(array_input_test array_input)
+ion_jit_executable(array_input SRCS array_input.cc)
 
 # Array Output test
-ion_jit(array_output SRCS array_output.cc)
-add_dependencies(array_output ion-bb-test)
-ion_register_test(array_output_test array_output)
+ion_jit_executable(array_output SRCS array_output.cc)
 
 # Duplicate array names test
-ion_jit(array_dup_names SRCS array_dup_names.cc)
-add_dependencies(array_dup_names ion-bb-test)
-ion_register_test(array_dup_names_test array_dup_names)
+ion_jit_executable(array_dup_names SRCS array_dup_names.cc)
 
 # Inverted dep test
-ion_jit(inverted_dep SRCS inverted_dep.cc)
-add_dependencies(inverted_dep ion-bb-test)
-ion_register_test(inverted_dep_test inverted_dep)
+ion_jit_executable(inverted_dep SRCS inverted_dep.cc)
 
 # Duplicate port
-ion_jit(dup SRCS dup.cc)
-add_dependencies(dup ion-bb-test)
-ion_register_test(dup_test dup)
+ion_jit_executable(dup SRCS dup.cc)
 
 # Port binding in compatible style
-ion_jit(port-binding-compat SRCS port-binding-compat.cc)
-add_dependencies(port-binding-compat ion-bb-test)
-ion_register_test(port-binding-compat_test port-binding-compat)
+ion_jit_executable(port-binding-compat SRCS port-binding-compat.cc)
 
 # Port binding
-ion_jit(port-binding SRCS port-binding.cc)
-add_dependencies(port-binding ion-bb-test)
-ion_register_test(port-binding_test port-binding)
+ion_jit_executable(port-binding SRCS port-binding.cc)
 
 # Port index access
 if(${OpenCV_DIR})
-    ion_jit(port-access SRCS port-access.cc)
-    add_dependencies(port-access ion-bb-test)
-    ion_register_test(port-access_test port-access)
+    ion_jit_executable(port-access SRCS port-access.cc)
 endif()
 
-ion_jit(direct-extern SRCS direct-extern.cc)
-add_dependencies(direct-extern ion-bb-test)
-ion_register_test(direct-extern_test direct-extern)
+ion_jit_executable(direct-extern SRCS direct-extern.cc)
 
 if (${CUDA_FOUND})
-    ion_jit(gpu-extern SRCS gpu-extern.cc)
+    ion_jit_executable(gpu-extern SRCS gpu-extern.cc)
     cuda_add_library(gpu-extern-lib SHARED gpu-extern-lib.cu)
-    add_dependencies(gpu-extern ion-bb-test gpu-extern-lib)
-    ion_register_test(gpu-extern_test gpu-extern)
 endif()
 
 # Duplicate name test
-ion_jit(dup-port-name SRCS dup-port-name.cc)
-ion_register_test(dup-port-name_test dup-port-name)
+ion_jit_executable(dup-port-name SRCS dup-port-name.cc)
 
 # Export test
-ion_jit(export SRCS export.cc)
-ion_register_test(export_test export)
+ion_jit_executable(export SRCS export.cc)
 
-#
-# Pipeline testing
-#
-ion_compile(simple_graph_compile SRCS simple_graph_compile.cc PIPELINE_NAME simple_graph)
-ion_run(simple_graph_aot_test simple_graph_compile SRCS simple_graph_run.cc test-rt.h LIBS ion-bb-test TARGET_STRING "host-profile")
-ion_jit(simple_graph_jit SRCS simple_graph_jit.cc test-rt.h)
-ion_register_test(simple_graph_jit_test simple_graph_jit TARGET_STRING "host-profile")
+ion_aot_executable(simple_graph SRCS_COMPILE simple_graph_compile.cc SRCS_RUN simple_graph_run.cc LIBS ion-bb-test)
+ion_jit_executable(simple_graph SRCS simple_graph_jit.cc)
 
-ion_compile(complex_graph_compile SRCS complex_graph_compile.cc PIPELINE_NAME complex_graph)
-ion_run(complex_graph_aot_test complex_graph_compile SRCS complex_graph_run.cc test-rt.h LIBS ion-bb-test TARGET_STRING "host-profile")
-ion_jit(complex_graph_jit SRCS complex_graph_jit.cc test-rt.h)
-ion_register_test(complex_graph_jit_test complex_graph_jit TARGET_STRING "host-profile")
+ion_aot_executable(complex_graph SRCS_COMPILE complex_graph_compile.cc SRCS_RUN complex_graph_run.cc LIBS ion-bb-test)
+ion_jit_executable(complex_graph SRCS complex_graph_jit.cc)

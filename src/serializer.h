@@ -12,8 +12,7 @@
 
 namespace nlohmann {
 template <>
-class adl_serializer<halide_type_t> {
-public:
+struct adl_serializer<halide_type_t> {
     static void to_json(json& j, const halide_type_t& v) {
         j["code"] = v.code;
         j["bits"] = v.bits;
@@ -28,8 +27,7 @@ public:
 };
 
 template <>
-class adl_serializer<ion::Param> {
-public:
+struct adl_serializer<ion::Param> {
 static void to_json(json& j, const ion::Param& v) {
     j["key"] = v.key();
     j["val"] = v.val();
@@ -42,8 +40,7 @@ static void from_json(const json& j, ion::Param& v) {
 };
 
 template<>
-class adl_serializer<ion::Port> {
- public:
+struct adl_serializer<ion::Port> {
      static void to_json(json& j, const ion::Port& v) {
          j["pred_chan"] = v.pred_chan();
          j["succ_chans"] = v.succ_chans();
@@ -71,8 +68,7 @@ class adl_serializer<ion::Port> {
 };
 
 template <>
-class adl_serializer<ion::Node> {
- public:
+struct adl_serializer<ion::Node> {
      static void to_json(json& j, const ion::Node& v) {
          j["id"] = v.id();
          j["name"] = v.name();
