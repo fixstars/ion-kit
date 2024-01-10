@@ -129,7 +129,7 @@ public:
     const std::set<Channel>& succ_chans() const { return impl_->succ_chans; }
     const Halide::Type& type() const { return impl_->type; }
     int32_t dimensions() const { return impl_->dimensions; }
-    int32_t size() const { return impl_->params.size(); }
+    int32_t size() const { return static_cast<int32_t>(impl_->params.size()); }
     int32_t index() const { return index_; }
     uintptr_t impl_ptr() const { return reinterpret_cast<uintptr_t>(impl_.get()); }
 
