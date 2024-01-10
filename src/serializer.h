@@ -45,25 +45,28 @@ template<>
 class adl_serializer<ion::Port> {
  public:
      static void to_json(json& j, const ion::Port& v) {
-         j["pred_chan"] = v.impl_->pred_chan;
-         j["succ_chans"] = v.impl_->succ_chans;
-         j["type"] = static_cast<halide_type_t>(v.impl_->type);
-         j["dimensions"] = v.impl_->dimensions;
-         j["size"] = v.impl_->params.size();
-         j["impl_ptr"] = reinterpret_cast<uintptr_t>(v.impl_.get());
-         j["index"] = v.index_;
+         j["pred_chan"] = v.pred_chan();
+         j["succ_chans"] = v.succ_chans();
+         j["type"] = static_cast<halide_type_t>(v.type());
+         j["dimensions"] = v.dimensions();
+         j["size"] = v.size();
+         j["impl_ptr"] = v.impl_ptr();
+         j["index"] = v.index();
      }
 
      static void from_json(const json& j, ion::Port& v) {
-         v = ion::Port(ion::Port::find_impl(j["impl_ptr"].get<uintptr_t>()));
-         v.impl_->pred_chan = j["pred_chan"].get<ion::Port::Channel>();
-         v.impl_->succ_chans = j["succ_chans"].get<std::set<ion::Port::Channel>>();
-         v.impl_->type = j["type"].get<halide_type_t>();
-         v.impl_->dimensions = j["dimensions"];
-         for (auto i=0; i<j["size"]; ++i) {
-             v.impl_->params[i] = Halide::Internal::Parameter(v.impl_->type, v.impl_->dimensions != 0, v.impl_->dimensions, ion::argument_name(v.pred_id(), v.pred_name(), i));
+         auto [impl, found] = ion::Port::find_impl(j["impl_ptr"].get<uintptr_t>());
+         if (!found) {
+             impl->pred_chan = j["pred_chan"].get<ion::Port::Channel>();
+             impl->succ_chans = j["succ_chans"].get<std::set<ion::Port::Channel>>();
+             impl->type = j["type"].get<halide_type_t>();
+             impl->dimensions = j["dimensions"];
+             for (auto i=0; i<j["size"]; ++i) {
+                 impl->params[i] = Halide::Internal::Parameter(impl->type, impl->dimensions != 0, impl->dimensions,
+                                                               ion::argument_name(std::get<0>(impl->pred_chan), std::get<1>(impl->pred_chan), i));
+             }
          }
-         v.index_ = j["index"];
+         v = ion::Port(impl, j["index"]);
      }
 };
 
@@ -71,25 +74,27 @@ template <>
 class adl_serializer<ion::Node> {
  public:
      static void to_json(json& j, const ion::Node& v) {
-         j["id"] = v.impl_->id;
-         j["name"] = v.impl_->name;
-         j["target"] = v.impl_->target.to_string();
-         j["params"] = v.impl_->params;
-         j["ports"] = v.impl_->ports;
+         j["id"] = v.id();
+         j["name"] = v.name();
+         j["target"] = v.target().to_string();
+         j["params"] = v.params();
+         j["ports"] = v.ports();
      }
 
      static void from_json(const json& j, ion::Node& v) {
-         v.impl_->id = j["id"].get<std::string>();
-         v.impl_->name = j["name"].get<std::string>();
-         v.impl_->target = Halide::Target(j["target"].get<std::string>());
-         v.impl_->params = j["params"].get<std::vector<ion::Param>>();
-         v.impl_->ports = j["ports"].get<std::vector<ion::Port>>();
-         auto bb(Halide::Internal::GeneratorRegistry::create(v.impl_->name, Halide::GeneratorContext(v.impl_->target)));
+         auto impl = std::make_shared<ion::Node::Impl>();
+         impl->id = j["id"].get<std::string>();
+         impl->name = j["name"].get<std::string>();
+         impl->target = Halide::Target(j["target"].get<std::string>());
+         impl->params = j["params"].get<std::vector<ion::Param>>();
+         impl->ports = j["ports"].get<std::vector<ion::Port>>();
+         auto bb(Halide::Internal::GeneratorRegistry::create(impl->name, Halide::GeneratorContext(impl->target)));
          if (!bb) {
-             ion::log::error("BuildingBlock {} is not found", v.impl_->name);
+             ion::log::error("BuildingBlock {} is not found", impl->name);
              throw std::runtime_error("Failed to create building block object");
          }
-         v.impl_->arginfos = bb->arginfos();
+         impl->arginfos = bb->arginfos();
+         v = ion::Node(impl);
      }
 };
 }

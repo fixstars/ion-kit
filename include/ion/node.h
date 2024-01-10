@@ -17,8 +17,8 @@ namespace ion {
  */
 class Node {
     friend class Builder;
-    friend class nlohmann::adl_serializer<Node>;
 
+public:
     struct Impl {
         std::string id;
         std::string name;
@@ -34,6 +34,8 @@ class Node {
 
 public:
     Node() : impl_(new Impl) {};
+
+    Node(const std::shared_ptr<Impl>& impl) : impl_(impl) {};
 
     /**
      * Set the target of the node.
@@ -87,6 +89,7 @@ public:
      */
     Port operator[](const std::string& name);
 
+    // Getter
     const std::string& id() const {
         return impl_->id;
     }
@@ -101,6 +104,10 @@ public:
 
     const std::vector<Param>& params() const {
         return impl_->params;
+    }
+
+    const std::vector<Port>& ports() const {
+        return impl_->ports;
     }
 
    std::vector<Port> iports() const {
