@@ -41,7 +41,7 @@ class BuildingBlock : public Halide::Generator<T> {
 
      Halide::Buffer<uint8_t> get_id() {
          std::string bb_id_s(bb_id);
-         Buffer<uint8_t> buf(bb_id_s.size() + 1);
+         Buffer<uint8_t> buf(static_cast<int>(bb_id_s.size() + 1));
          buf.fill(0);
          std::memcpy(buf.data(), bb_id_s.c_str(), bb_id_s.size());
          return buf;

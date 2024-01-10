@@ -1,0 +1,50 @@
+name: Windows
+
+on:
+  pull_request:
+    branches:
+      - master
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+
+jobs:
+  build-and-test:
+    # The CMake configure and build commands are platform agnostic and should work equally
+    # well on Windows or Mac.  You can convert this to a matrix build if you need
+    # cross-platform coverage.
+    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+    runs-on: windows-2019
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get latest CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Setup msbuild
+        uses: microsoft/setup-msbuild@v1
+
+      - name: Setup dependencies
+        shell: bash
+        run: |
+          # Halide
+          mkdir ${HOME}/Halide
+          curl -L https://github.com/halide/Halide/releases/download/v16.0.0/Halide-16.0.0-x86-64-windows-1e963ff817ef0968cc25d811a25a7350c8953ee6.zip -o Halide.zip
+          unzip Halide.zip
+          rm Halide.zip
+          mv Halide*/* ${HOME}/Halide
+
+      - name: Configure
+        shell: bash
+        run: cmake -G "Visual Studio 16 2019" -A x64 -D ION_BUILD_TEST=ON -D ION_BUILD_EXAMPLE=ON -D HalideHelpers_DIR=${HOME}/Halide/lib/cmake/HalideHelpers -D Halide_DIR=${HOME}/Halide/lib/cmake/Halide $GITHUB_WORKSPACE
+
+      - name: Build
+        shell: bash
+        run: cmake --build . --config $BUILD_TYPE
+
+      - name: Test
+        shell: bash
+        run: |
+          ctest --verbose -v -C $BUILD_TYPE

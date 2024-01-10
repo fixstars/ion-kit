@@ -26,7 +26,7 @@ public:
 
     void generate() {
         std::string url_str(url);
-        Halide::Buffer<uint8_t> url_buf(url_str.size() + 1);
+        Halide::Buffer<uint8_t> url_buf(static_cast<int>(url_str.size() + 1));
         url_buf.fill(0);
         std::memcpy(url_buf.data(), url_str.c_str(), url_str.size());
 
@@ -197,7 +197,7 @@ public:
 
     void generate() {
         std::string path_str(path);
-        Halide::Buffer<uint8_t> path_buf(path_str.size() + 1);
+        Halide::Buffer<uint8_t> path_buf(static_cast<int>(path_str.size() + 1));
         path_buf.fill(0);
         std::memcpy(path_buf.data(), path_str.c_str(), path_str.size());
 
@@ -1104,7 +1104,7 @@ public:
             }
             index = index % static_cast<int>(value_list.size());
 
-            Halide::Buffer<T> buf(value_list.size());
+            Halide::Buffer<T> buf(static_cast<int>(value_list.size()));
             std::copy(value_list.begin(), value_list.end(), buf.data());
 
             output(vars) = buf(index);

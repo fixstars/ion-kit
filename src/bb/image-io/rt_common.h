@@ -12,6 +12,9 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 
+#include "ion/export.h"
+
+
 #include "log.h"
 
 #include "httplib.h"
@@ -22,12 +25,6 @@
 #include <windows.h>
 #else
 #include <dlfcn.h>
-#endif
-
-#ifdef _WIN32
-#define ION_EXPORT __declspec(dllexport)
-#else
-#define ION_EXPORT
 #endif
 
 namespace ion {
@@ -332,7 +329,7 @@ struct rawHeader {
 
 #define PFNC_BayerBG8 0x0108000B //PFNC Bayer Blue-Green 8-bit
 #define PFNC_BayerBG10 0x0110000F //PFNC Bayer Blue-Green 10-bit unpacked
-#define PFNC_BayerBG12 0x01100013 //PFNC Bayer Blue-Green 12-bit unpacked 
+#define PFNC_BayerBG12 0x01100013 //PFNC Bayer Blue-Green 12-bit unpacked
 
 #define PFNC_BayerGR8 0x01080008 //PFNC Bayer Green-Red 8-bit
 #define PFNC_BayerGR12 0x01100010 //PFNC Bayer Green-Red 12-bit unpacked

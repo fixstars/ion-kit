@@ -1,4 +1,4 @@
-name: Develop
+name: Linux
 
 on:
   pull_request:
@@ -20,51 +20,36 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Get latest CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Setup dependencies
+        shell: bash
         run: |
             sudo apt-get update
             sudo apt-get install -y curl cmake build-essential libopencv-dev zlib1g-dev
             sudo apt-get clean
             sudo rm -rf /var/lib/apt/lists/*
 
-      - name: Download Halide package
-        run: |
             mkdir ${HOME}/halide
             curl -L https://github.com/halide/Halide/releases/download/v16.0.0/Halide-16.0.0-x86-64-linux-1e963ff817ef0968cc25d811a25a7350c8953ee6.tar.gz | tar zx -C ${HOME}/halide --strip-components 1
             find ${HOME}/halide -type d | xargs chmod 755
             sudo cp -r ${HOME}/halide/* /usr/
 
-      - name: Download onnxruntime package
-        run: |
             mkdir ${HOME}/onnxruntime
             curl -L https://github.com/microsoft/onnxruntime/releases/download/v1.16.3/onnxruntime-linux-x64-1.16.3.tgz | tar zx -C ${HOME}/onnxruntime --strip-components 1
             find ${HOME}/onnxruntime -type d | xargs chmod 755
             sudo cp -r ${HOME}/onnxruntime/* /usr/
 
-      - name: Create Build Environment
-        # Some projects don't allow in-source building, so create a separate build directory
-        # We'll use this as our working directory for all subsequent commands
-        run: cmake -E make_directory ${{runner.workspace}}/ion-kit/build
-
-      - name: Configure CMake
-        # Use a bash shell so we can use the same syntax for environment variable
-        # access regardless of the host operating system
-        working-directory: ${{runner.workspace}}/ion-kit/build
-        # Note the current convention is to use the -S and -B options here to specify source
-        # and build directories, but this is only available with CMake 3.13 and higher.
-        # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-        run: cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE $GITHUB_WORKSPACE
+      - name: Configure
+        shell: bash
+        run: cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -D ION_BUILD_TEST=ON -D ION_BUILD_EXAMPLE=ON $GITHUB_WORKSPACE
 
       - name: Build
-        working-directory: ${{runner.workspace}}/ion-kit/build
         shell: bash
-        # Execute the build.  You can specify a specific target with "--target <NAME>"
         run: cmake --build . --config $BUILD_TYPE
 
       - name: Test
-        working-directory: ${{runner.workspace}}/ion-kit/build
         shell: bash
-        # Execute tests defined by the CMake configuration.
-        # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
         run: |
           ctest --verbose -v -C $BUILD_TYPE

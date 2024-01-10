@@ -4,6 +4,7 @@
 #include "builder.h"
 #include "building_block.h"
 #include "def.h"
+#include "export.h"
 #include "node.h"
 #include "param.h"
 #include "port.h"
