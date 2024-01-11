@@ -7,17 +7,12 @@
 #include <unordered_map>
 #include <vector>
 
-#include <HalideBuffer.h>
+#include <Halide.h>
+
+#include "ion/export.h"
 
 #include "httplib.h"
 
-#ifdef _WIN32
-#define ION_EXPORT __declspec(dllexport)
-#else
-#define ION_EXPORT
-#endif
-
-#include <Halide.h>
 namespace ion {
 namespace bb {
 namespace base {
@@ -234,6 +229,5 @@ extern "C" ION_EXPORT int ion_bb_base_random_buffer(int32_t instance_id, int32_t
 }
 
 #undef ION_REGISTER_EXTERN
-#undef ION_EXPORT
 
 #endif

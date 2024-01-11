@@ -6,11 +6,6 @@
 
 #include <ion/ion.h>
 
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-
-
 #include "util.h"
 
 using namespace ion;
@@ -36,27 +31,6 @@ Halide::Buffer<float> load_raw(std::string filename) {
     }
 
     return buffer;
-}
-
-void save_image(Halide::Buffer<float> buffer, std::string filename) {
-    int width = buffer.width();
-    int height = buffer.height();
-    int channels = buffer.channels();
-    cv::Mat img_out;
-    if (channels == 3) {
-        cv::Mat img_float;
-        cv::merge(std::vector<cv::Mat>{
-                      cv::Mat(height, width, CV_32F, buffer.data() + width * height * 2),
-                      cv::Mat(height, width, CV_32F, buffer.data() + width * height * 1),
-                      cv::Mat(height, width, CV_32F, buffer.data())},
-                  img_float);
-        img_float.convertTo(img_out, CV_8U, 255);
-    } else {
-        cv::Mat img_float(height, width, CV_32F, buffer.data());
-        img_float.convertTo(img_out, CV_8U, 255);
-    }
-
-    cv::imwrite(filename, img_out);
 }
 
 int main(int argc, char *argv[]) {

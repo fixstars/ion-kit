@@ -1,0 +1,55 @@
+name: Linux
+
+on:
+  pull_request:
+    branches:
+      - master
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+
+jobs:
+  build-and-test:
+    # The CMake configure and build commands are platform agnostic and should work equally
+    # well on Windows or Mac.  You can convert this to a matrix build if you need
+    # cross-platform coverage.
+    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get latest CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Setup dependencies
+        shell: bash
+        run: |
+            sudo apt-get update
+            sudo apt-get install -y curl cmake build-essential libopencv-dev zlib1g-dev
+            sudo apt-get clean
+            sudo rm -rf /var/lib/apt/lists/*
+
+            mkdir ${HOME}/halide
+            curl -L https://github.com/halide/Halide/releases/download/v16.0.0/Halide-16.0.0-x86-64-linux-1e963ff817ef0968cc25d811a25a7350c8953ee6.tar.gz | tar zx -C ${HOME}/halide --strip-components 1
+            find ${HOME}/halide -type d | xargs chmod 755
+            sudo cp -r ${HOME}/halide/* /usr/
+
+            mkdir ${HOME}/onnxruntime
+            curl -L https://github.com/microsoft/onnxruntime/releases/download/v1.16.3/onnxruntime-linux-x64-1.16.3.tgz | tar zx -C ${HOME}/onnxruntime --strip-components 1
+            find ${HOME}/onnxruntime -type d | xargs chmod 755
+            sudo cp -r ${HOME}/onnxruntime/* /usr/
+
+      - name: Configure
+        shell: bash
+        run: cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -D ION_BUILD_TEST=ON -D ION_BUILD_EXAMPLE=ON $GITHUB_WORKSPACE
+
+      - name: Build
+        shell: bash
+        run: cmake --build . --config $BUILD_TYPE
+
+      - name: Test
+        shell: bash
+        run: |
+          ctest --verbose -v -C $BUILD_TYPE

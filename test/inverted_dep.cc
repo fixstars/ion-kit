@@ -165,7 +165,7 @@ int main()
                           }
                         }
                       ],
-                      "target": "x86-64-linux-avx-avx2-debug-f16c-fma-sse41-trace_pipeline"
+                      "target": "host-trace_pipeline"
                     },
                     {
                       "id": "2c706f47-6f51-4f1e-82de-f87f2dd0e9ab",
@@ -199,30 +199,26 @@ int main()
                           }
                         }
                       ],
-                      "target": "x86-64-linux-avx-avx2-debug-f16c-fma-sse41-trace_pipeline"
+                      "target": "host-trace_pipeline"
                     }
                   ],
-                  "target": "x86-64-linux-avx-avx2-debug-f16c-fma-sse41-trace_pipeline"
+                  "target": "host-trace_pipeline"
                 }
             )";
             std::ofstream ofs(file_name);
             ofs << graph;
         }
 
-        Halide::Type t = Halide::type_of<int32_t>();
-
-        Builder b;
-
-        b.set_target(Halide::get_host_target());
-
-        b.with_bb_module("ion-bb-test");
-
-        b.load(file_name);
-
         int32_t min0 = 0, extent0 = 1, min1 = 0, extent1 = 2, v = 1;
         Halide::Buffer<int32_t> r = Halide::Buffer<int32_t>::make_scalar();
 
+        Builder b;
+        b.with_bb_module("ion-bb-test");
+        b.set_target(Halide::get_host_target());
+        b.load(file_name);
+
         for (auto& n : b.nodes()) {
+            std::cout << n.name() << std::endl;
             if (n.name() == "test_consumer") {
                 n["min0"].bind(&min0);
                 n["extent0"].bind(&extent0);
@@ -230,11 +226,11 @@ int main()
                 n["extent1"].bind(&extent1);
                 n["v"].bind(&v);
                 n["output"].bind(r);
-                break;
             }
         }
 
         b.run();
+    
     } catch (const Halide::Error &e) {
         std::cerr << e.what() << std::endl;
         return 1;

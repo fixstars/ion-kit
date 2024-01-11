@@ -1,32 +1,38 @@
-# OpenCV
-find_package(OpenCV 4 REQUIRED)
-if (UNIX)
-    add_compile_options(-Wno-format-security)
-endif()
+find_package(OpenCV 4 QUIET)
 
-set(INCLUDE_DIRS
-    ${OpenCV_INCLUDE_DIRS})
+if (${OpenCV_FOUND})
+    set(ION_BB_BUILD_dnn TRUE)
 
-set(LINK_DIRS
-    ${OpenCV_DIR}/lib)
+    if (UNIX)
+        add_compile_options(-Wno-format-security)
+    endif()
 
-if (UNIX)
+    set(INCLUDE_DIRS
+        ${OpenCV_INCLUDE_DIRS})
+
+    set(LINK_DIRS
+        ${OpenCV_DIR}/lib)
+
     if (APPLE)
         set(LIBRARIES
             dl
             pthread
             m
-            z
             ${OpenCV_LIBRARIES})
-    else()
+        list(APPEND RUNTIME_ENVS LD_LIBRARY_PATH ${OpenCV_DIR}/lib)
+    elseif (UNIX)
         set(LIBRARIES
             rt
             dl
             pthread
             m
-            z
             ${OpenCV_LIBRARIES})
+        list(APPEND RUNTIME_ENVS LD_LIBRARY_PATH ${OpenCV_DIR}/lib)
+    else()
+        set(LIBRARIES
+            ${OpenCV_LIBRARIES})
+        list(APPEND RUNTIME_ENVS PATH ${OpenCV_DIR}/x64/vc15/bin)
     endif()
 else()
-    set(LIBRARIES ${OpenCV_LIBRARIES})
+    set(ION_BB_BUILD_dnn FALSE)
 endif()

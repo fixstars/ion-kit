@@ -1,8 +1,5 @@
 #include "ion/ion.h"
 
-#include "test-bb.h"
-#include "test-rt.h"
-
 using namespace ion;
 
 int main()
@@ -15,6 +12,7 @@ int main()
                 Port min0{"min0", t}, extent0{"extent0", t}, min1{"min1", t}, extent1{"extent1", t}, v{"v", t};
                 Param v41("v", 41);
                 Builder b;
+                b.with_bb_module("ion-bb-test");
                 b.set_target(get_host_target());
                 Node n;
                 n = b.add("test_producer").set_param(v41);
@@ -26,6 +24,7 @@ int main()
 
                 ion::Type t = ion::type_of<int32_t>();
                 Builder b;
+                b.with_bb_module("ion-bb-test");
                 b.load("simple_graph.json");
 
                 auto out = ion::Buffer<int32_t>::make_scalar();
@@ -48,6 +47,7 @@ int main()
             Port input{"input", t, 2}, width{"width", t}, height{"height", t};
             Param v1("v", 1);
             Builder b;
+            b.with_bb_module("ion-bb-test");
             b.set_target(ion::get_host_target());
             Node n;
             n = b.add("test_inc_i32x2")(input).set_param(v1);
@@ -61,6 +61,7 @@ int main()
         {
             ion::Type t = ion::type_of<int32_t>();
             Builder b;
+            b.with_bb_module("ion-bb-test");
             b.load("complex_graph.json");
             b.set_target(ion::get_host_target());
 
@@ -116,6 +117,7 @@ int main()
             {
                 Port input{"input", ion::type_of<int32_t>(), 2};
                 Builder b;
+                b.with_bb_module("ion-bb-test");
                 b.set_target(ion::get_host_target());
                 auto n = b.add("test_array_output")(input).set_param(Param("len", len));
                 n = b.add("test_array_input")(n["array_output"]);
@@ -124,6 +126,7 @@ int main()
             {
                 Port input{"input", ion::type_of<int32_t>(), 2};
                 Builder b;
+                b.with_bb_module("ion-bb-test");
                 b.load("array_inout.json");
 
                 ion::Buffer<int32_t> in(w, h);

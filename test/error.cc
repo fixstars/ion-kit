@@ -12,7 +12,7 @@ int main()
         Builder b;
         b.add("sonzai_shinai_bb");
         b.compile("sonzai_shinai_graph");
-    } catch (const exception&) {
+    } catch (...) {
         // Expected
         return 0;
     }

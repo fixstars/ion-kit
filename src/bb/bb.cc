@@ -2,6 +2,8 @@
 #include <string>
 #include <Halide.h>
 
+#include "ion/export.h"
+
 #if defined(ION_ENABLE_BB_BASE)
 #include "base/bb.h"
 #include "base/rt.h"

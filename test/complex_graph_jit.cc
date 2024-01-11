@@ -1,8 +1,5 @@
 #include "ion/ion.h"
 
-#include "test-bb.h"
-#include "test-rt.h"
-
 using namespace ion;
 
 int main()
@@ -23,6 +20,7 @@ int main()
         Param v1("v", 1);
 
         Builder b;
+        b.with_bb_module("ion-bb-test");
         b.set_target(Halide::get_host_target());
 
         Node n;
