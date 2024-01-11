@@ -24,6 +24,10 @@ namespace {
 #define CV_MAKETYPE(depth,cn) (CV_MAT_DEPTH(depth) + (((cn)-1) << CV_CN_SHIFT))
 #define CV_MAKE_TYPE CV_MAKETYPE
 
+#define IMREAD_GRAYSCALE 0
+#define IMREAD_COLOR 1
+
+
 enum SmoothMethod_c
 {
     /** linear convolution with \f$\texttt{size1}\times\texttt{size2}\f$ box kernel (all 1's). If
@@ -52,13 +56,22 @@ class OpenCV {
 
     using CvArr = void;
     using CvMat = struct CvMat;
-
+    // To fo, remove c api function later, since it is deprecated
     using cvCreateMatHeader_t = CvMat*(*)(int rows, int cols, int type);
     using cvReleaseMat_t = void(*)(CvMat **mat);
     using cvSetData_t = void(*)(CvArr* arr, void* data, int step);
+    using cvSplit_t = void(*)(const CvArr *src, CvArr *dst0, CvArr *dst1, CvArr *dst2, CvArr *dst3);
+    using cvPow_t = void(*)	(const CvArr *src, CvArr *dst, double power);
+    using cvRepeat_t = void(*) (const CvArr *src, CvArr *dst);
     using cvSmooth_t = void (*)(const CvArr* src, CvArr* dst, int smoothtype, int size1, int size2, double sigma1, double sigma2);
     using cvShowImage_t = void(*)(const char* name, const CvArr* image);
+    using cvCvtColor_t = void(*)(const CvArr *src, CvArr *dst, int code);
+//   using cvSaveImage_t = void(*)(const char *filename, const CvArr *image, const int *params);
+//    using cvLoadImageM_t =CvMat*(*)(const char* filename, int iscolor);
     using cvWaitKey_t = int(*)(int delay);
+
+    using cvResize_t = void (*)(const CvArr *src, CvArr *dst, int interpolation);
+    using cvNormalize_t =  void (*)(const CvArr* src, CvArr* dst, double alpha, double beta, int normtype, int dtype, const CvArr* mask );
 
  public:
 
@@ -96,7 +109,12 @@ class OpenCV {
         GET_SYMBOL(cvCreateMatHeader, "cvCreateMatHeader");
         GET_SYMBOL(cvReleaseMat, "cvReleaseMat");
         GET_SYMBOL(cvSetData, "cvSetData");
+        GET_SYMBOL(cvSplit, "cvSplit");
+        GET_SYMBOL(cvPow, "cvPow");
+        GET_SYMBOL(cvRepeat, "cvRepeat");
         GET_SYMBOL(cvSmooth, "cvSmooth");
+        GET_SYMBOL(cvResize, "cvResize");
+        GET_SYMBOL(cvCvtColor, "cvCvtColor");
         GET_SYMBOL(cvShowImage, "cvShowImage");
         GET_SYMBOL(cvWaitKey, "cvWaitKey");
 
@@ -112,10 +130,15 @@ class OpenCV {
         GET_SYMBOL(core, cvCreateMatHeader, "cvCreateMatHeader");
         GET_SYMBOL(core, cvReleaseMat, "cvReleaseMat");
         GET_SYMBOL(core, cvSetData, "cvSetData");
+        GET_SYMBOL(core, cvSplit, "cvSplit");
+        GET_SYMBOL(core, cvPow, "cvPow");
+        GET_SYMBOL(core, cvRepeat, "cvRepeat");
         GET_SYMBOL(imgproc, cvSmooth, "cvSmooth");
+        GET_SYMBOL(imgproc, cvResize, "cvResize");
+        GET_SYMBOL(imgproc, cvNormalize, "cvNormalize"); //obsolete
+        GET_SYMBOL(imgproc, cvCvtColor, "cvCvtColor");
         GET_SYMBOL(highgui, cvShowImage, "cvShowImage");
         GET_SYMBOL(highgui, cvWaitKey, "cvWaitKey");
-
         #undef GET_SYMBOL
 
 #endif
@@ -142,9 +165,18 @@ public:
     cvCreateMatHeader_t cvCreateMatHeader;
     cvReleaseMat_t cvReleaseMat;
     cvSetData_t cvSetData;
+    cvSplit_t cvSplit;
+    cvPow_t  cvPow;
+    cvRepeat_t cvRepeat;
     cvSmooth_t cvSmooth;
+    cvResize_t  cvResize;
+    cvNormalize_t cvNormalize;
     cvShowImage_t cvShowImage;
     cvWaitKey_t cvWaitKey;
+    cvCvtColor_t cvCvtColor;
+
+
+
 };
 
 int hl2cv_type(halide_type_t hl_type, int channel) {

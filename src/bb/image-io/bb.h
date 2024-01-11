@@ -688,10 +688,12 @@ public:
 
         Func in(static_cast<std::string>(gc_prefix) + "input");
         Var x, y, c;
+        // replace opencv with halide::save_image , should use RGB instead of BGR
         in(c, x, y) = mux(c,
-                          {input(x, y, 2),
+                          {input(x, y, 0),
                            input(x, y, 1),
-                           input(x, y, 0)});
+                           input(x, y, 2)});
+
         in.compute_root();
         if (get_target().has_gpu_feature()) {
             Var xo, yo, xi, yi;

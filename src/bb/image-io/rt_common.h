@@ -9,8 +9,11 @@
 #include <unordered_map>
 #include <vector>
 
-#include <opencv2/highgui.hpp>
-#include <opencv2/imgproc.hpp>
+#include "opencv_loader.h"
+
+#include <Halide.h>
+#include <HalideBuffer.h>
+#include "halide_image_io.h"
 
 #include "log.h"
 
@@ -153,44 +156,6 @@ std::tuple<std::string, std::string> parse_url(const std::string &url) {
 }
 
 
-cv::Mat get_image(const std::string &url) {
-    if (url.empty()) {
-        return {};
-    }
-
-    std::string host_name;
-    std::string path_name;
-    std::tie(host_name, path_name) = parse_url(url);
-
-    cv::Mat img;
-    bool img_loaded = false;
-    if (host_name.empty() || path_name.empty()) {
-        // fallback to local file
-        img = cv::imread(url);
-        if (!img.empty()) {
-            img_loaded = true;
-        }
-    } else {
-        httplib::Client cli(host_name.c_str());
-        cli.set_follow_location(true);
-        auto res = cli.Get(path_name.c_str());
-        if (res && res->status == 200) {
-            std::vector<char> data(res->body.size());
-            std::memcpy(data.data(), res->body.c_str(), res->body.size());
-            img = cv::imdecode(cv::InputArray(data), cv::IMREAD_COLOR);
-            if (!img.empty()) {
-                img_loaded = true;
-            }
-        }
-    }
-
-    if (img_loaded) {
-        return img;
-    } else {
-        return {};
-    }
-}
-
 class ImageSequence {
 
  public:
@@ -242,29 +207,37 @@ class ImageSequence {
 
      }
 
-     cv::Mat get(int width, int height, int imread_flags) {
+     void get(int width, int height, int imread_flags, Halide::Runtime::Buffer<uint16_t> &buf) {
         namespace fs = std::filesystem;
 
-        cv::Mat frame;
-
         auto path = paths_[idx_];
+        auto size = fs::file_size(path);
 
+        std::ifstream ifs(path, std::ios::binary);
+        char * img_data = new char[size];
+        ifs.read(img_data, size);
         if (path.extension() == ".raw") {
-            auto size = fs::file_size(path);
             switch (imread_flags) {
-                case cv::IMREAD_GRAYSCALE:
+                case IMREAD_GRAYSCALE:
                     if (size == width * height * sizeof(uint8_t)) {
-                        frame = cv::Mat(height, width, CV_8UC1);
+                        Halide::Runtime::Buffer<uint16_t> buf_8bit;
+                        Halide::Buffer<uint8_t> buf_8(std::vector<int>{width, height, 3});
+                        memcpy(buf_8.data(), img_data, size);
+                        Buffer<uint16_t> buf_16 = Halide::Tools::ImageTypeConversion::convert_image(buf_8, halide_type_of<uint16_t>());
+                        memcpy(buf.data(), buf_16.data(), height* width*sizeof(uint16_t));
+
                     } else if (size == width * height * sizeof(uint16_t)) {
-                        frame = cv::Mat(height, width, CV_16UC1);
+                        memcpy(buf.data(), img_data, size);
                     } else {
                         throw std::runtime_error("Unsupported raw format");
                     }
+
                     break;
-                case cv::IMREAD_COLOR:
+                case IMREAD_COLOR:
                     if (size == 3 * width * height * sizeof(uint8_t)) {
                         // Expect interleaved RGB
-                        frame = cv::Mat(height, width, CV_8UC3);
+                        memcpy(buf.data(), img_data, size);
+
                     } else {
                         throw std::runtime_error("Unsupported raw format");
                     }
@@ -272,17 +245,38 @@ class ImageSequence {
                 default:
                     throw std::runtime_error("Unsupported flags");
             }
-            std::ifstream ifs(path, std::ios::binary);
-            ifs.read(reinterpret_cast<char*>(frame.ptr()), size);
+
+
         } else {
-            frame = cv::imread(path.string(), imread_flags);
-            if (frame.empty()) {
-                throw std::runtime_error("Failed to load data : " + path.string());
+            switch (imread_flags) {
+                case IMREAD_GRAYSCALE:
+                    if (size == width * height * sizeof(uint8_t)) {
+                        Halide::Runtime::Buffer<uint8_t> img_buf = Halide::Tools::load_image(path.string());
+                        std::memcpy(buf.data(), img_buf.data(), height*width*sizeof(uint8_t));
+                    } else if (size == width * height * sizeof(uint16_t)) {
+                        Halide::Runtime::Buffer<uint16_t> img_buf = Halide::Tools::load_image(path.string());
+                        std::memcpy(buf.data(), img_buf.data(), height*width*sizeof(uint16_t));
+                    } else {
+                        throw std::runtime_error("Unsupported raw format");
+                    }
+                    break;
+                case IMREAD_COLOR:
+                    if (size == 3 * width * height * sizeof(uint8_t)) {
+                        // Expect interleaved RGB
+                        Halide::Buffer<uint8_t> img_buf = Halide::Tools::load_image(path.string());
+                        std::memcpy(buf.data(), img_buf.data(), 3* height*width*sizeof(uint8_t));
+                    } else {
+                        throw std::runtime_error("Unsupported raw format");
+                    }
+                    break;
+                default:
+                    throw std::runtime_error("Unsupported flags");
             }
+
+
         }
         idx_ = ((idx_+1) % paths_.size());
-
-        return frame;
+        return;
     }
 
  private:

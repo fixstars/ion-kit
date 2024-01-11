@@ -1,5 +1,8 @@
 #ifndef ION_BB_IMAGE_IO_RT_V4L2_H
 #define ION_BB_IMAGE_IO_RT_V4L2_H
+#ifdef USE_OPENCV
+#include <linux/videodev2.h>
+
 
 #include <cstdlib>
 #include <chrono>
@@ -35,6 +38,43 @@ namespace image_io {
 
 std::unordered_map<int32_t, std::vector<uint8_t>> image_cache;
 
+cv::Mat get_image(const std::string &url) {
+    if (url.empty()) {
+        return {};
+    }
+
+    std::string host_name;
+    std::string path_name;
+    std::tie(host_name, path_name) = parse_url(url);
+
+    cv::Mat img;
+    bool img_loaded = false;
+    if (host_name.empty() || path_name.empty()) {
+        // fallback to local file
+        img = cv::imread(url);
+        if (!img.empty()) {
+            img_loaded = true;
+        }
+    } else {
+        httplib::Client cli(host_name.c_str());
+        cli.set_follow_location(true);
+        auto res = cli.Get(path_name.c_str());
+        if (res && res->status == 200) {
+            std::vector<char> data(res->body.size());
+            std::memcpy(data.data(), res->body.c_str(), res->body.size());
+            img = cv::imdecode(cv::InputArray(data), cv::IMREAD_COLOR);
+            if (!img.empty()) {
+                img_loaded = true;
+            }
+        }
+    }
+
+    if (img_loaded) {
+        return img;
+    } else {
+        return {};
+    }
+}
 }  // namespace image_io
 }  // namespace bb
 }  // namespace ion
@@ -577,5 +617,5 @@ extern "C" int ION_EXPORT ion_bb_image_io_camera(int32_t instance_id, int32_t in
     }
 }
 ION_REGISTER_EXTERN(ion_bb_image_io_camera)
-
+#endif
 #endif
