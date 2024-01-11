@@ -49,10 +49,8 @@ ion_jit_executable(port-binding SRCS port-binding.cc)
 # Port index access
 if(${OpenCV_DIR})
     ion_jit_executable(port-access SRCS port-access.cc)
-    # Display Input test
-
 endif()
-ion_jit_executable(display SRCS display.cc)
+
 ion_jit_executable(direct-extern SRCS direct-extern.cc)
 
 if (${CUDA_FOUND})
