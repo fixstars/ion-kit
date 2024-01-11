@@ -61,7 +61,7 @@ cv::Mat get_image(const std::string &url) {
         if (res && res->status == 200) {
             std::vector<char> data(res->body.size());
             std::memcpy(data.data(), res->body.c_str(), res->body.size());
-            img = cv::imdecode(cv::InputArray(data), cv::IMREAD_COLOR);
+            img = cv::imdecode(cv::InputArray(data), IMREAD_COLOR);
             if (!img.empty()) {
                 img_loaded = true;
             }
@@ -616,5 +616,4 @@ extern "C" int ION_EXPORT ion_bb_image_io_camera(int32_t instance_id, int32_t in
     }
 }
 ION_REGISTER_EXTERN(ion_bb_image_io_camera)
-#endif
 #endif
