@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.25)
 project(ion-kit LANGUAGES C CXX)
 
 #
@@ -29,6 +29,7 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 # find_package(ZLIB REQUIRED)
 # find_package(LLVM REQUIRED)
 # find_package(Halide REQUIRED COMPONENTS static)
+find_package(Threads REQUIRED)
 find_package(Halide REQUIRED COMPONENTS shared)
 find_package(CUDA)
 
@@ -63,11 +64,7 @@ file(GLOB ION_CORE_SRC LIST_DIRECTORIES false ${PROJECT_SOURCE_DIR}/src/*)
 list(REMOVE_ITEM ION_CORE_SRC "${PROJECT_SOURCE_DIR}/src/generator.cc")
 add_library(ion-core SHARED ${ION_CORE_SRC})
 target_include_directories(ion-core PUBLIC ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/src)
-if (UNIX)
-  target_link_libraries(ion-core PUBLIC Halide::Halide Halide::Runtime dl pthread z m stdc++)
-else()
-  target_link_libraries(ion-core PUBLIC Halide::Halide Halide::Runtime)
-endif()
+target_link_libraries(ion-core PUBLIC Halide::Halide Halide::Runtime Threads::Threads ${CMAKE_DL_LIBS} )
 
 #
 # ion-bb

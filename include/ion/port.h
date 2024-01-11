@@ -12,7 +12,6 @@
 #include <Halide.h>
 
 #include "json/json.hpp"
-
 #include "util.h"
 
 namespace ion {

@@ -18,14 +18,11 @@ function(ion_aot_executable NAME_PREFIX)
     # Build compile
     set(COMPILE_NAME ${NAME_PREFIX}_compile)
     add_executable(${COMPILE_NAME} ${IAE_SRCS_COMPILE})
-    if(UNIX AND NOT APPLE)
+    if(UNIX)
         target_compile_options(${COMPILE_NAME} PUBLIC -fno-rtti)  # For Halide::Generator
-        target_link_options(${COMPILE_NAME} PUBLIC -Wl,--export-dynamic) # For JIT compiling
-    endif()
-    IF (APPLE)
-        target_compile_options(${COMPILE_NAME}
-            PUBLIC -fno-rtti  # For Halide::Generator
-            PUBLIC -rdynamic) # For JIT compiling
+        if (NOT APPLE)
+            target_link_options(${COMPILE_NAME} PUBLIC -Wl,--export-dynamic) # For JIT compiling
+        endif()
     endif()
     target_include_directories(${COMPILE_NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include")
     target_link_libraries(${COMPILE_NAME} PRIVATE ion-core ${PLATFORM_LIBRARIES})
@@ -39,26 +36,24 @@ function(ion_aot_executable NAME_PREFIX)
     add_custom_command(OUTPUT ${OUTPUT_PATH}
         COMMAND ${CMAKE_COMMAND} -E make_directory ${OUTPUT_PATH}
     )
-    if (UNIX)
-        if(APPLE)
-            add_custom_command(OUTPUT ${HEADER} ${STATIC_LIB}
-            COMMAND ${CMAKE_SOURCE_DIR}/script/invoke.sh $<TARGET_FILE:${COMPILE_NAME}>
-                HL_TARGET ${IAE_TARGET_STRING}
-                DYLD_LIBRARY_PATH ${Halide_DIR}/../../../bin
-                DYLD_LIBRARY_PATH ${CMAKE_BINARY_DIR}
-                DYLD_LIBRARY_PATH ${CMAKE_BINARY_DIR}/src/bb
-            DEPENDS ${COMPILE_NAME} ${OUTPUT_PATH}
-            WORKING_DIRECTORY ${OUTPUT_PATH})
-        else()
-            add_custom_command(OUTPUT ${HEADER} ${STATIC_LIB}
-            COMMAND ${CMAKE_SOURCE_DIR}/script/invoke.sh $<TARGET_FILE:${COMPILE_NAME}>
-                HL_TARGET ${IAE_TARGET_STRING}
-                LD_LIBRARY_PATH ${Halide_DIR}/../../../bin
-                LD_LIBRARY_PATH ${CMAKE_BINARY_DIR}
-                LD_LIBRARY_PATH ${CMAKE_BINARY_DIR}/src/bb
-            DEPENDS ${COMPILE_NAME} ${OUTPUT_PATH}
-            WORKING_DIRECTORY ${OUTPUT_PATH})
-        endif()
+    if(APPLE)
+        add_custom_command(OUTPUT ${HEADER} ${STATIC_LIB}
+        COMMAND ${CMAKE_SOURCE_DIR}/script/invoke.sh $<TARGET_FILE:${COMPILE_NAME}>
+            HL_TARGET ${IAE_TARGET_STRING}
+            DYLD_LIBRARY_PATH ${Halide_DIR}/../../../bin
+            DYLD_LIBRARY_PATH ${CMAKE_BINARY_DIR}
+            DYLD_LIBRARY_PATH ${CMAKE_BINARY_DIR}/src/bb
+        DEPENDS ${COMPILE_NAME} ${OUTPUT_PATH}
+        WORKING_DIRECTORY ${OUTPUT_PATH})
+    elseif(UNIX)
+        add_custom_command(OUTPUT ${HEADER} ${STATIC_LIB}
+        COMMAND ${CMAKE_SOURCE_DIR}/script/invoke.sh $<TARGET_FILE:${COMPILE_NAME}>
+            HL_TARGET ${IAE_TARGET_STRING}
+            LD_LIBRARY_PATH ${Halide_DIR}/../../../bin
+            LD_LIBRARY_PATH ${CMAKE_BINARY_DIR}
+            LD_LIBRARY_PATH ${CMAKE_BINARY_DIR}/src/bb
+        DEPENDS ${COMPILE_NAME} ${OUTPUT_PATH}
+        WORKING_DIRECTORY ${OUTPUT_PATH})
     else()
         add_custom_command(OUTPUT ${HEADER} ${STATIC_LIB}
             COMMAND ${CMAKE_SOURCE_DIR}/script/invoke.bat $<TARGET_FILE:${COMPILE_NAME}>
@@ -77,12 +72,10 @@ function(ion_aot_executable NAME_PREFIX)
     target_link_libraries(${NAME} PRIVATE ${STATIC_LIB} Halide::Halide Halide::Runtime ${PLATFORM_LIBRARIES} ${IAE_LIBS})
 
     # Test
-    if (UNIX)
-        if(APPLE)
-            set(RUNTIME_ENVS "DYLD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/src/bb:${CMAKE_BINARY_DIR}/test")
-        else()
-            set(RUNTIME_ENVS "LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/src/bb:${CMAKE_BINARY_DIR}/test")
-        endif()
+    if(APPLE)
+        set(RUNTIME_ENVS "DYLD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/src/bb:${CMAKE_BINARY_DIR}/test")
+    elseif(UNIX)
+        set(RUNTIME_ENVS "LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/src/bb:${CMAKE_BINARY_DIR}/test")
     else()
         set(RUNTIME_ENVS "PATH=${CMAKE_BINARY_DIR}/Release\;${CMAKE_BINARY_DIR}/src/bb/Release\;${CMAKE_BINARY_DIR}/test/Release\;${Halide_DIR}/../../../bin/Release")
     endif()
@@ -103,13 +96,11 @@ function(ion_jit_executable NAME_PREFIX)
 
     set(NAME ${NAME_PREFIX}_jit)
     add_executable(${NAME} ${IJE_SRCS})
-    if (UNIX AND NOT APPLE)
-        target_link_options(${NAME} PUBLIC -Wl,--export-dynamic) # For JIT compiling
-    endif()
-    if (APPLE)
-        target_compile_options(${NAME}
-            PUBLIC -fno-rtti  # For Halide::Generator
-            PUBLIC -rdynamic) # For JIT compiling
+    if(UNIX)
+        target_compile_options(${NAME} PUBLIC -fno-rtti)  # For Halide::Generator
+        if (NOT APPLE)
+            target_link_options(${NAME} PUBLIC -Wl,--export-dynamic) # For JIT compiling
+        endif()
     endif()
     add_dependencies(${NAME} ion-bb ion-bb-test)
     target_include_directories(${NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include ${ION_BB_INCLUDE_DIRS} ${IJE_INCS})
@@ -117,12 +108,10 @@ function(ion_jit_executable NAME_PREFIX)
     set_target_properties(${NAME} PROPERTIES ENABLE_EXPORTS ON)
 
     # Test
-    if (UNIX)
-        if(APPLE)
-            set(RUNTIME_ENVS "DYLD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/src/bb:${CMAKE_BINARY_DIR}/test")
-        else()
-            set(RUNTIME_ENVS "LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/src/bb:${CMAKE_BINARY_DIR}/test")
-        endif()
+    if(APPLE)
+        set(RUNTIME_ENVS "DYLD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/src/bb:${CMAKE_BINARY_DIR}/test")
+    elseif(UNIX)
+        set(RUNTIME_ENVS "LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/src/bb:${CMAKE_BINARY_DIR}/test")
     else()
         set(RUNTIME_ENVS "PATH=${CMAKE_BINARY_DIR}/Release\;${CMAKE_BINARY_DIR}/src/bb/Release\;${CMAKE_BINARY_DIR}/test/Release\;${Halide_DIR}/../../../bin/Release")
     endif()
@@ -141,12 +130,10 @@ function(ion_register_test TEST_NAME EXEC_NAME)
     set(multiValueArgs RUNTIME_ARGS)
     cmake_parse_arguments(IERT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    if (UNIX)
-        if(APPLE)
-            set(IERT_RUNTIME_ENVS "DYLD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/src/bb:${CMAKE_BINARY_DIR}/test")
-        else()
-            set(IERT_RUNTIME_ENVS "LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/src/bb:${CMAKE_BINARY_DIR}/test")
-        endif()
+    if(APPLE)
+        set(IERT_RUNTIME_ENVS "DYLD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/src/bb:${CMAKE_BINARY_DIR}/test")
+    elseif(UNIX)
+        set(IERT_RUNTIME_ENVS "LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/src/bb:${CMAKE_BINARY_DIR}/test")
     else()
         set(IERT_RUNTIME_ENVS "PATH=${CMAKE_BINARY_DIR}/Release\;${CMAKE_BINARY_DIR}/src/bb/Release\;${CMAKE_BINARY_DIR}/test/Release\;${Halide_DIR}/../../../bin/Release")
     endif()

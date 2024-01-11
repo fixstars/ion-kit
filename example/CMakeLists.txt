@@ -27,7 +27,7 @@ if(${ION_BB_BUILD_base} AND ${ION_BB_BUILD_image-io} AND ${ION_BB_BUILD_dnn})
     ion_jit_executable(dnn SRCS dnn.cc INCS ${OpenCV_INCLUDE_DIRS} LIBS ${OpenCV_LIBRARIES})
 endif()
 
-if(${ION_BB_BUILD_base} AND ${ION_BB_BUILD_image-processing} AND ${ION_BB_BUILD_image-io})
+if(${ION_BB_BUILD_base} AND ${ION_BB_BUILD_image-processing} AND ${ION_BB_BUILD_image-io} AND UNIX AND NOT APPLE)
     ion_aot_executable(demo SRCS_COMPILE demo_compile.cc SRCS_RUN demo_run.cc INCS ${OpenCV_INCLUDE_DIR} LIBS ion-bb ${OpenCV_LIBRARIES} TARGET_STRING "host-profile")
     if(${CUDA_FOUND})
         ion_aot_executable(demo_gpu SRCS_COMPILE demo_compile.cc SRCS_RUN demo_run.cc INCS ${OpenCV_INCLUDE_DIR} LIBS ion-bb ${OpenCV_LIBRARIES} TARGET_STRING "host-cuda-cuda_capability_50-profile")
