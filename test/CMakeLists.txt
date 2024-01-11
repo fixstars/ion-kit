@@ -61,6 +61,9 @@ endif()
 # Duplicate name test
 ion_jit_executable(dup-port-name SRCS dup-port-name.cc)
 
+# BuildingBlock::configure
+ion_jit_executable(configure SRCS configure.cc)
+
 # Export test
 # TODO: Resolve defects in feature/win-debug branch on Windows environment
 # ion_jit_executable(export SRCS export.cc)

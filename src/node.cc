@@ -19,19 +19,20 @@ Node::Impl::Impl(const std::string& id_, const std::string& name_, const Halide:
 void Node::set_iport(const std::vector<Port>& ports) {
 
     size_t i = 0;
-    for (const auto& info : impl_->arginfos) {
-        if (info.dir == Halide::Internal::ArgInfoDirection::Output) {
-            continue;
-        }
+    for (auto& port : ports) {
+        // TODO: Validation is better to be done lazily after BuildingBlock::configure
+        //
+        // if (info.dir == Halide::Internal::ArgInfoDirection::Output) {
+        //     continue;
+        // }
 
-        if (i >= ports.size()) {
-            log::error("Port {} is out of range", i);
-            throw std::runtime_error("Failed to validate input port");
-        }
+        // if (i >= ports.size()) {
+        //     log::error("Port {} is out of range", i);
+        //     throw std::runtime_error("Failed to validate input port");
+        // }
 
-        auto& port(ports[i]);
-
-        port.impl_->succ_chans.insert({id(), info.name});
+        // NOTE: Is succ_chans name OK to be just leave as it is?
+        port.impl_->succ_chans.insert({id(), "_ion_iport_" + i});
 
         impl_->ports.push_back(port);
 
@@ -40,11 +41,13 @@ void Node::set_iport(const std::vector<Port>& ports) {
 }
 
 Port Node::operator[](const std::string& name) {
-        if (std::find_if(impl_->arginfos.begin(), impl_->arginfos.end(),
-                         [&](const Halide::Internal::AbstractGenerator::ArgInfo& info) { return info.name == name; }) == impl_->arginfos.end()) {
-            log::error("Port {} is not found", name);
-            throw std::runtime_error("Failed to find port");
-        }
+        // TODO: Validation is better to be done lazily after BuildingBlock::configure
+        //
+        // if (std::find_if(impl_->arginfos.begin(), impl_->arginfos.end(),
+        //                  [&](const Halide::Internal::AbstractGenerator::ArgInfo& info) { return info.name == name; }) == impl_->arginfos.end()) {
+        //     log::error("Port {} is not found", name);
+        //     throw std::runtime_error("Failed to find port");
+        // }
 
         auto it = std::find_if(impl_->ports.begin(), impl_->ports.end(),
                                [&](const Port& p){ return (p.pred_name() == name && p.pred_id() == impl_->id) || p.has_succ({impl_->id, name}); });
