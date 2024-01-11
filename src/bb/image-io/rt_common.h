@@ -152,7 +152,7 @@ std::tuple<std::string, std::string> parse_url(const std::string &url) {
     return std::tuple<std::string, std::string>(host_name, path_name);
 }
 
-
+template<typename T>
 class ImageSequence {
 
  public:
@@ -204,7 +204,7 @@ class ImageSequence {
 
      }
 
-     void get(int width, int height, int imread_flags, Halide::Runtime::Buffer<uint16_t> &buf) {
+     void get(int width, int height, int imread_flags, Halide::Runtime::Buffer<T> &buf) {
         namespace fs = std::filesystem;
 
         auto path = paths_[idx_];
@@ -217,24 +217,22 @@ class ImageSequence {
             switch (imread_flags) {
                 case IMREAD_GRAYSCALE:
                     if (size == width * height * sizeof(uint8_t)) {
-                        Halide::Runtime::Buffer<uint16_t> buf_8bit;
-                        Halide::Buffer<uint8_t> buf_8(std::vector<int>{width, height, 3});
-                        memcpy(buf_8.data(), img_data, size);
-                        Buffer<uint16_t> buf_16 = Halide::Tools::ImageTypeConversion::convert_image(buf_8, halide_type_of<uint16_t>());
-                        memcpy(buf.data(), buf_16.data(), height* width*sizeof(uint16_t));
-
+                        Halide::Runtime::Buffer<uint8_t> buf_8(std::vector<int>{width, height}); //read in 8 bit
+                        memcpy(buf_8.data(), img_data, width * height * sizeof(uint8_t));   // set_img_data
+                        auto buf_16 = Halide::Tools::ImageTypeConversion::convert_image(buf_8, halide_type_of<uint16_t>());
+                        buf.copy_from(buf_16);
                     } else if (size == width * height * sizeof(uint16_t)) {
-                        memcpy(buf.data(), img_data, size);
+                        memcpy(buf.data(), img_data, width * height * sizeof(T));
                     } else {
                         throw std::runtime_error("Unsupported raw format");
                     }
-
                     break;
                 case IMREAD_COLOR:
                     if (size == 3 * width * height * sizeof(uint8_t)) {
                         // Expect interleaved RGB
-                        memcpy(buf.data(), img_data, size);
-
+                        Halide::Runtime::Buffer <uint8_t> buf_interleaved = Halide::Runtime::Buffer <uint8_t>::make_interleaved(width, height, 3); ;
+                        auto buffer_planar = buf_interleaved.copy_to_planar();
+                        buf.copy_from(buffer_planar);
                     } else {
                         throw std::runtime_error("Unsupported raw format");
                     }
@@ -242,34 +240,22 @@ class ImageSequence {
                 default:
                     throw std::runtime_error("Unsupported flags");
             }
-
-
         } else {
             switch (imread_flags) {
                 case IMREAD_GRAYSCALE:
-                    if (size == width * height * sizeof(uint8_t)) {
-                        Halide::Runtime::Buffer<uint8_t> img_buf = Halide::Tools::load_image(path.string());
-                        std::memcpy(buf.data(), img_buf.data(), height*width*sizeof(uint8_t));
-                    } else if (size == width * height * sizeof(uint16_t)) {
-                        Halide::Runtime::Buffer<uint16_t> img_buf = Halide::Tools::load_image(path.string());
-                        std::memcpy(buf.data(), img_buf.data(), height*width*sizeof(uint16_t));
-                    } else {
-                        throw std::runtime_error("Unsupported raw format");
-                    }
+                {   Halide::Runtime::Buffer<T> img_buf = Halide::Tools::load_and_convert_image(path.string());
+                    std::memcpy(buf.data(), img_buf.data(), height*width*sizeof(T));
+                }
                     break;
                 case IMREAD_COLOR:
-                    if (size == 3 * width * height * sizeof(uint8_t)) {
-                        // Expect interleaved RGB
-                        Halide::Buffer<uint8_t> img_buf = Halide::Tools::load_image(path.string());
-                        std::memcpy(buf.data(), img_buf.data(), 3* height*width*sizeof(uint8_t));
-                    } else {
-                        throw std::runtime_error("Unsupported raw format");
-                    }
+
+                  { Halide::Buffer<uint8_t> img_buf = Halide::Tools::load_and_convert_image(path.string());
+                    std::memcpy(buf.data(), img_buf.data(), 3* height*width*sizeof(T));
+                  }
                     break;
                 default:
                     throw std::runtime_error("Unsupported flags");
             }
-
 
         }
         idx_ = ((idx_+1) % paths_.size());

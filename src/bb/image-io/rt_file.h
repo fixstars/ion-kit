@@ -36,12 +36,12 @@ extern "C" int ION_EXPORT ion_bb_image_io_color_data_loader(halide_buffer_t *ses
         } else {
             const std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
             const std::string url = reinterpret_cast<const char *>(url_buf->host);
-            static std::unordered_map<std::string, std::unique_ptr<ImageSequence>> seqs;
+            static std::unordered_map<std::string, std::unique_ptr<ImageSequence<uint8_t>>> seqs;
             if (seqs.count(session_id) == 0) {
-                seqs[session_id] = std::unique_ptr<ImageSequence>(new ImageSequence(session_id, url));
+                seqs[session_id] = std::unique_ptr<ImageSequence<uint8_t>>(new ImageSequence<uint8_t>(session_id, url));
             }
 
-            Halide::Runtime::Buffer<uint16_t> obuf(*out);
+            Halide::Runtime::Buffer<uint8_t> obuf(*out);
             seqs[session_id]->get(width, height, IMREAD_COLOR,  obuf);
 
         }
@@ -70,9 +70,9 @@ extern "C" int ION_EXPORT ion_bb_image_io_grayscale_data_loader(halide_buffer_t 
         } else {
             const std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
             const std::string url = reinterpret_cast<const char *>(url_buf->host);
-            static std::unordered_map<std::string, std::unique_ptr<ImageSequence>> seqs;
+            static std::unordered_map<std::string, std::unique_ptr<ImageSequence<uint16_t>>> seqs;
             if (seqs.count(session_id) == 0) {
-                seqs[session_id] = std::unique_ptr<ImageSequence>(new ImageSequence(session_id, url));
+                seqs[session_id] = std::unique_ptr<ImageSequence<uint16_t>>(new ImageSequence<uint16_t>(session_id, url));
             }
             Halide::Runtime::Buffer<uint16_t> obuf(*out);
             seqs[session_id]->get(width, height, IMREAD_GRAYSCALE, obuf);
@@ -99,6 +99,9 @@ extern "C" int ION_EXPORT ion_bb_image_io_image_saver(halide_buffer_t *in, int32
             in->dim[2].min = 0;
             in->dim[2].extent = height;
         } else {
+
+
+
             Halide::Runtime::Buffer<uint8_t> obuf = Halide::Runtime::Buffer<uint8_t>::make_interleaved(width, height, 3);
             std::memcpy(obuf.data(), in->host, 3* width*height*sizeof(uint8_t));
             Halide::Tools::save_image(obuf, reinterpret_cast<const char *>(path->host));
