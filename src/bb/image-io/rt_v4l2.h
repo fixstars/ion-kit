@@ -1,6 +1,5 @@
 #ifndef ION_BB_IMAGE_IO_RT_V4L2_H
 #define ION_BB_IMAGE_IO_RT_V4L2_H
-#ifdef USE_OPENCV
 #include <linux/videodev2.h>
 
 

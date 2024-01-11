@@ -3,6 +3,51 @@
 #
 
 # Test BB module
+
+find_package(OpenCV 4 QUIET)
+
+if (${OpenCV_FOUND})
+    set(ION_BB_BUILD_image-io TRUE)
+
+    if (UNIX)
+        add_compile_options(-Wno-format-security)
+    endif()
+
+    set(INCLUDE_DIRS
+        ${OpenCV_INCLUDE_DIRS})
+
+    set(LINK_DIRS
+        ${OpenCV_DIR}/lib)
+
+    if (APPLE)
+        set(LIBRARIES
+            dl
+            pthread
+            m
+            jpeg
+            png
+            ${OpenCV_LIBRARIES})
+        list(APPEND RUNTIME_ENVS LD_LIBRARY_PATH ${OpenCV_DIR}/lib)
+    elseif (UNIX)
+        set(LIBRARIES
+            rt
+            dl
+            pthread
+            m
+            ${OpenCV_LIBRARIES})
+        list(APPEND RUNTIME_ENVS LD_LIBRARY_PATH ${OpenCV_DIR}/lib)
+    else()
+        set(LIBRARIES
+            ${OpenCV_LIBRARIES})
+        list(APPEND RUNTIME_ENVS PATH ${OpenCV_DIR}/x64/vc15/bin)
+    endif()
+else()
+    set(ION_BB_BUILD_image-io FALSE)
+endif()
+
+
+
+
 add_library(ion-bb-test SHARED ion-bb-test.cc)
 target_include_directories(ion-bb-test PUBLIC ${PROJECT_SOURCE_DIR}/src)
 if(UNIX)
@@ -60,6 +105,10 @@ endif()
 
 # Duplicate name test
 ion_jit_executable(dup-port-name SRCS dup-port-name.cc)
+
+
+# Duplicate name test
+ion_jit_executable(io_test SRCS io_test_without_opencv.cc)
 
 # Export test
 ion_jit_executable(export SRCS export.cc)
