@@ -127,7 +127,7 @@ public:
     GeneratorParam<int32_t> index{"index", 0};
     GeneratorParam<std::string> url{"url", ""};
 
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 3};
+    Output<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 3};
 
     void generate() {
         using namespace Halide;
@@ -182,8 +182,8 @@ public:
 
 
 
-    GeneratorOutput<Halide::Func> output0{"output0", Halide::type_of<uint8_t>(), 3};
-    GeneratorOutput<Halide::Func> output1{"output1", Halide::type_of<uint8_t>(), 3};
+    Output<Halide::Func> output0{"output0", Halide::type_of<uint8_t>(), 3};
+    Output<Halide::Func> output1{"output1", Halide::type_of<uint8_t>(), 3};
 
 
     void generate() {
@@ -255,8 +255,7 @@ public:
     GeneratorParam<int32_t> index{"index", 0};
     GeneratorParam<std::string> urls{"urls", ""};
 
-//  GeneratorInput<Buffer<uint8_t>[]>  urls{"urls"};
-    GeneratorOutput<Halide::Func[]> output{"output", Halide::type_of<uint8_t>(), 3};
+    Output<Halide::Func[]> output{"output", Halide::type_of<uint8_t>(), 3};
 
 
     void generate() {
@@ -334,7 +333,7 @@ public:
     GeneratorParam<std::string> url{"url", ""};
     GeneratorParam<bool> force_sim_mode{"force_sim_mode", false};
 
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint16_t>(), 2};
+    Output<Halide::Func> output{"output", Halide::type_of<uint16_t>(), 2};
 
     void generate() {
         using namespace Halide;
@@ -374,9 +373,9 @@ public:
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
 
-    GeneratorOutput<Halide::Func> output_l{"output_l", Halide::type_of<uint8_t>(), 2};
-    GeneratorOutput<Halide::Func> output_r{"output_r", Halide::type_of<uint8_t>(), 2};
-    GeneratorOutput<Halide::Func> output_d{"output_d", Halide::type_of<uint16_t>(), 2};
+    Output<Halide::Func> output_l{"output_l", Halide::type_of<uint8_t>(), 2};
+    Output<Halide::Func> output_r{"output_r", Halide::type_of<uint8_t>(), 2};
+    Output<Halide::Func> output_d{"output_d", Halide::type_of<uint16_t>(), 2};
 
     void generate() {
         using namespace Halide;
@@ -417,7 +416,7 @@ public:
     GeneratorParam<int32_t> height{"height", 0};
     GeneratorParam<int32_t> bit_width{"bit_width", 10};
     GeneratorParam<BayerMap::Pattern> bayer_pattern{"bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint16_t>(), 2};
+    Output<Halide::Func> output{"output", Halide::type_of<uint16_t>(), 2};
 
     void generate() {
         using namespace Halide;
@@ -470,7 +469,7 @@ public:
     GeneratorParam<float> gain_b{"gain_b", 1.f};
     GeneratorParam<float> offset{"offset", 0.f};
 
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint16_t>(), 2};
+    Output<Halide::Func> output{"output", Halide::type_of<uint16_t>(), 2};
 
     void generate() {
         using namespace Halide;
@@ -515,8 +514,8 @@ public:
     GeneratorParam<int32_t> idx{"idx", 0};
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
-    GeneratorInput<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 3};
-    GeneratorOutput<Halide::Func> output{"output", Halide::Int(32), 0};
+    Input<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 3};
+    Output<Halide::Func> output{"output", Halide::Int(32), 0};
 
     void generate() {
         using namespace Halide;
@@ -557,8 +556,8 @@ public:
 
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
-    GeneratorInput<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 3};
-    GeneratorOutput<Halide::Func> output{"output", Halide::Int(32), 0};
+    Input<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 3};
+    Output<Halide::Func> output{"output", Halide::Int(32), 0};
 
     void generate() {
         using namespace Halide;
@@ -601,7 +600,7 @@ public:
     GeneratorParam<int32_t> height{"height", 0};
     GeneratorParam<int32_t> dynamic_range{"dynamic_range", 65535};
     GeneratorParam<std::string> url{"url", ""};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint16_t>(), 2};
+    Output<Halide::Func> output{"output", Halide::type_of<uint16_t>(), 2};
 
     void generate() {
         using namespace Halide;
@@ -638,7 +637,7 @@ public:
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
     GeneratorParam<std::string> url{"url", ""};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 3};
+    Output<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 3};
 
     void generate() {
         using namespace Halide;
@@ -676,8 +675,8 @@ public:
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
     GeneratorParam<std::string> path{"path", ""};
-    GeneratorInput<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 3};
-    GeneratorOutput<Halide::Func> output{"output", Halide::Int(32), 0};
+    Input<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 3};
+    Output<Halide::Func> output{"output", Halide::Int(32), 0};
 
     void generate() {
         using namespace Halide;
@@ -717,11 +716,11 @@ public:
     GeneratorParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
     GeneratorParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
 
-    GeneratorInput<double> gain0{ "gain0" };
-    GeneratorInput<double> exposure0{ "exposure0" };
+    Input<double> gain0{ "gain0" };
+    Input<double> exposure0{ "exposure0" };
 
-    GeneratorOutput<Halide::Func> output0{ "output0", Halide::type_of<T>(), D};
-    GeneratorOutput<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
+    Output<Halide::Func> output0{ "output0", Halide::type_of<T>(), D};
+    Output<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
 
     void generate() {
         using namespace Halide;
@@ -729,7 +728,7 @@ public:
         Func camera1("u3v_camera1");
         {
             Buffer<uint8_t> id_buf = this->get_id();
-           
+
             const std::string gain_key(gain_key_ptr);
             Buffer<uint8_t> gain_key_buf(static_cast<int>(gain_key.size() + 1));
             gain_key_buf.fill(0);
@@ -749,14 +748,14 @@ public:
             camera1.compute_root();
             output0(_) = camera1(_);
         }
-    
+
         Func camera1_frame_count;
         {
             Buffer<uint8_t> id_buf = this->get_id();
             camera1_frame_count.define_extern("ion_bb_image_io_u3v_camera1_frame_count",{camera1, 1, static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode), id_buf}, type_of<uint32_t>(), 1);
             camera1_frame_count.compute_root();
             frame_count(_) = camera1_frame_count(_);
-        }     
+        }
 
         this->register_disposer("u3v_dispose");
 
@@ -776,14 +775,14 @@ public:
     GeneratorParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
     GeneratorParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
 
-    GeneratorInput<double> gain0{ "gain0" };
-    GeneratorInput<double> gain1{ "gain1" };
-    GeneratorInput<double> exposure0{ "exposure0" };
-    GeneratorInput<double> exposure1{ "exposure1" };
+    Input<double> gain0{ "gain0" };
+    Input<double> gain1{ "gain1" };
+    Input<double> exposure0{ "exposure0" };
+    Input<double> exposure1{ "exposure1" };
 
-    GeneratorOutput<Halide::Func> output0{ "output0", Halide::type_of<T>(), D};
-    GeneratorOutput<Halide::Func> output1{ "output1", Halide::type_of<T>(), D};
-    GeneratorOutput<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
+    Output<Halide::Func> output0{ "output0", Halide::type_of<T>(), D};
+    Output<Halide::Func> output1{ "output1", Halide::type_of<T>(), D};
+    Output<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
 
     void generate() {
         using namespace Halide;
@@ -812,7 +811,7 @@ public:
             output0(_) = camera2(_)[0];
             output1(_) = camera2(_)[1];
         }
-        
+
         Func camera2_frame_count;{
             Buffer<uint8_t> id_buf = this->get_id();
             camera2_frame_count.define_extern("ion_bb_image_io_u3v_camera2_frame_count", { camera2,  2, static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode), id_buf}, type_of<uint32_t>(), 1);
@@ -831,20 +830,34 @@ template<typename T, int D>
 class U3VCameraN : public ion::BuildingBlock<U3VCameraN<T, D>> {
 public:
     GeneratorParam<int32_t> num_devices{"num_devices", 2};
-
     GeneratorParam<bool> frame_sync{"frame_sync", false};
+
     GeneratorParam<std::string> gain_key_ptr{"gain_key", "Gain"};
     GeneratorParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
+
     GeneratorParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
 
-    GeneratorInput<Halide::Func> gain{ "gain", Halide::type_of<double>(), 1};
-    GeneratorInput<Halide::Func> exposure{ "exposure", Halide::type_of<double>(), 1};
+    GeneratorParam<bool> enable_control{"enable_control", false};
 
-    GeneratorOutput<Halide::Func[]> output{ "output", Halide::type_of<T>(), D};
-    GeneratorOutput<Halide::Func[]> device_info{ "device_info", Halide::type_of<uint8_t>(), 1};
-    GeneratorOutput<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
+    Input<Halide::Func> gain{ "gain", Halide::type_of<double>(), 1};
+    Input<Halide::Func> exposure{ "exposure", Halide::type_of<double>(), 1};
 
+    Output<Halide::Func[]> output{ "output", Halide::type_of<T>(), D};
+    Output<Halide::Func[]> device_info{ "device_info", Halide::type_of<uint8_t>(), 1};
+    Output<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
+#if 0
+    std::vector<Input<double> *> gain;
+    std::vector<Input<double> *> exposure;
 
+    void configure() {
+        if (enable_control) {
+            for (auto i=0; i<num_devices; ++i) {
+                gain.push_back(add_input<double>("gain_" + std::to_string(i)));
+                exposure.push_back(add_input<double>("exposure_" + std::to_string(i)));
+            }
+        }
+    }
+#endif
     void generate() {
         using namespace Halide;
 
@@ -935,7 +948,7 @@ public:
         }
         this->register_disposer("u3v_dispose");
     }
-  
+
 };
 
 using U3VCameraN_U8x3 = U3VCameraN<uint8_t, 3>;
@@ -951,11 +964,11 @@ public:
     GeneratorParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
     GeneratorParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
 
-    GeneratorInput<Halide::Func> gain{ "gain", Halide::type_of<double>(), 1};
-    GeneratorInput<Halide::Func> exposure{ "exposure", Halide::type_of<double>(), 1};
+    Input<Halide::Func> gain{ "gain", Halide::type_of<double>(), 1};
+    Input<Halide::Func> exposure{ "exposure", Halide::type_of<double>(), 1};
 
-    GeneratorOutput<Halide::Func[]> gendc{ "gendc", Halide::type_of<uint8_t>(), 1};
-    GeneratorOutput<Halide::Func[]> device_info{ "device_info", Halide::type_of<uint8_t>(), 1};
+    Output<Halide::Func[]> gendc{ "gendc", Halide::type_of<uint8_t>(), 1};
+    Output<Halide::Func[]> device_info{ "device_info", Halide::type_of<uint8_t>(), 1};
 
     void generate() {
         using namespace Halide;
@@ -1038,17 +1051,17 @@ public:
     GeneratorParam<std::string> output_directory_ptr{ "output_directory", "." };
     GeneratorParam<int32_t> num_devices{"num_devices", 2};
 
-    GeneratorInput<Halide::Func[]> input_images{ "input_images", Halide::type_of<T>(), D };
+    Input<Halide::Func[]> input_images{ "input_images", Halide::type_of<T>(), D };
 
-    GeneratorInput<Halide::Func[]> input_deviceinfo{ "input_deviceinfo", Halide::type_of<uint8_t>(), 1 };
-    GeneratorInput<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
+    Input<Halide::Func[]> input_deviceinfo{ "input_deviceinfo", Halide::type_of<uint8_t>(), 1 };
+    Input<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
 
-    GeneratorInput<bool> dispose{ "dispose" };
-    GeneratorInput<int32_t> width{ "width" };
-    GeneratorInput<int32_t> height{ "height" };
-    GeneratorInput<int32_t> color_channel{ "color_channel" };
+    Input<bool> dispose{ "dispose" };
+    Input<int32_t> width{ "width" };
+    Input<int32_t> height{ "height" };
+    Input<int32_t> color_channel{ "color_channel" };
 
-    GeneratorOutput<int32_t> output{"output"};
+    Output<int32_t> output{"output"};
 
     void generate() {
         using namespace Halide;
@@ -1116,13 +1129,13 @@ public:
 
     GeneratorParam<int32_t> num_devices{"num_devices", 2};
 
-    GeneratorInput<Halide::Func[]> input_gendc{ "input_gendc", Halide::type_of<uint8_t>(), 1 };
-    GeneratorInput<Halide::Func[]> input_deviceinfo{ "input_deviceinfo", Halide::type_of<uint8_t>(), 1 };
+    Input<Halide::Func[]> input_gendc{ "input_gendc", Halide::type_of<uint8_t>(), 1 };
+    Input<Halide::Func[]> input_deviceinfo{ "input_deviceinfo", Halide::type_of<uint8_t>(), 1 };
 
-    GeneratorInput<bool> dispose{ "dispose" };
-    GeneratorInput<int32_t> payloadsize{ "payloadsize" };
+    Input<bool> dispose{ "dispose" };
+    Input<int32_t> payloadsize{ "payloadsize" };
 
-    GeneratorOutput<int> output{ "output" };
+    Output<int> output{ "output" };
 
     void generate() {
         using namespace Halide;

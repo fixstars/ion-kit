@@ -175,7 +175,7 @@ class U3V {
     static U3V & get_instance(const std::string& id, int32_t num_sensor, bool frame_sync, bool realtime_display_mode)
     {
 
-      
+
         if (instances_.count(id) == 0) {
             ion::log::info("Create U3V instance: {}", id);
             instances_[id] = std::unique_ptr<U3V>(new U3V(num_sensor, frame_sync, realtime_display_mode));
@@ -211,7 +211,7 @@ class U3V {
 
         devices_.clear();
 
-        arv_shutdown();
+        // arv_shutdown();
         disposed_ = true;
         // instance_.reset(nullptr);
 
@@ -307,7 +307,7 @@ class U3V {
         return frame_count;
     }
 
-    void get(std::vector<void *>& outs) {
+    void get(std::vector<Halide::Buffer<>>& outs) {
 
         auto timeout_us = 30 * 1000 * 1000;
 
@@ -403,7 +403,8 @@ class U3V {
             }
 
             for (int i = 0; i < num_sensor_; ++i){
-                ::memcpy(outs[i], arv_buffer_get_part_data(bufs[i], 0, nullptr), devices_[i].image_payload_size_);
+                auto sz = (std::min)(devices_[i].image_payload_size_, static_cast<int32_t>(outs[i].size_in_bytes()));
+                ::memcpy(outs[i].data(), arv_buffer_get_part_data(bufs[i], 0, nullptr), sz);
                 arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
                 log::trace("Obtained Frame from USB{}: {}", i, devices_[i].frame_count_);
             }
@@ -481,7 +482,8 @@ class U3V {
             }
 
             frame_cnt_ = latest_cnt;
-            ::memcpy(outs[0], arv_buffer_get_part_data(bufs[cameN_idx_], 0, nullptr), devices_[cameN_idx_].image_payload_size_);
+            auto sz = (std::min)(devices_[cameN_idx_].image_payload_size_, static_cast<int32_t>(outs[0].size_in_bytes()));
+            ::memcpy(outs[0].data(), arv_buffer_get_part_data(bufs[cameN_idx_], 0, nullptr), sz);
             arv_stream_push_buffer(devices_[cameN_idx_].stream_, bufs[cameN_idx_]);
 
             log::trace("Obtained Frame from USB{}: {}", cameN_idx_, frame_cnt_);
@@ -1185,7 +1187,7 @@ int ION_EXPORT ion_bb_image_io_u3v_camera1(
             u3v.SetGain(0, gain_key, gain0);
             u3v.SetExposure(0, exposure_key, exposure0);
 
-            std::vector<void *> obufs{out0->host};
+            std::vector<Halide::Buffer<> > obufs{Halide::Buffer<>(*out0)};
             u3v.get(obufs);
         }
 
@@ -1222,7 +1224,7 @@ int ION_EXPORT ion_bb_image_io_u3v_camera2(
             u3v.SetExposure(0, exposure_key, exposure0);
             u3v.SetExposure(1, exposure_key, exposure1);
 
-            std::vector<void *> obufs{out0->host, out1->host};
+            std::vector<Halide::Buffer<> > obufs{Halide::Buffer<>(*out0), Halide::Buffer<>(*out1)};
             u3v.get(obufs);
         }
 
@@ -1447,7 +1449,7 @@ int ION_EXPORT ion_bb_image_io_u3v_multiple_camera1(
                 u3v.SetExposure(i, exposure_key, (reinterpret_cast<double*>(exposure->host))[i]);
             }
 
-            std::vector<void *> obufs{out0->host};
+            std::vector<Halide::Buffer<>> obufs{Halide::Buffer<>(*out0)};
             u3v.get(obufs);
         }
 
@@ -1487,7 +1489,8 @@ int ION_EXPORT ion_bb_image_io_u3v_multiple_camera2(
                 u3v.SetGain(i, gain_key, (reinterpret_cast<double*>(gain->host))[i]);
                 u3v.SetExposure(i, exposure_key, (reinterpret_cast<double*>(exposure->host))[i]);
             }
-            std::vector<void *> obufs{out0->host, out1->host};
+
+            std::vector<Halide::Buffer<>> obufs{Halide::Buffer<>(*out0), Halide::Buffer<>(*out1)};
             u3v.get(obufs);
         }
 
