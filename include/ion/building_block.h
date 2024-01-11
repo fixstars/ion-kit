@@ -2,6 +2,7 @@
 #define ION_BUILDING_BLOCK_H
 
 #include <vector>
+
 #include <Halide.h>
 
 #include "builder.h"

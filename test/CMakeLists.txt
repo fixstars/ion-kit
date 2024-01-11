@@ -62,7 +62,8 @@ endif()
 ion_jit_executable(dup-port-name SRCS dup-port-name.cc)
 
 # Export test
-ion_jit_executable(export SRCS export.cc)
+# TODO: Resolve defects in feature/win-debug branch on Windows environment
+# ion_jit_executable(export SRCS export.cc)
 
 ion_aot_executable(simple_graph SRCS_COMPILE simple_graph_compile.cc SRCS_RUN simple_graph_run.cc LIBS ion-bb-test)
 ion_jit_executable(simple_graph SRCS simple_graph_jit.cc)

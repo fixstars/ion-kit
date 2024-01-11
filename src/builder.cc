@@ -87,9 +87,7 @@ Builder::Builder()
 
 Builder::~Builder()
 {
-    for (auto kv : disposers_) {
-        auto bb_id(std::get<0>(kv));
-        auto disposer(std::get<1>(kv));
+    for (auto [bb_id, disposer] : disposers_) {
         disposer(bb_id.c_str());
     }
 }
