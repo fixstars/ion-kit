@@ -37,7 +37,7 @@ jobs:
           mv Halide*/* ${HOME}/Halide
 
           # zlib, libjpeg, libpng
-          vcpkg install zlib libjpeg libpng
+          vcpkg install zlib libjpeg-turbo libpng
           vcpkg integrate install
 
       - name: Configure
