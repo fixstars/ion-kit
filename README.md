@@ -2,7 +2,7 @@
 [![MacOS](https://github.com/fixstars/ion-kit/workflows/MacOS/badge.svg)](https://github.com/fixstars/ion-kit/actions?query=workflow%3AMacOS)
 [![Windows](https://github.com/fixstars/ion-kit/workflows/Windows/badge.svg)](https://github.com/fixstars/ion-kit/actions?query=workflow%3AWindows)
 
-# Overview
+# ion-kit
 ion-kit is a graph-based data processing framework.
 You can define an algorithm in [Halide](https://halide-lang.org/) language as a "Building Block" (BB), then form a processing pipeline as a directed acyclic graph (DAG) combining BBs.
 The pipeline can be optimized and compiled targeting various architectures of CPUs, GPUs, and WebAssembly.
