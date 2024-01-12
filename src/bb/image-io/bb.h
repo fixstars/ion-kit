@@ -689,9 +689,9 @@ public:
         Func in(static_cast<std::string>(gc_prefix) + "input");
         Var x, y, c;
         in(c, x, y) = mux(c,
-                          {input(x, y, 2),
+                          {input(x, y, 0),
                            input(x, y, 1),
-                           input(x, y, 0)});
+                           input(x, y, 2)});
         in.compute_root();
         if (get_target().has_gpu_feature()) {
             Var xo, yo, xi, yi;
@@ -729,7 +729,7 @@ public:
         Func camera1("u3v_camera1");
         {
             Buffer<uint8_t> id_buf = this->get_id();
-           
+
             const std::string gain_key(gain_key_ptr);
             Buffer<uint8_t> gain_key_buf(static_cast<int>(gain_key.size() + 1));
             gain_key_buf.fill(0);
@@ -749,14 +749,14 @@ public:
             camera1.compute_root();
             output0(_) = camera1(_);
         }
-    
+
         Func camera1_frame_count;
         {
             Buffer<uint8_t> id_buf = this->get_id();
             camera1_frame_count.define_extern("ion_bb_image_io_u3v_camera1_frame_count",{camera1, 1, static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode), id_buf}, type_of<uint32_t>(), 1);
             camera1_frame_count.compute_root();
             frame_count(_) = camera1_frame_count(_);
-        }     
+        }
 
         this->register_disposer("u3v_dispose");
 
@@ -812,7 +812,7 @@ public:
             output0(_) = camera2(_)[0];
             output1(_) = camera2(_)[1];
         }
-        
+
         Func camera2_frame_count;{
             Buffer<uint8_t> id_buf = this->get_id();
             camera2_frame_count.define_extern("ion_bb_image_io_u3v_camera2_frame_count", { camera2,  2, static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode), id_buf}, type_of<uint32_t>(), 1);
@@ -935,7 +935,7 @@ public:
         }
         this->register_disposer("u3v_dispose");
     }
-  
+
 };
 
 using U3VCameraN_U8x3 = U3VCameraN<uint8_t, 3>;

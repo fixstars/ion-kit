@@ -26,24 +26,29 @@ jobs:
       - name: Setup dependencies
         shell: bash
         run: |
-            sudo apt-get update
-            sudo apt-get install -y curl cmake build-essential libopencv-dev zlib1g-dev
-            sudo apt-get clean
-            sudo rm -rf /var/lib/apt/lists/*
+          sudo apt-get update
+          sudo apt-get install -y curl cmake build-essential libopencv-dev
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
 
-            mkdir ${HOME}/halide
-            curl -L https://github.com/halide/Halide/releases/download/v16.0.0/Halide-16.0.0-x86-64-linux-1e963ff817ef0968cc25d811a25a7350c8953ee6.tar.gz | tar zx -C ${HOME}/halide --strip-components 1
-            find ${HOME}/halide -type d | xargs chmod 755
-            sudo cp -r ${HOME}/halide/* /usr/
+          # Halide
+          mkdir ${HOME}/halide
+          curl -L https://github.com/halide/Halide/releases/download/v16.0.0/Halide-16.0.0-x86-64-linux-1e963ff817ef0968cc25d811a25a7350c8953ee6.tar.gz | tar zx -C ${HOME}/halide --strip-components 1
+          find ${HOME}/halide -type d | xargs chmod 755
+          sudo cp -r ${HOME}/halide/* /usr/
 
-            mkdir ${HOME}/onnxruntime
-            curl -L https://github.com/microsoft/onnxruntime/releases/download/v1.16.3/onnxruntime-linux-x64-1.16.3.tgz | tar zx -C ${HOME}/onnxruntime --strip-components 1
-            find ${HOME}/onnxruntime -type d | xargs chmod 755
-            sudo cp -r ${HOME}/onnxruntime/* /usr/
+          # ONNXRuntime
+          mkdir ${HOME}/onnxruntime
+          curl -L https://github.com/microsoft/onnxruntime/releases/download/v1.16.3/onnxruntime-linux-x64-1.16.3.tgz | tar zx -C ${HOME}/onnxruntime --strip-components 1
+          find ${HOME}/onnxruntime -type d | xargs chmod 755
+          sudo cp -r ${HOME}/onnxruntime/* /usr/
+
+          # zlib, libjpeg, libpng
+          vcpkg install zlib libjpeg-turbo libpng
 
       - name: Configure
         shell: bash
-        run: cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -D ION_BUILD_TEST=ON -D ION_BUILD_EXAMPLE=ON $GITHUB_WORKSPACE
+        run: cmake -D CMAKE_TOOLCHAIN_FILE=${VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -D ION_BUILD_TEST=ON -D ION_BUILD_EXAMPLE=ON $GITHUB_WORKSPACE
 
       - name: Build
         shell: bash
