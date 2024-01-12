@@ -3,7 +3,7 @@ name: MacOS
 on:
   pull_request:
     branches:
-      - master
+      - main
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
