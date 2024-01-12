@@ -5,7 +5,8 @@
 # ion-kit
 The ion-kit is a graph-based data processing framework.
 You can define an algorithm in [Halide](https://halide-lang.org/) language as a "Building Block" (BB), then form a processing pipeline as a directed acyclic graph (DAG) combining BBs.
-The pipeline can be optimized and compiled targeting various architecture of CPUs, GPUs and WebAssembly, or ran immediately.
+The pipeline can be optimized and compiled targeting various architectures of CPUs, GPUs, and WebAssembly.
+You can also run the pipeline immediately on your host machine.
 
 ## Quick start
 
@@ -16,7 +17,7 @@ struct MyFilter : ion::BuildingBlock<MyFilter> {
     // This Building Block takes 1 input, 1 output and 1 parameter.
     ion::Input<Halide::Func> input{"input", Int(32), 1};
     ion::Output<Halide::Func> output{"output", Int(32), 1};
-    ion::GeneratorParam<int32_t> v{"v", 0};
+    ion::BuildingBlockParam<int32_t> v{"v", 0};
 
     void generate() {
         Halide::Var i;
@@ -65,6 +66,9 @@ int main() {
 
     // Run the pipeline.
     b.run();
+
+    // Or compile into the library.
+    b.compile("my_pipeine");
 
     // Expected output is "42 42 42 42"
     for (int i=0; i<size; ++i) {
