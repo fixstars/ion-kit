@@ -1,6 +1,6 @@
-find_package(JPEG QUIET)
-find_package(PNG QUIET)
-find_package(ZLIB QUIET)
+find_package(JPEG)
+find_package(PNG)
+find_package(ZLIB)
 
 if(JPEG_FOUND AND PNG_FOUND AND ZLIB_FOUND)
     set(ION_BB_BUILD_image-io TRUE)
