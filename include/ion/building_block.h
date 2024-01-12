@@ -10,16 +10,13 @@
 namespace ion {
 
 template<typename T>
-using GeneratorParam = Halide::GeneratorParam<T>;
+using BuildingBlockParam = Halide::GeneratorParam<T>;
 
 template<typename T>
-using GeneratorInput = Halide::GeneratorInput<T>;
+using BuildingBlockInput = Halide::GeneratorInput<T>;
 
 template<typename T>
-using GeneratorOutput = Halide::GeneratorOutput<T>;
-
-// template<typename T>
-// using Param = Halide::GeneratorParam<T>;
+using BuildingBlockOutput = Halide::GeneratorOutput<T>;
 
 template<typename T>
 using Input = Halide::GeneratorInput<T>;
@@ -30,8 +27,8 @@ using Output = Halide::GeneratorOutput<T>;
 template<typename T>
 class BuildingBlock : public Halide::Generator<T> {
 
-    GeneratorParam<uint64_t> builder_ptr{"builder_ptr", 0};
-    GeneratorParam<std::string> bb_id{"bb_id", ""};
+    BuildingBlockParam<uint64_t> builder_ptr{"builder_ptr", 0};
+    BuildingBlockParam<std::string> bb_id{"bb_id", ""};
 
  protected:
 
@@ -40,7 +37,7 @@ class BuildingBlock : public Halide::Generator<T> {
          reinterpret_cast<Builder*>(static_cast<uint64_t>(builder_ptr))->register_disposer(bb_id, n);
      }
 
-     Halide::Buffer<uint8_t> get_id() {
+     ion::Buffer<uint8_t> get_id() {
          std::string bb_id_s(bb_id);
          Buffer<uint8_t> buf(static_cast<int>(bb_id_s.size() + 1));
          buf.fill(0);

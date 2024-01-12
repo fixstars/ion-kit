@@ -3,15 +3,9 @@
 [![Windows](https://github.com/fixstars/ion-kit/workflows/Windows/badge.svg)](https://github.com/fixstars/ion-kit/actions?query=workflow%3AWindows)
 
 # ion-kit
-The ion-kit is a graph based data processing framework.
-User can define data processing algorithm in Halide as a "Building Block" (BB), then form a processing pipeline as a directed acyclic graph (DAG) combining BBs.
-The pipeline can be ran just in time or compiled into binary object.
-
-## Depedencies
-* [Halide (v16.0.0)](https://github.com/halide/Halide/releases/tag/v16.0.0)
-* [libjpeg](https://libjpeg-turbo.org/)
-* [libpng](http://www.libpng.org/)
-* [zlib](https://www.zlib.net/)
+The ion-kit is a graph-based data processing framework.
+You can define an algorithm in [Halide](https://halide-lang.org/) language as a "Building Block" (BB), then form a processing pipeline as a directed acyclic graph (DAG) combining BBs.
+The pipeline can be optimized and compiled targeting various architecture of CPUs, GPUs and WebAssembly, or ran immediately.
 
 ## Quick start
 
@@ -89,20 +83,11 @@ $ c++ -std=c++17 -fno-rtti main.cc -o main -I <ion-kit-PATH>/include -L <ion-kit
 42 42 42 42
 ```
 
-## Build from scratch
+## Build
 Please follow the instructions provided for your preferred platform.
-* [Linux](INSTALL-LINUX.md)
-* [Windows](INSTALL-WINDOWS.md)
-* [MacOS](INSTALL-MACOS.md)
-
-## CMake variables
-| Variable          | Type   | Descriotion                                                               |
-| ----------------- | ------ | ------------------------------------------------------------------------- |
-| ION_BUILD_DOC     | ON/OFF | Enable to bulid documents. (Default: ON)                                  |
-| ION_BUILD_TEST    | ON/OFF | Enable to bulid tests. (Default: ON)                                      |
-| ION_BUILD_EXAMPLE | ON/OFF | Enable to bulid examples. (Default: ON)                                   |
-| ION_BUNDLE_HALIDE | ON/OFF | Bundle Halide when packaging. (Default: OFF)                              |
-| ION_ENABLE_HALIDE_FPGA_BACKEND | ON/OFF | Enable experimental FPGA backend. (Default: OFF)             |
+* [Linux](BUILD-Linux.md)
+* [MacOS](BUILD-MacOS.md)
+* [Windows](BUILD-Windows.md)
 
 ## Authors
 The ion-kit is an open-source project created by Fixstars Corporation and its subsidiary companies including Fixstars Solutions Inc, Fixstars Autonomous Technologies.

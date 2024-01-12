@@ -185,19 +185,19 @@ Halide::Expr lut_interpolation_float(Halide::Func lut, Halide::Expr value, int32
 
 class BayerOffset : public BuildingBlock<BayerOffset> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "BayerOffset"};
-    GeneratorParam<std::string> gc_description{"gc_description", "Offset values of bayer image."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "BayerOffset"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Offset values of bayer image."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", ""};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    GeneratorParam<BayerMap::Pattern> bayer_pattern{"bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map};
-    GeneratorInput<float> offset_r{"offset_r"};
-    GeneratorInput<float> offset_g{"offset_g"};
-    GeneratorInput<float> offset_b{"offset_b"};
-    GeneratorInput<Halide::Func> input{"input", Halide::Float(32), 2};
-    GeneratorOutput<Halide::Func> output{"output", Halide::Float(32), 2};
+    BuildingBlockParam<BayerMap::Pattern> bayer_pattern{"bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map};
+    Input<float> offset_r{"offset_r"};
+    Input<float> offset_g{"offset_g"};
+    Input<float> offset_b{"offset_b"};
+    Input<Halide::Func> input{"input", Halide::Float(32), 2};
+    Output<Halide::Func> output{"output", Halide::Float(32), 2};
 
     void generate() {
         output(x, y) = Halide::clamp(input(x, y) - Halide::mux(BayerMap::get_color(bayer_pattern, x, y), {offset_r, offset_g, offset_b}), 0.f, 1.f);
@@ -225,19 +225,19 @@ private:
 
 class BayerWhiteBalance : public BuildingBlock<BayerWhiteBalance> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "BayerWhiteBalance"};
-    GeneratorParam<std::string> gc_description{"gc_description", "Gain values of bayer image."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "BayerWhiteBalance"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Gain values of bayer image."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", ""};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    GeneratorParam<BayerMap::Pattern> bayer_pattern{"bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map};
-    GeneratorInput<float> gain_r{"gain_r"};
-    GeneratorInput<float> gain_g{"gain_g"};
-    GeneratorInput<float> gain_b{"gain_b"};
-    GeneratorInput<Halide::Func> input{"input", Halide::Float(32), 2};
-    GeneratorOutput<Halide::Func> output{"output", Halide::Float(32), 2};
+    BuildingBlockParam<BayerMap::Pattern> bayer_pattern{"bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map};
+    Input<float> gain_r{"gain_r"};
+    Input<float> gain_g{"gain_g"};
+    Input<float> gain_b{"gain_b"};
+    Input<Halide::Func> input{"input", Halide::Float(32), 2};
+    Output<Halide::Func> output{"output", Halide::Float(32), 2};
 
     void generate() {
         output(x, y) = Halide::clamp(input(x, y) * Halide::mux(BayerMap::get_color(bayer_pattern, x, y), {gain_r, gain_g, gain_b}), 0.f, 1.f);
@@ -265,18 +265,18 @@ private:
 
 class BayerDemosaicSimple : public BuildingBlock<BayerDemosaicSimple> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "BayerDemosaicSimple"};
-    GeneratorParam<std::string> gc_description{"gc_description", "Demosaic bayer image by simple algorithm."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.map(x => x / 2).concat([3]) }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "BayerDemosaicSimple"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Demosaic bayer image by simple algorithm."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.map(x => x / 2).concat([3]) }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    GeneratorParam<BayerMap::Pattern> bayer_pattern{"bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map};
-    GeneratorParam<int32_t> width{"width", 0};
-    GeneratorParam<int32_t> height{"height", 0};
-    GeneratorInput<Halide::Func> input{"input", Halide::Float(32), 2};
-    GeneratorOutput<Halide::Func> output{"output", Halide::Float(32), 3};
+    BuildingBlockParam<BayerMap::Pattern> bayer_pattern{"bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map};
+    BuildingBlockParam<int32_t> width{"width", 0};
+    BuildingBlockParam<int32_t> height{"height", 0};
+    Input<Halide::Func> input{"input", Halide::Float(32), 2};
+    Output<Halide::Func> output{"output", Halide::Float(32), 3};
 
     void generate() {
         Func input_wrapper = Halide::BoundaryConditions::constant_exterior(input, 0, {{0, width}, {0, height}});
@@ -336,18 +336,18 @@ private:
 
 class BayerDemosaicLinear : public BuildingBlock<BayerDemosaicLinear> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "BayerDemosaicLinear"};
-    GeneratorParam<std::string> gc_description{"gc_description", "Demosaic bayer image by linear algorithm."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.concat([3]) }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "BayerDemosaicLinear"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Demosaic bayer image by linear algorithm."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.concat([3]) }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    GeneratorParam<BayerMap::Pattern> bayer_pattern{"bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map};
-    GeneratorParam<int32_t> width{"width", 0};
-    GeneratorParam<int32_t> height{"height", 0};
-    GeneratorInput<Halide::Func> input{"input", Halide::Float(32), 2};
-    GeneratorOutput<Halide::Func> output{"output", Halide::Float(32), 3};
+    BuildingBlockParam<BayerMap::Pattern> bayer_pattern{"bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map};
+    BuildingBlockParam<int32_t> width{"width", 0};
+    BuildingBlockParam<int32_t> height{"height", 0};
+    Input<Halide::Func> input{"input", Halide::Float(32), 2};
+    Output<Halide::Func> output{"output", Halide::Float(32), 3};
 
     void generate() {
         split(x, y, c) = Halide::select(c == BayerMap::get_color(bayer_pattern, x, y), input(x, y), 0);
@@ -409,18 +409,18 @@ private:
 
 class BayerDemosaicFilter : public BuildingBlock<BayerDemosaicFilter> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "BayerDemosaicFilter"};
-    GeneratorParam<std::string> gc_description{"gc_description", "Demosaic bayer image by filter algorithm."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.concat([3]) }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "BayerDemosaicFilter"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Demosaic bayer image by filter algorithm."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.concat([3]) }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    GeneratorParam<BayerMap::Pattern> bayer_pattern{"bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map};
-    GeneratorParam<int32_t> width{"width", 0};
-    GeneratorParam<int32_t> height{"height", 0};
-    GeneratorInput<Halide::Func> input{"input", Halide::Float(32), 2};
-    GeneratorOutput<Halide::Func> output{"output", Halide::Float(32), 3};
+    BuildingBlockParam<BayerMap::Pattern> bayer_pattern{"bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map};
+    BuildingBlockParam<int32_t> width{"width", 0};
+    BuildingBlockParam<int32_t> height{"height", 0};
+    Input<Halide::Func> input{"input", Halide::Float(32), 2};
+    Output<Halide::Func> output{"output", Halide::Float(32), 3};
 
     void generate() {
         // Generate filters
@@ -538,15 +538,15 @@ class GammaCorrection : public BuildingBlock<X> {
     static_assert(D == 2 || D == 3, "D must be 2 or 3.");
 
 public:
-    GeneratorParam<std::string> gc_description{"gc_description", "Gamma correction."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Gamma correction."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", ""};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    GeneratorInput<float> gamma{"gamma"};
-    GeneratorInput<Halide::Func> input{"input", Halide::Float(32), D};
-    GeneratorOutput<Halide::Func> output{"output", Halide::Float(32), D};
+    Input<float> gamma{"gamma"};
+    Input<Halide::Func> input{"input", Halide::Float(32), D};
+    Output<Halide::Func> output{"output", Halide::Float(32), D};
 
     void generate() {
         output(Halide::_) = Halide::clamp(Halide::fast_pow(input(Halide::_), gamma), 0.f, 1.f);
@@ -575,33 +575,33 @@ public:
 };
 
 class GammaCorrection2D : public GammaCorrection<GammaCorrection2D, 2> {
-    GeneratorParam<std::string> gc_title{"gc_title", "GammaCorrection2D"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "GammaCorrection2D"};
 };
 
 class GammaCorrection3D : public GammaCorrection<GammaCorrection3D, 3> {
-    GeneratorParam<std::string> gc_title{"gc_title", "GammaCorrection3D"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "GammaCorrection3D"};
 };
 
 class LensShadingCorrectionLinear : public BuildingBlock<LensShadingCorrectionLinear> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "LensShadingCorrectionLinear"};
-    GeneratorParam<std::string> gc_description{"gc_description", "Correct lens shading."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "LensShadingCorrectionLinear"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Correct lens shading."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    GeneratorParam<BayerMap::Pattern> bayer_pattern{"bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map};
-    GeneratorParam<int32_t> width{"width", 0};
-    GeneratorParam<int32_t> height{"height", 0};
-    GeneratorInput<float> slope_r{"slope_r"};
-    GeneratorInput<float> slope_g{"slope_g"};
-    GeneratorInput<float> slope_b{"slope_b"};
-    GeneratorInput<float> offset_r{"offset_r"};
-    GeneratorInput<float> offset_g{"offset_g"};
-    GeneratorInput<float> offset_b{"offset_b"};
-    GeneratorInput<Halide::Func> input{"input", Halide::Float(32), 2};
-    GeneratorOutput<Halide::Func> output{"output", Halide::Float(32), 2};
+    BuildingBlockParam<BayerMap::Pattern> bayer_pattern{"bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map};
+    BuildingBlockParam<int32_t> width{"width", 0};
+    BuildingBlockParam<int32_t> height{"height", 0};
+    Input<float> slope_r{"slope_r"};
+    Input<float> slope_g{"slope_g"};
+    Input<float> slope_b{"slope_b"};
+    Input<float> offset_r{"offset_r"};
+    Input<float> offset_g{"offset_g"};
+    Input<float> offset_b{"offset_b"};
+    Input<Halide::Func> input{"input", Halide::Float(32), 2};
+    Output<Halide::Func> output{"output", Halide::Float(32), 2};
 
     void generate() {
         BayerMap::Pattern bayer_pattern = BayerMap::Pattern::RGGB;
@@ -639,21 +639,21 @@ private:
 
 class LensShadingCorrectionLUT : public BuildingBlock<LensShadingCorrectionLUT> {
 public:
-    // GeneratorParam<std::string> gc_title{"gc_title", "LensShadingCorrectionLUT"};
-    GeneratorParam<std::string> gc_description{"gc_description", "Correct lens shading."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+    // BuildingBlockParam<std::string> gc_title{"gc_title", "LensShadingCorrectionLUT"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Correct lens shading."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    GeneratorParam<BayerMap::Pattern> bayer_pattern{"bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map};
-    GeneratorParam<int32_t> width{"width", 0};
-    GeneratorParam<int32_t> height{"height", 0};
-    GeneratorInput<Halide::Func> lut_r{"lut_r", Halide::Float(32), 1};
-    GeneratorInput<Halide::Func> lut_g{"lut_g", Halide::Float(32), 1};
-    GeneratorInput<Halide::Func> lut_b{"lut_b", Halide::Float(32), 1};
-    GeneratorInput<Halide::Func> input{"input", Halide::Float(32), 2};
-    GeneratorOutput<Halide::Func> output{"output", Halide::Float(32), 2};
+    BuildingBlockParam<BayerMap::Pattern> bayer_pattern{"bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map};
+    BuildingBlockParam<int32_t> width{"width", 0};
+    BuildingBlockParam<int32_t> height{"height", 0};
+    Input<Halide::Func> lut_r{"lut_r", Halide::Float(32), 1};
+    Input<Halide::Func> lut_g{"lut_g", Halide::Float(32), 1};
+    Input<Halide::Func> lut_b{"lut_b", Halide::Float(32), 1};
+    Input<Halide::Func> input{"input", Halide::Float(32), 2};
+    Output<Halide::Func> output{"output", Halide::Float(32), 2};
 
     void generate() {
         Halide::Expr center_x, center_y, r2;
@@ -690,16 +690,16 @@ private:
 
 class ColorMatrix : public BuildingBlock<ColorMatrix> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ColorMatrix"};
-    GeneratorParam<std::string> gc_description{"gc_description", "Apply color matrix."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "ColorMatrix"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Apply color matrix."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", ""};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    GeneratorInput<Halide::Func> matrix{"matrix", Halide::Float(32), 2};
-    GeneratorInput<Halide::Func> input{"input", Halide::Float(32), 3};
-    GeneratorOutput<Halide::Func> output{"output", Halide::Float(32), 3};
+    Input<Halide::Func> matrix{"matrix", Halide::Float(32), 2};
+    Input<Halide::Func> input{"input", Halide::Float(32), 3};
+    Output<Halide::Func> output{"output", Halide::Float(32), 3};
 
     void generate() {
         sum(x, y, c) += input(x, y, r) * matrix(r, c);
@@ -731,16 +731,16 @@ private:
 
 class CalcLuminance : public BuildingBlock<CalcLuminance> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "CalcLuminance"};
-    GeneratorParam<std::string> gc_description{"gc_description", "Calc luminance of image."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.slice(0, -1) }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "CalcLuminance"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Calc luminance of image."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.slice(0, -1) }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", ""};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    GeneratorParam<Luminance::Method> luminance_method{"luminance_method", Luminance::Method::Average, Luminance::enum_map};
-    GeneratorInput<Halide::Func> input{"input", Halide::Float(32), 3};
-    GeneratorOutput<Halide::Func> output{"output", Halide::Float(32), 2};
+    BuildingBlockParam<Luminance::Method> luminance_method{"luminance_method", Luminance::Method::Average, Luminance::enum_map};
+    Input<Halide::Func> input{"input", Halide::Float(32), 3};
+    Output<Halide::Func> output{"output", Halide::Float(32), 2};
 
     void generate() {
         output(x, y) = Luminance::calc(luminance_method, input(x, y, 0), input(x, y, 1), input(x, y, 2));
@@ -765,21 +765,21 @@ private:
 
 class BilateralFilter2D : public BuildingBlock<BilateralFilter2D> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "BilateralFilter2D"};
-    GeneratorParam<std::string> gc_description{"gc_description", "Bilateral filter."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "BilateralFilter2D"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Bilateral filter."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    GeneratorParam<int32_t> window_size{"window_size", 2};  // window_size=2 -> 5x5 window
-    GeneratorParam<int32_t> width{"width", 0};
-    GeneratorParam<int32_t> height{"height", 0};
-    GeneratorInput<float> coef_color{"coef_color"};
-    GeneratorInput<float> coef_space{"coef_space"};
-    GeneratorInput<Halide::Func> sigma{"sigma", Halide::Float(32), 2};
-    GeneratorInput<Halide::Func> input{"input", Halide::Float(32), 2};
-    GeneratorOutput<Halide::Func> output{"output", Halide::Float(32), 2};
+    BuildingBlockParam<int32_t> window_size{"window_size", 2};  // window_size=2 -> 5x5 window
+    BuildingBlockParam<int32_t> width{"width", 0};
+    BuildingBlockParam<int32_t> height{"height", 0};
+    Input<float> coef_color{"coef_color"};
+    Input<float> coef_space{"coef_space"};
+    Input<Halide::Func> sigma{"sigma", Halide::Float(32), 2};
+    Input<Halide::Func> input{"input", Halide::Float(32), 2};
+    Output<Halide::Func> output{"output", Halide::Float(32), 2};
 
     void generate() {
         Halide::Func input_mirror = Halide::BoundaryConditions::mirror_interior(input, {{0, width}, {0, height}, {0, 3}});
@@ -839,22 +839,22 @@ private:
 
 class BilateralFilter3D : public BuildingBlock<BilateralFilter3D> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "BilateralFilter3D"};
-    GeneratorParam<std::string> gc_description{"gc_description", "Bilateral filter."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "BilateralFilter3D"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Bilateral filter."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    GeneratorParam<ColorDifference::Method> color_difference_method{"color_difference_method", ColorDifference::Method::Average, ColorDifference::enum_map};
-    GeneratorParam<int32_t> window_size{"window_size", 2};  // window_size=2 -> 5x5 window
-    GeneratorParam<int32_t> width{"width", 0};
-    GeneratorParam<int32_t> height{"height", 0};
-    GeneratorInput<float> coef_color{"coef_color"};
-    GeneratorInput<float> coef_space{"coef_space"};
-    GeneratorInput<Halide::Func> sigma{"sigma", Halide::Float(32), 2};
-    GeneratorInput<Halide::Func> input{"input", Halide::Float(32), 3};
-    GeneratorOutput<Halide::Func> output{"output", Halide::Float(32), 3};
+    BuildingBlockParam<ColorDifference::Method> color_difference_method{"color_difference_method", ColorDifference::Method::Average, ColorDifference::enum_map};
+    BuildingBlockParam<int32_t> window_size{"window_size", 2};  // window_size=2 -> 5x5 window
+    BuildingBlockParam<int32_t> width{"width", 0};
+    BuildingBlockParam<int32_t> height{"height", 0};
+    Input<float> coef_color{"coef_color"};
+    Input<float> coef_space{"coef_space"};
+    Input<Halide::Func> sigma{"sigma", Halide::Float(32), 2};
+    Input<Halide::Func> input{"input", Halide::Float(32), 3};
+    Output<Halide::Func> output{"output", Halide::Float(32), 3};
 
     void generate() {
         Halide::Func input_mirror = Halide::BoundaryConditions::mirror_interior(input, {{0, width}, {0, height}, {0, 3}});
@@ -928,19 +928,19 @@ class Convolution : public BuildingBlock<X> {
     static_assert(D == 2 || D == 3, "D must be 2 or 3.");
 
 public:
-    GeneratorParam<std::string> gc_description{"gc_description", "Image convolution."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Image convolution."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    GeneratorParam<BoundaryConditions::Method> boundary_conditions_method{"boundary_conditions_method", BoundaryConditions::Method::Zero, BoundaryConditions::enum_map};
-    GeneratorParam<int32_t> window_size{"window_size", 2};  // window_size=2 -> 5x5 window
-    GeneratorParam<int32_t> width{"width", 0};
-    GeneratorParam<int32_t> height{"height", 0};
-    GeneratorInput<Halide::Func> kernel{"kernel", Halide::Float(32), 2};
-    GeneratorInput<Halide::Func> input{"input", Halide::Float(32), D};
-    GeneratorOutput<Halide::Func> output{"output", Halide::Float(32), D};
+    BuildingBlockParam<BoundaryConditions::Method> boundary_conditions_method{"boundary_conditions_method", BoundaryConditions::Method::Zero, BoundaryConditions::enum_map};
+    BuildingBlockParam<int32_t> window_size{"window_size", 2};  // window_size=2 -> 5x5 window
+    BuildingBlockParam<int32_t> width{"width", 0};
+    BuildingBlockParam<int32_t> height{"height", 0};
+    Input<Halide::Func> kernel{"kernel", Halide::Float(32), 2};
+    Input<Halide::Func> input{"input", Halide::Float(32), D};
+    Output<Halide::Func> output{"output", Halide::Float(32), D};
 
     void generate() {
         Halide::Var x;
@@ -991,11 +991,11 @@ private:
 };
 
 class Convolution2D : public Convolution<Convolution2D, 2> {
-    GeneratorParam<std::string> gc_title{"gc_title", "Convolution2D"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "Convolution2D"};
 };
 
 class Convolution3D : public Convolution<Convolution3D, 3> {
-    GeneratorParam<std::string> gc_title{"gc_title", "Convolution3D"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "Convolution3D"};
 };
 
 template<typename X, int32_t D>
@@ -1006,19 +1006,19 @@ class LensDistortionCorrectionLUT : public BuildingBlock<X> {
     // LUT(r2) = (1 + k1 * r2 + k2 * r2 * r2 + k3 * r2 * r2 * r2) / output_scale
     // fx = fy = sqrt(width^2 + height^2)
 public:
-    GeneratorParam<std::string> gc_description{"gc_description", "Correct lens distortion."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Correct lens distortion."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    GeneratorParam<int32_t> width{"width", 0};
-    GeneratorParam<int32_t> height{"height", 0};
-    GeneratorInput<float> cx{"cx"};
-    GeneratorInput<float> cy{"cy"};
-    GeneratorInput<Halide::Func> lut{"lut", Halide::Float(32), 1};
-    GeneratorInput<Halide::Func> input{"input", Halide::Float(32), D};
-    GeneratorOutput<Halide::Func> output{"output", Halide::Float(32), D};
+    BuildingBlockParam<int32_t> width{"width", 0};
+    BuildingBlockParam<int32_t> height{"height", 0};
+    Input<float> cx{"cx"};
+    Input<float> cy{"cy"};
+    Input<Halide::Func> lut{"lut", Halide::Float(32), 1};
+    Input<Halide::Func> input{"input", Halide::Float(32), D};
+    Output<Halide::Func> output{"output", Halide::Float(32), D};
 
     void generate() {
         Halide::Var x;
@@ -1074,11 +1074,11 @@ public:
 };
 
 class LensDistortionCorrectionLUT2D : public LensDistortionCorrectionLUT<LensDistortionCorrectionLUT2D, 2> {
-    // GeneratorParam<std::string> gc_title{"gc_title", "LensDistortionCorrectionLUT2D"};
+    // BuildingBlockParam<std::string> gc_title{"gc_title", "LensDistortionCorrectionLUT2D"};
 };
 
 class LensDistortionCorrectionLUT3D : public LensDistortionCorrectionLUT<LensDistortionCorrectionLUT3D, 3> {
-    // GeneratorParam<std::string> gc_title{"gc_title", "LensDistortionCorrectionLUT3D"};
+    // BuildingBlockParam<std::string> gc_title{"gc_title", "LensDistortionCorrectionLUT3D"};
 };
 
 template<typename X, int32_t D>
@@ -1086,26 +1086,26 @@ class LensDistortionCorrectionModel : public BuildingBlock<X> {
     static_assert(D == 2 || D == 3, "D must be 2 or 3.");
     // Output fx, fy is scaled by output_scale
 public:
-    GeneratorParam<std::string> gc_description{"gc_description", "Correct lens distortion."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Correct lens distortion."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    GeneratorParam<int32_t> width{"width", 0};
-    GeneratorParam<int32_t> height{"height", 0};
-    GeneratorInput<float> k1{"k1"};
-    GeneratorInput<float> k2{"k2"};
-    GeneratorInput<float> k3{"k3"};
-    GeneratorInput<float> p1{"p1"};
-    GeneratorInput<float> p2{"p2"};
-    GeneratorInput<float> fx{"fx"};
-    GeneratorInput<float> fy{"fy"};
-    GeneratorInput<float> cx{"cx"};
-    GeneratorInput<float> cy{"cy"};
-    GeneratorInput<float> output_scale{"output_scale"};
-    GeneratorInput<Halide::Func> input{"input", Halide::Float(32), D};
-    GeneratorOutput<Halide::Func> output{"output", Halide::Float(32), D};
+    BuildingBlockParam<int32_t> width{"width", 0};
+    BuildingBlockParam<int32_t> height{"height", 0};
+    Input<float> k1{"k1"};
+    Input<float> k2{"k2"};
+    Input<float> k3{"k3"};
+    Input<float> p1{"p1"};
+    Input<float> p2{"p2"};
+    Input<float> fx{"fx"};
+    Input<float> fy{"fy"};
+    Input<float> cx{"cx"};
+    Input<float> cy{"cy"};
+    Input<float> output_scale{"output_scale"};
+    Input<Halide::Func> input{"input", Halide::Float(32), D};
+    Output<Halide::Func> output{"output", Halide::Float(32), D};
 
     void generate() {
         Halide::Var x;
@@ -1157,11 +1157,11 @@ public:
 };
 
 class LensDistortionCorrectionModel2D : public LensDistortionCorrectionModel<LensDistortionCorrectionModel2D, 2> {
-    GeneratorParam<std::string> gc_title{"gc_title", "LensDistortionCorrectionModel2D"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "LensDistortionCorrectionModel2D"};
 };
 
 class LensDistortionCorrectionModel3D : public LensDistortionCorrectionModel<LensDistortionCorrectionModel3D, 3> {
-    GeneratorParam<std::string> gc_title{"gc_title", "LensDistortionCorrectionModel3D"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "LensDistortionCorrectionModel3D"};
 };
 
 template<typename X, int D>
@@ -1169,17 +1169,17 @@ class ResizeNearest : public BuildingBlock<X> {
     static_assert(D == 2 || D == 3, "D must be 2 or 3.");
 
 public:
-    GeneratorParam<std::string> gc_description{"gc_description", "Resize image by nearest algorithm."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.map((x, i) => i < 2 ? Math.floor(x * parseFloat(v.scale)) : x) }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Resize image by nearest algorithm."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.map((x, i) => i < 2 ? Math.floor(x * parseFloat(v.scale)) : x) }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    GeneratorParam<int32_t> width{"width", 0};
-    GeneratorParam<int32_t> height{"height", 0};
-    GeneratorParam<float> scale{"scale", 1.f};
-    GeneratorInput<Halide::Func> input{"input", Halide::Float(32), D};
-    GeneratorOutput<Halide::Func> output{"output", Halide::Float(32), D};
+    BuildingBlockParam<int32_t> width{"width", 0};
+    BuildingBlockParam<int32_t> height{"height", 0};
+    BuildingBlockParam<float> scale{"scale", 1.f};
+    Input<Halide::Func> input{"input", Halide::Float(32), D};
+    Output<Halide::Func> output{"output", Halide::Float(32), D};
 
     void generate() {
         Halide::Var x;
@@ -1212,11 +1212,11 @@ public:
 };
 
 class ResizeNearest2D : public ResizeNearest<ResizeNearest2D, 2> {
-    GeneratorParam<std::string> gc_title{"gc_title", "ResizeNearest2D"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "ResizeNearest2D"};
 };
 
 class ResizeNearest3D : public ResizeNearest<ResizeNearest3D, 3> {
-    GeneratorParam<std::string> gc_title{"gc_title", "ResizeNearest3D"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "ResizeNearest3D"};
 };
 
 template<typename X, int32_t D>
@@ -1224,17 +1224,17 @@ class ResizeBilinear : public BuildingBlock<X> {
     static_assert(D == 2 || D == 3, "D must be 2 or 3.");
 
 public:
-    GeneratorParam<std::string> gc_description{"gc_description", "Resize image by bilinear algorithm."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.map((x, i) => i < 2 ? Math.floor(x * parseFloat(v.scale)) : x) }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Resize image by bilinear algorithm."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.map((x, i) => i < 2 ? Math.floor(x * parseFloat(v.scale)) : x) }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    GeneratorParam<int32_t> width{"width", 0};
-    GeneratorParam<int32_t> height{"height", 0};
-    GeneratorParam<float> scale{"scale", 1.f};
-    GeneratorInput<Halide::Func> input{"input", Halide::Float(32), D};
-    GeneratorOutput<Halide::Func> output{"output", Halide::Float(32), D};
+    BuildingBlockParam<int32_t> width{"width", 0};
+    BuildingBlockParam<int32_t> height{"height", 0};
+    BuildingBlockParam<float> scale{"scale", 1.f};
+    Input<Halide::Func> input{"input", Halide::Float(32), D};
+    Output<Halide::Func> output{"output", Halide::Float(32), D};
 
     void generate() {
         Halide::Var x;
@@ -1281,11 +1281,11 @@ public:
 };
 
 class ResizeBilinear2D : public ResizeBilinear<ResizeBilinear2D, 2> {
-    GeneratorParam<std::string> gc_title{"gc_title", "ResizeBilinear2D"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "ResizeBilinear2D"};
 };
 
 class ResizeBilinear3D : public ResizeBilinear<ResizeBilinear3D, 3> {
-    GeneratorParam<std::string> gc_title{"gc_title", "ResizeBilinear3D"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "ResizeBilinear3D"};
 };
 
 template<typename X, int32_t D>
@@ -1293,17 +1293,17 @@ class ResizeAreaAverage : public BuildingBlock<X> {
     static_assert(D == 2 || D == 3, "D must be 2 or 3.");
 
 public:
-    GeneratorParam<std::string> gc_description{"gc_description", "Resize image by area average algorithm."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.map((x, i) => i < 2 ? Math.floor(x * parseFloat(v.scale)) : x) }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Resize image by area average algorithm."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.map((x, i) => i < 2 ? Math.floor(x * parseFloat(v.scale)) : x) }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    GeneratorParam<int32_t> width{"width", 0};
-    GeneratorParam<int32_t> height{"height", 0};
-    GeneratorParam<float> scale{"scale", 1.f};
-    GeneratorInput<Halide::Func> input{"input", Halide::Float(32), D};
-    GeneratorOutput<Halide::Func> output{"output", Halide::Float(32), D};
+    BuildingBlockParam<int32_t> width{"width", 0};
+    BuildingBlockParam<int32_t> height{"height", 0};
+    BuildingBlockParam<float> scale{"scale", 1.f};
+    Input<Halide::Func> input{"input", Halide::Float(32), D};
+    Output<Halide::Func> output{"output", Halide::Float(32), D};
 
     void generate() {
         Halide::Var x;
@@ -1361,11 +1361,11 @@ private:
 };
 
 class ResizeAreaAverage2D : public ResizeAreaAverage<ResizeAreaAverage2D, 2> {
-    GeneratorParam<std::string> gc_title{"gc_title", "ResizeAreaAverage2D"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "ResizeAreaAverage2D"};
 };
 
 class ResizeAreaAverage3D : public ResizeAreaAverage<ResizeAreaAverage3D, 3> {
-    GeneratorParam<std::string> gc_title{"gc_title", "ResizeAreaAverage3D"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "ResizeAreaAverage3D"};
 };
 
 template<typename X, typename T>
@@ -1373,17 +1373,17 @@ class BayerDownscale : public BuildingBlock<X> {
     static_assert(std::is_arithmetic<T>::value, "T must be arithmetic type.");
 
 public:
-    GeneratorParam<std::string> gc_description{"gc_description", "Downscale bayer image."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.map(x => Math.floor(x / parseInt(v.downscale_factor))) }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "input_width,input_height"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Downscale bayer image."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.map(x => Math.floor(x / parseInt(v.downscale_factor))) }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "input_width,input_height"};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    GeneratorParam<int32_t> input_width{"input_width", 0};
-    GeneratorParam<int32_t> input_height{"input_height", 0};
-    GeneratorParam<int32_t> downscale_factor{"downscale_factor", 1};
-    GeneratorInput<Halide::Func> input{"input", Halide::type_of<T>(), 2};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), 2};
+    BuildingBlockParam<int32_t> input_width{"input_width", 0};
+    BuildingBlockParam<int32_t> input_height{"input_height", 0};
+    BuildingBlockParam<int32_t> downscale_factor{"downscale_factor", 1};
+    Input<Halide::Func> input{"input", Halide::type_of<T>(), 2};
+    Output<Halide::Func> output{"output", Halide::type_of<T>(), 2};
 
     void generate() {
         Halide::Var x;
@@ -1410,22 +1410,22 @@ public:
 };
 
 class BayerDownscaleUInt16 : public BayerDownscale<BayerDownscaleUInt16, uint16_t> {
-    GeneratorParam<std::string> gc_title{"gc_title", "BayerDownscaleUInt16"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "BayerDownscaleUInt16"};
 };
 
 class NormalizeRawImage : public BuildingBlock<NormalizeRawImage> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "Normalize RAW"};
-    GeneratorParam<std::string> gc_description{"gc_description", "Normalize raw image."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "Normalize RAW"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Normalize raw image."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", ""};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    GeneratorParam<uint8_t> bit_width{"bit_width", 10};
-    GeneratorParam<uint8_t> bit_shift{"bit_shift", 6};
-    GeneratorInput<Halide::Func> input{"input", Halide::type_of<uint16_t>(), 2};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<float>(), 2};
+    BuildingBlockParam<uint8_t> bit_width{"bit_width", 10};
+    BuildingBlockParam<uint8_t> bit_shift{"bit_shift", 6};
+    Input<Halide::Func> input{"input", Halide::type_of<uint16_t>(), 2};
+    Output<Halide::Func> output{"output", Halide::type_of<float>(), 2};
 
     void generate() {
         Halide::Var x;
@@ -1456,18 +1456,18 @@ class FitImageToCenter : public BuildingBlock<X> {
     static_assert(std::is_arithmetic<T>::value, "T must be arithmetic type.");
 
 public:
-    GeneratorParam<std::string> gc_description{"gc_description", "Fit image to center."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.output_width), parseInt(v.output_height)].concat(v.input.slice(2)) }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "input_width,input_height,output_width,output_height"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Fit image to center."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.output_width), parseInt(v.output_height)].concat(v.input.slice(2)) }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "input_width,input_height,output_width,output_height"};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    GeneratorParam<int32_t> input_width{"input_width", 0};
-    GeneratorParam<int32_t> input_height{"input_height", 0};
-    GeneratorParam<int32_t> output_width{"output_width", 0};
-    GeneratorParam<int32_t> output_height{"output_height", 0};
-    GeneratorInput<Halide::Func> input{"input", Halide::type_of<T>(), D};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), D};
+    BuildingBlockParam<int32_t> input_width{"input_width", 0};
+    BuildingBlockParam<int32_t> input_height{"input_height", 0};
+    BuildingBlockParam<int32_t> output_width{"output_width", 0};
+    BuildingBlockParam<int32_t> output_height{"output_height", 0};
+    Input<Halide::Func> input{"input", Halide::type_of<T>(), D};
+    Output<Halide::Func> output{"output", Halide::type_of<T>(), D};
 
     void generate() {
         using namespace  Halide;
@@ -1487,22 +1487,22 @@ public:
 
 class FitImageToCenter2DUInt8 : public FitImageToCenter<FitImageToCenter2DUInt8, uint8_t, 2> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "FitImageToCenter2DUInt8"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "FitImageToCenter2DUInt8"};
 };
 
 class FitImageToCenter3DUInt8 : public FitImageToCenter<FitImageToCenter3DUInt8, uint8_t, 3> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "FitImageToCenter3DUInt8"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "FitImageToCenter3DUInt8"};
 };
 
 class FitImageToCenter2DFloat : public FitImageToCenter<FitImageToCenter2DFloat, float, 2> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "FitImageToCenter2DFloat"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "FitImageToCenter2DFloat"};
 };
 
 class FitImageToCenter3DFloat : public FitImageToCenter<FitImageToCenter3DFloat, float, 3> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "FitImageToCenter3DFloat"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "FitImageToCenter3DFloat"};
 };
 
 template<typename X, typename T, int32_t D>
@@ -1511,15 +1511,15 @@ class ReorderColorChannel : public BuildingBlock<X> {
     static_assert(std::is_arithmetic<T>::value, "T must be arithmetic type.");
 
 public:
-    GeneratorParam<std::string> gc_description{"gc_description", "Reorder color channel (RGB <-> BGR)."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Reorder color channel (RGB <-> BGR)."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", ""};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    GeneratorParam<int32_t> color_dim{"color_dim", D - 1, 0, D - 1};
-    GeneratorInput<Halide::Func> input{"input", Halide::type_of<T>(), D};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), D};
+    BuildingBlockParam<int32_t> color_dim{"color_dim", D - 1, 0, D - 1};
+    Input<Halide::Func> input{"input", Halide::type_of<T>(), D};
+    Output<Halide::Func> output{"output", Halide::type_of<T>(), D};
 
     void generate() {
         std::vector<Halide::Var> vars(D);
@@ -1540,12 +1540,12 @@ public:
 
 class ReorderColorChannel3DUInt8 : public ReorderColorChannel<ReorderColorChannel3DUInt8, uint8_t, 3> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ReorderColorChannel3DUInt8"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "ReorderColorChannel3DUInt8"};
 };
 
 class ReorderColorChannel3DFloat : public ReorderColorChannel<ReorderColorChannel3DFloat, float, 3> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ReorderColorChannel3DFloat"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "ReorderColorChannel3DFloat"};
 };
 
 template<typename X, typename T, int32_t D>
@@ -1554,23 +1554,23 @@ class OverlayImage : public BuildingBlock<X> {
     static_assert(std::is_arithmetic<T>::value, "T must be arithmetic type.");
 
 public:
-    GeneratorParam<std::string> gc_description{"gc_description", "Overlay image to another image."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input0.map((x, i) => i === parseInt(v.x_dim) ? Math.max(parseInt(v.input1_left) + v.input1[i], x) : i === parseInt(v.y_dim) ? Math.max(parseInt(v.input1_top) + v.input1[i], x) : Math.min(x, v.input1[i])) }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "input0_width,input0_height,input1_width,input1_height"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Overlay image to another image."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input0.map((x, i) => i === parseInt(v.x_dim) ? Math.max(parseInt(v.input1_left) + v.input1[i], x) : i === parseInt(v.y_dim) ? Math.max(parseInt(v.input1_top) + v.input1[i], x) : Math.min(x, v.input1[i])) }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "input0_width,input0_height,input1_width,input1_height"};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    GeneratorParam<int32_t> x_dim{"x_dim", 0, 0, D - 1};
-    GeneratorParam<int32_t> y_dim{"y_dim", 1, 0, D - 1};
-    GeneratorParam<int32_t> input0_width{"input0_width", 0};
-    GeneratorParam<int32_t> input0_height{"input0_height", 0};
-    GeneratorParam<int32_t> input1_left{"input1_left", 0};
-    GeneratorParam<int32_t> input1_top{"input1_top", 0};
-    GeneratorParam<int32_t> input1_width{"input1_width", 0};
-    GeneratorParam<int32_t> input1_height{"input1_height", 0};
-    GeneratorInput<Halide::Func> input0{"input0", Halide::type_of<T>(), D};
-    GeneratorInput<Halide::Func> input1{"input1", Halide::type_of<T>(), D};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), D};
+    BuildingBlockParam<int32_t> x_dim{"x_dim", 0, 0, D - 1};
+    BuildingBlockParam<int32_t> y_dim{"y_dim", 1, 0, D - 1};
+    BuildingBlockParam<int32_t> input0_width{"input0_width", 0};
+    BuildingBlockParam<int32_t> input0_height{"input0_height", 0};
+    BuildingBlockParam<int32_t> input1_left{"input1_left", 0};
+    BuildingBlockParam<int32_t> input1_top{"input1_top", 0};
+    BuildingBlockParam<int32_t> input1_width{"input1_width", 0};
+    BuildingBlockParam<int32_t> input1_height{"input1_height", 0};
+    Input<Halide::Func> input0{"input0", Halide::type_of<T>(), D};
+    Input<Halide::Func> input1{"input1", Halide::type_of<T>(), D};
+    Output<Halide::Func> output{"output", Halide::type_of<T>(), D};
 
     void generate() {
         using namespace Halide;
@@ -1607,22 +1607,22 @@ public:
 
 class OverlayImage2DUInt8 : public OverlayImage<OverlayImage2DUInt8, uint8_t, 2> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "OverlayImage2DUInt8"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "OverlayImage2DUInt8"};
 };
 
 class OverlayImage3DUInt8 : public OverlayImage<OverlayImage3DUInt8, uint8_t, 3> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "OverlayImage3DUInt8"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "OverlayImage3DUInt8"};
 };
 
 class OverlayImage2DFloat : public OverlayImage<OverlayImage2DFloat, float, 2> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "OverlayImage2DFloat"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "OverlayImage2DFloat"};
 };
 
 class OverlayImage3DFloat : public OverlayImage<OverlayImage3DFloat, float, 3> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "OverlayImage3DFloat"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "OverlayImage3DFloat"};
 };
 
 template<typename X, typename T, int32_t D>
@@ -1631,21 +1631,21 @@ class TileImageHorizontal : public BuildingBlock<X> {
     static_assert(std::is_arithmetic<T>::value, "T must be arithmetic type.");
 
 public:
-    GeneratorParam<std::string> gc_description{"gc_description", "Tile two images horizontally."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input0.map((x, i) => i === parseInt(v.x_dim) ? x + v.input1[i] : i === parseInt(v.y_dim) ? Math.max(x, v.input1[i]) : Math.min(x, v.input1[i])) }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "input0_width,input0_height,input1_width,input1_height"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Tile two images horizontally."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input0.map((x, i) => i === parseInt(v.x_dim) ? x + v.input1[i] : i === parseInt(v.y_dim) ? Math.max(x, v.input1[i]) : Math.min(x, v.input1[i])) }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "input0_width,input0_height,input1_width,input1_height"};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    GeneratorParam<int32_t> x_dim{"x_dim", 0, 0, D - 1};
-    GeneratorParam<int32_t> y_dim{"y_dim", 1, 0, D - 1};
-    GeneratorParam<int32_t> input0_width{"input0_width", 0};
-    GeneratorParam<int32_t> input0_height{"input0_height", 0};
-    GeneratorParam<int32_t> input1_width{"input1_width", 0};
-    GeneratorParam<int32_t> input1_height{"input1_height", 0};
-    GeneratorInput<Halide::Func> input0{"input0", Halide::type_of<T>(), D};
-    GeneratorInput<Halide::Func> input1{"input1", Halide::type_of<T>(), D};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), D};
+    BuildingBlockParam<int32_t> x_dim{"x_dim", 0, 0, D - 1};
+    BuildingBlockParam<int32_t> y_dim{"y_dim", 1, 0, D - 1};
+    BuildingBlockParam<int32_t> input0_width{"input0_width", 0};
+    BuildingBlockParam<int32_t> input0_height{"input0_height", 0};
+    BuildingBlockParam<int32_t> input1_width{"input1_width", 0};
+    BuildingBlockParam<int32_t> input1_height{"input1_height", 0};
+    Input<Halide::Func> input0{"input0", Halide::type_of<T>(), D};
+    Input<Halide::Func> input1{"input1", Halide::type_of<T>(), D};
+    Output<Halide::Func> output{"output", Halide::type_of<T>(), D};
 
     void generate() {
         Halide::Func input0_wrapper;
@@ -1678,22 +1678,22 @@ public:
 
 class TileImageHorizontal2DUInt8 : public TileImageHorizontal<TileImageHorizontal2DUInt8, uint8_t, 2> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "TileImageHorizontal2DUInt8"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "TileImageHorizontal2DUInt8"};
 };
 
 class TileImageHorizontal3DUInt8 : public TileImageHorizontal<TileImageHorizontal3DUInt8, uint8_t, 3> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "TileImageHorizontal3DUInt8"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "TileImageHorizontal3DUInt8"};
 };
 
 class TileImageHorizontal2DFloat : public TileImageHorizontal<TileImageHorizontal2DFloat, float, 2> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "TileImageHorizontal2DFloat"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "TileImageHorizontal2DFloat"};
 };
 
 class TileImageHorizontal3DFloat : public TileImageHorizontal<TileImageHorizontal3DFloat, float, 3> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "TileImageHorizontal3DFloat"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "TileImageHorizontal3DFloat"};
 };
 
 template<typename X, typename T, int32_t D>
@@ -1702,21 +1702,21 @@ class TileImageVertical : public BuildingBlock<X> {
     static_assert(std::is_arithmetic<T>::value, "T must be arithmetic type.");
 
 public:
-    GeneratorParam<std::string> gc_description{"gc_description", "Tile two images vertically."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input0.map((x, i) => i === parseInt(v.x_dim) ? Math.max(x, v.input1[i]) : i === parseInt(v.y_dim) ? x + v.input1[i] : Math.min(x, v.input1[i])) }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "input0_width,input0_height,input1_width,input1_height"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Tile two images vertically."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input0.map((x, i) => i === parseInt(v.x_dim) ? Math.max(x, v.input1[i]) : i === parseInt(v.y_dim) ? x + v.input1[i] : Math.min(x, v.input1[i])) }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "input0_width,input0_height,input1_width,input1_height"};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    GeneratorParam<int32_t> x_dim{"x_dim", 0, 0, D - 1};
-    GeneratorParam<int32_t> y_dim{"y_dim", 1, 0, D - 1};
-    GeneratorParam<int32_t> input0_width{"input0_width", 0};
-    GeneratorParam<int32_t> input0_height{"input0_height", 0};
-    GeneratorParam<int32_t> input1_width{"input1_width", 0};
-    GeneratorParam<int32_t> input1_height{"input1_height", 0};
-    GeneratorInput<Halide::Func> input0{"input0", Halide::type_of<T>(), D};
-    GeneratorInput<Halide::Func> input1{"input1", Halide::type_of<T>(), D};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), D};
+    BuildingBlockParam<int32_t> x_dim{"x_dim", 0, 0, D - 1};
+    BuildingBlockParam<int32_t> y_dim{"y_dim", 1, 0, D - 1};
+    BuildingBlockParam<int32_t> input0_width{"input0_width", 0};
+    BuildingBlockParam<int32_t> input0_height{"input0_height", 0};
+    BuildingBlockParam<int32_t> input1_width{"input1_width", 0};
+    BuildingBlockParam<int32_t> input1_height{"input1_height", 0};
+    Input<Halide::Func> input0{"input0", Halide::type_of<T>(), D};
+    Input<Halide::Func> input1{"input1", Halide::type_of<T>(), D};
+    Output<Halide::Func> output{"output", Halide::type_of<T>(), D};
 
     void generate() {
         Halide::Func input0_wrapper;
@@ -1749,22 +1749,22 @@ public:
 
 class TileImageVertical2DUInt8 : public TileImageVertical<TileImageVertical2DUInt8, uint8_t, 2> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "TileImageVertical2DUInt8"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "TileImageVertical2DUInt8"};
 };
 
 class TileImageVertical3DUInt8 : public TileImageVertical<TileImageVertical3DUInt8, uint8_t, 3> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "TileImageVertical3DUInt8"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "TileImageVertical3DUInt8"};
 };
 
 class TileImageVertical2DFloat : public TileImageVertical<TileImageVertical2DFloat, float, 2> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "TileImageVertical2DFloat"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "TileImageVertical2DFloat"};
 };
 
 class TileImageVertical3DFloat : public TileImageVertical<TileImageVertical3DFloat, float, 3> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "TileImageVertical3DFloat"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "TileImageVertical3DFloat"};
 };
 
 template<typename X, typename T, int32_t D>
@@ -1773,23 +1773,23 @@ class CropImage : public BuildingBlock<X> {
     static_assert(std::is_arithmetic<T>::value, "T must be arithmetic type.");
 
 public:
-    GeneratorParam<std::string> gc_description{"gc_description", "Crop image."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.map((x, i) => i === parseInt(v.x_dim) ? parseInt(v.output_width) : i === parseInt(v.y_dim) ? parseInt(v.output_height) : x) }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "input_width,input_height,output_width,output_height"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "inline"};
-    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Crop image."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input.map((x, i) => i === parseInt(v.x_dim) ? parseInt(v.output_width) : i === parseInt(v.y_dim) ? parseInt(v.output_height) : x) }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "input_width,input_height,output_width,output_height"};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "inline"};
+    BuildingBlockParam<std::string> gc_prefix{"gc_prefix", ""};
 
-    GeneratorParam<int32_t> x_dim{"x_dim", 0, 0, D - 1};
-    GeneratorParam<int32_t> y_dim{"y_dim", 1, 0, D - 1};
-    GeneratorParam<int32_t> input_width{"input_width", 0};
-    GeneratorParam<int32_t> input_height{"input_height", 0};
-    GeneratorParam<int32_t> left{"left", 0};
-    GeneratorParam<int32_t> top{"top", 0};
-    GeneratorParam<int32_t> output_width{"output_width", 0};
-    GeneratorParam<int32_t> output_height{"output_height", 0};
-    GeneratorInput<Halide::Func> input{"input", Halide::type_of<T>(), D};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), D};
+    BuildingBlockParam<int32_t> x_dim{"x_dim", 0, 0, D - 1};
+    BuildingBlockParam<int32_t> y_dim{"y_dim", 1, 0, D - 1};
+    BuildingBlockParam<int32_t> input_width{"input_width", 0};
+    BuildingBlockParam<int32_t> input_height{"input_height", 0};
+    BuildingBlockParam<int32_t> left{"left", 0};
+    BuildingBlockParam<int32_t> top{"top", 0};
+    BuildingBlockParam<int32_t> output_width{"output_width", 0};
+    BuildingBlockParam<int32_t> output_height{"output_height", 0};
+    Input<Halide::Func> input{"input", Halide::type_of<T>(), D};
+    Output<Halide::Func> output{"output", Halide::type_of<T>(), D};
 
     void generate() {
         Halide::Func input_wrapper;
@@ -1820,33 +1820,33 @@ public:
 
 class CropImage2DUInt8 : public CropImage<CropImage2DUInt8, uint8_t, 2> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "CropImage2DUInt8"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "CropImage2DUInt8"};
 };
 
 class CropImage3DUInt8 : public CropImage<CropImage3DUInt8, uint8_t, 3> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "CropImage3DUInt8"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "CropImage3DUInt8"};
 };
 
 class CropImage2DFloat : public CropImage<CropImage2DFloat, float, 2> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "CropImage2DFloat"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "CropImage2DFloat"};
 };
 
 class CropImage3DFloat : public CropImage<CropImage3DFloat, float, 3> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "CropImage3DFloat"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "CropImage3DFloat"};
 };
 
 class ColorSpaceConverterRGBToHSV : public ion::BuildingBlock<ColorSpaceConverterRGBToHSV> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ColorSpaceConverter RGB to HSV"};
-    GeneratorParam<std::string> gc_description{"gc_description", "This converts color space from RGB into HSV."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
-    GeneratorInput<Halide::Func> input{"input", Halide::type_of<float>(), 3};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<float>(), 3};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "ColorSpaceConverter RGB to HSV"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "This converts color space from RGB into HSV."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", ""};
+    Input<Halide::Func> input{"input", Halide::type_of<float>(), 3};
+    Output<Halide::Func> output{"output", Halide::type_of<float>(), 3};
 
     void generate() {
         using namespace Halide;
@@ -1883,13 +1883,13 @@ public:
 
 class ColorSpaceConverterHSVToRGB : public ion::BuildingBlock<ColorSpaceConverterHSVToRGB> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ColorSpaceConverter HSV to RGB"};
-    GeneratorParam<std::string> gc_description{"gc_description", "This converts color space from HSV into RGB."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
-    GeneratorInput<Halide::Func> input{"input", Halide::type_of<float>(), 3};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<float>(), 3};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "ColorSpaceConverter HSV to RGB"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "This converts color space from HSV into RGB."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", ""};
+    Input<Halide::Func> input{"input", Halide::type_of<float>(), 3};
+    Output<Halide::Func> output{"output", Halide::type_of<float>(), 3};
 
     void generate() {
         using namespace Halide;
@@ -1947,16 +1947,16 @@ public:
 
 class ColorAdjustment : public ion::BuildingBlock<ColorAdjustment> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "Color Adjustment"};
-    GeneratorParam<std::string> gc_description{"gc_description", "This applies color adjustment."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "target_color"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "Color Adjustment"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "This applies color adjustment."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "target_color"};
 
-    GeneratorParam<float> adjustment_value{"adjustment_value", 1.0f};
-    GeneratorParam<int32_t> target_color{"target_color", 0};
-    GeneratorInput<Halide::Func> input{"input", Halide::type_of<float>(), 3};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<float>(), 3};
+    BuildingBlockParam<float> adjustment_value{"adjustment_value", 1.0f};
+    BuildingBlockParam<int32_t> target_color{"target_color", 0};
+    Input<Halide::Func> input{"input", Halide::type_of<float>(), 3};
+    Output<Halide::Func> output{"output", Halide::type_of<float>(), 3};
 
     void generate() {
         using namespace Halide;
@@ -1973,17 +1973,17 @@ public:
 
 class ColorDynamicAdjustment : public ion::BuildingBlock<ColorDynamicAdjustment> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "Color Dynamic Adjustment"};
-    GeneratorParam<std::string> gc_description{"gc_description", "This applies color dunamic adjustment."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "Color Dynamic Adjustment"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "This applies color dunamic adjustment."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", ""};
 
-    GeneratorInput<float> gain_r{"gain_r"};
-    GeneratorInput<float> gain_g{"gain_g"};
-    GeneratorInput<float> gain_b{"gain_b"};
-    GeneratorInput<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 3};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 3};
+    Input<float> gain_r{"gain_r"};
+    Input<float> gain_g{"gain_g"};
+    Input<float> gain_b{"gain_b"};
+    Input<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 3};
+    Output<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 3};
 
     void generate() {
         using namespace Halide;
