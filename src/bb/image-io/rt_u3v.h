@@ -1425,8 +1425,10 @@ ION_REGISTER_EXTERN(ion_bb_image_io_u3v_device_info2);
 
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_multiple_camera1(
-    bool frame_sync, bool realtime_display_mode, halide_buffer_t * gain, halide_buffer_t * exposure,
-    halide_buffer_t * id_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
+    halide_buffer_t * id_buf,
+    bool frame_sync, bool realtime_display_mode, bool enable_control,
+    halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
+    double gain0, double exposure0,
     halide_buffer_t * out0)
 {
     using namespace Halide;
@@ -1436,22 +1438,20 @@ int ION_EXPORT ion_bb_image_io_u3v_multiple_camera1(
         const std::string gain_key(reinterpret_cast<const char*>(gain_key_buf->host));
         const std::string exposure_key(reinterpret_cast<const char*>(exposure_key_buf->host));
         auto &u3v(ion::bb::image_io::U3V::get_instance(id, num_output, false, realtime_display_mode));
-        if (out0->is_bounds_query() || gain->is_bounds_query() || exposure->is_bounds_query()) {
-            gain->dim[0].min = 0;
-            gain->dim[0].extent = num_output;
-            exposure->dim[0].min = 0;
-            exposure->dim[0].extent = num_output;
-            return 0;
-        }else{
-            // set gain & exposure
-            for (int i = 0; i < num_output; ++i){
-                u3v.SetGain(i, gain_key, (reinterpret_cast<double*>(gain->host))[i]);
-                u3v.SetExposure(i, exposure_key, (reinterpret_cast<double*>(exposure->host))[i]);
-            }
 
-            std::vector<Halide::Buffer<>> obufs{Halide::Buffer<>(*out0)};
-            u3v.get(obufs);
+        if (out0->is_bounds_query()) {
+            return 0;
         }
+
+        // set gain & exposure
+        if (enable_control) {
+            ion::log::debug("Setting gain0:{} exposure0:{}", gain0, exposure0);
+            u3v.SetGain(0, gain_key, gain0);
+            u3v.SetExposure(0, exposure_key, exposure0);
+        }
+
+        std::vector<Halide::Buffer<>> obufs{Halide::Buffer<>(*out0)};
+        u3v.get(obufs);
 
         return 0;
     } catch (const std::exception &e) {
@@ -1466,8 +1466,11 @@ ION_REGISTER_EXTERN(ion_bb_image_io_u3v_multiple_camera1);
 
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_multiple_camera2(
-    bool frame_sync, bool realtime_display_mode, halide_buffer_t * gain, halide_buffer_t * exposure,
-    halide_buffer_t * id_buf, halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
+    halide_buffer_t * id_buf,
+    bool frame_sync, bool realtime_display_mode, bool enable_control,
+    halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
+    double gain0, double exposure0,
+    double gain1, double exposure1,
     halide_buffer_t * out0, halide_buffer_t * out1)
 {
     using namespace Halide;
@@ -1477,22 +1480,23 @@ int ION_EXPORT ion_bb_image_io_u3v_multiple_camera2(
         const std::string gain_key(reinterpret_cast<const char*>(gain_key_buf->host));
         const std::string exposure_key(reinterpret_cast<const char*>(exposure_key_buf->host));
         auto &u3v(ion::bb::image_io::U3V::get_instance(id, 2, frame_sync, realtime_display_mode));
-        if (out0->is_bounds_query() || out1->is_bounds_query() || gain->is_bounds_query() || exposure->is_bounds_query()) {
-            gain->dim[0].min = 0;
-            gain->dim[0].extent = num_output;
-            exposure->dim[0].min = 0;
-            exposure->dim[0].extent = num_output;
+        if (out0->is_bounds_query() || out1->is_bounds_query()) {
             return 0;
-        }else{
-            // set gain & exposure
-            for (int i = 0; i < num_output; ++i){
-                u3v.SetGain(i, gain_key, (reinterpret_cast<double*>(gain->host))[i]);
-                u3v.SetExposure(i, exposure_key, (reinterpret_cast<double*>(exposure->host))[i]);
-            }
-
-            std::vector<Halide::Buffer<>> obufs{Halide::Buffer<>(*out0), Halide::Buffer<>(*out1)};
-            u3v.get(obufs);
         }
+
+        // set gain & exposure
+        if (enable_control) {
+            ion::log::debug("Setting gain0:{} exposure0:{}", gain0, exposure0);
+            u3v.SetGain(0, gain_key, gain0);
+            u3v.SetExposure(0, exposure_key, exposure0);
+
+            ion::log::debug("Setting gain1:{} exposure1:{}", gain1, exposure1);
+            u3v.SetGain(1, gain_key, gain1);
+            u3v.SetExposure(1, exposure_key, exposure1);
+        }
+
+        std::vector<Halide::Buffer<>> obufs{Halide::Buffer<>(*out0), Halide::Buffer<>(*out1)};
+        u3v.get(obufs);
 
         return 0;
     } catch (const std::exception &e) {

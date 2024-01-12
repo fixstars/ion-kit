@@ -23,7 +23,11 @@ class Param {
      Param(const std::string& key, const std::string& val) : key_(key), val_(val) {}
 
      template<typename T,
-              typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
+              typename std::enable_if<std::is_same<T, bool>::value>::type* = nullptr>
+     Param(const std::string& key, T val) : key_(key), val_(val ? "true" : "false") {}
+
+     template<typename T,
+              typename std::enable_if<std::is_arithmetic<T>::value && !std::is_same<T, bool>::value>::type* = nullptr>
      Param(const std::string& key, T val) : key_(key), val_(std::to_string(val)) {}
 
      std::string key() const { return key_; }

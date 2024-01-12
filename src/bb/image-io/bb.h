@@ -839,35 +839,24 @@ public:
 
     GeneratorParam<bool> enable_control{"enable_control", false};
 
-    Input<Halide::Func> gain{ "gain", Halide::type_of<double>(), 1};
-    Input<Halide::Func> exposure{ "exposure", Halide::type_of<double>(), 1};
-
     Output<Halide::Func[]> output{ "output", Halide::type_of<T>(), D};
     Output<Halide::Func[]> device_info{ "device_info", Halide::type_of<uint8_t>(), 1};
     Output<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
-#if 0
+
     std::vector<Input<double> *> gain;
     std::vector<Input<double> *> exposure;
 
     void configure() {
         if (enable_control) {
             for (auto i=0; i<num_devices; ++i) {
-                gain.push_back(add_input<double>("gain_" + std::to_string(i)));
-                exposure.push_back(add_input<double>("exposure_" + std::to_string(i)));
+                gain.push_back(Halide::Internal::GeneratorBase::add_input<double>("gain_" + std::to_string(i)));
+                exposure.push_back(Halide::Internal::GeneratorBase::add_input<double>("exposure_" + std::to_string(i)));
             }
         }
     }
-#endif
+
     void generate() {
         using namespace Halide;
-
-        Func gain_func;
-        gain_func(_) = gain(_);
-        gain_func.compute_root();
-
-        Func exposure_func;
-        exposure_func(_) = exposure(_);
-        exposure_func.compute_root();
 
         Func cameraN("u3v_cameraN");
         {
@@ -884,27 +873,31 @@ public:
             std::memcpy(exposure_key_buf.data(), exposure_key.c_str(), exposure_key.size());
 
             std::vector<ExternFuncArgument> params{
-                static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
-                gain_func, exposure_func,
-                id_buf, gain_key_buf, exposure_key_buf
+                id_buf,
+                static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode), static_cast<bool>(enable_control),
+                gain_key_buf, exposure_key_buf
             };
 
-            output.resize(num_devices);
-            if (output.size() == 1){
-                cameraN.define_extern("ion_bb_image_io_u3v_multiple_camera" + std::to_string(output.size()), params, Halide::type_of<T>(), D);
-            }else{
-                std::vector<Halide::Type> output_type;
-                for (int i = 0; i < output.size(); i++) {
-                    output_type.push_back(Halide::type_of<T>());
+            for (int i = 0; i<num_devices; i++) {
+                if (i < gain.size()) {
+                    params.push_back(*gain[i]);
+                } else {
+                    params.push_back(Internal::make_const(type_of<double>(), 0.0));
                 }
-                cameraN.define_extern("ion_bb_image_io_u3v_multiple_camera" + std::to_string(output.size()), params, output_type, D);
-
+                if (i < exposure.size()) {
+                    params.push_back(*exposure[i]);
+                } else {
+                    params.push_back(Internal::make_const(type_of<double>(), 0.0));
+                }
             }
+
+            output.resize(num_devices);
+            cameraN.define_extern("ion_bb_image_io_u3v_multiple_camera" + std::to_string(num_devices), params, std::vector<Halide::Type>(num_devices, Halide::type_of<T>()), D);
             cameraN.compute_root();
-            if (output.size() == 1){
+            if (num_devices == 1){
                 output[0](_) = cameraN(_);
-            }else{
-                for (int i = 0; i < output.size(); i++) {
+            } else {
+                for (int i = 0; i<num_devices; i++) {
                     output[i](_) = cameraN(_)[i];
                 }
             }

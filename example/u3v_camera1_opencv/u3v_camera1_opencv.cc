@@ -22,13 +22,13 @@ const int32_t height = 480;
 double gain = 400;
 double exposure = 400;
 
-int positive_pow(int base, int expo){
-    if (expo <= 0){
+int positive_pow(int base, int expo) {
+    if (expo <= 0) {
         return 1;
     }
-    if (expo == 1){
+    if (expo == 1) {
         return base;
-    }else{
+    } else {
         return base * positive_pow(base, expo-1);
     }
 }
@@ -41,25 +41,20 @@ int main(int argc, char *argv[])
         Builder b;
 
         // Set the target hardware. The default is CPU.
-        b.set_target(Halide::get_host_target());
+        b.set_target(ion::get_host_target());
 
         // Load standard building block
         b.with_bb_module("ion-bb");
 
-        Buffer<double> gainb(1);
-        gainb.fill(gain);
-
-        Buffer<double> exposureb(1);
-        exposureb.fill(gain);
-
         //  Connect the input port to the Node instance created by b.add().
-        Node n = b.add("image_io_u3v_cameraN_u16x2")(gainb, exposureb)
+        Node n = b.add("image_io_u3v_cameraN_u16x2")(&gain, &exposure)
             .set_param(
                 Param("num_devices", 1),
-                Param("frame_sync", "false"),
+                Param("frame_sync", false),
                 Param("gain_key", FEATURE_GAIN_KEY),
                 Param("exposure_key", FEATURE_EXPOSURE_KEY),
-                Param("realtime_diaplay_mode", "true")
+                Param("realtime_diaplay_mode", true),
+                Param("enable_control", true)
                 );
 
         // Map output buffer and ports by using Port::bind.
@@ -74,6 +69,7 @@ int main(int argc, char *argv[])
 
         // Obtain image data continuously for 100 frames to facilitate operation check.
         int loop_num = 100;
+        int coef =  positive_pow(2, NUM_BIT_SHIFT);
         for (int i = 0; i < loop_num; ++i)
         {
             // JIT compilation and execution of pipelines with Builder.
@@ -83,7 +79,7 @@ int main(int argc, char *argv[])
             cv::Mat A(height, width, CV_16UC1, output.data());
 
             // Depends on sensor image pixel format, apply bit shift on images
-            A = A * positive_pow(2, NUM_BIT_SHIFT);
+            A = A * coef;
 
             // Display the image
             cv::imshow("A", A);
@@ -93,7 +89,7 @@ int main(int argc, char *argv[])
             cv::waitKey(1);
         }
 
-    } catch (const Halide::Error& e) {
+    } catch (const ion::Error& e) {
         std::cerr << e.what() << std::endl;
         return 1;
     }

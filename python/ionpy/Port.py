@@ -87,12 +87,13 @@ class Port:
                     raise Exception('Invalid operation')
                 if self.type.bits_ == 64 and ion_port_bind_u64(self.obj, ctypes.byref(self.bind_value)) != 0:
                     raise Exception('Invalid operation')
-            elif self.type.bits_ == 32 and self.type.code_ == TypeCode.Float:
-                if ion_port_bind_f32(self.obj, ctypes.byref(self.bind_value)) != 0:
+            elif self.type.code_ == TypeCode.Float:
+                if self.type.bits_ == 32 and ion_port_bind_f32(self.obj, ctypes.byref(self.bind_value)) != 0:
                     raise Exception('Invalid operation')
-                if ion_port_bind_f64(self.obj, ctypes.byref(self.bind_value)) != 0:
+                if self.type.bits_ == 64 and ion_port_bind_f64(self.obj, ctypes.byref(self.bind_value)) != 0:
                     raise Exception('Invalid operation')
         #  vector
         else:
+            self.bind_value = v
             if ion_port_bind_buffer(self.obj, v.obj) != 0:
                 raise Exception('Invalid operation')

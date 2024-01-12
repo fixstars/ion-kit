@@ -8,13 +8,6 @@ feature_gain_key = 'Gain'
 feature_exposure_key = 'ExposureTime'
 num_bit_shift = 0
 
-if platform == "win32":
-    module_name = 'ion-bb.dll'
-elif platform == "darwin":
-    module_name = 'libion-bb.dylib'
-else:
-    module_name = 'libion-bb.so'
-
 if __name__ == "__main__":
 
     # Define parameters
@@ -25,16 +18,16 @@ if __name__ == "__main__":
 
     # Build the pipeline by adding nodes to this builder.
     builder = Builder()
+
     #   Set the target hardware, The default is CPU.
     builder.set_target('host')
+
     #   Load building block module from the library
-    builder.with_bb_module(module_name)
+    builder.with_bb_module("ion-bb")
 
 
     # Define Input Port
     #    Port class would be  used to define dynamic O/O for each node.
-    t = Type(TypeCode.Uint, 1, 1)
-    dispose_p = Port('dispose', t, 0)
     t = Type(TypeCode.Float, 64, 1)
     gain0_p = Port('gain0', t, 0)
     gain1_p = Port('gain1', t, 0)
@@ -42,71 +35,60 @@ if __name__ == "__main__":
     exposure1_p = Port('exposure1', t, 0)
 
     # Params
-    pixel_format_ptr = Param('pixel_format_ptr', 'Mono12')
-    frame_sync = Param('frame_sync', 'true')
+    num_devices = Param('num_devices', '2')
+    frame_sync = Param('frame_sync', 'false')
     gain_key = Param('gain_key', feature_gain_key)
     exposure_key = Param('exposure_key', feature_exposure_key)
     realtime_diaplay_mode = Param('realtime_diaplay_mode', 'true')
-
+    enable_control = Param('enable_control', 'true')
 
     #    Add node and connect the input port to the node instance
-    node = builder.add('image_io_u3v_camera2_u16x2')\
-        .set_port([dispose_p, gain0_p, gain1_p, exposure0_p, exposure1_p, ])\
-        .set_param([pixel_format_ptr, frame_sync, gain_key, exposure_key, realtime_diaplay_mode, ])
+    node = builder.add('image_io_u3v_cameraN_u16x2')\
+        .set_iport([gain0_p, gain1_p, exposure0_p, exposure1_p, ])\
+        .set_param([num_devices, frame_sync, gain_key, exposure_key, realtime_diaplay_mode, enable_control])
 
 
     # Define Output Port
-    lp = node.get_port('output0')
-    rp = node.get_port('output1')
+    out_p = node.get_port('output')
     frame_count_p = node.get_port('frame_count')
 
-    # portmap
-    port_map = PortMap()
-
     # input values
-    port_map.set_f64(gain0_p, gain)
-    port_map.set_f64(gain1_p, gain)
-    port_map.set_f64(exposure0_p, exposure)
-    port_map.set_f64(exposure1_p, exposure)
+    gain0_p.bind(gain)
+    gain1_p.bind(gain)
+    exposure0_p.bind(exposure)
+    exposure1_p.bind(exposure)
 
     # output values
-    buf_size = (width, height, )
-    t = Type(TypeCode.Uint, 16, 1)
-    output0 = Buffer(t, buf_size)
-    output1 = Buffer(t, buf_size)
-    t = Type(TypeCode.Uint, 32, 1)
-    frame_count = Buffer(t, (1,))
+    odata0 = np.full((height, width), fill_value=0, dtype=np.uint16)
+    output0 = Buffer(array=odata0)
+    out_p[0].bind(output0)
 
-    port_map.set_buffer(lp, output0)
-    port_map.set_buffer(rp, output1)
-    port_map.set_buffer(frame_count_p, frame_count)
+    odata1 = np.full((height, width), fill_value=0, dtype=np.uint16)
+    output1 = Buffer(array=odata1)
+    out_p[1].bind(output1)
 
-    buf_size_opencv = (height, width)
+    fcdata = np.full((1), fill_value=0, dtype=np.uint32)
+    frame_count = Buffer(array=fcdata)
+    frame_count_p.bind(frame_count)
 
     loop_num = 100
 
     for x in range(loop_num):
-        port_map.set_u1(dispose_p, x==loop_num-1)
 
         # running the builder
-        builder.run(port_map)
+        builder.run()
 
-        output0_bytes = output0.read(width*height*2)
-        output1_bytes = output1.read(width*height*2)
+        odata0 *= pow(2, num_bit_shift)
+        odata1 *= pow(2, num_bit_shift)
 
-        output0_np_HxW = np.frombuffer(output0_bytes, np.uint16).reshape(buf_size_opencv)
-        output1_np_HxW = np.frombuffer(output1_bytes, np.uint16).reshape(buf_size_opencv)
+        median_output0_np_HxW = cv2.medianBlur(odata0, 5)
+        median_output1_np_HxW = cv2.medianBlur(odata1, 5)
 
-        output0_np_HxW *= pow(2, num_bit_shift)
-        output1_np_HxW *= pow(2, num_bit_shift)
-
-        median_output0_np_HxW = cv2.medianBlur(output0_np_HxW, 5)
-        median_output1_np_HxW = cv2.medianBlur(output1_np_HxW, 5)
-
-        cv2.imshow("A", output0_np_HxW)
-        cv2.imshow("B", output1_np_HxW)
+        cv2.imshow("A", odata0)
+        cv2.imshow("B", odata1)
         cv2.imshow("C", median_output0_np_HxW)
         cv2.imshow("D", median_output1_np_HxW)
-        cv2.waitKey(0)
+
+        cv2.waitKey(1)
 
     cv2.destroyAllWindows()
