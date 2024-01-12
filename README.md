@@ -10,6 +10,8 @@ You can also run the pipeline immediately on your host machine.
 
 ## Quick start
 
+You can download the official binary package from [release](https://github.com/fixstars/ion-kit/releases).
+
 ```c++
 #include <ion/ion.h>
 
@@ -79,11 +81,10 @@ int main() {
     return 0;
 }
 ```
-
-Assuming [release binary](https://github.com/fixstars/ion-kit/releases) is extracted in <ion-kit-PATH>.
+Assuming binary package is extracted in `ION_KIT_PATH`.
 
 ```bash
-$ c++ -std=c++17 -fno-rtti main.cc -o main -I <ion-kit-PATH>/include -L <ion-kit-PATH>/lib -lion-core -lHalide && LD_LIBRARY_PATH=<ion-kit-PATH>/lib ./main
+$ c++ -std=c++17 -fno-rtti main.cc -o main -I ${ION_KIT_PATH}/include -L ${ION_KIT_PATH}/lib -lion-core -lHalide && LD_LIBRARY_PATH=${ION_KIT_PATH}/lib ./main
 42 42 42 42
 ```
 
