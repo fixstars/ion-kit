@@ -16,7 +16,7 @@ public:
         in.compute_root();
         std::vector<ExternFuncArgument> params{in, static_cast<int>(ksize)};
         Func median_blur;
-        median_blur.define_extern("median_blur", params, UInt(8), 3);
+        median_blur.define_extern("ion_bb_opencv_median_blur", params, UInt(8), 3);
         median_blur.compute_root();
         output(c, x, y) = median_blur(c, x, y);
     }
@@ -45,7 +45,7 @@ public:
         in.compute_root();
         std::vector<ExternFuncArgument> params = {in, static_cast<int>(width), static_cast<int>(height), static_cast<int>(idx)};
         Func display;
-        display.define_extern("display", params, Int(32), 0);
+        display.define_extern("ion_bb_opencv_display", params, Int(32), 0);
         display.compute_root();
         output() = display();
     }

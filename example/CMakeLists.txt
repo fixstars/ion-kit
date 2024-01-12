@@ -43,7 +43,7 @@ if(${ION_BB_BUILD_image-processing} AND ${ION_BB_BUILD_image-io} AND ${ION_BB_BU
     ion_jit_executable(isp_and_sgm SRCS isp_and_sgm.cc INCS ${OpenCV_INCLUDE_DIR} LIBS ${OpenCV_LIBRARIES})
 endif()
 
-if(${ION_BB_BUILD_base} AND ${ION_BB_BUILD_image-io} AND ${ION_BB_BUILD_image-processing})
+if(${ION_BB_BUILD_base} AND ${ION_BB_BUILD_image-io} AND ${ION_BB_BUILD_image-processing} AND OpenCV_FOUND)
     ion_jit_executable(imx219_isp_display_jit SRCS imx219_isp_display.cc)
 endif()
 

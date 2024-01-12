@@ -9,12 +9,6 @@
 #include "log.h"
 #include "opencv_loader.h"
 
-#ifdef _WIN32
-#define ION_EXPORT __declspec(dllexport)
-#else
-#define ION_EXPORT
-#endif
-
 namespace ion {
 namespace bb {
 namespace opencv {
@@ -35,7 +29,7 @@ class RegisterExtern {
 #define ION_REGISTER_EXTERN(NAME) static auto ion_register_extern_##NAME = ion::bb::opencv::RegisterExtern(#NAME, NAME);
 
 extern "C" ION_EXPORT
-int median_blur(halide_buffer_t *in, int ksize, halide_buffer_t *out) {
+int ion_bb_opencv_median_blur(halide_buffer_t *in, int ksize, halide_buffer_t *out) {
     auto& cv(ion::bb::OpenCV::get_instance());
     if (!cv.is_available()) {
         ion::log::error("OpenCV is not available");
@@ -69,10 +63,10 @@ int median_blur(halide_buffer_t *in, int ksize, halide_buffer_t *out) {
 
     return 0;
 }
-ION_REGISTER_EXTERN(median_blur);
+ION_REGISTER_EXTERN(ion_bb_opencv_median_blur);
 
 extern "C" ION_EXPORT
-int display(halide_buffer_t *in, int width, int height, int idx, halide_buffer_t *out) {
+int ion_bb_opencv_display(halide_buffer_t *in, int width, int height, int idx, halide_buffer_t *out) {
     auto& cv(ion::bb::OpenCV::get_instance());
     if (!cv.is_available()) {
         ion::log::error("OpenCV is not available");
@@ -99,7 +93,7 @@ int display(halide_buffer_t *in, int width, int height, int idx, halide_buffer_t
 
     return 0;
 }
-ION_REGISTER_EXTERN(display);
+ION_REGISTER_EXTERN(ion_bb_opencv_display);
 
 #undef ION_EXPORT
 #undef ION_REGISTER_EXTERN
