@@ -52,7 +52,6 @@ endif()
 #
 if (UNIX)
     install(TARGETS ion-bb DESTINATION lib)
-    install(FILES ${ION_BB_BUNDLE_DSOS} DESTINATION lib)
 else()
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>/ion-bb.dll DESTINATION bin)
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>/ion-bb.lib DESTINATION lib)

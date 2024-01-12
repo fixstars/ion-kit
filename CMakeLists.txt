@@ -146,7 +146,7 @@ install(FILES
     DESTINATION license)
 
 # Halide
-set(HALIDE_ROOT ${Halide_DIR}../../..)
+set(HALIDE_ROOT ${Halide_DIR}/../../..)
 
 file(GLOB HALIDE_HEADERS ${HALIDE_ROOT}/include/Halide*.h ${HALIDE_ROOT}/include/wasm*.h)
 install(FILES ${HALIDE_HEADERS} DESTINATION include)
