@@ -70,11 +70,11 @@ jobs:
           mv Halide*/* ${HOME}/Halide
 
           # zlib, libjpeg, libpng
-          vcpkg install zlib libjpeg-turbo libpng
+          vcpkg install zlib:x64-windows-static libjpeg-turbo:x64-windows-static libpng:x64-windows-static
 
       - name: Configure
         shell: bash
-        run: cmake -G "Visual Studio 16 2019" -A x64 -D CMAKE_TOOLCHAIN_FILE=${VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake -D ION_BUILD_DOC=OFF -D ION_BUILD_TEST=OFF -D ION_BUILD_EXAMPLE=OFF -D ION_BUNDLE_HALIDE=ON -D HalideHelpers_DIR=${HOME}/Halide/lib/cmake/HalideHelpers -D Halide_DIR=${HOME}/Halide/lib/cmake/Halide $GITHUB_WORKSPACE
+        run: cmake -G "Visual Studio 16 2019" -A x64 -D VCPKG_TARGET_TRIPLET=x64-windows-static -D CMAKE_TOOLCHAIN_FILE=${VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake -D ION_BUILD_DOC=OFF -D ION_BUILD_TEST=OFF -D ION_BUILD_EXAMPLE=OFF -D ION_BUNDLE_HALIDE=ON -D HalideHelpers_DIR=${HOME}/Halide/lib/cmake/HalideHelpers -D Halide_DIR=${HOME}/Halide/lib/cmake/Halide $GITHUB_WORKSPACE
 
       - name: Build
         shell: bash
