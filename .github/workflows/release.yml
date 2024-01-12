@@ -19,18 +19,22 @@ jobs:
         run: |
           # Packages
           sudo apt-get update
-          sudo apt-get install -y doxygen curl build-essential zlib1g-dev
+          sudo apt-get install -y doxygen curl build-essential
           sudo apt-get clean
           sudo rm -rf /var/lib/apt/lists/*
 
       - name: Download Halide package
         run: |
-            mkdir ${HOME}/Halide
-            curl -L https://github.com/halide/Halide/releases/download/v16.0.0/Halide-16.0.0-x86-64-linux-1e963ff817ef0968cc25d811a25a7350c8953ee6.tar.gz | tar zx -C ${HOME}/Halide --strip-components 1
-            find ${HOME}/Halide -type d | xargs chmod 755
+          # Halide
+          mkdir ${HOME}/Halide
+          curl -L https://github.com/halide/Halide/releases/download/v16.0.0/Halide-16.0.0-x86-64-linux-1e963ff817ef0968cc25d811a25a7350c8953ee6.tar.gz | tar zx -C ${HOME}/Halide --strip-components 1
+          find ${HOME}/Halide -type d | xargs chmod 755
+
+          # zlib, libjpeg, libpng
+          vcpkg install zlib libjpeg-turbo libpng
 
       - name: Configure
-        run: cmake -D CMAKE_BUILD_TYPE=Release -D ION_BUILD_TEST=OFF -D ION_BUILD_EXAMPLE=OFF -D ION_BUNDLE_HALIDE=ON -D HalideHelpers_DIR=${HOME}/Halide/lib/cmake/HalideHelpers -D Halide_DIR=${HOME}/Halide/lib/cmake/Halide $GITHUB_WORKSPACE
+        run: cmake -D CMAKE_TOOLCHAIN_FILE=${VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake -D CMAKE_BUILD_TYPE=Release -D ION_BUILD_TEST=OFF -D ION_BUILD_EXAMPLE=OFF -D ION_BUNDLE_HALIDE=ON -D HalideHelpers_DIR=${HOME}/Halide/lib/cmake/HalideHelpers -D Halide_DIR=${HOME}/Halide/lib/cmake/Halide $GITHUB_WORKSPACE
 
       - name: Build
         run: cmake --build . --config Release --target package
@@ -70,7 +74,7 @@ jobs:
 
       - name: Configure
         shell: bash
-        run: cmake -G "Visual Studio 16 2019" -A x64 -D CMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -D ION_BUILD_DOC=OFF -D ION_BUILD_TEST=OFF -D ION_BUILD_EXAMPLE=OFF -D ION_BUNDLE_HALIDE=ON -D HalideHelpers_DIR=${HOME}/Halide/lib/cmake/HalideHelpers -D Halide_DIR=${HOME}/Halide/lib/cmake/Halide $GITHUB_WORKSPACE
+        run: cmake -G "Visual Studio 16 2019" -A x64 -D CMAKE_TOOLCHAIN_FILE=${VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake -D ION_BUILD_DOC=OFF -D ION_BUILD_TEST=OFF -D ION_BUILD_EXAMPLE=OFF -D ION_BUNDLE_HALIDE=ON -D HalideHelpers_DIR=${HOME}/Halide/lib/cmake/HalideHelpers -D Halide_DIR=${HOME}/Halide/lib/cmake/Halide $GITHUB_WORKSPACE
 
       - name: Build
         shell: bash
