@@ -8,6 +8,9 @@ User can build pipeline using ion-kit API composing building blocks and compile 
 
 ## Depedencies
 * [Halide (v16.0.0)](https://github.com/halide/Halide/releases/tag/v16.0.0)
+* [libjpeg](https://libjpeg-turbo.org/)
+* [libpng](http://www.libpng.org/)
+* [zlib](https://www.zlib.net/)
 
 ## Quick start
 
