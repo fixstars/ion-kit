@@ -1,7 +1,8 @@
 #ifndef ION_BB_IMAGE_IO_RT_V4L2_H
 #define ION_BB_IMAGE_IO_RT_V4L2_H
-#include <linux/videodev2.h>
 
+// TODO: Remove OpenCV build dependency
+#ifdef HAS_OPENCV
 
 #include <cstdlib>
 #include <chrono>
@@ -616,4 +617,8 @@ extern "C" int ION_EXPORT ion_bb_image_io_camera(int32_t instance_id, int32_t in
     }
 }
 ION_REGISTER_EXTERN(ion_bb_image_io_camera)
-#endif
+
+#endif // HAS_OPENCV
+
+#endif // ION_BB_IMAGE_IO_RT_V4L2_H
+

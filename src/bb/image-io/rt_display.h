@@ -125,7 +125,7 @@ extern "C" ION_EXPORT int ion_bb_image_io_gui_display(halide_buffer_t *in, int w
             Halide::Runtime::Buffer<uint8_t> ibuf(*in);
             ibuf.copy_to_host();
 
-            auto img = cv.cvCreateMatHeader(height, width, CV_8UC3);
+            auto img = cv.cvCreateMatHeader(height, width, CV_MAKETYPE(CV_8U, 3));
             cv.cvSetData(img, in->host, 3*width*sizeof(uint8_t));
 
             auto name = "img" + std::to_string(idx);

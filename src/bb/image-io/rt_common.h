@@ -43,103 +43,103 @@ std::string format(const char *fmt, const Rest &... rest) {
     return s;
 }
 
-class DynamicModule {
-public:
-#ifdef _WIN32
-    using Handle = HMODULE;
-#else
-    using Handle = void *;
-#endif
-
-    DynamicModule(const std::string &module_name, bool essential) {
-        ion::log::debug("Load module : Trying to load {}", module_name);
-        if (module_name == "") {
-            handle_ = nullptr;
-            return;
-        }
-
-#ifdef _WIN32
-        auto file_name = module_name + ".dll";
-        ion::log::debug("Load module : Looking for {}", file_name);
-        handle_ = LoadLibraryA(file_name.c_str());
-
-        if (handle_ != nullptr){
-            //successfully loaded the module without the prefix of "lib".
-            return;
-        }
-
-        file_name = "lib" + file_name;
-        ion::log::debug("Load module : Looking for {}", file_name);
-        handle_ = LoadLibraryA(file_name.c_str());
-
-#else
-        auto file_name = "lib" + module_name + ".so";
-        ion::log::debug("Load module : Looking for {}", file_name);
-        handle_ = dlopen(file_name.c_str(), RTLD_NOW);
-#endif
-
-        if (handle_ == nullptr) {
-            if (essential) {
-                throw std::runtime_error(get_error_string());
-            } else {
-                std::cerr << format("WARNING: Not found the not essential dynamic library: %s, it may work as a simulation mode", module_name.c_str());
-            }
-        }
-    }
-
-    ~DynamicModule() {
-        if (handle_ != nullptr) {
-#ifdef _WIN32
-            FreeLibrary(handle_);
-#else
-            dlclose(handle_);
-#endif
-        }
-    }
-
-    DynamicModule(const std::string &module_name)
-        : DynamicModule(module_name, true) {
-    }
-
-    bool is_available(void) const {
-        return handle_ != NULL;
-    }
-
-    template<typename T>
-    T get_symbol(const std::string &symbol_name) const {
-#if defined(_WIN32)
-        return reinterpret_cast<T>(GetProcAddress(handle_, symbol_name.c_str()));
-#else
-        return reinterpret_cast<T>(dlsym(handle_, symbol_name.c_str()));
-#endif
-    }
-
-private:
-    std::string get_error_string(void) const {
-        std::string error_msg;
-
-#ifdef _WIN32
-        LPVOID lpMsgBuf;
-        FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
-                          FORMAT_MESSAGE_IGNORE_INSERTS,
-                      nullptr, GetLastError(),
-                      MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
-                      (LPTSTR)&lpMsgBuf, 0, nullptr);
-        std::size_t len = 0;
-        wcstombs_s(&len, nullptr, 0, reinterpret_cast<const wchar_t *>(lpMsgBuf), _TRUNCATE);
-        std::vector<char> buf(len + 1, 0);
-        wcstombs_s(nullptr, &buf[0], len, reinterpret_cast<const wchar_t *>(lpMsgBuf), _TRUNCATE);
-        error_msg.assign(buf.begin(), buf.end());
-        LocalFree(lpMsgBuf);
-#else
-        const char *buf(dlerror());
-        error_msg.assign(buf ? buf : "none");
-#endif
-        return error_msg;
-    }
-
-    Handle handle_;
-};
+// class DynamicModule {
+// public:
+// #ifdef _WIN32
+//     using Handle = HMODULE;
+// #else
+//     using Handle = void *;
+// #endif
+//
+//     DynamicModule(const std::string &module_name, bool essential) {
+//         ion::log::debug("Load module : Trying to load {}", module_name);
+//         if (module_name == "") {
+//             handle_ = nullptr;
+//             return;
+//         }
+//
+// #ifdef _WIN32
+//         auto file_name = module_name + ".dll";
+//         ion::log::debug("Load module : Looking for {}", file_name);
+//         handle_ = LoadLibraryA(file_name.c_str());
+//
+//         if (handle_ != nullptr){
+//             //successfully loaded the module without the prefix of "lib".
+//             return;
+//         }
+//
+//         file_name = "lib" + file_name;
+//         ion::log::debug("Load module : Looking for {}", file_name);
+//         handle_ = LoadLibraryA(file_name.c_str());
+//
+// #else
+//         auto file_name = "lib" + module_name + ".so";
+//         ion::log::debug("Load module : Looking for {}", file_name);
+//         handle_ = dlopen(file_name.c_str(), RTLD_NOW);
+// #endif
+//
+//         if (handle_ == nullptr) {
+//             if (essential) {
+//                 throw std::runtime_error(get_error_string());
+//             } else {
+//                 std::cerr << format("WARNING: Not found the not essential dynamic library: %s, it may work as a simulation mode", module_name.c_str());
+//             }
+//         }
+//     }
+//
+//     ~DynamicModule() {
+//         if (handle_ != nullptr) {
+// #ifdef _WIN32
+//             FreeLibrary(handle_);
+// #else
+//             dlclose(handle_);
+// #endif
+//         }
+//     }
+//
+//     DynamicModule(const std::string &module_name)
+//         : DynamicModule(module_name, true) {
+//     }
+//
+//     bool is_available(void) const {
+//         return handle_ != NULL;
+//     }
+//
+//     template<typename T>
+//     T get_symbol(const std::string &symbol_name) const {
+// #if defined(_WIN32)
+//         return reinterpret_cast<T>(GetProcAddress(handle_, symbol_name.c_str()));
+// #else
+//         return reinterpret_cast<T>(dlsym(handle_, symbol_name.c_str()));
+// #endif
+//     }
+//
+// private:
+//     std::string get_error_string(void) const {
+//         std::string error_msg;
+//
+// #ifdef _WIN32
+//         LPVOID lpMsgBuf;
+//         FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
+//                           FORMAT_MESSAGE_IGNORE_INSERTS,
+//                       nullptr, GetLastError(),
+//                       MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US),
+//                       (LPTSTR)&lpMsgBuf, 0, nullptr);
+//         std::size_t len = 0;
+//         wcstombs_s(&len, nullptr, 0, reinterpret_cast<const wchar_t *>(lpMsgBuf), _TRUNCATE);
+//         std::vector<char> buf(len + 1, 0);
+//         wcstombs_s(nullptr, &buf[0], len, reinterpret_cast<const wchar_t *>(lpMsgBuf), _TRUNCATE);
+//         error_msg.assign(buf.begin(), buf.end());
+//         LocalFree(lpMsgBuf);
+// #else
+//         const char *buf(dlerror());
+//         error_msg.assign(buf ? buf : "none");
+// #endif
+//         return error_msg;
+//     }
+//
+//     Handle handle_;
+// };
 
 std::tuple<std::string, std::string> parse_url(const std::string &url) {
     auto protocol_end_pos = url.find("://");
@@ -211,18 +211,18 @@ class ImageSequence {
         auto size = fs::file_size(path);
 
         std::ifstream ifs(path, std::ios::binary);
-        char * img_data = new char[size];
-        ifs.read(img_data, size);
+        std::vector<uint8_t> img_data(size);
+        ifs.read(reinterpret_cast<char*>(img_data.data()), size);
         if (path.extension() == ".raw") {
             switch (imread_flags) {
                 case IMREAD_GRAYSCALE:
                     if (size == width * height * sizeof(uint8_t)) {
                         Halide::Runtime::Buffer<uint8_t> buf_8(std::vector<int>{width, height}); //read in 8 bit
-                        memcpy(buf_8.data(), img_data, width * height * sizeof(uint8_t));   // set_img_data
+                        memcpy(buf_8.data(), img_data.data(), width * height * sizeof(uint8_t));   // set_img_data
                         auto buf_16 = Halide::Tools::ImageTypeConversion::convert_image(buf_8, halide_type_of<uint16_t>());
                         buf.copy_from(buf_16);
                     } else if (size == width * height * sizeof(uint16_t)) {
-                        memcpy(buf.data(), img_data, width * height * sizeof(T));
+                        memcpy(buf.data(), img_data.data(), width * height * sizeof(T));
                     } else {
                         throw std::runtime_error("Unsupported raw format");
                     }
