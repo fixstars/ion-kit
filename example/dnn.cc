@@ -16,9 +16,9 @@ int main(int argc, char *argv[]) {
         Builder b;
         b.set_target(Halide::get_target_from_environment());
         b.with_bb_module("ion-bb");
-
+        
         Node n;
-        n = b.add("image_io_color_data_loader").set_param(Param("url", "https://ion-kit.s3.us-west-2.amazonaws.com/images/pedestrian.png"), Param("width", width), Param("height", height));
+        n = b.add("image_io_color_data_loader").set_param(Param("url", "http://ion-kit.s3.us-west-2.amazonaws.com/images/pedestrian.png"), Param("width", width), Param("height", height));
         n = b.add("base_normalize_3d_uint8")(n["output"]);
         n = b.add("base_reorder_buffer_3d_float")(n["output"]).set_param(Param("dim0", 2), Param("dim1", 0), Param("dim2", 1));  // CHW -> HWC
         n = b.add("dnn_object_detection")(n["output"]);
@@ -29,9 +29,6 @@ int main(int argc, char *argv[]) {
         n["output"].bind(out_buf);
         b.run();
 
-        cv::Mat predicted(height, width, CV_8UC3, out_buf.data());
-        cv::cvtColor(predicted, predicted, cv::COLOR_RGB2BGR);
-        cv::imwrite("predicted.png", predicted);
 
         std::cout << "yolov4 example done!!!" << std::endl;
 
