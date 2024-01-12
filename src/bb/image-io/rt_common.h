@@ -221,11 +221,11 @@ class ImageSequence {
                 case IMREAD_GRAYSCALE:
                     if (size == width * height * sizeof(uint8_t)) {
                         Halide::Runtime::Buffer<uint8_t> buf_8(std::vector<int>{width, height}); //read in 8 bit
-                        memcpy(buf_8.data(), img_data.data(), width * height * sizeof(uint8_t));   // set_img_data
+                        std::memcpy(buf_8.data(), img_data.data(), size);   // set_img_data
                         auto buf_16 = Halide::Tools::ImageTypeConversion::convert_image(buf_8, halide_type_of<uint16_t>());
                         buf.copy_from(buf_16);
                     } else if (size == width * height * sizeof(uint16_t)) {
-                        memcpy(buf.data(), img_data.data(), width * height * sizeof(T));
+                        std::memcpy(buf.data(), img_data.data(), size);
                     } else {
                         throw std::runtime_error("Unsupported raw format");
                     }
@@ -234,6 +234,7 @@ class ImageSequence {
                     if (size == 3 * width * height * sizeof(uint8_t)) {
                         // Expect interleaved RGB
                         Halide::Runtime::Buffer <uint8_t> buf_interleaved = Halide::Runtime::Buffer <uint8_t>::make_interleaved(width, height, 3); ;
+                        std::memcpy(buf_interleaved.data(), img_data.data(), size);   // set_img_data
                         auto buffer_planar = buf_interleaved.copy_to_planar();
                         buf.copy_from(buffer_planar);
                     } else {
@@ -246,14 +247,15 @@ class ImageSequence {
         } else {
             switch (imread_flags) {
                 case IMREAD_GRAYSCALE:
-                {   Halide::Runtime::Buffer<T> img_buf = Halide::Tools::load_and_convert_image(path.string());
-                    std::memcpy(buf.data(), img_buf.data(), height*width*sizeof(T));
+                {
+                    Halide::Runtime::Buffer<T> img_buf = Halide::Tools::load_and_convert_image(path.string());
+                    buf.copy_from(img_buf);
                 }
                     break;
                 case IMREAD_COLOR:
-
-                  { Halide::Buffer<uint8_t> img_buf = Halide::Tools::load_and_convert_image(path.string());
-                    std::memcpy(buf.data(), img_buf.data(), 3* height*width*sizeof(T));
+                  {
+                    Halide::Runtime::Buffer<uint8_t> img_buf = Halide::Tools::load_image(path.string());
+                    buf.copy_from(img_buf);
                   }
                     break;
                 default:
