@@ -10,8 +10,8 @@ namespace test {
 class Producer : public BuildingBlock<Producer> {
 public:
     Output<Halide::Func> output{"output", Int(32), 2};
-    GeneratorParam<std::string> string_param{"string_param", "string value"};
-    GeneratorParam<int32_t> v{"v", 42};
+    BuildingBlockParam<std::string> string_param{"string_param", "string value"};
+    BuildingBlockParam<int32_t> v{"v", 42};
     void generate() {
         output(x, y) = v;
     }
@@ -104,7 +104,7 @@ private:
 template<typename T, int D>
 class Inc : public BuildingBlock<Inc<T, D>> {
 public:
-    GeneratorParam<T> v{"v", 0};
+    BuildingBlockParam<T> v{"v", 0};
     Input<Halide::Func> input{"input", Halide::type_of<T>(), D};
     Output<Halide::Func> output{"output", Halide::type_of<T>(), D};
 
@@ -186,7 +186,7 @@ private:
 
 class ArrayInput : public BuildingBlock<ArrayInput> {
 public:
-    GeneratorParam<int> len{"len", 5};
+    BuildingBlockParam<int> len{"len", 5};
 
     Input<Halide::Func[]> array_input{"array_input", Int(32), 2};
     Output<Halide::Func> output{"output", Int(32), 2};
@@ -205,7 +205,7 @@ private:
 
 class ArrayOutput : public BuildingBlock<ArrayOutput> {
 public:
-    GeneratorParam<int> len{"len", 5};
+    BuildingBlockParam<int> len{"len", 5};
     Input<Halide::Func> input{"input", Int(32), 2};
     Output<Halide::Func[]> array_output{"array_output", Int(32), 2};
 
@@ -222,7 +222,7 @@ private:
 
 class ArrayCopy : public BuildingBlock<ArrayCopy> {
 public:
-    GeneratorParam<int> len{"len", 5};
+    BuildingBlockParam<int> len{"len", 5};
 
     Input<Halide::Func[]> array_input{"array_input", Int(32), 2};
     Output<Halide::Func[]> array_output{"array_output", Int(32), 2};
@@ -241,9 +241,9 @@ private:
 
 class ExternIncI32x2 : public BuildingBlock<ExternIncI32x2> {
 public:
-    GeneratorParam<int32_t> v{"v", 0};
-    GeneratorParam<int32_t> width{"width", 0};
-    GeneratorParam<int32_t> height{"height", 0};
+    BuildingBlockParam<int32_t> v{"v", 0};
+    BuildingBlockParam<int32_t> width{"width", 0};
+    BuildingBlockParam<int32_t> height{"height", 0};
     Input<Halide::Func> input{"input", Halide::type_of<int32_t>(), 2};
     Output<Halide::Func> output{"output", Halide::type_of<int32_t>(), 2};
 
