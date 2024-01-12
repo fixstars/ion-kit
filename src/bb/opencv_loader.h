@@ -146,7 +146,7 @@ class OpenCV {
 
     bool is_available(void) const {
 #if _WIN32
-        return opencv_world_.is_available()
+        return opencv_world_.is_available();
 #else
         return opencv_core_.is_available() && opencv_imgproc_.is_available() && opencv_highgui_.is_available();
 #endif
