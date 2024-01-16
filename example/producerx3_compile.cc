@@ -2,6 +2,13 @@
 
 #include <vector>
 
+
+#define STRINGIFY(N) #N
+
+// #ifndef NAME_PREFIX
+// #define NAME_PREFIX "producerx3"
+// #endif
+
 using namespace ion;
 
 int main() {
@@ -16,7 +23,7 @@ int main() {
         n = b.add("base_extend_dimension_1d_uint8")(n["output"]);
         n = b.add("base_extend_dimension_2d_uint8")(n["output"]);
 
-        b.compile("producerx3");
+        b.compile( STRINGIFY(NAME_PREFIX) );
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
         return -1;

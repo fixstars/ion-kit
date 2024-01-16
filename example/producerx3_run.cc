@@ -1,8 +1,14 @@
-#include "producerx3.h"
+//#if (NAME_PREFIX == producerx3)
+//#include "producerx3.h"
+// #include NAME_PREFIX ".h"
+//#include "producerx3_gpu.h"
+//#endif
 
 #include <HalideBuffer.h>
 
 #include <iostream>
+
+extern int NAME_PREFIX(uint8_t, halide_buffer_t *);
 
 int main() {
     try {
@@ -10,7 +16,7 @@ int main() {
         Halide::Runtime::Buffer<uint8_t> out(output_extents);
 
         const uint8_t in = 1;
-        producerx3(in, out);
+        NAME_PREFIX(in, out);
 
         for (int y = 0; y < output_extents.at(2); ++y) {
             for (int x = 0; x < output_extents.at(1); ++x) {

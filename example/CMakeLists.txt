@@ -7,8 +7,12 @@ find_package(OpenCV 4 QUIET)
 
 if(${ION_BB_BUILD_base})
     ion_aot_executable(producerx3 SRCS_COMPILE producerx3_compile.cc SRCS_RUN producerx3_run.cc TARGET_STRING "host-profile")
+    add_compile_definitions(producerx3_compile NAME_PREFIX=producerx3)
+    add_compile_definitions(producerx3_run NAME_PREFIX=producerx3)
     if(${CUDA_FOUND})
         ion_aot_executable(producerx3_gpu SRCS_COMPILE producerx3_compile.cc SRCS_RUN producerx3_run.cc TARGET_STRING "host-cuda-cuda_capability_50-profile")
+	add_compile_definitions(producerx3_gpu_compile NAME_PREFIX=producerx3_gpu)
+	add_compile_definitions(producerx3_gpu_run NAME_PREFIX=producerx3_gpu)
     endif()
 endif()
 
