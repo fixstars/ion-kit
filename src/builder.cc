@@ -76,6 +76,16 @@ std::vector<Node> topological_sort(std::vector<Node> nodes) {
     return sorted;
 }
 
+Halide::Internal::AbstractGenerator::ArgInfo make_arginfo(const std::string& name,
+                                                          Halide::Internal::ArgInfoDirection dir,
+                                                          Halide::Internal::ArgInfoKind kind,
+                                                          const std::vector<Halide::Type>& types,
+                                                          int dimensions) {
+    return Halide::Internal::AbstractGenerator::ArgInfo {
+        name, dir, kind, types, dimensions
+    };
+}
+
 } // anonymous
 
 using json = nlohmann::json;
@@ -239,13 +249,23 @@ Halide::Pipeline Builder::build(bool implicit_output) {
         }
 
         auto bb(Halide::Internal::GeneratorRegistry::create(n.name(), Halide::GeneratorContext(n.target())));
+
+        // Default parameter
         Halide::GeneratorParamsMap params;
         params["builder_ptr"] = std::to_string(reinterpret_cast<uint64_t>(this));
         params["bb_id"] = n.id();
-        for (const auto& p : n.params()) {
-            params[p.key()] = p.val();
-        }
         bb->set_generatorparam_values(params);
+
+        // User defined parameter
+        for (const auto& p : n.params()) {
+            try {
+                bb->set_generatorparam_value(p.key(), p.val());
+            } catch (const Halide::CompileError& e) {
+                auto msg = fmt::format("BuildingBlock \"{}\" has no parameter \"{}\"", n.name(), p.key());
+                log::error(msg);
+                throw std::runtime_error(msg);
+            }
+        }
         bbs[n.id()] = std::move(bb);
     }
 
@@ -257,14 +277,24 @@ Halide::Pipeline Builder::build(bool implicit_output) {
         for (size_t j=0; j<n.iports().size(); ++j) {
             auto port = n.iports()[j];
             auto index = port.index();
-            // Unbounded parameter
             const auto& arginfo = arginfos[j];
             if (port.has_pred()) {
-                auto fs = bbs[port.pred_id()]->output_func(port.pred_name());
+
+                const auto& pred_bb(bbs[port.pred_id()]);
+
+                // Validate port exists
+                const auto& pred_arginfos(pred_bb->arginfos());
+                if (!std::count_if(pred_arginfos.begin(), pred_arginfos.end(),
+                                  [&](Halide::Internal::AbstractGenerator::ArgInfo arginfo){ return port.pred_name() == arginfo.name && Halide::Internal::ArgInfoDirection::Output == arginfo.dir; })) {
+                    auto msg = fmt::format("BuildingBlock \"{}\" has no output \"{}\"", pred_bb->name(), port.pred_name());
+                    log::error(msg);
+                    throw std::runtime_error(msg);
+                }
+
+                auto fs = pred_bb->output_func(port.pred_name());
                 if (arginfo.kind == Halide::Internal::ArgInfoKind::Scalar) {
                     bb->bind_input(arginfo.name, fs);
                 } else if (arginfo.kind == Halide::Internal::ArgInfoKind::Function) {
-                    auto fs = bbs[port.pred_id()]->output_func(port.pred_name());
                     // no specific index provided, direct output Port
                     if (index == -1) {
                         bb->bind_input(arginfo.name, fs);
