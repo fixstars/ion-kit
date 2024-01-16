@@ -112,6 +112,11 @@ ion_port_bind_buffer = ion_core.ion_port_bind_buffer
 ion_port_bind_buffer.restype = ctypes.c_int
 ion_port_bind_buffer.argtypes = [c_ion_port_t, c_ion_buffer_t ]
 
+# int ion_port_bind_buffer_array(ion_port_t obj, ion_buffer_t *bs, int n)
+ion_port_bind_buffer_array = ion_core.ion_port_bind_buffer_array
+ion_port_bind_buffer_array.restype = ctypes.c_int
+ion_port_bind_buffer_array.argtypes = [c_ion_port_t, ctypes.POINTER(c_ion_buffer_t), ctypes.c_int]
+
 # int ion_param_create(ion_param_t *, const char *, const char *);
 ion_param_create = ion_core.ion_param_create
 ion_param_create.restype = ctypes.c_int
