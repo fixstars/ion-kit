@@ -10,8 +10,8 @@ using namespace ion;
 int main()
 {
     try {
-        ion::Buffer<int32_t> input(2, 2);
-        ion::Buffer<int32_t> output(2, 2);
+        Buffer<int32_t> input(2, 2);
+        Buffer<int32_t> output(2, 2);
 
         // Unknown parameter
         {
@@ -37,7 +37,7 @@ int main()
             b.with_bb_module("ion-bb-test");
             b.set_target(Halide::get_host_target());
             Node n;
-            n = b.add("test_inc_i32x2").set_param(Param("v", 41));
+            n = b.add("test_inc_i32x2")(input).set_param(Param("v", 41));
             n = b.add("test_inc_i32x2")(n["unknown-port"]);
             n["output"].bind(output);
 
@@ -55,7 +55,7 @@ int main()
             b.with_bb_module("ion-bb-test");
             b.set_target(Halide::get_host_target());
             Node n;
-            n = b.add("test_inc_i32x2").set_param(Param("v", 41));
+            n = b.add("test_inc_i32x2")(input).set_param(Param("v", 41));
             n = b.add("test_inc_i32x2")(n["output"]);
             n["unknown-port"].bind(output);
 
@@ -67,17 +67,18 @@ int main()
             }
         }
 
-        // Unknown input port 1 (Same to Unknown output port 2)
+        // Unknown input port 1
         {
             Builder b;
             b.with_bb_module("ion-bb-test");
             b.set_target(Halide::get_host_target());
+
+            Buffer<int32_t> unknown(2, 2);
+
             Node n;
-            n = b.add("test_inc_i32x2").set_param(Param("v", 41));
+            n = b.add("test_inc_i32x2")(input, unknown).set_param(Param("v", 41));
             n = b.add("test_inc_i32x2")(n["output"]);
             n["output"].bind(output);
-
-            b.nodes()[0]["input"].bind(input);
 
             try {
                 b.run();
@@ -86,8 +87,6 @@ int main()
                 std::cerr << e.what() << std::endl;
             }
         }
-
-
 
     } catch (Halide::Error& e) {
         std::cerr << e.what() << std::endl;

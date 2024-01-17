@@ -18,6 +18,11 @@ Node::Impl::Impl(const std::string& id_, const std::string& name_, const Halide:
 
 void Node::set_iport(const std::vector<Port>& ports) {
 
+    std::remove_if(impl_->ports.begin(), impl_->ports.end(),
+                   [&](const Port& p) {
+                       return p.has_succ_by_nid(this->id());
+                   });
+
     size_t i = 0;
     for (auto& port : ports) {
         // TODO: Validation is better to be done lazily after BuildingBlock::configure
@@ -32,7 +37,7 @@ void Node::set_iport(const std::vector<Port>& ports) {
         // }
 
         // NOTE: Is succ_chans name OK to be just leave as it is?
-        port.impl_->succ_chans.insert({id(), "_ion_iport_" + i});
+        port.impl_->succ_chans.insert({id(), "_ion_iport_" + std::to_string(i)});
 
         impl_->ports.push_back(port);
 

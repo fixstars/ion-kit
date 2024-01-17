@@ -104,7 +104,7 @@ public:
      */
     template<typename T,
              typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-    Port(T *vptr) : impl_(new Impl("", Halide::Internal::unique_name("ion_port"), Halide::type_of<T>(), 0)), index_(-1) {
+    Port(T *vptr) : impl_(new Impl("", Halide::Internal::unique_name("_ion_port_"), Halide::type_of<T>(), 0)), index_(-1) {
         this->bind(vptr);
     }
 
@@ -140,8 +140,16 @@ public:
 
     // Util
     bool has_pred() const { return !std::get<0>(impl_->pred_chan).empty(); }
+    bool has_pred_by_nid(const std::string& nid) const { return !std::get<0>(impl_->pred_chan).empty(); }
     bool has_succ() const { return !impl_->succ_chans.empty(); }
     bool has_succ(const Channel& c) const { return impl_->succ_chans.count(c); }
+    bool has_succ_by_nid(const std::string& nid) const {
+        return std::count_if(impl_->succ_chans.begin(),
+                             impl_->succ_chans.end(),
+                             [&](const Port::Channel& c) { return std::get<0>(c) == nid; });
+    }
+
+    void determine_succ(const std::string& nid, const std::string& old_pn, const std::string& new_pn);
 
     /**
      * Overloaded operator to set the port index and return a reference to the current port. eg. port[0]

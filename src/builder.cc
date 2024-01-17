@@ -18,8 +18,6 @@
 #include "metadata.h"
 #include "serializer.h"
 
-#define SW 1
-
 namespace ion {
 
 namespace {
@@ -38,7 +36,7 @@ std::map<Halide::OutputFileType, std::string> compute_output_files(const Halide:
 
 bool is_ready(const std::vector<Node>& sorted, const Node& n) {
     bool ready = true;
-    for (auto port : n.iports()) {
+    for (const auto& [pn, port] : n.iports()) {
         // This port has predecessor dependency. Always ready to add.
         if (!port.has_pred()) {
             continue;
@@ -84,6 +82,27 @@ Halide::Internal::AbstractGenerator::ArgInfo make_arginfo(const std::string& nam
     return Halide::Internal::AbstractGenerator::ArgInfo {
         name, dir, kind, types, dimensions
     };
+}
+
+bool is_free(const std::string& pn) {
+    return pn.find("_ion_iport_") != std::string::npos;
+}
+
+std::tuple<Halide::Internal::AbstractGenerator::ArgInfo, bool> find_ith_input(const std::vector<Halide::Internal::AbstractGenerator::ArgInfo>& arginfos, int i) {
+    int j = 0;
+    for (const auto& arginfo : arginfos) {
+        if (arginfo.dir != Halide::Internal::ArgInfoDirection::Input) {
+            continue;
+        }
+
+        if (i == j) {
+            return std::make_tuple(arginfo, true);
+        }
+
+        j++;
+    }
+
+    return std::make_tuple(Halide::Internal::AbstractGenerator::ArgInfo(), false);
 }
 
 } // anonymous
@@ -234,33 +253,19 @@ Halide::Pipeline Builder::build(bool implicit_output) {
 
     log::info("Start building pipeline");
 
-    {
-        // TODO: We need node-wise validation to ensure port assignment
-    }
-
-    // Sort nodes prior to build.
-    // This operation is required especially for the graph which is loaded from JSON definition.
-    nodes_ = topological_sort(nodes_);
-
     auto generator_names = Halide::Internal::GeneratorRegistry::enumerate();
 
-    // Constructing Generator object and setting static parameters
-    std::unordered_map<std::string, Halide::Internal::AbstractGeneratorPtr> bbs;
+    //
+    // Validation and port determination
+    //
     for (auto n : nodes_) {
-
         if (std::find(generator_names.begin(), generator_names.end(), n.name()) == generator_names.end()) {
             throw std::runtime_error("Cannot find generator : " + n.name());
         }
 
         auto bb(Halide::Internal::GeneratorRegistry::create(n.name(), Halide::GeneratorContext(n.target())));
 
-        // Default parameter
-        Halide::GeneratorParamsMap params;
-        params["builder_ptr"] = std::to_string(reinterpret_cast<uint64_t>(this));
-        params["bb_id"] = n.id();
-        bb->set_generatorparam_values(params);
-
-        // User defined parameter
+        // Validate and set parameters
         for (const auto& p : n.params()) {
             try {
                 bb->set_generatorparam_value(p.key(), p.val());
@@ -270,30 +275,87 @@ Halide::Pipeline Builder::build(bool implicit_output) {
                 throw std::runtime_error(msg);
             }
         }
+
+        try {
+            bb->build_pipeline();
+        } catch (const Halide::CompileError& e) {
+            log::error(e.what());
+            throw std::runtime_error(e.what());
+        }
+
+        const auto& arginfos(bb->arginfos());
+
+        // validate input port
+        auto i = 0;
+        for (auto& [pn, port] : n.iports()) {
+            if (is_free(pn)) {
+                const auto& [arginfo, found] = find_ith_input(arginfos, i);
+                if (!found) {
+                    auto msg = fmt::format("BuildingBlock \"{}\" has no input #{}", n.name(), i);
+                    log::error(msg);
+                    throw std::runtime_error(msg);
+                }
+
+                port.determine_succ(n.id(), pn, arginfo.name);
+                pn = arginfo.name;
+            }
+
+            if (!std::count_if(arginfos.begin(), arginfos.end(),
+                               [&](Halide::Internal::AbstractGenerator::ArgInfo arginfo){ return pn == arginfo.name && Halide::Internal::ArgInfoDirection::Input == arginfo.dir; })) {
+                auto msg = fmt::format("BuildingBlock \"{}\" has no input \"{}\"", n.name(), pn);
+                log::error(msg);
+                throw std::runtime_error(msg);
+            }
+
+            i++;
+        }
+
+        // validate output
+        for (const auto& [pn, port] : n.oports()) {
+            if (!std::count_if(arginfos.begin(), arginfos.end(),
+                               [&](Halide::Internal::AbstractGenerator::ArgInfo arginfo){ return pn == arginfo.name && Halide::Internal::ArgInfoDirection::Output == arginfo.dir; })) {
+                auto msg = fmt::format("BuildingBlock \"{}\" has no output \"{}\"", n.name(), pn);
+                log::error(msg);
+                throw std::runtime_error(msg);
+            }
+        }
+    }
+
+    // Sort nodes prior to build.
+    // This operation is required especially for the graph which is loaded from JSON definition.
+    nodes_ = topological_sort(nodes_);
+
+    // Constructing Generator object and setting static parameters
+    std::unordered_map<std::string, Halide::Internal::AbstractGeneratorPtr> bbs;
+    for (auto n : nodes_) {
+        auto bb(Halide::Internal::GeneratorRegistry::create(n.name(), Halide::GeneratorContext(n.target())));
+
+        // Default parameter
+        Halide::GeneratorParamsMap params;
+        params["builder_ptr"] = std::to_string(reinterpret_cast<uint64_t>(this));
+        params["bb_id"] = n.id();
+
+        // User defined parameter
+        for (const auto& p : n.params()) {
+            params[p.key()] =  p.val();
+        }
+        bb->set_generatorparam_values(params);
         bbs[n.id()] = std::move(bb);
     }
 
-    // Assigning ports
+    // Assigning ports and build pipeline
     for (size_t i=0; i<nodes_.size(); ++i) {
         auto n = nodes_[i];
         const auto& bb = bbs[n.id()];
         auto arginfos = bb->arginfos();
-        for (size_t j=0; j<n.iports().size(); ++j) {
-            auto port = n.iports()[j];
+        const auto& iports(n.iports());
+        for (size_t j=0; j<iports.size(); ++j) {
+            const auto& [pn, port] = iports[j];
             auto index = port.index();
             const auto& arginfo = arginfos[j];
             if (port.has_pred()) {
 
                 const auto& pred_bb(bbs[port.pred_id()]);
-
-                // Validate port exists
-                const auto& pred_arginfos(pred_bb->arginfos());
-                if (!std::count_if(pred_arginfos.begin(), pred_arginfos.end(),
-                                  [&](Halide::Internal::AbstractGenerator::ArgInfo arginfo){ return port.pred_name() == arginfo.name && Halide::Internal::ArgInfoDirection::Output == arginfo.dir; })) {
-                    auto msg = fmt::format("BuildingBlock \"{}\" has no output \"{}\"", pred_bb->name(), port.pred_name());
-                    log::error(msg);
-                    throw std::runtime_error(msg);
-                }
 
                 auto fs = pred_bb->output_func(port.pred_name());
                 if (arginfo.kind == Halide::Internal::ArgInfoKind::Scalar) {
@@ -332,7 +394,7 @@ Halide::Pipeline Builder::build(bool implicit_output) {
         // This mode is used for AOT compilation
         std::unordered_map<std::string, std::vector<std::string>> referenced;
         for (const auto& n : nodes_) {
-            for (const auto& port : n.iports()) {
+            for (const auto& [pn, port] : n.iports()) {
                 if (port.has_pred()) {
                     for (const auto &f : bbs[port.pred_id()]->output_func(port.pred_name())) {
                         referenced[port.pred_id()].emplace_back(f.name());
@@ -365,7 +427,7 @@ Halide::Pipeline Builder::build(bool implicit_output) {
         // Collects all output which is bound with buffer.
         // This mode is used for JIT
         for (const auto& node : nodes_) {
-            for (const auto& port : node.oports()) {
+            for (const auto& [pn, port] : node.oports()) {
                 const auto& port_instances(port.as_instance());
                 if (port_instances.empty()) {
                     continue;
@@ -423,7 +485,7 @@ std::vector<Halide::Argument> Builder::get_arguments_stub() const {
     std::set<Port::Channel> added_ports;
     std::vector<Halide::Argument> args;
     for (const auto& node : nodes_) {
-        for (const auto& port : node.iports()) {
+        for (const auto& [pn, port] : node.iports()) {
             if (port.has_pred()) {
                 continue;
             }
@@ -446,7 +508,7 @@ std::vector<const void*> Builder::get_arguments_instance() const {
 
     // Input
     for (const auto& node : nodes_) {
-        for (const auto& port : node.iports()) {
+        for (const auto& [pn, port] : node.iports()) {
             if (port.has_pred()) {
                 continue;
             }
@@ -463,7 +525,7 @@ std::vector<const void*> Builder::get_arguments_instance() const {
 
     // Output
     for (const auto& node : nodes_) {
-        for (const auto& port : node.oports()) {
+        for (const auto& [pn, port] : node.oports()) {
             const auto& port_instances(port.as_instance());
             instances.insert(instances.end(), port_instances.begin(), port_instances.end());
         }
