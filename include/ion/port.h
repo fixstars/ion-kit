@@ -53,12 +53,6 @@ public:
 
 private:
     struct Impl {
-        // std::string pred_id;
-        // std::string pred_name;
-
-        // std::string succ_id;
-        // std::string succ_name;
-
         Channel pred_chan;
         std::set<Channel> succ_chans;
 
@@ -75,6 +69,13 @@ private:
         {
             params[0] = Halide::Internal::Parameter(type, dimensions != 0, dimensions, argument_name(pid, pn, 0));
         }
+
+        Impl(const Channel& chan, const Halide::Type& t, int32_t d)
+            : pred_chan(chan), succ_chans{chan}, type(t), dimensions(d)
+        {
+            params[0] = Halide::Internal::Parameter(type, dimensions != 0, dimensions, argument_name(std::get<0>(chan), std::get<1>(chan), 0));
+        }
+
     };
 
 public:
@@ -203,9 +204,16 @@ public:
 
 private:
     /**
-     * This port is created from another node
+     * This port is created from another node.
+     * In this case, it is not sure what this port is input or output.
+     * pid and pn is stored in both pred and succ,
+     * then it will determined through pipeline build process.
      */
+#if 1
      Port(const std::string& pid, const std::string& pn) : impl_(new Impl(pid, pn, Halide::Type(), 0)), index_(-1) {}
+#else
+     Port(const std::string& pid, const std::string& pn) : impl_(new Impl(Channel{pid, pn}, Halide::Type(), 0)), index_(-1) {}
+#endif
 
 
      std::vector<Halide::Argument> as_argument() const {

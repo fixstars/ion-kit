@@ -234,6 +234,10 @@ Halide::Pipeline Builder::build(bool implicit_output) {
 
     log::info("Start building pipeline");
 
+    {
+        // TODO: We need node-wise validation to ensure port assignment
+    }
+
     // Sort nodes prior to build.
     // This operation is required especially for the graph which is loaded from JSON definition.
     nodes_ = topological_sort(nodes_);
@@ -366,6 +370,18 @@ Halide::Pipeline Builder::build(bool implicit_output) {
                 if (port_instances.empty()) {
                     continue;
                 }
+
+                const auto& pred_bb(bbs[port.pred_id()]);
+
+                // Validate port exists
+                const auto& pred_arginfos(pred_bb->arginfos());
+                if (!std::count_if(pred_arginfos.begin(), pred_arginfos.end(),
+                                   [&](Halide::Internal::AbstractGenerator::ArgInfo arginfo){ return port.pred_name() == arginfo.name && Halide::Internal::ArgInfoDirection::Output == arginfo.dir; })) {
+                    auto msg = fmt::format("BuildingBlock \"{}\" has no output \"{}\"", pred_bb->name(), port.pred_name());
+                    log::error(msg);
+                    throw std::runtime_error(msg);
+                }
+
 
                 auto fs(bbs[port.pred_id()]->output_func(port.pred_name()));
                 output_funcs.insert(output_funcs.end(), fs.begin(), fs.end());
