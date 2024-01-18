@@ -1,4 +1,4 @@
-Please include 3 dll in this directory if you are using windows.
+Please include 3 .dll libraries in this directory if you are using windows.
 ```
 windows
 ├──ion-core.dll
