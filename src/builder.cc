@@ -42,10 +42,12 @@ bool is_ready(const std::vector<Node>& sorted, const Node& n) {
             continue;
         }
 
+        const auto& port_(port); // This is workaround for Clang-14 (MacOS)
+
         // Check port dependent node is already added
         ready &= std::find_if(sorted.begin(), sorted.end(),
-                              [&port](const Node& n) {
-                                return n.id() == port.pred_id();
+                              [&](const Node& n) {
+                                return n.id() == port_.pred_id();
                               }) != sorted.end();
     }
     return ready;
@@ -371,9 +373,10 @@ Halide::Pipeline Builder::build(bool implicit_output) {
                 const auto& pred_bb(bbs[port.pred_id()]);
 
                 // Validate port exists
+                const auto& port_(port); // This is workaround for Clang-14 (MacOS)
                 const auto& pred_arginfos(pred_bb->arginfos());
                 if (!std::count_if(pred_arginfos.begin(), pred_arginfos.end(),
-                                   [&](Halide::Internal::AbstractGenerator::ArgInfo arginfo){ return port.pred_name() == arginfo.name && Halide::Internal::ArgInfoDirection::Output == arginfo.dir; })) {
+                                   [&](Halide::Internal::AbstractGenerator::ArgInfo arginfo){ return port_.pred_name() == arginfo.name && Halide::Internal::ArgInfoDirection::Output == arginfo.dir; })) {
                     auto msg = fmt::format("BuildingBlock \"{}\" has no output \"{}\"", pred_bb->name(), port.pred_name());
                     log::error(msg);
                     throw std::runtime_error(msg);
@@ -439,8 +442,9 @@ void Builder::determine_and_validate() {
                 pn = arginfo.name;
             }
 
+            const auto& pn_(pn); // This is workaround for Clang-14 (MacOS)
             if (!std::count_if(arginfos.begin(), arginfos.end(),
-                               [&](Halide::Internal::AbstractGenerator::ArgInfo arginfo){ return pn == arginfo.name && Halide::Internal::ArgInfoDirection::Input == arginfo.dir; })) {
+                               [&](Halide::Internal::AbstractGenerator::ArgInfo arginfo){ return pn_ == arginfo.name && Halide::Internal::ArgInfoDirection::Input == arginfo.dir; })) {
                 auto msg = fmt::format("BuildingBlock \"{}\" has no input \"{}\"", n.name(), pn);
                 log::error(msg);
                 throw std::runtime_error(msg);
@@ -451,8 +455,9 @@ void Builder::determine_and_validate() {
 
         // validate output
         for (const auto& [pn, port] : n.oports()) {
+            const auto& pn_(pn); // This is workaround for Clang-14 (MacOS)
             if (!std::count_if(arginfos.begin(), arginfos.end(),
-                               [&](Halide::Internal::AbstractGenerator::ArgInfo arginfo){ return pn == arginfo.name && Halide::Internal::ArgInfoDirection::Output == arginfo.dir; })) {
+                               [&](Halide::Internal::AbstractGenerator::ArgInfo arginfo){ return pn_ == arginfo.name && Halide::Internal::ArgInfoDirection::Output == arginfo.dir; })) {
                 auto msg = fmt::format("BuildingBlock \"{}\" has no output \"{}\"", n.name(), pn);
                 log::error(msg);
                 throw std::runtime_error(msg);
