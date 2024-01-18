@@ -53,12 +53,7 @@ public:
 
 private:
     struct Impl {
-        // std::string pred_id;
-        // std::string pred_name;
-
-        // std::string succ_id;
-        // std::string succ_name;
-
+        std::string id;
         Channel pred_chan;
         std::set<Channel> succ_chans;
 
@@ -68,13 +63,8 @@ private:
         std::unordered_map<int32_t, Halide::Internal::Parameter> params;
         std::unordered_map<int32_t, const void *> instances;
 
-        Impl() {}
-
-        Impl(const std::string& pid, const std::string& pn, const Halide::Type& t, int32_t d)
-            : pred_chan{pid, pn}, succ_chans{}, type(t), dimensions(d)
-        {
-            params[0] = Halide::Internal::Parameter(type, dimensions != 0, dimensions, argument_name(pid, pn, 0));
-        }
+        Impl();
+        Impl(const std::string& pid, const std::string& pn, const Halide::Type& t, int32_t d);
     };
 
 public:
@@ -103,7 +93,7 @@ public:
      */
     template<typename T,
              typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-    Port(T *vptr) : impl_(new Impl("", Halide::Internal::unique_name("ion_port"), Halide::type_of<T>(), 0)), index_(-1) {
+    Port(T *vptr) : impl_(new Impl("", Halide::Internal::unique_name("_ion_port_"), Halide::type_of<T>(), 0)), index_(-1) {
         this->bind(vptr);
     }
 
@@ -124,6 +114,7 @@ public:
     }
 
     // Getter
+    const std::string& id() const { return impl_->id; }
     const Channel& pred_chan() const { return impl_->pred_chan; }
     const std::string& pred_id() const { return std::get<0>(impl_->pred_chan); }
     const std::string& pred_name() const { return std::get<1>(impl_->pred_chan); }
@@ -132,15 +123,22 @@ public:
     int32_t dimensions() const { return impl_->dimensions; }
     int32_t size() const { return static_cast<int32_t>(impl_->params.size()); }
     int32_t index() const { return index_; }
-    uintptr_t impl_ptr() const { return reinterpret_cast<uintptr_t>(impl_.get()); }
 
     // Setter
     void set_index(int index) { index_ = index; }
 
     // Util
     bool has_pred() const { return !std::get<0>(impl_->pred_chan).empty(); }
+    bool has_pred_by_nid(const std::string& nid) const { return !std::get<0>(impl_->pred_chan).empty(); }
     bool has_succ() const { return !impl_->succ_chans.empty(); }
     bool has_succ(const Channel& c) const { return impl_->succ_chans.count(c); }
+    bool has_succ_by_nid(const std::string& nid) const {
+        return std::count_if(impl_->succ_chans.begin(),
+                             impl_->succ_chans.end(),
+                             [&](const Port::Channel& c) { return std::get<0>(c) == nid; });
+    }
+
+    void determine_succ(const std::string& nid, const std::string& old_pn, const std::string& new_pn);
 
     /**
      * Overloaded operator to set the port index and return a reference to the current port. eg. port[0]
@@ -189,24 +187,16 @@ public:
          }
      }
 
-     static std::tuple<std::shared_ptr<Impl>, bool> find_impl(uintptr_t ptr) {
-         static std::unordered_map<uintptr_t, std::shared_ptr<Impl>> impls;
-         static std::mutex mutex;
-         std::scoped_lock lock(mutex);
-         bool found = true;
-         if (!impls.count(ptr)) {
-             impls[ptr] = std::make_shared<Impl>();
-             found = false;
-         }
-         return std::make_tuple(impls[ptr], found);
-     }
+     static std::tuple<std::shared_ptr<Impl>, bool> find_impl(const std::string& id);
 
 private:
     /**
-     * This port is created from another node
+     * This port is created from another node.
+     * In this case, it is not sure what this port is input or output.
+     * pid and pn is stored in both pred and succ,
+     * then it will determined through pipeline build process.
      */
      Port(const std::string& pid, const std::string& pn) : impl_(new Impl(pid, pn, Halide::Type(), 0)), index_(-1) {}
-
 
      std::vector<Halide::Argument> as_argument() const {
          std::vector<Halide::Argument> args;

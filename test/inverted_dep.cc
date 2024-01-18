@@ -16,24 +16,23 @@ int main()
             std::string graph = R"(
                 {
                   "nodes": [
-
                     {
-                      "id": "9ebf9c1e-25bf-451d-b92e-54322c72476f",
+                      "id": "3de72ac3-d7e4-4de1-b73e-49856f8b5fc7",
                       "name": "test_consumer",
                       "params": [],
                       "ports": [
                         {
                           "dimensions": 0,
-                          "impl_ptr": 94067312766832,
+                          "id": "2792b187-a42f-4c02-9399-25fc3acddd8e",
                           "index": -1,
                           "pred_chan": [
-                            "2c706f47-6f51-4f1e-82de-f87f2dd0e9ab",
+                            "c4fcbdba-7da4-4149-80ab-4ad5da37b435",
                             "output"
                           ],
                           "size": 1,
                           "succ_chans": [
                             [
-                              "9ebf9c1e-25bf-451d-b92e-54322c72476f",
+                              "3de72ac3-d7e4-4de1-b73e-49856f8b5fc7",
                               "input"
                             ]
                           ],
@@ -45,7 +44,7 @@ int main()
                         },
                         {
                           "dimensions": 0,
-                          "impl_ptr": 94067313268224,
+                          "id": "b44a2f84-b7a2-40a4-9fbf-ed80078b6123",
                           "index": -1,
                           "pred_chan": [
                             "",
@@ -54,7 +53,7 @@ int main()
                           "size": 1,
                           "succ_chans": [
                             [
-                              "9ebf9c1e-25bf-451d-b92e-54322c72476f",
+                              "3de72ac3-d7e4-4de1-b73e-49856f8b5fc7",
                               "min0"
                             ]
                           ],
@@ -66,7 +65,7 @@ int main()
                         },
                         {
                           "dimensions": 0,
-                          "impl_ptr": 94067313265008,
+                          "id": "2f9ab162-f72a-42c8-8b92-2cbcf5ce71f7",
                           "index": -1,
                           "pred_chan": [
                             "",
@@ -75,7 +74,7 @@ int main()
                           "size": 1,
                           "succ_chans": [
                             [
-                              "9ebf9c1e-25bf-451d-b92e-54322c72476f",
+                              "3de72ac3-d7e4-4de1-b73e-49856f8b5fc7",
                               "extent0"
                             ]
                           ],
@@ -87,7 +86,7 @@ int main()
                         },
                         {
                           "dimensions": 0,
-                          "impl_ptr": 94067313264752,
+                          "id": "ba2f373c-2dd7-436f-b816-0ca59ca83037",
                           "index": -1,
                           "pred_chan": [
                             "",
@@ -96,7 +95,7 @@ int main()
                           "size": 1,
                           "succ_chans": [
                             [
-                              "9ebf9c1e-25bf-451d-b92e-54322c72476f",
+                              "3de72ac3-d7e4-4de1-b73e-49856f8b5fc7",
                               "min1"
                             ]
                           ],
@@ -108,7 +107,7 @@ int main()
                         },
                         {
                           "dimensions": 0,
-                          "impl_ptr": 94067312830512,
+                          "id": "537fd4b2-eef1-4c69-a04f-bd09adf3c93f",
                           "index": -1,
                           "pred_chan": [
                             "",
@@ -117,7 +116,7 @@ int main()
                           "size": 1,
                           "succ_chans": [
                             [
-                              "9ebf9c1e-25bf-451d-b92e-54322c72476f",
+                              "3de72ac3-d7e4-4de1-b73e-49856f8b5fc7",
                               "extent1"
                             ]
                           ],
@@ -129,7 +128,7 @@ int main()
                         },
                         {
                           "dimensions": 0,
-                          "impl_ptr": 94067312767360,
+                          "id": "80f24262-a521-43b7-8063-3b410fb5c509",
                           "index": -1,
                           "pred_chan": [
                             "",
@@ -138,7 +137,7 @@ int main()
                           "size": 1,
                           "succ_chans": [
                             [
-                              "9ebf9c1e-25bf-451d-b92e-54322c72476f",
+                              "3de72ac3-d7e4-4de1-b73e-49856f8b5fc7",
                               "v"
                             ]
                           ],
@@ -147,28 +146,12 @@ int main()
                             "code": 0,
                             "lanes": 1
                           }
-                        },
-                        {
-                          "dimensions": 0,
-                          "impl_ptr": 94067312830256,
-                          "index": -1,
-                          "pred_chan": [
-                            "9ebf9c1e-25bf-451d-b92e-54322c72476f",
-                            "output"
-                          ],
-                          "size": 1,
-                          "succ_chans": [],
-                          "type": {
-                            "bits": 0,
-                            "code": 3,
-                            "lanes": 0
-                          }
                         }
                       ],
-                      "target": "host-trace_pipeline"
+                      "target": "host-profile"
                     },
                     {
-                      "id": "2c706f47-6f51-4f1e-82de-f87f2dd0e9ab",
+                      "id": "c4fcbdba-7da4-4149-80ab-4ad5da37b435",
                       "name": "test_producer",
                       "params": [
                         {
@@ -179,16 +162,16 @@ int main()
                       "ports": [
                         {
                           "dimensions": 0,
-                          "impl_ptr": 94067312766832,
+                          "id": "2792b187-a42f-4c02-9399-25fc3acddd8e",
                           "index": -1,
                           "pred_chan": [
-                            "2c706f47-6f51-4f1e-82de-f87f2dd0e9ab",
+                            "c4fcbdba-7da4-4149-80ab-4ad5da37b435",
                             "output"
                           ],
                           "size": 1,
                           "succ_chans": [
                             [
-                              "9ebf9c1e-25bf-451d-b92e-54322c72476f",
+                              "3de72ac3-d7e4-4de1-b73e-49856f8b5fc7",
                               "input"
                             ]
                           ],
@@ -199,10 +182,10 @@ int main()
                           }
                         }
                       ],
-                      "target": "host-trace_pipeline"
+                      "target": "host-profile"
                     }
                   ],
-                  "target": "host-trace_pipeline"
+                  "target": "host-profile"
                 }
             )";
             std::ofstream ofs(file_name);
@@ -220,17 +203,17 @@ int main()
         for (auto& n : b.nodes()) {
             std::cout << n.name() << std::endl;
             if (n.name() == "test_consumer") {
-                n["min0"].bind(&min0);
-                n["extent0"].bind(&extent0);
-                n["min1"].bind(&min1);
-                n["extent1"].bind(&extent1);
-                n["v"].bind(&v);
-                n["output"].bind(r);
+                n.iport("min0").bind(&min0);
+                n.iport("extent0").bind(&extent0);
+                n.iport("min1").bind(&min1);
+                n.iport("extent1").bind(&extent1);
+                n.iport("v").bind(&v);
+                n.oport("output").bind(r);
             }
         }
 
         b.run();
-    
+
     } catch (const Halide::Error &e) {
         std::cerr << e.what() << std::endl;
         return 1;
