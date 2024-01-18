@@ -66,7 +66,7 @@ ion_jit_executable(configure SRCS configure.cc)
 
 # Export test
 # TODO: Resolve defects in feature/win-debug branch on Windows environment
-# ion_jit_executable(export SRCS export.cc)
+ion_jit_executable(export SRCS export.cc)
 
 # Validation test
 ion_jit_executable(validation SRCS validation.cc)

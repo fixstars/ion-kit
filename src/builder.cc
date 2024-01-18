@@ -141,6 +141,7 @@ Builder& Builder::with_bb_module(const std::string& module_path) {
 
 
 void Builder::save(const std::string& file_name) {
+    determine_and_validate();
     std::ofstream ofs(file_name);
     json j;
     j["target"] = target_.to_string();
@@ -253,73 +254,7 @@ Halide::Pipeline Builder::build(bool implicit_output) {
 
     log::info("Start building pipeline");
 
-    auto generator_names = Halide::Internal::GeneratorRegistry::enumerate();
-
-    //
-    // Validation and port determination
-    //
-    for (auto n : nodes_) {
-        if (std::find(generator_names.begin(), generator_names.end(), n.name()) == generator_names.end()) {
-            throw std::runtime_error("Cannot find generator : " + n.name());
-        }
-
-        auto bb(Halide::Internal::GeneratorRegistry::create(n.name(), Halide::GeneratorContext(n.target())));
-
-        // Validate and set parameters
-        for (const auto& p : n.params()) {
-            try {
-                bb->set_generatorparam_value(p.key(), p.val());
-            } catch (const Halide::CompileError& e) {
-                auto msg = fmt::format("BuildingBlock \"{}\" has no parameter \"{}\"", n.name(), p.key());
-                log::error(msg);
-                throw std::runtime_error(msg);
-            }
-        }
-
-        try {
-            bb->build_pipeline();
-        } catch (const Halide::CompileError& e) {
-            log::error(e.what());
-            throw std::runtime_error(e.what());
-        }
-
-        const auto& arginfos(bb->arginfos());
-
-        // validate input port
-        auto i = 0;
-        for (auto& [pn, port] : n.iports()) {
-            if (is_free(pn)) {
-                const auto& [arginfo, found] = find_ith_input(arginfos, i);
-                if (!found) {
-                    auto msg = fmt::format("BuildingBlock \"{}\" has no input #{}", n.name(), i);
-                    log::error(msg);
-                    throw std::runtime_error(msg);
-                }
-
-                port.determine_succ(n.id(), pn, arginfo.name);
-                pn = arginfo.name;
-            }
-
-            if (!std::count_if(arginfos.begin(), arginfos.end(),
-                               [&](Halide::Internal::AbstractGenerator::ArgInfo arginfo){ return pn == arginfo.name && Halide::Internal::ArgInfoDirection::Input == arginfo.dir; })) {
-                auto msg = fmt::format("BuildingBlock \"{}\" has no input \"{}\"", n.name(), pn);
-                log::error(msg);
-                throw std::runtime_error(msg);
-            }
-
-            i++;
-        }
-
-        // validate output
-        for (const auto& [pn, port] : n.oports()) {
-            if (!std::count_if(arginfos.begin(), arginfos.end(),
-                               [&](Halide::Internal::AbstractGenerator::ArgInfo arginfo){ return pn == arginfo.name && Halide::Internal::ArgInfoDirection::Output == arginfo.dir; })) {
-                auto msg = fmt::format("BuildingBlock \"{}\" has no output \"{}\"", n.name(), pn);
-                log::error(msg);
-                throw std::runtime_error(msg);
-            }
-        }
-    }
+    determine_and_validate();
 
     // Sort nodes prior to build.
     // This operation is required especially for the graph which is loaded from JSON definition.
@@ -456,6 +391,74 @@ Halide::Pipeline Builder::build(bool implicit_output) {
     }
 
     return Halide::Pipeline(output_funcs);
+}
+
+void Builder::determine_and_validate() {
+
+    auto generator_names = Halide::Internal::GeneratorRegistry::enumerate();
+
+    for (auto n : nodes_) {
+        if (std::find(generator_names.begin(), generator_names.end(), n.name()) == generator_names.end()) {
+            throw std::runtime_error("Cannot find generator : " + n.name());
+        }
+
+        auto bb(Halide::Internal::GeneratorRegistry::create(n.name(), Halide::GeneratorContext(n.target())));
+
+        // Validate and set parameters
+        for (const auto& p : n.params()) {
+            try {
+                bb->set_generatorparam_value(p.key(), p.val());
+            } catch (const Halide::CompileError& e) {
+                auto msg = fmt::format("BuildingBlock \"{}\" has no parameter \"{}\"", n.name(), p.key());
+                log::error(msg);
+                throw std::runtime_error(msg);
+            }
+        }
+
+        try {
+            bb->build_pipeline();
+        } catch (const Halide::CompileError& e) {
+            log::error(e.what());
+            throw std::runtime_error(e.what());
+        }
+
+        const auto& arginfos(bb->arginfos());
+
+        // validate input port
+        auto i = 0;
+        for (auto& [pn, port] : n.iports()) {
+            if (is_free(pn)) {
+                const auto& [arginfo, found] = find_ith_input(arginfos, i);
+                if (!found) {
+                    auto msg = fmt::format("BuildingBlock \"{}\" has no input #{}", n.name(), i);
+                    log::error(msg);
+                    throw std::runtime_error(msg);
+                }
+
+                port.determine_succ(n.id(), pn, arginfo.name);
+                pn = arginfo.name;
+            }
+
+            if (!std::count_if(arginfos.begin(), arginfos.end(),
+                               [&](Halide::Internal::AbstractGenerator::ArgInfo arginfo){ return pn == arginfo.name && Halide::Internal::ArgInfoDirection::Input == arginfo.dir; })) {
+                auto msg = fmt::format("BuildingBlock \"{}\" has no input \"{}\"", n.name(), pn);
+                log::error(msg);
+                throw std::runtime_error(msg);
+            }
+
+            i++;
+        }
+
+        // validate output
+        for (const auto& [pn, port] : n.oports()) {
+            if (!std::count_if(arginfos.begin(), arginfos.end(),
+                               [&](Halide::Internal::AbstractGenerator::ArgInfo arginfo){ return pn == arginfo.name && Halide::Internal::ArgInfoDirection::Output == arginfo.dir; })) {
+                auto msg = fmt::format("BuildingBlock \"{}\" has no output \"{}\"", n.name(), pn);
+                log::error(msg);
+                throw std::runtime_error(msg);
+            }
+        }
+    }
 }
 
 std::string Builder::bb_metadata(void) {

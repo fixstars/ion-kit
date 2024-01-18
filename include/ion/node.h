@@ -110,27 +110,11 @@ public:
         return impl_->ports;
     }
 
-   std::vector<std::tuple<std::string, Port>> iports() const {
-        std::vector<std::tuple<std::string, Port>> iports;
-        for (const auto& p: impl_->ports) {
-            auto it = std::find_if(p.impl_->succ_chans.begin(), p.impl_->succ_chans.end(),
-                                   [&](const Port::Channel& c) { return std::get<0>(c) == impl_->id; });
-            if (it != p.impl_->succ_chans.end()) {
-                iports.push_back(std::make_tuple(std::get<1>(*it), p));
-            }
-        }
-        return iports;
-    }
+    Port iport(const std::string& pn);
+    std::vector<std::tuple<std::string, Port>> iports() const;
 
-    std::vector<std::tuple<std::string, Port>> oports() const {
-        std::vector<std::tuple<std::string, Port>> oports;
-        for (const auto& p: impl_->ports) {
-            if (id() == p.pred_id()) {
-                oports.push_back(std::make_tuple(p.pred_name(), p));
-            }
-        }
-        return oports;
-    }
+    Port oport(const std::string& pn);
+    std::vector<std::tuple<std::string, Port>> oports() const;
 
 private:
     Node(const std::string& id, const std::string& name, const Halide::Target& target)

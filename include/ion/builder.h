@@ -100,6 +100,8 @@ private:
 
     Halide::Pipeline build(bool implicit_output = false);
 
+    void determine_and_validate();
+
     std::vector<Halide::Argument> get_arguments_stub() const;
     std::vector<const void*> get_arguments_instance() const;
 
