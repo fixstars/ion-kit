@@ -23,8 +23,6 @@
 
 #include <HalideBuffer.h>
 #include "halide_image_io.h"
-#include <opencv2/highgui.hpp>
-#include <opencv2/imgproc.hpp>
 
 #include "log.h"
 
