@@ -17,22 +17,22 @@ int main()
                 {
                   "nodes": [
                     {
-                      "id": "827bd8eb-b51c-4f0a-b94d-58dd3c521464",
+                      "id": "3de72ac3-d7e4-4de1-b73e-49856f8b5fc7",
                       "name": "test_consumer",
                       "params": [],
                       "ports": [
                         {
                           "dimensions": 0,
-                          "impl_ptr": 93824992939168,
+                          "id": "2792b187-a42f-4c02-9399-25fc3acddd8e",
                           "index": -1,
                           "pred_chan": [
-                            "51917e77-d626-47ff-b1be-37957a7d0706",
+                            "c4fcbdba-7da4-4149-80ab-4ad5da37b435",
                             "output"
                           ],
                           "size": 1,
                           "succ_chans": [
                             [
-                              "827bd8eb-b51c-4f0a-b94d-58dd3c521464",
+                              "3de72ac3-d7e4-4de1-b73e-49856f8b5fc7",
                               "input"
                             ]
                           ],
@@ -44,7 +44,7 @@ int main()
                         },
                         {
                           "dimensions": 0,
-                          "impl_ptr": 93824992925424,
+                          "id": "b44a2f84-b7a2-40a4-9fbf-ed80078b6123",
                           "index": -1,
                           "pred_chan": [
                             "",
@@ -53,7 +53,7 @@ int main()
                           "size": 1,
                           "succ_chans": [
                             [
-                              "827bd8eb-b51c-4f0a-b94d-58dd3c521464",
+                              "3de72ac3-d7e4-4de1-b73e-49856f8b5fc7",
                               "min0"
                             ]
                           ],
@@ -65,7 +65,7 @@ int main()
                         },
                         {
                           "dimensions": 0,
-                          "impl_ptr": 93824992925968,
+                          "id": "2f9ab162-f72a-42c8-8b92-2cbcf5ce71f7",
                           "index": -1,
                           "pred_chan": [
                             "",
@@ -74,7 +74,7 @@ int main()
                           "size": 1,
                           "succ_chans": [
                             [
-                              "827bd8eb-b51c-4f0a-b94d-58dd3c521464",
+                              "3de72ac3-d7e4-4de1-b73e-49856f8b5fc7",
                               "extent0"
                             ]
                           ],
@@ -86,7 +86,7 @@ int main()
                         },
                         {
                           "dimensions": 0,
-                          "impl_ptr": 93824992926512,
+                          "id": "ba2f373c-2dd7-436f-b816-0ca59ca83037",
                           "index": -1,
                           "pred_chan": [
                             "",
@@ -95,7 +95,7 @@ int main()
                           "size": 1,
                           "succ_chans": [
                             [
-                              "827bd8eb-b51c-4f0a-b94d-58dd3c521464",
+                              "3de72ac3-d7e4-4de1-b73e-49856f8b5fc7",
                               "min1"
                             ]
                           ],
@@ -107,7 +107,7 @@ int main()
                         },
                         {
                           "dimensions": 0,
-                          "impl_ptr": 93824992927056,
+                          "id": "537fd4b2-eef1-4c69-a04f-bd09adf3c93f",
                           "index": -1,
                           "pred_chan": [
                             "",
@@ -116,7 +116,7 @@ int main()
                           "size": 1,
                           "succ_chans": [
                             [
-                              "827bd8eb-b51c-4f0a-b94d-58dd3c521464",
+                              "3de72ac3-d7e4-4de1-b73e-49856f8b5fc7",
                               "extent1"
                             ]
                           ],
@@ -128,7 +128,7 @@ int main()
                         },
                         {
                           "dimensions": 0,
-                          "impl_ptr": 93824992927664,
+                          "id": "80f24262-a521-43b7-8063-3b410fb5c509",
                           "index": -1,
                           "pred_chan": [
                             "",
@@ -137,7 +137,7 @@ int main()
                           "size": 1,
                           "succ_chans": [
                             [
-                              "827bd8eb-b51c-4f0a-b94d-58dd3c521464",
+                              "3de72ac3-d7e4-4de1-b73e-49856f8b5fc7",
                               "v"
                             ]
                           ],
@@ -151,7 +151,7 @@ int main()
                       "target": "host-profile"
                     },
                     {
-                      "id": "51917e77-d626-47ff-b1be-37957a7d0706",
+                      "id": "c4fcbdba-7da4-4149-80ab-4ad5da37b435",
                       "name": "test_producer",
                       "params": [
                         {
@@ -162,16 +162,16 @@ int main()
                       "ports": [
                         {
                           "dimensions": 0,
-                          "impl_ptr": 93824992939168,
+                          "id": "2792b187-a42f-4c02-9399-25fc3acddd8e",
                           "index": -1,
                           "pred_chan": [
-                            "51917e77-d626-47ff-b1be-37957a7d0706",
+                            "c4fcbdba-7da4-4149-80ab-4ad5da37b435",
                             "output"
                           ],
                           "size": 1,
                           "succ_chans": [
                             [
-                              "827bd8eb-b51c-4f0a-b94d-58dd3c521464",
+                              "3de72ac3-d7e4-4de1-b73e-49856f8b5fc7",
                               "input"
                             ]
                           ],
