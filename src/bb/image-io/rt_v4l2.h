@@ -2,7 +2,6 @@
 #define ION_BB_IMAGE_IO_RT_V4L2_H
 
 // TODO: Remove OpenCV build dependency
-#ifdef HAS_OPENCV
 
 #include <cstdlib>
 #include <chrono>
@@ -23,7 +22,7 @@
 #include <sys/types.h>
 
 #include <HalideBuffer.h>
-
+#include "halide_image_io.h"
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 
@@ -35,46 +34,137 @@
 namespace ion {
 namespace bb {
 namespace image_io {
+#define BORDER_INTERPOLATE(x, l) (x < 0 ? 0 : (x >= l ? l - 1 : x))
+float weight(float input){
+            float alpha = -1;
+            float x = (input < 0)? -input : input;
+            float x2 = x * x;
+            float x3 = x * x * x;
+
+            if(x <= 1){
+                return (alpha + 2) * x3 - (alpha + 3) * x2 + 1;
+            }else if(x < 2){
+                return alpha * x3 - 5 * alpha * x2 + 8 * alpha * x - 4 * alpha;
+            }else{
+                return 0x0;
+            }
+        }
+template<typename T>
+void resize_bicubic(Halide::Runtime::Buffer<T>& dst,
+                                            const Halide::Runtime::Buffer<T>& src,
+                                            const int32_t src_width, const int32_t src_height,
+                                            const uint32_t dst_width, const uint32_t dst_height){
+    double min_value = static_cast<double>(std::numeric_limits<T>::min());
+    double max_value = static_cast<double>(std::numeric_limits<T>::max());
+
+    for(int dh = 0; dh < dst_height; dh++){
+        for(int dw = 0; dw < dst_width; dw++){
+             for(int c = 0; c<3; c++){
+                double value = 0;
+                float totalWeight = 0;
+
+                float x = ((static_cast<float>(dw)+ 0.5f)
+                            *static_cast<float>(src_width)) / static_cast<float>(dst_width);
+                x -= 0.5f;
+                float y = (static_cast<float>(dh)+ 0.5f)
+                            *static_cast<float>(src_height) / static_cast<float>(dst_height);
+                y -= 0.5f;
+                float dx = x - static_cast<float>(floor(x));
+                float dy = y - static_cast<float>(floor(y));
+
+                for(int i = -1; i < 3; i++){
+                    for(int j = -1; j < 3; j++){
+
+                        float wx = weight(j - dx);
+                        float wy = weight(i - dy);
+                        float w = wx * wy;
+
+                        int sw = BORDER_INTERPOLATE((int)(x + j), src_width);
+                        int sh = BORDER_INTERPOLATE((int)(y + i), src_height);
+                        T s = src(sw, sh, c);
+
+                        value += w*s;
+                        totalWeight += w;
+                    }
+
+                }
+                if(fabs(totalWeight)>0){
+                    value /= fabs(totalWeight);
+                }else{
+                    value= 0;
+                }
+                value += 0.5;
+                value = (value < min_value) ? min_value : value;
+                value = (value > max_value) ? max_value : value;
+                dst(dw, dh, c) = static_cast<T>(value);
+             }
+        }
+    }
+}
+
 
 std::unordered_map<int32_t, std::vector<uint8_t>> image_cache;
 
-cv::Mat get_image(const std::string &url) {
+template<typename T>
+bool get_image(const std::string &url, Halide::Runtime::Buffer<T> &img, int width_, int height_) {
+    bool img_loaded = false;
     if (url.empty()) {
-        return {};
+        return img_loaded;
     }
 
     std::string host_name;
     std::string path_name;
     std::tie(host_name, path_name) = parse_url(url);
 
-    cv::Mat img;
-    bool img_loaded = false;
-    if (host_name.empty() || path_name.empty()) {
+    Halide::Runtime::Buffer<uint8_t> img_buf;
+    if (host_name.empty() || path_name.empty()){
         // fallback to local file
-        img = cv::imread(url);
-        if (!img.empty()) {
+        if (std::filesystem::exists(url)){
+            img_buf = Halide::Tools::load_and_convert_image(url);
             img_loaded = true;
         }
-    } else {
+    }else{
         httplib::Client cli(host_name.c_str());
         cli.set_follow_location(true);
         auto res = cli.Get(path_name.c_str());
         if (res && res->status == 200) {
             std::vector<char> data(res->body.size());
+            data.resize(res->body.size());
             std::memcpy(data.data(), res->body.c_str(), res->body.size());
-            img = cv::imdecode(cv::InputArray(data), IMREAD_COLOR);
-            if (!img.empty()) {
-                img_loaded = true;
+            std::filesystem::path dir_path =  std::filesystem::temp_directory_path() / "simulation_camera";;
+            if (!std::filesystem::exists(dir_path)) {
+                if (!std::filesystem::create_directory(dir_path)) {
+                    throw std::runtime_error("Failed to create temporary directory");
+                }
             }
+            std::ofstream ofs(dir_path / std::filesystem::path(url).filename(), std::ios::binary);
+            ofs.write(reinterpret_cast<const char*>(data.data()), data.size());
+
+            img_buf  =  Halide::Tools::load_and_convert_image(dir_path / std::filesystem::path(url).filename());
+            img_loaded = true;
+
         }
     }
+    if (img_loaded){ //resize
+        int ori_width = img_buf.width();
+        int ori_height = img_buf.height();
+        int channels =  img_buf.channels();
+        Halide::Runtime::Buffer<uint8_t> resized (width_, height_, 3);
+        resize_bicubic<uint8_t>(resized, img_buf, ori_width, ori_height, width_, height_);
 
-    if (img_loaded) {
-        return img;
-    } else {
-        return {};
+        if (sizeof(T) == 4){ //float
+            // Buffer<uint8_t> to Buffer<float> range(0-1)
+            Halide::Runtime::Buffer<float> float_img = Halide::Tools::ImageTypeConversion::convert_image(resized, halide_type_of<float>());
+            img.copy_from(float_img);
+        }else if (sizeof(T) == 1){ //uint_8
+            img.copy_from(resized);
+        }else{
+            throw std::runtime_error("Unsupported image format");
+        }
     }
+    return img_loaded;
 }
+
 }  // namespace image_io
 }  // namespace bb
 }  // namespace ion
@@ -335,94 +425,124 @@ public:
     template<typename T>
     void generate_bayer(Halide::Runtime::Buffer<T> &buf) {
         auto it = ion::bb::image_io::image_cache.find(id_);
+        std::cout<<id_;
         if (it != ion::bb::image_io::image_cache.end()) {
-            memcpy(buf.data(), it->second.data(), it->second.size());
+            memcpy(buf.data(), it->second.data(), it->second.size() * sizeof(T));
             return;
         }
 
-        cv::Mat img = ion::bb::image_io::get_image(url_);
+        Halide::Runtime::Buffer<float> img(width_, height_, 3);
+        bool is_loaded = get_image<float>(url_, img, width_, height_);
 
-        if (img.empty()) {
+        if (!is_loaded) {
             // Fill by dummy image
-            cv::Mat pat = cv::Mat::zeros(2, 2, CV_16U);
-            pat.at<uint16_t>((index_ / 2) % 2, index_ % 2) = 65535;
-
-            img = cv::repeat(pat, height_ / 2, width_ / 2);
-
-            std::vector<uint8_t> data(img.total() * img.elemSize());
-            memcpy(data.data(), img.data, img.total() * img.elemSize());
-            memcpy(buf.data(), img.data, img.total() * img.elemSize());
-
+            Halide::Runtime::Buffer<uint16_t> img_16(width_, height_);
+            img_16.fill(0);
+             for(int y = (index_ / 2) % 2; y < height_ ; y+=2){
+                for(int x = index_ % 2; x < width_; x+=2){
+                     img_16(x, y) = 65535 ;
+                }
+             }
+            buf.copy_from(img_16);
+            auto size  = width_ * height_ * sizeof(uint16_t);
+            std::vector<uint8_t> data(size);
+            memcpy(data.data(), img_16.data(), size);
             ion::bb::image_io::image_cache[id_] = data;
-
             return;
         }
 
-        cv::Mat resized_img;
-        cv::resize(img, resized_img, cv::Size(width_, height_));
+        img.for_each_element([&](int x, int y, int c) {
+            img(x, y, c) = pow((float)(img(x, y, c)), 2.2) ;
+        });
 
-        cv::Mat normalized_img;
-        resized_img.convertTo(normalized_img, CV_32F, 1 / 255.f);
+        std::vector<float> r_planar(width_*height_);
+        std::vector<float> g_planar(width_*height_);
+        std::vector<float> b_planar(width_*height_);
 
-        cv::Mat linear_img;
-        cv::pow(normalized_img, 2.2, linear_img);
+        memcpy(r_planar.data(), img.data(), width_* height_* sizeof(float));
+        memcpy(g_planar.data(), img.data() + width_ * height_ * 1, width_* height_* sizeof(float));
+        memcpy(b_planar.data(), img.data() + width_ * height_ * 2, width_* height_* sizeof(float));
 
-        std::vector<cv::Mat> splitted_image(3);
-        cv::split(linear_img, splitted_image);
+        std::transform(r_planar.begin(), r_planar.end(), r_planar.begin(), [&](float x){return std::min(std::max(x * gain_r_ + offset_, 0.f), 1.f);});
+        std::transform(g_planar.begin(), g_planar.end(), g_planar.begin(), [&](float x){return std::min(std::max(x * gain_g_ + offset_, 0.f), 1.f);});
+        std::transform(b_planar.begin(), b_planar.end(), b_planar.begin(), [&](float x){return std::min(std::max(x * gain_b_ + offset_, 0.f), 1.f);});
 
-        cv::Mat processed_img_r, processed_img_g, processed_img_b;
-        processed_img_r = min(max(splitted_image[2] * gain_r_ + offset_, 0), 1);
-        processed_img_g = min(max(splitted_image[1] * gain_g_ + offset_, 0), 1);
-        processed_img_b = min(max(splitted_image[0] * gain_b_ + offset_, 0), 1);
-
-        cv::Mat mask_00 = cv::repeat((cv::Mat_<float>(2, 2) << 1, 0, 0, 0), height_ / 2, width_ / 2);
-        cv::Mat mask_10 = cv::repeat((cv::Mat_<float>(2, 2) << 0, 1, 0, 0), height_ / 2, width_ / 2);
-        cv::Mat mask_01 = cv::repeat((cv::Mat_<float>(2, 2) << 0, 0, 1, 0), height_ / 2, width_ / 2);
-        cv::Mat mask_11 = cv::repeat((cv::Mat_<float>(2, 2) << 0, 0, 0, 1), height_ / 2, width_ / 2);
-
-        cv::Mat processed_img;
-        switch (bayer_pattern(pixel_format_)) {
-        case 0:  // RGGB
-            processed_img = processed_img_r.mul(mask_00) + processed_img_g.mul(mask_01 + mask_10) + processed_img_b.mul(mask_11);
-            break;
-        case 1:  // BGGR
-            processed_img = processed_img_r.mul(mask_11) + processed_img_g.mul(mask_01 + mask_10) + processed_img_b.mul(mask_00);
-            break;
-        case 2:  // GRBG
-            processed_img = processed_img_r.mul(mask_10) + processed_img_g.mul(mask_00 + mask_11) + processed_img_b.mul(mask_01);
-            break;
-        case 3:  // GBRG
-            processed_img = processed_img_r.mul(mask_01) + processed_img_g.mul(mask_00 + mask_11) + processed_img_b.mul(mask_10);
-            break;
+        std::vector<float> processed_img_arr(width_*height_);
+        int idx = 0;
+        for (int j = 0; j < height_; j++) {
+            int evenRow = j % 2 == 0;
+            for (int i = 0; i < width_; i++) {
+                int evenCol = i % 2 == 0;
+                switch (bayer_pattern(pixel_format_)) {
+                    case 0:  // RGGB
+                        processed_img_arr[idx] = evenRow ? (evenCol ? r_planar[idx] : g_planar[idx]) : (evenCol ? g_planar[idx] : b_planar[idx]);
+                        break;
+                    case 1:  // BGGR
+                        processed_img_arr[idx] = evenRow ? (evenCol ? b_planar[idx] : g_planar[idx]) : (evenCol ? g_planar[idx] : r_planar[idx]);
+                        break;
+                    case 2:  // GRBG
+                        processed_img_arr[idx] = evenRow ? (evenCol ? g_planar[idx] : r_planar[idx]) : (evenCol ? b_planar[idx] : g_planar[idx]);
+                        break;
+                    case 3:  // GBRG
+                        processed_img_arr[idx] = evenRow ? (evenCol ? g_planar[idx] : b_planar[idx]) : (evenCol ? r_planar[idx] : g_planar[idx]);
+                        break;
+                }
+                idx+=1;
+            }
         }
 
-        cv::Mat denormalized_img;
-        processed_img.convertTo(denormalized_img, CV_16U, (1 << bit_width_) - 1);
-
-        cv::Mat bit_shifted_img;
-        bit_shifted_img = denormalized_img * (1 << bit_shift_) + denormalized_img / (1 << (bit_width_ - bit_shift_));
-
-        std::vector<uint8_t> data(bit_shifted_img.total() * bit_shifted_img.elemSize());
-        memcpy(data.data(), bit_shifted_img.data, bit_shifted_img.total() * bit_shifted_img.elemSize());
-        memcpy(buf.data(), bit_shifted_img.data, bit_shifted_img.total() * bit_shifted_img.elemSize());
-
+        std::vector<uint16_t> bit_shifted_img_arr(width_*height_);
+        for (int i = 0;i<width_*height_;i++){
+            float val = processed_img_arr[i];
+            val *= (float)((1 << bit_width_) - 1);
+            val = val * (float)(1 << bit_shift_) + val / (float)(1 << (bit_width_ - bit_shift_));
+            bit_shifted_img_arr[i] = static_cast<uint16_t>(val);
+        }
+        std::vector<uint8_t> data(bit_shifted_img_arr.size() * sizeof(uint16_t));
+        memcpy(data.data(), bit_shifted_img_arr.data(), bit_shifted_img_arr.size() * sizeof(uint16_t));
+        memcpy(buf.data(), bit_shifted_img_arr.data(), bit_shifted_img_arr.size() * sizeof(uint16_t));
         ion::bb::image_io::image_cache[id_] = data;
+    }
+
+
+// Created by         :  Harris Zhu
+// Filename           :  rgb2I420.cpp
+// Avthor             :  Harris Zhu
+//=======================================================================
+
+#include <stdint.h>
+#include <stddef.h>
+#define BORDER_INTERPOLATE(x, l) (x < 0 ? 0 : (x >= l ? l - 1 : x))
+    template<typename T>
+    void rgb2YCrCb(T *destination, Halide::Runtime::Buffer<T> &rgb, int width, int height){
+        for(int y = 0; y < height ; y++){
+            for(int x = 0; x < width; x++){
+                T r = rgb(x, y, 0);
+                T g = rgb(x, y, 1);
+                T b = rgb(x, y, 2);
+
+                T Yy =  0.299 * r + 0.587 * g + 0.114 * b  ;
+                T Cr =  (r-Yy) * 0.713 + 128;
+                T Cb =  (b-Yy) * 0.564 + 128;
+                destination[(x+y*width)*3] = Yy;
+                destination[(x+y*width)*3+1] = Cr;
+                destination[(x+y*width)*3+2] = Cb;
+            }
+        }
+
     }
 
     template<typename T>
     void generate_yuyv(Halide::Runtime::Buffer<T> &buf) {
-
         auto it = ion::bb::image_io::image_cache.find(id_);
         if (it != ion::bb::image_io::image_cache.end()) {
-            memcpy(buf.data(), it->second.data(), it->second.size());
+            memcpy(buf.data(), it->second.data(), it->second.size() * sizeof(T));
             return;
         }
-
-        cv::Mat img = ion::bb::image_io::get_image(url_);
-
+        Halide::Runtime::Buffer<uint8_t> img (width_, height_, 3);
+        bool is_loaded = get_image<uint8_t>(url_, img,  width_, height_);;
         std::vector<uint8_t> yuyv_img(2 * width_ * height_);
-
-        if (img.empty()) {
+        if (!is_loaded) {
             // Fill by dummy image
             for (int y = 0; y < height_; ++y) {
                 for (int x = 0; x < 2 * width_; ++x) {
@@ -430,14 +550,16 @@ public:
                 }
             }
         } else {
-            cv::resize(img, img, cv::Size(width_, height_));
-            cv::cvtColor(img, img, cv::COLOR_BGR2YCrCb);
+
+            std::vector<uint8_t> yuv(3 * width_ * width_);
+            rgb2YCrCb<uint8_t>(yuv.data(), img, width_, height_);
+
             for (int y = 0; y < height_; ++y) {
                 for (int x = 0; x < width_; ++x) {
                     // Y
-                    yuyv_img[2 * width_ * y + 2 * x + 0] = img.at<cv::Vec3b>(y, x)[0];
+                    yuyv_img[2 * width_ * y + 2 * x + 0] = yuv[( x + y * width_) * 3];
                     // Cb or Cr
-                    yuyv_img[2 * width_ * y + 2 * x + 1] = ((x % 2) == 1) ? img.at<cv::Vec3b>(y, x)[1] : img.at<cv::Vec3b>(y, x)[2];
+                    yuyv_img[2 * width_ * y + 2 * x + 1] = ((x % 2) == 1) ? yuv[(y * width_ + x) * 3 + 1]:yuv[(y * width_ + x) * 3 + 2];
                 }
             }
         }
@@ -446,6 +568,7 @@ public:
 
         return;
     }
+
 
     template<typename T>
     void generate(Halide::Runtime::Buffer<T> &buf) {
@@ -618,7 +741,7 @@ extern "C" int ION_EXPORT ion_bb_image_io_camera(int32_t instance_id, int32_t in
 }
 ION_REGISTER_EXTERN(ion_bb_image_io_camera)
 
-#endif // HAS_OPENCV
+
 
 #endif // ION_BB_IMAGE_IO_RT_V4L2_H
 

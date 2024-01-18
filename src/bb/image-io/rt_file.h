@@ -99,9 +99,6 @@ extern "C" int ION_EXPORT ion_bb_image_io_image_saver(halide_buffer_t *in, int32
             in->dim[2].min = 0;
             in->dim[2].extent = height;
         } else {
-
-
-
             Halide::Runtime::Buffer<uint8_t> obuf = Halide::Runtime::Buffer<uint8_t>::make_interleaved(width, height, 3);
             std::memcpy(obuf.data(), in->host, 3* width*height*sizeof(uint8_t));
             Halide::Tools::save_image(obuf, reinterpret_cast<const char *>(path->host));
