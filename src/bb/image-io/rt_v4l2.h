@@ -425,9 +425,8 @@ public:
     template<typename T>
     void generate_bayer(Halide::Runtime::Buffer<T> &buf) {
         auto it = ion::bb::image_io::image_cache.find(id_);
-        std::cout<<id_;
         if (it != ion::bb::image_io::image_cache.end()) {
-            memcpy(buf.data(), it->second.data(), it->second.size() * sizeof(T));
+            memcpy(buf.data(), it->second.data(), it->second.size());
             return;
         }
 
@@ -536,7 +535,7 @@ public:
     void generate_yuyv(Halide::Runtime::Buffer<T> &buf) {
         auto it = ion::bb::image_io::image_cache.find(id_);
         if (it != ion::bb::image_io::image_cache.end()) {
-            memcpy(buf.data(), it->second.data(), it->second.size() * sizeof(T));
+            memcpy(buf.data(), it->second.data(), it->second.size());
             return;
         }
         Halide::Runtime::Buffer<uint8_t> img (width_, height_, 3);
