@@ -54,10 +54,9 @@ void resize_bicubic(Halide::Runtime::Buffer<T>& dst,
                                             const uint32_t dst_width, const uint32_t dst_height){
     double min_value = static_cast<double>(std::numeric_limits<T>::min());
     double max_value = static_cast<double>(std::numeric_limits<T>::max());
-
-    for(int dh = 0; dh < dst_height; dh++){
-        for(int dw = 0; dw < dst_width; dw++){
-             for(int c = 0; c<3; c++){
+    for(int c = 0; c < 3; c++){
+        for(int dh = 0; dh < dst_height; dh++){
+            for(int dw = 0; dw < dst_width; dw++){
                 double value = 0;
                 float totalWeight = 0;
 
