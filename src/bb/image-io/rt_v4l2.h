@@ -1,8 +1,6 @@
 #ifndef ION_BB_IMAGE_IO_RT_V4L2_H
 #define ION_BB_IMAGE_IO_RT_V4L2_H
 
-// TODO: Remove OpenCV build dependency
-
 #include <cstdlib>
 #include <chrono>
 #include <map>
