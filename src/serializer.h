@@ -42,17 +42,17 @@ static void from_json(const json& j, ion::Param& v) {
 template<>
 struct adl_serializer<ion::Port> {
      static void to_json(json& j, const ion::Port& v) {
+         j["id"] = v.id();
          j["pred_chan"] = v.pred_chan();
          j["succ_chans"] = v.succ_chans();
          j["type"] = static_cast<halide_type_t>(v.type());
          j["dimensions"] = v.dimensions();
          j["size"] = v.size();
-         j["impl_ptr"] = v.impl_ptr();
          j["index"] = v.index();
      }
 
      static void from_json(const json& j, ion::Port& v) {
-         auto [impl, found] = ion::Port::find_impl(j["impl_ptr"].get<uintptr_t>());
+         auto [impl, found] = ion::Port::find_impl(j["id"].get<std::string>());
          if (!found) {
              impl->pred_chan = j["pred_chan"].get<ion::Port::Channel>();
              impl->succ_chans = j["succ_chans"].get<std::set<ion::Port::Channel>>();

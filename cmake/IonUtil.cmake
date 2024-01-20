@@ -18,14 +18,11 @@ function(ion_aot_executable NAME_PREFIX)
     # Build compile
     set(COMPILE_NAME ${NAME_PREFIX}_compile)
     add_executable(${COMPILE_NAME} ${IAE_SRCS_COMPILE})
-    if(UNIX AND NOT APPLE)
+    if(UNIX)
         target_compile_options(${COMPILE_NAME} PUBLIC -fno-rtti)  # For Halide::Generator
-        target_link_options(${COMPILE_NAME} PUBLIC -Wl,--export-dynamic) # For JIT compiling
-    endif()
-    IF (APPLE)
-        target_compile_options(${COMPILE_NAME}
-            PUBLIC -fno-rtti  # For Halide::Generator
-            PUBLIC -rdynamic) # For JIT compiling
+        if(NOT APPLE)
+            target_link_options(${COMPILE_NAME} PUBLIC -Wl,--export-dynamic) # For JIT compiling
+        endif()
     endif()
     target_include_directories(${COMPILE_NAME} PUBLIC "${PROJECT_SOURCE_DIR}/include")
     target_link_libraries(${COMPILE_NAME} PRIVATE ion-core ${PLATFORM_LIBRARIES})
@@ -105,12 +102,7 @@ function(ion_jit_executable NAME_PREFIX)
     add_executable(${NAME} ${IJE_SRCS})
     if (UNIX AND NOT APPLE)
         target_link_options(${NAME} PUBLIC -Wl,--export-dynamic) # For JIT compiling
-    endif()
-    if (APPLE)
-        target_compile_options(${NAME}
-            PUBLIC -fno-rtti  # For Halide::Generator
-            PUBLIC -rdynamic) # For JIT compiling
-    endif()
+   endif()
     add_dependencies(${NAME} ion-bb ion-bb-test)
     target_include_directories(${NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include ${ION_BB_INCLUDE_DIRS} ${IJE_INCS})
     target_link_libraries(${NAME} PRIVATE ion-core ${ION_BB_LIBRARIES} ${PLATFORM_LIBRARIES} ${IJE_LIBS})

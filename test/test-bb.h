@@ -10,8 +10,8 @@ namespace test {
 class Producer : public BuildingBlock<Producer> {
 public:
     Output<Halide::Func> output{"output", Int(32), 2};
-    GeneratorParam<std::string> string_param{"string_param", "string value"};
-    GeneratorParam<int32_t> v{"v", 42};
+    BuildingBlockParam<std::string> string_param{"string_param", "string value"};
+    BuildingBlockParam<int32_t> v{"v", 42};
     void generate() {
         output(x, y) = v;
     }
@@ -104,12 +104,24 @@ private:
 template<typename T, int D>
 class Inc : public BuildingBlock<Inc<T, D>> {
 public:
-    GeneratorParam<T> v{"v", 0};
     Input<Halide::Func> input{"input", Halide::type_of<T>(), D};
     Output<Halide::Func> output{"output", Halide::type_of<T>(), D};
+    BuildingBlockParam<T> v{"v", 0};
+    BuildingBlockParam<bool> enable_extra_input{"enable_extra_input", false};
+    Input<int32_t> *extra_input;
+
+    void configure() {
+        if (enable_extra_input) {
+            extra_input = Halide::Internal::GeneratorBase::add_input<int32_t>("extra_input");
+        }
+    }
 
     void generate() {
-        output(Halide::_) = input(Halide::_) + v;
+        Halide::Expr rv = input(Halide::_) + v;
+        if (enable_extra_input) {
+            rv += static_cast<bool>(enable_extra_input) ? *extra_input : Halide::Internal::make_const(Halide::type_of<int32_t>(), 0);
+        }
+        output(Halide::_) = rv;
     }
 
     void schedule() {
@@ -186,14 +198,12 @@ private:
 
 class ArrayInput : public BuildingBlock<ArrayInput> {
 public:
-    GeneratorParam<int> len{"len", 5};
-
     Input<Halide::Func[]> array_input{"array_input", Int(32), 2};
     Output<Halide::Func> output{"output", Int(32), 2};
 
     void generate() {
         Halide::Expr v = 0;
-        for (int i = 0; i < len; ++i) {
+        for (int i = 0; i < array_input.size(); ++i) {
              v += array_input[i](x, y);
         }
         output(x, y) = v;
@@ -205,7 +215,7 @@ private:
 
 class ArrayOutput : public BuildingBlock<ArrayOutput> {
 public:
-    GeneratorParam<int> len{"len", 5};
+    BuildingBlockParam<int> len{"len", 5};
     Input<Halide::Func> input{"input", Int(32), 2};
     Output<Halide::Func[]> array_output{"array_output", Int(32), 2};
 
@@ -222,14 +232,12 @@ private:
 
 class ArrayCopy : public BuildingBlock<ArrayCopy> {
 public:
-    GeneratorParam<int> len{"len", 5};
-
     Input<Halide::Func[]> array_input{"array_input", Int(32), 2};
     Output<Halide::Func[]> array_output{"array_output", Int(32), 2};
 
     void generate() {
-        array_output.resize(len);
-        for (int i = 0; i < len; ++i) {
+        array_output.resize(array_input.size());
+        for (int i = 0; i < array_input.size(); ++i) {
             array_output[i](x, y) = array_input[i](x, y);
         }
     }
@@ -241,9 +249,9 @@ private:
 
 class ExternIncI32x2 : public BuildingBlock<ExternIncI32x2> {
 public:
-    GeneratorParam<int32_t> v{"v", 0};
-    GeneratorParam<int32_t> width{"width", 0};
-    GeneratorParam<int32_t> height{"height", 0};
+    BuildingBlockParam<int32_t> v{"v", 0};
+    BuildingBlockParam<int32_t> width{"width", 0};
+    BuildingBlockParam<int32_t> height{"height", 0};
     Input<Halide::Func> input{"input", Halide::type_of<int32_t>(), 2};
     Output<Halide::Func> output{"output", Halide::type_of<int32_t>(), 2};
 

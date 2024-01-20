@@ -4,17 +4,23 @@ from ctypes.util import find_library
 import os
 import platform
 
-if platform.system()  == 'Windows':
-    ion_core_module = find_library('ion-core.dll')
+pre_built_path = os.path.join(os.path.dirname(__file__), 'module')
+
+if platform.system() == 'Windows':
+    ion_core_module = os.path.join(pre_built_path, 'windows/ion-core.dll')
+    ion_bb_module = os.path.join(pre_built_path, 'windows/ion-bb.dll')
 elif platform.system() == 'Darwin':
-    ion_core_module = 'libion-core.dylib'
+    ion_core_module = os.path.join(pre_built_path, 'macos/libion-core.dylib')
+    ion_bb_module = os.path.join(pre_built_path, 'macos/libion-bb.dylib')
 elif platform.system() == 'Linux':
-    ion_core_module = 'libion-core.so'
+    ion_core_module = os.path.join(pre_built_path, 'linux/libion-core.so')
+    ion_bb_module = os.path.join(pre_built_path, 'linux/libion-bb.so')
 
 # libion-core.so must be in a directory listed in $LD_LIBRARY_PATH.
 # ion-core.dll must be in a directory listed in %PATH%.
 # libion-core.dylib must be in a directory listed in $DYLD_LIBRARY_PATH.
 ion_core = ctypes.cdll.LoadLibrary(ion_core_module)
+ion_bb = ctypes.cdll.LoadLibrary(ion_bb_module)
 
 class c_ion_type_t(ctypes.Structure):
     _fields_ = [
@@ -111,6 +117,11 @@ ion_port_bind_f64.argtypes = [ c_ion_port_t, ctypes.POINTER(ctypes.c_double) ]
 ion_port_bind_buffer = ion_core.ion_port_bind_buffer
 ion_port_bind_buffer.restype = ctypes.c_int
 ion_port_bind_buffer.argtypes = [c_ion_port_t, c_ion_buffer_t ]
+
+# int ion_port_bind_buffer_array(ion_port_t obj, ion_buffer_t *bs, int n)
+ion_port_bind_buffer_array = ion_core.ion_port_bind_buffer_array
+ion_port_bind_buffer_array.restype = ctypes.c_int
+ion_port_bind_buffer_array.argtypes = [c_ion_port_t, ctypes.POINTER(c_ion_buffer_t), ctypes.c_int]
 
 # int ion_param_create(ion_param_t *, const char *, const char *);
 ion_param_create = ion_core.ion_param_create
