@@ -1,5 +1,4 @@
 find_package(OpenCV 4 QUIET)
-
 if (${OpenCV_FOUND})
     set(ION_BB_BUILD_opencv TRUE)
 
