@@ -233,17 +233,17 @@ namespace sgm {
 class Census : public ion::BuildingBlock<Census> {
 public:
     // TODO: Write suitable description
-    // GeneratorParam<std::string> gc_title{"gc_title", "Census Transform"};
-    GeneratorParam<std::string> gc_description{"gc_description", "Census transform."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,stereo"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }; }))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    // BuildingBlockParam<std::string> gc_title{"gc_title", "Census Transform"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Census transform."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "image,stereo"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }; }))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
 
-    GeneratorParam<int32_t> width{"width", 0};
-    GeneratorParam<int32_t> height{"height", 0};
+    BuildingBlockParam<int32_t> width{"width", 0};
+    BuildingBlockParam<int32_t> height{"height", 0};
 
-    GeneratorInput<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 2};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint64_t>(), 2};
+    Input<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 2};
+    Output<Halide::Func> output{"output", Halide::type_of<uint64_t>(), 2};
 
     void generate() {
         output(Halide::_) = census(input, width, height)(Halide::_);
@@ -265,19 +265,19 @@ public:
 class MatchingCost : public ion::BuildingBlock<MatchingCost> {
 public:
     // TODO: Write suitable description
-    // GeneratorParam<std::string> gc_title{"gc_title", "Matching cost"};
-    GeneratorParam<std::string> gc_description{"gc_description", "Matching cost."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,stereo"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.disp), parseInt(v.width), parseINt(v.height)]}; }))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    // BuildingBlockParam<std::string> gc_title{"gc_title", "Matching cost"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Matching cost."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "image,stereo"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.disp), parseInt(v.width), parseINt(v.height)]}; }))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
 
-    GeneratorParam<int32_t> disp{"disp", 16};
-    GeneratorParam<int32_t> width{"width", 0};
-    GeneratorParam<int32_t> height{"height", 0};
+    BuildingBlockParam<int32_t> disp{"disp", 16};
+    BuildingBlockParam<int32_t> width{"width", 0};
+    BuildingBlockParam<int32_t> height{"height", 0};
 
-    GeneratorInput<Halide::Func> input0{"input0", Halide::type_of<uint64_t>(), 2};
-    GeneratorInput<Halide::Func> input1{"input1", Halide::type_of<uint64_t>(), 2};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 3};
+    Input<Halide::Func> input0{"input0", Halide::type_of<uint64_t>(), 2};
+    Input<Halide::Func> input1{"input1", Halide::type_of<uint64_t>(), 2};
+    Output<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 3};
 
     void generate() {
         output(Halide::_) = matchingCost(input0, input1, width, height)(Halide::_);
@@ -300,21 +300,21 @@ public:
 class ScanCost : public ion::BuildingBlock<ScanCost> {
 public:
     // TODO: Write suitable description
-    // GeneratorParam<std::string> gc_title{"gc_title", "Scan cost"};
-    GeneratorParam<std::string> gc_description{"gc_description", "Scan cost."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,stereo"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }; }))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    // BuildingBlockParam<std::string> gc_title{"gc_title", "Scan cost"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Scan cost."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "image,stereo"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }; }))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
 
-    GeneratorParam<int32_t> disp{"disp", 16};
-    GeneratorParam<int32_t> width{"width", 0};
-    GeneratorParam<int32_t> height{"height", 0};
+    BuildingBlockParam<int32_t> disp{"disp", 16};
+    BuildingBlockParam<int32_t> width{"width", 0};
+    BuildingBlockParam<int32_t> height{"height", 0};
 
-    GeneratorInput<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 3};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint16_t>(), 3};
+    Input<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 3};
+    Output<Halide::Func> output{"output", Halide::type_of<uint16_t>(), 3};
 
-    GeneratorParam<int32_t> direction_x{"dx", 0};
-    GeneratorParam<int32_t> direction_y{"dy", 0};
+    BuildingBlockParam<int32_t> direction_x{"dx", 0};
+    BuildingBlockParam<int32_t> direction_y{"dy", 0};
 
     void generate() {
         const bool forward = direction_y > 0 || (direction_y == 0 && direction_x >= 0);
@@ -329,26 +329,26 @@ public:
     }
 };
 
-// // TODO: Use Halide::Func[] and handle variable size for GeneratorInput
+// // TODO: Use Halide::Func[] and handle variable size for Input
 class AddCost4 : public ion::BuildingBlock<AddCost4> {
 public:
     // TODO: Write suitable description
-    // GeneratorParam<std::string> gc_title{"gc_title", "Add cost"};
-    GeneratorParam<std::string> gc_description{"gc_description", "Add cost."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,stereo"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input0 }; }))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    // BuildingBlockParam<std::string> gc_title{"gc_title", "Add cost"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Add cost."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "image,stereo"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input0 }; }))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
 
-    GeneratorParam<int32_t> disp{"disp", 16};
-    GeneratorParam<int32_t> width{"width", 0};
-    GeneratorParam<int32_t> height{"height", 0};
-    GeneratorParam<int32_t> num{"num", 1};
+    BuildingBlockParam<int32_t> disp{"disp", 16};
+    BuildingBlockParam<int32_t> width{"width", 0};
+    BuildingBlockParam<int32_t> height{"height", 0};
+    BuildingBlockParam<int32_t> num{"num", 1};
 
-    GeneratorInput<Halide::Func> input0{"input0", Halide::type_of<uint16_t>(), 3};
-    GeneratorInput<Halide::Func> input1{"input1", Halide::type_of<uint16_t>(), 3};
-    GeneratorInput<Halide::Func> input2{"input2", Halide::type_of<uint16_t>(), 3};
-    GeneratorInput<Halide::Func> input3{"input3", Halide::type_of<uint16_t>(), 3};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint16_t>(), 3};
+    Input<Halide::Func> input0{"input0", Halide::type_of<uint16_t>(), 3};
+    Input<Halide::Func> input1{"input1", Halide::type_of<uint16_t>(), 3};
+    Input<Halide::Func> input2{"input2", Halide::type_of<uint16_t>(), 3};
+    Input<Halide::Func> input3{"input3", Halide::type_of<uint16_t>(), 3};
+    Output<Halide::Func> output{"output", Halide::type_of<uint16_t>(), 3};
 
     void generate() {
         output(Halide::_) = addCosts({input0, input1, input2, input3})(Halide::_);
@@ -371,18 +371,18 @@ public:
 class Disparity : public ion::BuildingBlock<Disparity> {
 public:
     // TODO: Write suitable description
-    // GeneratorParam<std::string> gc_title{"gc_title", "Disparity"};
-    GeneratorParam<std::string> gc_description{"gc_description", "Disparity."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,stereo"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.width), parseInt(v.height)]}; }))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    // BuildingBlockParam<std::string> gc_title{"gc_title", "Disparity"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Disparity."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "image,stereo"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.width), parseInt(v.height)]}; }))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
 
-    GeneratorParam<int32_t> disp{"disp", 16};
-    GeneratorParam<int32_t> width{"width", 0};
-    GeneratorParam<int32_t> height{"height", 0};
+    BuildingBlockParam<int32_t> disp{"disp", 16};
+    BuildingBlockParam<int32_t> width{"width", 0};
+    BuildingBlockParam<int32_t> height{"height", 0};
 
-    GeneratorInput<Halide::Func> input{"input", Halide::type_of<uint16_t>(), 3};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 2};
+    Input<Halide::Func> input{"input", Halide::type_of<uint16_t>(), 3};
+    Output<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 2};
 
     void generate() {
         output(Halide::_) = disparity(input, disp)(Halide::_);
@@ -403,19 +403,19 @@ public:
 
 class SGM : public ion::BuildingBlock<SGM> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "Stereo Matching"};
-    GeneratorParam<std::string> gc_description{"gc_description", "This calculates disparity from stereo image."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "image,stereo"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input_l }; }))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "Stereo Matching"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "This calculates disparity from stereo image."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "image,stereo"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input_l }; }))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
 
-    GeneratorParam<int32_t> disp{"disp", 16};
-    GeneratorParam<int32_t> width{"width", 0};
-    GeneratorParam<int32_t> height{"height", 0};
+    BuildingBlockParam<int32_t> disp{"disp", 16};
+    BuildingBlockParam<int32_t> width{"width", 0};
+    BuildingBlockParam<int32_t> height{"height", 0};
 
-    GeneratorInput<Halide::Func> input_l{"input_l", Halide::type_of<uint8_t>(), 2};
-    GeneratorInput<Halide::Func> input_r{"input_r", Halide::type_of<uint8_t>(), 2};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 2};
+    Input<Halide::Func> input_l{"input_l", Halide::type_of<uint8_t>(), 2};
+    Input<Halide::Func> input_r{"input_r", Halide::type_of<uint8_t>(), 2};
+    Output<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 2};
 
     void generate() {
         output(Halide::_) = semi_global_matching(input_l, input_r, width, height, disp, get_target())(Halide::_);
@@ -426,13 +426,13 @@ private:
 
 class SGM2 : public ion::BuildingBlock<SGM2> {
 public:
-    GeneratorParam<int32_t> mMaxDisp{"disp", 16};
-    GeneratorParam<int32_t> mWidth{"width", 0};
-    GeneratorParam<int32_t> mHeight{"height", 0};
+    BuildingBlockParam<int32_t> mMaxDisp{"disp", 16};
+    BuildingBlockParam<int32_t> mWidth{"width", 0};
+    BuildingBlockParam<int32_t> mHeight{"height", 0};
 
-    GeneratorInput<Halide::Func> input_l{"input_l", Halide::type_of<uint8_t>(), 2};
-    GeneratorInput<Halide::Func> input_r{"input_r", Halide::type_of<uint8_t>(), 2};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<float>(), 2};
+    Input<Halide::Func> input_l{"input_l", Halide::type_of<uint8_t>(), 2};
+    Input<Halide::Func> input_r{"input_r", Halide::type_of<uint8_t>(), 2};
+    Output<Halide::Func> output{"output", Halide::type_of<float>(), 2};
 
     Var x{"x"}, y{"y"}, d{"d"}, lx{"lx"}, ly{"ly"};
     Var td{"td"}, tx{"tx"}, ty{"ty"};

@@ -113,21 +113,21 @@ int instance_id = 0;
 
 class Camera : public ion::BuildingBlock<Camera> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "USBCamera"};
-    GeneratorParam<std::string> gc_description{"gc_description", "This captures USB camera image."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "input,sensor"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.width), parseInt(v.height), 3] }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
-    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "USBCamera"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "This captures USB camera image."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "input,sensor"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.width), parseInt(v.height), 3] }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "self"};
+    BuildingBlockParam<std::string> gc_prefix{"gc_prefix", ""};
 
-    GeneratorParam<int32_t> fps{"fps", 30};
-    GeneratorParam<int32_t> width{"width", 0};
-    GeneratorParam<int32_t> height{"height", 0};
-    GeneratorParam<int32_t> index{"index", 0};
-    GeneratorParam<std::string> url{"url", ""};
+    BuildingBlockParam<int32_t> fps{"fps", 30};
+    BuildingBlockParam<int32_t> width{"width", 0};
+    BuildingBlockParam<int32_t> height{"height", 0};
+    BuildingBlockParam<int32_t> index{"index", 0};
+    BuildingBlockParam<std::string> url{"url", ""};
 
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 3};
+    Output<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 3};
 
     void generate() {
         using namespace Halide;
@@ -164,26 +164,26 @@ public:
 
 class Camera2 : public ion::BuildingBlock<Camera2> {
 public:
-    GeneratorParam<int32_t> num_devices{"num_devices", 2};
-    GeneratorParam<std::string> gc_title{"gc_title", "USBCamera"};
-    GeneratorParam<std::string> gc_description{"gc_description", "This captures USB camera image."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "input,sensor"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.width), parseInt(v.height), 3] }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
-    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+    BuildingBlockParam<int32_t> num_devices{"num_devices", 2};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "USBCamera"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "This captures USB camera image."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "input,sensor"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.width), parseInt(v.height), 3] }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "self"};
+    BuildingBlockParam<std::string> gc_prefix{"gc_prefix", ""};
 
-    GeneratorParam<int32_t> fps{"fps", 30};
-    GeneratorParam<int32_t> width{"width", 0};
-    GeneratorParam<int32_t> height{"height", 0};
-    GeneratorParam<int32_t> index{"index", 0};
-    GeneratorParam<std::string> url0{"url0", ""};
-    GeneratorParam<std::string> url1{"url1", ""};
+    BuildingBlockParam<int32_t> fps{"fps", 30};
+    BuildingBlockParam<int32_t> width{"width", 0};
+    BuildingBlockParam<int32_t> height{"height", 0};
+    BuildingBlockParam<int32_t> index{"index", 0};
+    BuildingBlockParam<std::string> url0{"url0", ""};
+    BuildingBlockParam<std::string> url1{"url1", ""};
 
 
 
-    GeneratorOutput<Halide::Func> output0{"output0", Halide::type_of<uint8_t>(), 3};
-    GeneratorOutput<Halide::Func> output1{"output1", Halide::type_of<uint8_t>(), 3};
+    Output<Halide::Func> output0{"output0", Halide::type_of<uint8_t>(), 3};
+    Output<Halide::Func> output1{"output1", Halide::type_of<uint8_t>(), 3};
 
 
     void generate() {
@@ -240,23 +240,22 @@ public:
 
 class CameraN : public ion::BuildingBlock<CameraN> {
 public:
-    GeneratorParam<int32_t> num_devices{"num_devices", 2};
-    GeneratorParam<std::string> gc_title{"gc_title", "USBCamera"};
-    GeneratorParam<std::string> gc_description{"gc_description", "This captures USB camera image."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "input,sensor"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.width), parseInt(v.height), 3] }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
-    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+    BuildingBlockParam<int32_t> num_devices{"num_devices", 2};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "USBCamera"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "This captures USB camera image."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "input,sensor"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.width), parseInt(v.height), 3] }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "self"};
+    BuildingBlockParam<std::string> gc_prefix{"gc_prefix", ""};
 
-    GeneratorParam<int32_t> fps{"fps", 30};
-    GeneratorParam<int32_t> width{"width", 0};
-    GeneratorParam<int32_t> height{"height", 0};
-    GeneratorParam<int32_t> index{"index", 0};
-    GeneratorParam<std::string> urls{"urls", ""};
+    BuildingBlockParam<int32_t> fps{"fps", 30};
+    BuildingBlockParam<int32_t> width{"width", 0};
+    BuildingBlockParam<int32_t> height{"height", 0};
+    BuildingBlockParam<int32_t> index{"index", 0};
+    BuildingBlockParam<std::string> urls{"urls", ""};
 
-//  GeneratorInput<Buffer<uint8_t>[]>  urls{"urls"};
-    GeneratorOutput<Halide::Func[]> output{"output", Halide::type_of<uint8_t>(), 3};
+    Output<Halide::Func[]> output{"output", Halide::type_of<uint8_t>(), 3};
 
 
     void generate() {
@@ -319,22 +318,22 @@ public:
 
 class IMX219 : public ion::BuildingBlock<IMX219> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "IMX219"};
-    GeneratorParam<std::string> gc_description{"gc_description", "This captures IMX219 image."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "input,sensor"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.width), parseInt(v.height)] }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
-    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "IMX219"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "This captures IMX219 image."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "input,sensor"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.width), parseInt(v.height)] }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "self"};
+    BuildingBlockParam<std::string> gc_prefix{"gc_prefix", ""};
 
-    GeneratorParam<int32_t> fps{"fps", 24};
-    GeneratorParam<int32_t> width{"width", 3264};
-    GeneratorParam<int32_t> height{"height", 2464};
-    GeneratorParam<int32_t> index{"index", 0};
-    GeneratorParam<std::string> url{"url", ""};
-    GeneratorParam<bool> force_sim_mode{"force_sim_mode", false};
+    BuildingBlockParam<int32_t> fps{"fps", 24};
+    BuildingBlockParam<int32_t> width{"width", 3264};
+    BuildingBlockParam<int32_t> height{"height", 2464};
+    BuildingBlockParam<int32_t> index{"index", 0};
+    BuildingBlockParam<std::string> url{"url", ""};
+    BuildingBlockParam<bool> force_sim_mode{"force_sim_mode", false};
 
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint16_t>(), 2};
+    Output<Halide::Func> output{"output", Halide::type_of<uint16_t>(), 2};
 
     void generate() {
         using namespace Halide;
@@ -366,17 +365,17 @@ public:
 
 class D435 : public ion::BuildingBlock<D435> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "D435"};
-    GeneratorParam<std::string> gc_description{"gc_description", "This captures D435 stereo image and depth."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "input,sensor"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output_l: [1280, 720], output_r: [1280, 720], output_d: [1280, 720] }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
-    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "D435"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "This captures D435 stereo image and depth."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "input,sensor"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output_l: [1280, 720], output_r: [1280, 720], output_d: [1280, 720] }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", ""};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "self"};
+    BuildingBlockParam<std::string> gc_prefix{"gc_prefix", ""};
 
-    GeneratorOutput<Halide::Func> output_l{"output_l", Halide::type_of<uint8_t>(), 2};
-    GeneratorOutput<Halide::Func> output_r{"output_r", Halide::type_of<uint8_t>(), 2};
-    GeneratorOutput<Halide::Func> output_d{"output_d", Halide::type_of<uint16_t>(), 2};
+    Output<Halide::Func> output_l{"output_l", Halide::type_of<uint8_t>(), 2};
+    Output<Halide::Func> output_r{"output_r", Halide::type_of<uint8_t>(), 2};
+    Output<Halide::Func> output_d{"output_d", Halide::type_of<uint16_t>(), 2};
 
     void generate() {
         using namespace Halide;
@@ -402,22 +401,22 @@ public:
 
 class GenericV4L2Bayer : public ion::BuildingBlock<GenericV4L2Bayer> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "GenericV4L2Bayer"};
-    GeneratorParam<std::string> gc_description{"gc_description", "This captures Bayer image from V4L2."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "input,sensor"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.width), parseInt(v.height)] }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
-    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "GenericV4L2Bayer"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "This captures Bayer image from V4L2."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "input,sensor"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.width), parseInt(v.height)] }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "self"};
+    BuildingBlockParam<std::string> gc_prefix{"gc_prefix", ""};
 
-    GeneratorParam<int32_t> index{"index", 0};
-    GeneratorParam<std::string> url{"url", ""};
-    GeneratorParam<int32_t> fps{"fps", 20};
-    GeneratorParam<int32_t> width{"width", 0};
-    GeneratorParam<int32_t> height{"height", 0};
-    GeneratorParam<int32_t> bit_width{"bit_width", 10};
-    GeneratorParam<BayerMap::Pattern> bayer_pattern{"bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint16_t>(), 2};
+    BuildingBlockParam<int32_t> index{"index", 0};
+    BuildingBlockParam<std::string> url{"url", ""};
+    BuildingBlockParam<int32_t> fps{"fps", 20};
+    BuildingBlockParam<int32_t> width{"width", 0};
+    BuildingBlockParam<int32_t> height{"height", 0};
+    BuildingBlockParam<int32_t> bit_width{"bit_width", 10};
+    BuildingBlockParam<BayerMap::Pattern> bayer_pattern{"bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map};
+    Output<Halide::Func> output{"output", Halide::type_of<uint16_t>(), 2};
 
     void generate() {
         using namespace Halide;
@@ -450,27 +449,27 @@ public:
 
 class CameraSimulation : public ion::BuildingBlock<CameraSimulation> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "CameraSimulation"};
-    GeneratorParam<std::string> gc_description{"gc_description", "This simulates Bayer image."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "input,sensor"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.width), parseInt(v.height)] }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height,url"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
-    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "CameraSimulation"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "This simulates Bayer image."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "input,sensor"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.width), parseInt(v.height)] }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "width,height,url"};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "self"};
+    BuildingBlockParam<std::string> gc_prefix{"gc_prefix", ""};
 
-    GeneratorParam<int32_t> fps{"fps", 30};
-    GeneratorParam<int32_t> width{"width", 0};
-    GeneratorParam<int32_t> height{"height", 0};
-    GeneratorParam<std::string> url{"url", ""};
-    GeneratorParam<BayerMap::Pattern> bayer_pattern{"bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map};
-    GeneratorParam<int32_t> bit_width{"bit_width", 10};
-    GeneratorParam<int32_t> bit_shift{"bit_shift", 0};
-    GeneratorParam<float> gain_r{"gain_r", 1.f};
-    GeneratorParam<float> gain_g{"gain_g", 1.f};
-    GeneratorParam<float> gain_b{"gain_b", 1.f};
-    GeneratorParam<float> offset{"offset", 0.f};
+    BuildingBlockParam<int32_t> fps{"fps", 30};
+    BuildingBlockParam<int32_t> width{"width", 0};
+    BuildingBlockParam<int32_t> height{"height", 0};
+    BuildingBlockParam<std::string> url{"url", ""};
+    BuildingBlockParam<BayerMap::Pattern> bayer_pattern{"bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map};
+    BuildingBlockParam<int32_t> bit_width{"bit_width", 10};
+    BuildingBlockParam<int32_t> bit_shift{"bit_shift", 0};
+    BuildingBlockParam<float> gain_r{"gain_r", 1.f};
+    BuildingBlockParam<float> gain_g{"gain_g", 1.f};
+    BuildingBlockParam<float> gain_b{"gain_b", 1.f};
+    BuildingBlockParam<float> offset{"offset", 0.f};
 
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint16_t>(), 2};
+    Output<Halide::Func> output{"output", Halide::type_of<uint16_t>(), 2};
 
     void generate() {
         using namespace Halide;
@@ -504,19 +503,19 @@ public:
 
 class GUIDisplay : public ion::BuildingBlock<GUIDisplay> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "GUI Display"};
-    GeneratorParam<std::string> gc_description{"gc_description", "This renders RGB image on GUI window."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "output,display"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: []  }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
-    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "GUI Display"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "This renders RGB image on GUI window."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "output,display"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: []  }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "self"};
+    BuildingBlockParam<std::string> gc_prefix{"gc_prefix", ""};
 
-    GeneratorParam<int32_t> idx{"idx", 0};
-    GeneratorParam<int32_t> width{"width", 0};
-    GeneratorParam<int32_t> height{"height", 0};
-    GeneratorInput<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 3};
-    GeneratorOutput<Halide::Func> output{"output", Halide::Int(32), 0};
+    BuildingBlockParam<int32_t> idx{"idx", 0};
+    BuildingBlockParam<int32_t> width{"width", 0};
+    BuildingBlockParam<int32_t> height{"height", 0};
+    Input<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 3};
+    Output<Halide::Func> output{"output", Halide::Int(32), 0};
 
     void generate() {
         using namespace Halide;
@@ -547,18 +546,18 @@ public:
 #ifdef __linux__
 class FBDisplay : public ion::BuildingBlock<FBDisplay> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "FBDisplay"};
-    GeneratorParam<std::string> gc_description{"gc_description", "This draws image into framebuffer display."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "output,display"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [] }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
-    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "FBDisplay"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "This draws image into framebuffer display."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "output,display"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [] }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "self"};
+    BuildingBlockParam<std::string> gc_prefix{"gc_prefix", ""};
 
-    GeneratorParam<int32_t> width{"width", 0};
-    GeneratorParam<int32_t> height{"height", 0};
-    GeneratorInput<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 3};
-    GeneratorOutput<Halide::Func> output{"output", Halide::Int(32), 0};
+    BuildingBlockParam<int32_t> width{"width", 0};
+    BuildingBlockParam<int32_t> height{"height", 0};
+    Input<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 3};
+    Output<Halide::Func> output{"output", Halide::Int(32), 0};
 
     void generate() {
         using namespace Halide;
@@ -589,19 +588,19 @@ public:
 
 class GrayscaleDataLoader : public ion::BuildingBlock<GrayscaleDataLoader> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "Data Loader / Grayscale"};
-    GeneratorParam<std::string> gc_description{"gc_description", "This loads 16-bit grayscale image from specified URL."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "input,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.width), parseInt(v.height)] }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height,url"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
-    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "Data Loader / Grayscale"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "This loads 16-bit grayscale image from specified URL."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "input,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.width), parseInt(v.height)] }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "width,height,url"};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "self"};
+    BuildingBlockParam<std::string> gc_prefix{"gc_prefix", ""};
 
-    GeneratorParam<int32_t> width{"width", 0};
-    GeneratorParam<int32_t> height{"height", 0};
-    GeneratorParam<int32_t> dynamic_range{"dynamic_range", 65535};
-    GeneratorParam<std::string> url{"url", ""};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint16_t>(), 2};
+    BuildingBlockParam<int32_t> width{"width", 0};
+    BuildingBlockParam<int32_t> height{"height", 0};
+    BuildingBlockParam<int32_t> dynamic_range{"dynamic_range", 65535};
+    BuildingBlockParam<std::string> url{"url", ""};
+    Output<Halide::Func> output{"output", Halide::type_of<uint16_t>(), 2};
 
     void generate() {
         using namespace Halide;
@@ -627,18 +626,18 @@ public:
 
 class ColorDataLoader : public ion::BuildingBlock<ColorDataLoader> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "Data Loader / Color"};
-    GeneratorParam<std::string> gc_description{"gc_description", "This loads 8-bit/RGB/CHW image from specified URL."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "input,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.width), parseInt(v.height), 3] }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height,url"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
-    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "Data Loader / Color"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "This loads 8-bit/RGB/CHW image from specified URL."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "input,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.width), parseInt(v.height), 3] }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "width,height,url"};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "self"};
+    BuildingBlockParam<std::string> gc_prefix{"gc_prefix", ""};
 
-    GeneratorParam<int32_t> width{"width", 0};
-    GeneratorParam<int32_t> height{"height", 0};
-    GeneratorParam<std::string> url{"url", ""};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 3};
+    BuildingBlockParam<int32_t> width{"width", 0};
+    BuildingBlockParam<int32_t> height{"height", 0};
+    BuildingBlockParam<std::string> url{"url", ""};
+    Output<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 3};
 
     void generate() {
         using namespace Halide;
@@ -665,19 +664,19 @@ public:
 
 class ImageSaver : public ion::BuildingBlock<ImageSaver> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "Image Saver"};
-    GeneratorParam<std::string> gc_description{"gc_description", "This saves image to specified path."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "output,imgproc"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [] }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
-    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "Image Saver"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "This saves image to specified path."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "output,imgproc"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [] }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "self"};
+    BuildingBlockParam<std::string> gc_prefix{"gc_prefix", ""};
 
-    GeneratorParam<int32_t> width{"width", 0};
-    GeneratorParam<int32_t> height{"height", 0};
-    GeneratorParam<std::string> path{"path", ""};
-    GeneratorInput<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 3};
-    GeneratorOutput<Halide::Func> output{"output", Halide::Int(32), 0};
+    BuildingBlockParam<int32_t> width{"width", 0};
+    BuildingBlockParam<int32_t> height{"height", 0};
+    BuildingBlockParam<std::string> path{"path", ""};
+    Input<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 3};
+    Output<Halide::Func> output{"output", Halide::Int(32), 0};
 
     void generate() {
         using namespace Halide;
@@ -689,9 +688,9 @@ public:
         Func in(static_cast<std::string>(gc_prefix) + "input");
         Var x, y, c;
         in(c, x, y) = mux(c,
-                          {input(x, y, 2),
+                          {input(x, y, 0),
                            input(x, y, 1),
-                           input(x, y, 0)});
+                           input(x, y, 2)});
         in.compute_root();
         if (get_target().has_gpu_feature()) {
             Var xo, yo, xi, yi;
@@ -712,139 +711,24 @@ template<typename T, int D>
 class U3VCamera1 : public ion::BuildingBlock<U3VCamera1<T, D>> {
 public:
 
-    GeneratorParam<bool> frame_sync{"frame_sync", false};
-    GeneratorParam<std::string> gain_key_ptr{"gain_key", "Gain"};
-    GeneratorParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
-    GeneratorParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
+    BuildingBlockParam<bool> frame_sync{"frame_sync", false};
+    BuildingBlockParam<std::string> gain_key_ptr{"gain_key", "Gain"};
+    BuildingBlockParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
+    BuildingBlockParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
 
-    GeneratorInput<bool> dispose{ "dispose" };
-    GeneratorInput<double> gain0{ "gain0" };
-    GeneratorInput<double> exposure0{ "exposure0" };
+    Input<double> gain0{ "gain0" };
+    Input<double> exposure0{ "exposure0" };
 
-    GeneratorOutput<Halide::Func> output0{ "output0", Halide::type_of<T>(), D};
-    GeneratorOutput<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
+    Output<Halide::Func> output0{ "output0", Halide::type_of<T>(), D};
+    Output<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
 
     void generate() {
         using namespace Halide;
-
-        const std::string gain_key(gain_key_ptr);
-        Buffer<uint8_t> gain_key_buf(static_cast<int>(gain_key.size() + 1));
-        gain_key_buf.fill(0);
-        std::memcpy(gain_key_buf.data(), gain_key.c_str(), gain_key.size());
-
-        const std::string exposure_key(exposure_key_ptr);
-        Buffer<uint8_t> exposure_key_buf(static_cast<int>(exposure_key.size() + 1));
-        exposure_key_buf.fill(0);
-        std::memcpy(exposure_key_buf.data(), exposure_key.c_str(), exposure_key.size());
-
-        std::vector<ExternFuncArgument> params{
-            static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
-            gain0, exposure0, 
-            gain_key_buf, exposure_key_buf
-         };
 
         Func camera1("u3v_camera1");
-        camera1.define_extern("ion_bb_image_io_u3v_camera1", params, Halide::type_of<T>(), D);
-        camera1.compute_root();
-        output0(_) = camera1(_);
-
-        Func camera1_frame_count;
-        camera1_frame_count.define_extern("ion_bb_image_io_u3v_camera1_frame_count", { camera1, dispose, 1, static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode)}, type_of<uint32_t>(), 1);
-        camera1_frame_count.compute_root();
-        frame_count(_) = camera1_frame_count(_);
-    }
-};
-
-using U3VCamera1_U8x3 = U3VCamera1<uint8_t, 3>;
-using U3VCamera1_U8x2 = U3VCamera1<uint8_t, 2>;
-using U3VCamera1_U16x2 = U3VCamera1<uint16_t, 2>;
-
-template<typename T, int D>
-class U3VCamera2 : public ion::BuildingBlock<U3VCamera2<T, D>> {
-public:
-
-    GeneratorParam<bool> frame_sync{"frame_sync", false};
-    GeneratorParam<std::string> gain_key_ptr{"gain_key", "Gain"};
-    GeneratorParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
-    GeneratorParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
-
-    GeneratorInput<bool> dispose{ "dispose" };
-    GeneratorInput<double> gain0{ "gain0" };
-    GeneratorInput<double> gain1{ "gain1" };
-    GeneratorInput<double> exposure0{ "exposure0" };
-    GeneratorInput<double> exposure1{ "exposure1" };
-
-    GeneratorOutput<Halide::Func> output0{ "output0", Halide::type_of<T>(), D};
-    GeneratorOutput<Halide::Func> output1{ "output1", Halide::type_of<T>(), D};
-    GeneratorOutput<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
-
-    void generate() {
-        using namespace Halide;
-
-        const std::string gain_key(gain_key_ptr);
-        Buffer<uint8_t> gain_key_buf(static_cast<int>(gain_key.size() + 1));
-        gain_key_buf.fill(0);
-        std::memcpy(gain_key_buf.data(), gain_key.c_str(), gain_key.size());
-
-        const std::string exposure_key(exposure_key_ptr);
-        Buffer<uint8_t> exposure_key_buf(static_cast<int>(exposure_key.size() + 1));
-        exposure_key_buf.fill(0);
-        std::memcpy(exposure_key_buf.data(), exposure_key.c_str(), exposure_key.size());
-
-        std::vector<ExternFuncArgument> params{
-            static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
-            gain0, gain1, exposure0, exposure1, 
-            gain_key_buf, exposure_key_buf
-         };
-
-        Func camera2("u3v_camera2");
-        camera2.define_extern("ion_bb_image_io_u3v_camera2", params, { Halide::type_of<T>(), Halide::type_of<T>() }, D);
-        camera2.compute_root();
-        output0(_) = camera2(_)[0];
-        output1(_) = camera2(_)[1];
-
-        Func camera2_frame_count;
-        camera2_frame_count.define_extern("ion_bb_image_io_u3v_camera2_frame_count", { camera2, dispose, 2, static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode)}, type_of<uint32_t>(), 1);
-        camera2_frame_count.compute_root();
-        frame_count(_) = camera2_frame_count(_);
-    }
-};
-
-using U3VCamera2_U8x3 = U3VCamera2<uint8_t, 3>;
-using U3VCamera2_U8x2 = U3VCamera2<uint8_t, 2>;
-using U3VCamera2_U16x2 = U3VCamera2<uint16_t, 2>;
-
-template<typename T, int D>
-class U3VCameraN : public ion::BuildingBlock<U3VCameraN<T, D>> {
-public:
-    GeneratorParam<int32_t> num_devices{"num_devices", 2};
-
-    GeneratorParam<bool> frame_sync{"frame_sync", false};
-    GeneratorParam<std::string> gain_key_ptr{"gain_key", "Gain"};
-    GeneratorParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
-    GeneratorParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
-
-    GeneratorInput<bool> dispose{ "dispose", false };
-    GeneratorInput<Halide::Func> gain{ "gain", Halide::type_of<double>(), 1};
-    GeneratorInput<Halide::Func> exposure{ "exposure", Halide::type_of<double>(), 1};
-
-    GeneratorOutput<Halide::Func[]> output{ "output", Halide::type_of<T>(), D};
-    GeneratorOutput<Halide::Func[]> device_info{ "device_info", Halide::type_of<uint8_t>(), 1};
-    GeneratorOutput<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
-
-    void generate() {
-        using namespace Halide;
-
-        Func gain_func;
-        gain_func(_) = gain(_);
-        gain_func.compute_root();
-
-        Func exposure_func;
-        exposure_func(_) = exposure(_);
-        exposure_func.compute_root();
-
-        Func cameraN("u3v_cameraN");
         {
+            Buffer<uint8_t> id_buf = this->get_id();
+
             const std::string gain_key(gain_key_ptr);
             Buffer<uint8_t> gain_key_buf(static_cast<int>(gain_key.size() + 1));
             gain_key_buf.fill(0);
@@ -856,27 +740,164 @@ public:
             std::memcpy(exposure_key_buf.data(), exposure_key.c_str(), exposure_key.size());
 
             std::vector<ExternFuncArgument> params{
-                dispose, static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
-                    gain_func, exposure_func, 
-                    gain_key_buf, exposure_key_buf
+            static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
+            gain0, exposure0,
+            id_buf, gain_key_buf, exposure_key_buf
+         };
+            camera1.define_extern("ion_bb_image_io_u3v_camera1", params, Halide::type_of<T>(), D);
+            camera1.compute_root();
+            output0(_) = camera1(_);
+        }
+
+        Func camera1_frame_count;
+        {
+            Buffer<uint8_t> id_buf = this->get_id();
+            camera1_frame_count.define_extern("ion_bb_image_io_u3v_camera1_frame_count",{camera1, 1, static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode), id_buf}, type_of<uint32_t>(), 1);
+            camera1_frame_count.compute_root();
+            frame_count(_) = camera1_frame_count(_);
+        }
+
+        this->register_disposer("u3v_dispose");
+
+    }
+};
+
+using U3VCamera1_U8x3 = U3VCamera1<uint8_t, 3>;
+using U3VCamera1_U8x2 = U3VCamera1<uint8_t, 2>;
+using U3VCamera1_U16x2 = U3VCamera1<uint16_t, 2>;
+
+template<typename T, int D>
+class U3VCamera2 : public ion::BuildingBlock<U3VCamera2<T, D>> {
+public:
+
+    BuildingBlockParam<bool> frame_sync{"frame_sync", false};
+    BuildingBlockParam<std::string> gain_key_ptr{"gain_key", "Gain"};
+    BuildingBlockParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
+    BuildingBlockParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
+
+    Input<double> gain0{ "gain0" };
+    Input<double> gain1{ "gain1" };
+    Input<double> exposure0{ "exposure0" };
+    Input<double> exposure1{ "exposure1" };
+
+    Output<Halide::Func> output0{ "output0", Halide::type_of<T>(), D};
+    Output<Halide::Func> output1{ "output1", Halide::type_of<T>(), D};
+    Output<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
+
+    void generate() {
+        using namespace Halide;
+
+        Func camera2("u3v_camera2");
+        {
+            Buffer<uint8_t> id_buf = this->get_id();
+
+            const std::string gain_key(gain_key_ptr);
+            Buffer<uint8_t> gain_key_buf(static_cast<int>(gain_key.size() + 1));
+            gain_key_buf.fill(0);
+            std::memcpy(gain_key_buf.data(), gain_key.c_str(), gain_key.size());
+
+            const std::string exposure_key(exposure_key_ptr);
+            Buffer<uint8_t> exposure_key_buf(static_cast<int>(exposure_key.size() + 1));
+            exposure_key_buf.fill(0);
+            std::memcpy(exposure_key_buf.data(), exposure_key.c_str(), exposure_key.size());
+
+            std::vector<ExternFuncArgument> params{
+                static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
+                gain0, gain1, exposure0, exposure1,
+                id_buf, gain_key_buf, exposure_key_buf
+             };
+            camera2.define_extern("ion_bb_image_io_u3v_camera2", params, { Halide::type_of<T>(), Halide::type_of<T>() }, D);
+            camera2.compute_root();
+            output0(_) = camera2(_)[0];
+            output1(_) = camera2(_)[1];
+        }
+
+        Func camera2_frame_count;{
+            Buffer<uint8_t> id_buf = this->get_id();
+            camera2_frame_count.define_extern("ion_bb_image_io_u3v_camera2_frame_count", { camera2,  2, static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode), id_buf}, type_of<uint32_t>(), 1);
+            camera2_frame_count.compute_root();
+            frame_count(_) = camera2_frame_count(_);
+        }
+        this->register_disposer("u3v_dispose");
+    }
+};
+
+using U3VCamera2_U8x3 = U3VCamera2<uint8_t, 3>;
+using U3VCamera2_U8x2 = U3VCamera2<uint8_t, 2>;
+using U3VCamera2_U16x2 = U3VCamera2<uint16_t, 2>;
+
+template<typename T, int D>
+class U3VCameraN : public ion::BuildingBlock<U3VCameraN<T, D>> {
+public:
+    BuildingBlockParam<int32_t> num_devices{"num_devices", 2};
+    BuildingBlockParam<bool> frame_sync{"frame_sync", false};
+
+    BuildingBlockParam<std::string> gain_key_ptr{"gain_key", "Gain"};
+    BuildingBlockParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
+
+    BuildingBlockParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
+
+    BuildingBlockParam<bool> enable_control{"enable_control", false};
+
+    Output<Halide::Func[]> output{ "output", Halide::type_of<T>(), D};
+    Output<Halide::Func[]> device_info{ "device_info", Halide::type_of<uint8_t>(), 1};
+    Output<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
+
+    std::vector<Input<double> *> gain;
+    std::vector<Input<double> *> exposure;
+
+    void configure() {
+        if (enable_control) {
+            for (auto i=0; i<num_devices; ++i) {
+                gain.push_back(Halide::Internal::GeneratorBase::add_input<double>("gain_" + std::to_string(i)));
+                exposure.push_back(Halide::Internal::GeneratorBase::add_input<double>("exposure_" + std::to_string(i)));
+            }
+        }
+    }
+
+    void generate() {
+        using namespace Halide;
+
+        Func cameraN("u3v_cameraN");
+        {
+            Buffer<uint8_t> id_buf = this->get_id();
+
+            const std::string gain_key(gain_key_ptr);
+            Buffer<uint8_t> gain_key_buf(static_cast<int>(gain_key.size() + 1));
+            gain_key_buf.fill(0);
+            std::memcpy(gain_key_buf.data(), gain_key.c_str(), gain_key.size());
+
+            const std::string exposure_key(exposure_key_ptr);
+            Buffer<uint8_t> exposure_key_buf(static_cast<int>(exposure_key.size() + 1));
+            exposure_key_buf.fill(0);
+            std::memcpy(exposure_key_buf.data(), exposure_key.c_str(), exposure_key.size());
+
+            std::vector<ExternFuncArgument> params{
+                id_buf,
+                static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode), static_cast<bool>(enable_control),
+                gain_key_buf, exposure_key_buf
             };
 
-            output.resize(num_devices);
-            if (output.size() == 1){
-                cameraN.define_extern("ion_bb_image_io_u3v_multiple_camera" + std::to_string(output.size()), params, Halide::type_of<T>(), D);
-            }else{
-                std::vector<Halide::Type> output_type;
-                for (int i = 0; i < output.size(); i++) {
-                    output_type.push_back(Halide::type_of<T>());
+            for (int i = 0; i<num_devices; i++) {
+                if (i < gain.size()) {
+                    params.push_back(*gain[i]);
+                } else {
+                    params.push_back(Internal::make_const(type_of<double>(), 0.0));
                 }
-                cameraN.define_extern("ion_bb_image_io_u3v_multiple_camera" + std::to_string(output.size()), params, output_type, D);
-
+                if (i < exposure.size()) {
+                    params.push_back(*exposure[i]);
+                } else {
+                    params.push_back(Internal::make_const(type_of<double>(), 0.0));
+                }
             }
+
+            output.resize(num_devices);
+            cameraN.define_extern("ion_bb_image_io_u3v_multiple_camera" + std::to_string(num_devices), params, std::vector<Halide::Type>(num_devices, Halide::type_of<T>()), D);
             cameraN.compute_root();
-            if (output.size() == 1){
+            if (num_devices == 1){
                 output[0](_) = cameraN(_);
-            }else{
-                for (int i = 0; i < output.size(); i++) {
+            } else {
+                for (int i = 0; i<num_devices; i++) {
                     output[i](_) = cameraN(_)[i];
                 }
             }
@@ -884,9 +905,11 @@ public:
 
         Func u3v_device_info("u3v_device_info");
         {
+
+            Buffer<uint8_t> id_buf = this->get_id();
             std::vector<ExternFuncArgument> params{
-                cameraN, dispose, static_cast<int32_t>(num_devices), static_cast<bool>(frame_sync), 
-                static_cast<bool>(realtime_diaplay_mode)
+                cameraN, static_cast<int32_t>(num_devices), static_cast<bool>(frame_sync),
+                static_cast<bool>(realtime_diaplay_mode), id_buf
             };
 
             device_info.resize(num_devices);
@@ -907,15 +930,18 @@ public:
 
         Func cameraN_fc("u3v_cameraN_fc");
         {
+            Buffer<uint8_t> id_buf = this->get_id();
             std::vector<ExternFuncArgument> params{
-                cameraN, dispose, static_cast<int32_t>(output.size()), static_cast<bool>(frame_sync), 
-                static_cast<bool>(realtime_diaplay_mode), 
+                cameraN, static_cast<int32_t>(output.size()), static_cast<bool>(frame_sync),
+                static_cast<bool>(realtime_diaplay_mode), id_buf
             };
             cameraN_fc.define_extern("ion_bb_image_io_u3v_multiple_camera_frame_count" + std::to_string(output.size()), params, type_of<uint32_t>(), 1);
             cameraN_fc.compute_root();
             frame_count(_) = cameraN_fc(_);
         }
+        this->register_disposer("u3v_dispose");
     }
+
 };
 
 using U3VCameraN_U8x3 = U3VCameraN<uint8_t, 3>;
@@ -924,19 +950,18 @@ using U3VCameraN_U16x2 = U3VCameraN<uint16_t, 2>;
 
 class U3VGenDC : public ion::BuildingBlock<U3VGenDC> {
 public:
-    GeneratorParam<int32_t> num_devices{"num_devices", 2};
+    BuildingBlockParam<int32_t> num_devices{"num_devices", 2};
 
-    GeneratorParam<bool> frame_sync{"frame_sync", false};
-    GeneratorParam<std::string> gain_key_ptr{"gain_key", "Gain"};
-    GeneratorParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
-    GeneratorParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
+    BuildingBlockParam<bool> frame_sync{"frame_sync", false};
+    BuildingBlockParam<std::string> gain_key_ptr{"gain_key", "Gain"};
+    BuildingBlockParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
+    BuildingBlockParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
 
-    GeneratorInput<bool> dispose{ "dispose" };
-    GeneratorInput<Halide::Func> gain{ "gain", Halide::type_of<double>(), 1};
-    GeneratorInput<Halide::Func> exposure{ "exposure", Halide::type_of<double>(), 1};
+    Input<Halide::Func> gain{ "gain", Halide::type_of<double>(), 1};
+    Input<Halide::Func> exposure{ "exposure", Halide::type_of<double>(), 1};
 
-    GeneratorOutput<Halide::Func[]> gendc{ "gendc", Halide::type_of<uint8_t>(), 1};
-    GeneratorOutput<Halide::Func[]> device_info{ "device_info", Halide::type_of<uint8_t>(), 1};
+    Output<Halide::Func[]> gendc{ "gendc", Halide::type_of<uint8_t>(), 1};
+    Output<Halide::Func[]> device_info{ "device_info", Halide::type_of<uint8_t>(), 1};
 
     void generate() {
         using namespace Halide;
@@ -951,6 +976,8 @@ public:
 
         Func u3v_gendc("u3v_gendc");
         {
+            Buffer<uint8_t> id_buf =  this->get_id();
+
             const std::string gain_key(gain_key_ptr);
             Buffer<uint8_t> gain_key_buf(static_cast<int>(gain_key.size() + 1));
             gain_key_buf.fill(0);
@@ -962,9 +989,9 @@ public:
             std::memcpy(exposure_key_buf.data(), exposure_key.c_str(), exposure_key.size());
 
             std::vector<ExternFuncArgument> params{
-                dispose, static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
-                gain_func, exposure_func, 
-                gain_key_buf, exposure_key_buf
+                static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
+                gain_func, exposure_func,
+                id_buf, gain_key_buf, exposure_key_buf
             };
 
             gendc.resize(num_devices);
@@ -985,9 +1012,10 @@ public:
 
         Func u3v_device_info("u3v_device_info");
         {
+            Buffer<uint8_t> id_buf =  this->get_id();
             std::vector<ExternFuncArgument> params{
-                u3v_gendc, dispose, static_cast<int32_t>(num_devices), static_cast<bool>(frame_sync), 
-                static_cast<bool>(realtime_diaplay_mode)
+                u3v_gendc, static_cast<int32_t>(num_devices), static_cast<bool>(frame_sync),
+                static_cast<bool>(realtime_diaplay_mode), id_buf
             };
 
             device_info.resize(num_devices);
@@ -1006,26 +1034,27 @@ public:
             }
         }
 
+        this->register_disposer("u3v_dispose");
     }
 };
 
 template<typename T, int D>
 class BinarySaver : public ion::BuildingBlock<BinarySaver<T, D>> {
 public:
-    GeneratorParam<std::string> output_directory_ptr{ "output_directory", "." };
-    GeneratorParam<int32_t> num_devices{"num_devices", 2};
+    BuildingBlockParam<std::string> output_directory_ptr{ "output_directory", "." };
+    BuildingBlockParam<int32_t> num_devices{"num_devices", 2};
 
-    GeneratorInput<Halide::Func[]> input_images{ "input_images", Halide::type_of<T>(), D };
+    Input<Halide::Func[]> input_images{ "input_images", Halide::type_of<T>(), D };
 
-    GeneratorInput<Halide::Func[]> input_deviceinfo{ "input_deviceinfo", Halide::type_of<uint8_t>(), 1 };
-    GeneratorInput<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
-    
-    GeneratorInput<bool> dispose{ "dispose" };
-    GeneratorInput<int32_t> width{ "width" };
-    GeneratorInput<int32_t> height{ "height" };
-    GeneratorInput<int32_t> color_channel{ "color_channel" };
+    Input<Halide::Func[]> input_deviceinfo{ "input_deviceinfo", Halide::type_of<uint8_t>(), 1 };
+    Input<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
 
-    GeneratorOutput<int32_t> output{"output"};
+    Input<bool> dispose{ "dispose" };
+    Input<int32_t> width{ "width" };
+    Input<int32_t> height{ "height" };
+    Input<int32_t> color_channel{ "color_channel" };
+
+    Output<int32_t> output{"output"};
 
     void generate() {
         using namespace Halide;
@@ -1089,17 +1118,17 @@ using BinarySaver_U16x2 = BinarySaver<uint16_t, 2>;
 
 class BinaryGenDCSaver : public ion::BuildingBlock<BinaryGenDCSaver> {
 public:
-    GeneratorParam<std::string> output_directory_ptr{ "output_directory", "." };
+    BuildingBlockParam<std::string> output_directory_ptr{ "output_directory", "." };
 
-    GeneratorParam<int32_t> num_devices{"num_devices", 2};
+    BuildingBlockParam<int32_t> num_devices{"num_devices", 2};
 
-    GeneratorInput<Halide::Func[]> input_gendc{ "input_gendc", Halide::type_of<uint8_t>(), 1 };
-    GeneratorInput<Halide::Func[]> input_deviceinfo{ "input_deviceinfo", Halide::type_of<uint8_t>(), 1 };
+    Input<Halide::Func[]> input_gendc{ "input_gendc", Halide::type_of<uint8_t>(), 1 };
+    Input<Halide::Func[]> input_deviceinfo{ "input_deviceinfo", Halide::type_of<uint8_t>(), 1 };
 
-    GeneratorInput<bool> dispose{ "dispose" };
-    GeneratorInput<int32_t> payloadsize{ "payloadsize" };
+    Input<bool> dispose{ "dispose" };
+    Input<int32_t> payloadsize{ "payloadsize" };
 
-    GeneratorOutput<int> output{ "output" };
+    Output<int> output{ "output" };
 
     void generate() {
         using namespace Halide;
@@ -1153,7 +1182,7 @@ public:
 
 class BinaryLoader : public ion::BuildingBlock<BinaryLoader> {
 public:
-    GeneratorParam<std::string> output_directory_ptr{ "output_directory_ptr", "" };
+    BuildingBlockParam<std::string> output_directory_ptr{ "output_directory_ptr", "" };
     Input<int32_t> width{ "width", 0 };
     Input<int32_t> height{ "height", 0 };
     Output<Halide::Func> output0{ "output0", UInt(16), 2 };

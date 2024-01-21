@@ -17,8 +17,8 @@ namespace ion {
  */
 class Node {
     friend class Builder;
-    friend struct nlohmann::adl_serializer<Node>;
 
+public:
     struct Impl {
         std::string id;
         std::string name;
@@ -34,6 +34,8 @@ class Node {
 
 public:
     Node() : impl_(new Impl) {};
+
+    Node(const std::shared_ptr<Impl>& impl) : impl_(impl) {};
 
     /**
      * Set the target of the node.
@@ -87,6 +89,7 @@ public:
      */
     Port operator[](const std::string& name);
 
+    // Getter
     const std::string& id() const {
         return impl_->id;
     }
@@ -103,26 +106,15 @@ public:
         return impl_->params;
     }
 
-   std::vector<Port> iports() const {
-        std::vector<Port> iports;
-        for (const auto& p: impl_->ports) {
-            if (std::count_if(p.impl_->succ_chans.begin(), p.impl_->succ_chans.end(),
-                              [&](const Port::Channel& c) { return std::get<0>(c) == impl_->id; })) {
-                iports.push_back(p);
-            }
-        }
-        return iports;
+    const std::vector<Port>& ports() const {
+        return impl_->ports;
     }
 
-    std::vector<Port> oports() const {
-        std::vector<Port> oports;
-        for (const auto& p: impl_->ports) {
-            if (id() == p.pred_id()) {
-                oports.push_back(p);
-            }
-        }
-        return oports;
-    }
+    Port iport(const std::string& pn);
+    std::vector<std::tuple<std::string, Port>> iports() const;
+
+    Port oport(const std::string& pn);
+    std::vector<std::tuple<std::string, Port>> oports() const;
 
 private:
     Node(const std::string& id, const std::string& name, const Halide::Target& target)

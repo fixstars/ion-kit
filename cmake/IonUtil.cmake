@@ -20,7 +20,7 @@ function(ion_aot_executable NAME_PREFIX)
     add_executable(${COMPILE_NAME} ${IAE_SRCS_COMPILE})
     if(UNIX)
         target_compile_options(${COMPILE_NAME} PUBLIC -fno-rtti)  # For Halide::Generator
-        if (NOT APPLE)
+        if(NOT APPLE)
             target_link_options(${COMPILE_NAME} PUBLIC -Wl,--export-dynamic) # For JIT compiling
         endif()
     endif()
@@ -96,11 +96,8 @@ function(ion_jit_executable NAME_PREFIX)
 
     set(NAME ${NAME_PREFIX}_jit)
     add_executable(${NAME} ${IJE_SRCS})
-    if(UNIX)
-        target_compile_options(${NAME} PUBLIC -fno-rtti)  # For Halide::Generator
-        if (NOT APPLE)
-            target_link_options(${NAME} PUBLIC -Wl,--export-dynamic) # For JIT compiling
-        endif()
+    if (UNIX AND NOT APPLE)
+        target_link_options(${NAME} PUBLIC -Wl,--export-dynamic) # For JIT compiling
     endif()
     add_dependencies(${NAME} ion-bb ion-bb-test)
     target_include_directories(${NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include ${ION_BB_INCLUDE_DIRS} ${IJE_INCS})

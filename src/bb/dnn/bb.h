@@ -19,8 +19,8 @@ class ReorderHWC2CHW : public BuildingBlock<ReorderHWC2CHW<T>> {
 public:
     constexpr static const int dim = 3;
 
-    GeneratorInput<Halide::Func> input{"input", Halide::type_of<T>(), dim};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), dim};
+    Input<Halide::Func> input{"input", Halide::type_of<T>(), dim};
+    Output<Halide::Func> output{"output", Halide::type_of<T>(), dim};
 
     void generate() {
         output(x, y, c) = input(c, x, y);
@@ -34,8 +34,8 @@ template<typename T>
 class ReorderCHW2HWC : public BuildingBlock<ReorderCHW2HWC<T>> {
 public:
     constexpr static const int dim = 3;
-    GeneratorInput<Halide::Func> input{"input", Halide::type_of<T>(), dim};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<T>(), dim};
+    Input<Halide::Func> input{"input", Halide::type_of<T>(), dim};
+    Output<Halide::Func> output{"output", Halide::type_of<T>(), dim};
 
     void generate() {
         output(c, x, y) = input(x, y, c);
@@ -50,21 +50,21 @@ class ObjectDetectionBase : public BuildingBlock<X> {
     static_assert(D == 3 || D == 4, "D must be 3 or 4.");
 
 public:
-    GeneratorParam<std::string> gc_description{"gc_description", "Detect objects by various DNN models."};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,recognition"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
-    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Detect objects by various DNN models."};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,recognition"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", ""};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "self"};
+    BuildingBlockParam<std::string> gc_prefix{"gc_prefix", ""};
 
-    GeneratorParam<std::string> model_root_url_{"model_base_url", "http://ion-kit.s3.us-west-2.amazonaws.com/models/"};
-    GeneratorParam<std::string> cache_root_{"cache_root", "/tmp/"};
+    BuildingBlockParam<std::string> model_root_url_{"model_base_url", "http://ion-kit.s3.us-west-2.amazonaws.com/models/"};
+    BuildingBlockParam<std::string> cache_root_{"cache_root", "/tmp/"};
 
     // TODO: Embed model at compilation time
-    // GeneratorParam<bool> embed_model{"embed_model", false};
+    // BuildingBlockParam<bool> embed_model{"embed_model", false};
 
-    GeneratorInput<Halide::Func> input_{"input", Halide::type_of<float>(), D};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<float>(), D};
+    Input<Halide::Func> input_{"input", Halide::type_of<float>(), D};
+    Output<Halide::Func> output{"output", Halide::type_of<float>(), D};
 
     void generate() {
         using namespace Halide;
@@ -124,12 +124,12 @@ private:
 
 class ObjectDetection : public ObjectDetectionBase<ObjectDetection, 3> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "Object Detection"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "Object Detection"};
 };
 
 class ObjectDetectionArray : public ObjectDetectionBase<ObjectDetectionArray, 4> {
 public:
-    // GeneratorParam<std::string> gc_title{"gc_title", "Object Detection (Array)"};
+    // BuildingBlockParam<std::string> gc_title{"gc_title", "Object Detection (Array)"};
 };
 
 }  // namespace dnn
@@ -147,20 +147,20 @@ namespace dnn {
 
 class TLTObjectDetectionSSD : public BuildingBlock<TLTObjectDetectionSSD> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "TLT Object Detection SSD"};
-    GeneratorParam<std::string> gc_description{"gc_description", "Detect objects by TLT Object Detection SSD models."};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,recognition"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
-    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
-    GeneratorParam<std::string> gc_required_features{"gc_required_features", "cuda"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "TLT Object Detection SSD"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Detect objects by TLT Object Detection SSD models."};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,recognition"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", ""};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "self"};
+    BuildingBlockParam<std::string> gc_prefix{"gc_prefix", ""};
+    BuildingBlockParam<std::string> gc_required_features{"gc_required_features", "cuda"};
 
-    GeneratorParam<std::string> model_root_url_{"model_base_url", "http://ion-kit.s3.us-west-2.amazonaws.com/models/tlt_object_detection_ssd_resnet18/"};
-    GeneratorParam<std::string> cache_root_{"cache_root", "/tmp/"};
+    BuildingBlockParam<std::string> model_root_url_{"model_base_url", "http://ion-kit.s3.us-west-2.amazonaws.com/models/tlt_object_detection_ssd_resnet18/"};
+    BuildingBlockParam<std::string> cache_root_{"cache_root", "/tmp/"};
 
-    GeneratorInput<Halide::Func> input_{"input", Halide::type_of<float>(), 3};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<float>(), 3};
+    Input<Halide::Func> input_{"input", Halide::type_of<float>(), 3};
+    Output<Halide::Func> output{"output", Halide::type_of<float>(), 3};
 
     void generate() {
         using namespace Halide;
@@ -224,20 +224,20 @@ namespace dnn {
 
 class TLTPeopleNet : public BuildingBlock<TLTPeopleNet> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "TLT PeopleNet"};
-    GeneratorParam<std::string> gc_description{"gc_description", "Detect, People, Face and Bag by TLT PeopleNet models."};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,recognition"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
-    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
-    GeneratorParam<std::string> gc_required_features{"gc_required_features", "cuda"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "TLT PeopleNet"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Detect, People, Face and Bag by TLT PeopleNet models."};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: v.input }}))"};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,recognition"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", ""};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "self"};
+    BuildingBlockParam<std::string> gc_prefix{"gc_prefix", ""};
+    BuildingBlockParam<std::string> gc_required_features{"gc_required_features", "cuda"};
 
-    GeneratorParam<std::string> model_root_url_{"model_base_url", "http://ion-kit.s3.us-west-2.amazonaws.com/models/tlt_peoplenet_detectnet_v2_resnet18/"};
-    GeneratorParam<std::string> cache_root_{"cache_root", "/tmp/"};
+    BuildingBlockParam<std::string> model_root_url_{"model_base_url", "http://ion-kit.s3.us-west-2.amazonaws.com/models/tlt_peoplenet_detectnet_v2_resnet18/"};
+    BuildingBlockParam<std::string> cache_root_{"cache_root", "/tmp/"};
 
-    GeneratorInput<Halide::Func> input_{"input", Halide::type_of<float>(), 3};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<float>(), 3};
+    Input<Halide::Func> input_{"input", Halide::type_of<float>(), 3};
+    Output<Halide::Func> output{"output", Halide::type_of<float>(), 3};
 
     void generate() {
         using namespace Halide;
@@ -301,23 +301,23 @@ namespace dnn {
 
 class TLTPeopleNetMD : public BuildingBlock<TLTPeopleNetMD> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "TLT PeopleNet metadata version"};
-    GeneratorParam<std::string> gc_description{"gc_description", "Detect, People, Face and Bag by TLT PeopleNet models and create detection metadata."};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.output_size)] }}))"};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,recognition"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
-    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
-    GeneratorParam<std::string> gc_required_features{"gc_required_features", "cuda"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "TLT PeopleNet metadata version"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Detect, People, Face and Bag by TLT PeopleNet models and create detection metadata."};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.output_size)] }}))"};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,recognition"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", ""};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "self"};
+    BuildingBlockParam<std::string> gc_prefix{"gc_prefix", ""};
+    BuildingBlockParam<std::string> gc_required_features{"gc_required_features", "cuda"};
 
-    GeneratorParam<std::string> model_root_url_{"model_base_url", "http://ion-kit.s3.us-west-2.amazonaws.com/models/tlt_peoplenet_detectnet_v2_resnet18/"};
-    GeneratorParam<std::string> cache_root_{"cache_root", "/tmp/"};
-    GeneratorParam<int> input_width{"width", 640};
-    GeneratorParam<int> input_height{"height", 480};
-    GeneratorParam<int> output_size{"output_size", 16 * 1024 * 1024};  // 16MiB
+    BuildingBlockParam<std::string> model_root_url_{"model_base_url", "http://ion-kit.s3.us-west-2.amazonaws.com/models/tlt_peoplenet_detectnet_v2_resnet18/"};
+    BuildingBlockParam<std::string> cache_root_{"cache_root", "/tmp/"};
+    BuildingBlockParam<int> input_width{"width", 640};
+    BuildingBlockParam<int> input_height{"height", 480};
+    BuildingBlockParam<int> output_size{"output_size", 16 * 1024 * 1024};  // 16MiB
 
-    GeneratorInput<Halide::Func> input_{"input", Halide::type_of<float>(), 3};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 1};
+    Input<Halide::Func> input_{"input", Halide::type_of<float>(), 3};
+    Output<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 1};
 
     void generate() {
         using namespace Halide;
@@ -381,24 +381,24 @@ namespace dnn {
 
 class ClassifyGender : public BuildingBlock<ClassifyGender> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "ClassifyGender"};
-    GeneratorParam<std::string> gc_description{"gc_description", "Classify gender in image based on detection result."};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.output_size)] }}))"};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,recognition"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
-    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "ClassifyGender"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Classify gender in image based on detection result."};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [parseInt(v.output_size)] }}))"};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,recognition"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", ""};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "self"};
+    BuildingBlockParam<std::string> gc_prefix{"gc_prefix", ""};
 
-    GeneratorParam<std::string> model_root_url_{"model_base_url", "http://ion-kit.s3.us-west-2.amazonaws.com/models/classify_gender/"};
-    GeneratorParam<std::string> cache_root_{"cache_root", "/tmp/"};
-    GeneratorParam<int> input_img_width{"width", 0};
-    GeneratorParam<int> input_img_height{"height", 0};
-    GeneratorParam<int> input_md_size{"input_md_size", 16 * 1024 * 1024};  // 16MiB
-    GeneratorParam<int> output_size{"output_size", 16 * 1024 * 1024};      // 16MiB
+    BuildingBlockParam<std::string> model_root_url_{"model_base_url", "http://ion-kit.s3.us-west-2.amazonaws.com/models/classify_gender/"};
+    BuildingBlockParam<std::string> cache_root_{"cache_root", "/tmp/"};
+    BuildingBlockParam<int> input_img_width{"width", 0};
+    BuildingBlockParam<int> input_img_height{"height", 0};
+    BuildingBlockParam<int> input_md_size{"input_md_size", 16 * 1024 * 1024};  // 16MiB
+    BuildingBlockParam<int> output_size{"output_size", 16 * 1024 * 1024};      // 16MiB
 
-    GeneratorInput<Halide::Func> input_img{"image", Halide::type_of<float>(), 3};
-    GeneratorInput<Halide::Func> input_md{"metadata", Halide::type_of<uint8_t>(), 1};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 1};
+    Input<Halide::Func> input_img{"image", Halide::type_of<float>(), 3};
+    Input<Halide::Func> input_md{"metadata", Halide::type_of<uint8_t>(), 1};
+    Output<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 1};
 
     void generate() {
         using namespace Halide;
@@ -471,19 +471,19 @@ namespace dnn {
 
 class JSONDictAverageRegulator : public BuildingBlock<JSONDictAverageRegulator> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "JSONDictAverageRegulator"};
-    GeneratorParam<std::string> gc_description{"gc_description", "Takes JSON key/value dictionary, accumulate value and calculate average, and emit in paticular time period."};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [ parseInt(v.io_md_size) ] }}))"};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "processing,json"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", ""};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
-    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "JSONDictAverageRegulator"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "Takes JSON key/value dictionary, accumulate value and calculate average, and emit in paticular time period."};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [ parseInt(v.io_md_size) ] }}))"};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "processing,json"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", ""};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "self"};
+    BuildingBlockParam<std::string> gc_prefix{"gc_prefix", ""};
 
-    GeneratorParam<uint32_t> io_md_size{"io_md_size", 16 * 1024 * 1024};  // 16MiB
-    GeneratorParam<uint32_t> period_in_sec{"period_in_sec", 30};
+    BuildingBlockParam<uint32_t> io_md_size{"io_md_size", 16 * 1024 * 1024};  // 16MiB
+    BuildingBlockParam<uint32_t> period_in_sec{"period_in_sec", 30};
 
-    GeneratorInput<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 1};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 1};
+    Input<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 1};
+    Output<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 1};
 
     void generate() {
         using namespace Halide;
@@ -524,17 +524,17 @@ namespace dnn {
 
 class IFTTTWebHookUploader : public ion::BuildingBlock<IFTTTWebHookUploader> {
 public:
-    GeneratorParam<std::string> gc_title{"gc_title", "IFTTT WebHook Uploader"};
-    GeneratorParam<std::string> gc_description{"gc_description", "This makes POST request against to webhook endpoint on ifttt.com."};
-    GeneratorParam<std::string> gc_tags{"gc_tags", "output,network"};
-    GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [] }}))"};
-    GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "ifttt_webhook_url"};
-    GeneratorParam<std::string> gc_strategy{"gc_strategy", "self"};
-    GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
-    GeneratorParam<uint32_t> input_md_size{"input_md_size", 16 * 1024 * 1024};  // 16MiB
-    GeneratorParam<std::string> ifttt_webhook_url{"ifttt_webhook_url", ""};
-    GeneratorInput<Halide::Func> input_md{"input_md", Halide::type_of<uint8_t>(), 1};
-    GeneratorOutput<int32_t> output{"output"};
+    BuildingBlockParam<std::string> gc_title{"gc_title", "IFTTT WebHook Uploader"};
+    BuildingBlockParam<std::string> gc_description{"gc_description", "This makes POST request against to webhook endpoint on ifttt.com."};
+    BuildingBlockParam<std::string> gc_tags{"gc_tags", "output,network"};
+    BuildingBlockParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [] }}))"};
+    BuildingBlockParam<std::string> gc_mandatory{"gc_mandatory", "ifttt_webhook_url"};
+    BuildingBlockParam<std::string> gc_strategy{"gc_strategy", "self"};
+    BuildingBlockParam<std::string> gc_prefix{"gc_prefix", ""};
+    BuildingBlockParam<uint32_t> input_md_size{"input_md_size", 16 * 1024 * 1024};  // 16MiB
+    BuildingBlockParam<std::string> ifttt_webhook_url{"ifttt_webhook_url", ""};
+    Input<Halide::Func> input_md{"input_md", Halide::type_of<uint8_t>(), 1};
+    Output<int32_t> output{"output"};
 
     void generate() {
         using namespace Halide;

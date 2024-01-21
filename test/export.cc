@@ -30,12 +30,12 @@ int main()
                 auto out = ion::Buffer<int32_t>::make_scalar();
 
                 auto nodes = b.nodes();
-                nodes[1]["min0"].bind(&min0);
-                nodes[1]["extent0"].bind(&extent0);
-                nodes[1]["min1"].bind(&min1);
-                nodes[1]["extent1"].bind(&extent1);
-                nodes[1]["v"].bind(&v);
-                nodes[1]["output"].bind(out);
+                nodes[1].iport("min0").bind(&min0);
+                nodes[1].iport("extent0").bind(&extent0);
+                nodes[1].iport("min1").bind(&min1);
+                nodes[1].iport("extent1").bind(&extent1);
+                nodes[1].iport("v").bind(&v);
+                nodes[1].oport("output").bind(out);
 
                 b.run();
             }
@@ -79,11 +79,11 @@ int main()
 
             auto nodes = b.nodes();
 
-            nodes[0]["input"].bind(in);
-            nodes[1]["input_width"].bind(&size);
-            nodes[1]["input_height"].bind(&size);
-            nodes[4]["output_height"].bind(&size);
-            nodes[4]["output"].bind(out);
+            nodes[0].iport("input").bind(in);
+            nodes[1].iport("input_width").bind(&size);
+            nodes[1].iport("input_height").bind(&size);
+            nodes[4].iport("output_height").bind(&size);
+            nodes[4].oport("output").bind(out);
 
             b.compile("ex");
             b.run();
@@ -120,7 +120,7 @@ int main()
                 b.with_bb_module("ion-bb-test");
                 b.set_target(ion::get_host_target());
                 auto n = b.add("test_array_output")(input).set_param(Param("len", len));
-                n = b.add("test_array_input")(n["array_output"]);
+                n = b.add("test_array_input")(n["array_output"]).set_param(Param("array_input.size", len));
                 b.save("array_inout.json");
             }
             {
@@ -140,9 +140,9 @@ int main()
 
                 for (auto& n : b.nodes()) {
                     if (n.name() == "test_array_output") {
-                        n["input"].bind(in);
+                        n.iport("input").bind(in);
                     } else if (n.name() == "test_array_input") {
-                        n["output"].bind(out);
+                        n.oport("output").bind(out);
                     }
                 }
 

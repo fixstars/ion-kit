@@ -27,9 +27,9 @@ int main()
 
         Node n;
         n = b.add("test_extern_inc_i32x2")(ibuf).set_param(wp, hp, vp);
-        n = b.add("base_schedule")(n["output"]).set_param(Param("output_name", "b1"), Param("compute_level", "compute_inline"));
+        n = b.add("base_schedule")(n["output"]).set_param(Param("output_name", "b1"), Param("compute_level", "compute_inline"), Param("input.type", "int32"), Param("input.dim", 2));
         n = b.add("test_extern_inc_i32x2")(n["output"]).set_param(wp, hp, vp);
-        n = b.add("base_schedule")(n["output"]).set_param(Param("output_name", "b2"), Param("compute_level", "compute_inline"));
+        n = b.add("base_schedule")(n["output"]).set_param(Param("output_name", "b2"), Param("compute_level", "compute_inline"), Param("input.type", "int32"), Param("input.dim", 2));
         n["output"].bind(obuf);
 
         b.run();

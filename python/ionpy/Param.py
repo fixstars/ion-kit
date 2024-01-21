@@ -1,5 +1,5 @@
 import ctypes
-from typing import Optional
+from typing import Optional, Any
 
 from .native import (
     c_ion_param_t,
@@ -11,14 +11,14 @@ from .native import (
 class Param:
     def __init__(self,
         key: Optional[str] = None,
-        val: Optional[str] = None,
+        val: Any = None,
         # -- or
         obj_: Optional[c_ion_param_t] = None,
     ):
         if obj_ is None:
             obj_ = c_ion_param_t()
 
-            ret = ion_param_create(ctypes.byref(obj_), key.encode(),val.encode())
+            ret = ion_param_create(ctypes.byref(obj_), key.encode(), str(val).lower().encode())
             if ret != 0:
                 raise Exception('Invalid operation')
 

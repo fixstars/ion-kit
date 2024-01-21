@@ -3,7 +3,7 @@ name: MacOS
 on:
   pull_request:
     branches:
-      - master
+      - main
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -15,7 +15,7 @@ jobs:
     # well on Windows or Mac.  You can convert this to a matrix build if you need
     # cross-platform coverage.
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
-    runs-on: macos-latest
+    runs-on: macos-latest-xlarge
 
     steps:
       - uses: actions/checkout@v4
@@ -27,7 +27,7 @@ jobs:
         shell: bash
         run: |
             mkdir ${HOME}/Halide
-            curl -L https://github.com/halide/Halide/releases/download/v16.0.0/Halide-16.0.0-x86-64-osx-1e963ff817ef0968cc25d811a25a7350c8953ee6.tar.gz | tar zx -C ${HOME}/Halide --strip-components 1
+            curl -L https://github.com/halide/Halide/releases/download/v16.0.0/Halide-16.0.0-arm-64-osx-1e963ff817ef0968cc25d811a25a7350c8953ee6.tar.gz | tar zx -C ${HOME}/Halide --strip-components 1
             find ${HOME}/Halide -type d | xargs chmod 755
 
       - name: Configure

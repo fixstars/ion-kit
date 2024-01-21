@@ -10,11 +10,9 @@
 #include <sys/mman.h>
 #endif
 
-#include <opencv2/highgui.hpp>
-#include <opencv2/imgproc.hpp>
-
 #include <HalideBuffer.h>
 
+#include "opencv_loader.h"
 #include "rt_common.h"
 
 #ifdef __linux__
@@ -123,11 +121,18 @@ extern "C" ION_EXPORT int ion_bb_image_io_gui_display(halide_buffer_t *in, int w
         in->dim[2].extent = height;
     } else {
         if (getenv("DISPLAY")) {
+            auto& cv(ion::bb::OpenCV::get_instance());
             Halide::Runtime::Buffer<uint8_t> ibuf(*in);
             ibuf.copy_to_host();
-            cv::Mat img(std::vector<int>{height, width}, CV_8UC3, ibuf.data());
-            cv::imshow("img" + std::to_string(idx), img);
-            cv::waitKey(1);
+
+            auto img = cv.cvCreateMatHeader(height, width, CV_MAKETYPE(CV_8U, 3));
+            cv.cvSetData(img, in->host, 3*width*sizeof(uint8_t));
+
+            auto name = "img" + std::to_string(idx);
+            cv.cvShowImage(name.c_str(), img);
+            cv.cvWaitKey(1);
+
+            cv.cvReleaseMat(&img);
         } else {
             // This is shimulation mode. Just sleep 1/1000 second.
             std::this_thread::sleep_for(std::chrono::milliseconds(1));

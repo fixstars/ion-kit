@@ -3,62 +3,96 @@
 [![Windows](https://github.com/fixstars/ion-kit/workflows/Windows/badge.svg)](https://github.com/fixstars/ion-kit/actions?query=workflow%3AWindows)
 
 # ion-kit
-ion-kit is a graph based image processing framework based on Halide.
-User can build pipeline using ion-kit API composing building blocks and compile it into static library or run just in time.
-
-## Depedencies
-* [Halide (v16.0.0)](https://github.com/halide/Halide/releases/tag/v16.0.0)
+ion-kit is a graph-based data processing framework.
+You can define an algorithm in [Halide](https://halide-lang.org/) language as a "Building Block" (BB), then form a processing pipeline as a directed acyclic graph (DAG) combining BBs.
+The pipeline can be optimized and compiled targeting various architectures of CPUs, GPUs, and WebAssembly.
+You can also run the pipeline immediately on your host machine.
 
 ## Quick start
 
-```c++
-int main() {
-    int32_t min0 = 0, extent0 = 2, min1 = 0, extent1 = 2, v = 1;
+You can download the official binary package from [release](https://github.com/fixstars/ion-kit/releases).
 
-    // ion::Builder is fundamental class to build a graph.
+```c++
+#include <ion/ion.h>
+
+struct MyFilter : ion::BuildingBlock<MyFilter> {
+    // This Building Block takes 1 input, 1 output and 1 parameter.
+    ion::Input<Halide::Func> input{"input", Int(32), 1};
+    ion::Output<Halide::Func> output{"output", Int(32), 1};
+    ion::BuildingBlockParam<int32_t> v{"v", 0};
+
+    void generate() {
+        Halide::Var i;
+
+        // Increment input elements by value specified as "v"
+        output(i) = input(i) + v;
+    }
+};
+ION_REGISTER_BUILDING_BLOCK(MyFilter, my_filter);
+
+int main() {
+    int32_t v = 1;
+
+    // ion::Builder is the fundamental class to build a graph.
     ion::Builder b;
 
-    // Load ion building block module. User can create own BB module using ion::BuildingBlock class.
-    b.with_bb_module("ion-bb-test");
-
-    // Set the target architecture you will compile to. Here just use host architecture.
+    // Set the target architecture same as host.
     b.set_target(ion::get_host_target());
 
-    // Create simple graph consists from two nodes.
+    auto size = 4;
+
+    ion::Buffer<int32_t> input{size};
+    input.fill(0);
+
+    // Create sequential graph.
     //
-    // test_producer -> test_consumer -> r (dummy output)
+    // input -> my_filter (1st) -> my_filter (2nd) -> output
     //
-    ion::Node n;
-    n = b.add("test_producer").set_param(ion::Param("v", 41));
-    n = b.add("test_consumer")(n["output"], &min0, &extent0, &min1, &extent1, &v);
 
-    // Allocate dummy output. At least one output is required to run the pipeline.
-    auto r = ion::Buffer<int32_t>::make_scalar();
+    // Builder::add() creates Node object from Building Block.
+    ion::Node n1 = b.add("my_filter");
 
-    // Bind output with test_consumer "output" port.
-    n["output"].bind(r);
+    // Input is set by calling Node::operator().
+    n1(input);
 
-    // Run the pipeline. Internally, it is compiled into native code just in time called as a function.
+    // Parameter can be set by Node::set_param();
+    n1.set_param(ion::Param("v", 40));
+
+    // Method chain can be used to make it simple.
+    auto n2 = b.add("my_filter")(n1["output"]).set_param(ion::Param("v", 2));
+
+    // Bind output buffer.
+    ion::Buffer<int32_t> output{size};
+    output.fill(0);
+    n2["output"].bind(output);
+
+    // Run the pipeline.
     b.run();
+
+    // Or compile into the library.
+    b.compile("my_pipeine");
+
+    // Expected output is "42 42 42 42"
+    for (int i=0; i<size; ++i) {
+        std::cout << output(i) << " ";
+    }
+    std::cout << std::endl;
+
+    return 0;
 }
 ```
+Assuming binary package is extracted in `ION_KIT_PATH`.
 
-Compile it.
+```bash
+$ c++ -std=c++17 -fno-rtti main.cc -o main -I ${ION_KIT_PATH}/include -L ${ION_KIT_PATH}/lib -lion-core -lHalide && LD_LIBRARY_PATH=${ION_KIT_PATH}/lib ./main
+42 42 42 42
+```
 
-## Build from scratch
+## Build
 Please follow the instructions provided for your preferred platform.
-* [Linux](INSTALL-LINUX.md)
-* [Windows](INSTALL-WINDOWS.md)
-* [MacOS](INSTALL-MACOS.md)
-
-## CMake variables
-| Variable          | Type   | Descriotion                                                               |
-| ----------------- | ------ | ------------------------------------------------------------------------- |
-| ION_BUILD_DOC     | ON/OFF | Enable to bulid documents. (Default: ON)                                  |
-| ION_BUILD_TEST    | ON/OFF | Enable to bulid tests. (Default: ON)                                      |
-| ION_BUILD_EXAMPLE | ON/OFF | Enable to bulid examples. (Default: ON)                                   |
-| ION_BUNDLE_HALIDE | ON/OFF | Bundle Halide when packaging. (Default: OFF)                              |
-| ION_ENABLE_HALIDE_FPGA_BACKEND | ON/OFF | Enable experimental FPGA backend. (Default: OFF)             |
+* [Linux](BUILD-Linux.md)
+* [MacOS](BUILD-MacOS.md)
+* [Windows](BUILD-Windows.md)
 
 ## Authors
 The ion-kit is an open-source project created by Fixstars Corporation and its subsidiary companies including Fixstars Solutions Inc, Fixstars Autonomous Technologies.

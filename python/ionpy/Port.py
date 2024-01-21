@@ -1,9 +1,10 @@
 import ctypes
-from typing import Optional, Union
+from typing import Optional, Union, List
 import numpy as np
 
 from .native import (
     c_ion_port_t,
+    c_ion_buffer_t,
     ion_port_create,
     ion_port_create_with_index,
     ion_port_destroy,
@@ -22,6 +23,7 @@ from .native import (
     ion_port_bind_f32,
     ion_port_bind_f64,
     ion_port_bind_buffer,
+    ion_port_bind_buffer_array
 )
 
 from .Type import Type
@@ -60,7 +62,7 @@ class Port:
         if self.obj: # check not nullptr
             ion_port_destroy(self.obj)
 
-    def bind(self, v: Union[int, float, Buffer]):
+    def bind(self, v: Union[int, float, Buffer, List[Buffer]]):
         if self.dim == 0:
             if self.bind_value is None:
                 self.bind_value = np.ctypeslib.as_ctypes_type(self.type.to_dtype())(v)
@@ -87,12 +89,22 @@ class Port:
                     raise Exception('Invalid operation')
                 if self.type.bits_ == 64 and ion_port_bind_u64(self.obj, ctypes.byref(self.bind_value)) != 0:
                     raise Exception('Invalid operation')
-            elif self.type.bits_ == 32 and self.type.code_ == TypeCode.Float:
-                if ion_port_bind_f32(self.obj, ctypes.byref(self.bind_value)) != 0:
+            elif self.type.code_ == TypeCode.Float:
+                if self.type.bits_ == 32 and ion_port_bind_f32(self.obj, ctypes.byref(self.bind_value)) != 0:
                     raise Exception('Invalid operation')
-                if ion_port_bind_f64(self.obj, ctypes.byref(self.bind_value)) != 0:
+                if self.type.bits_ == 64 and ion_port_bind_f64(self.obj, ctypes.byref(self.bind_value)) != 0:
                     raise Exception('Invalid operation')
         #  vector
         else:
-            if ion_port_bind_buffer(self.obj, v.obj) != 0:
-                raise Exception('Invalid operation')
+
+            self.bind_value = v
+            if type(v) is not list:
+                if ion_port_bind_buffer(self.obj, v.obj) != 0:
+                    raise Exception('Invalid operation')
+            else:
+                num_buffers = len(v)
+                c_buffers = (c_ion_buffer_t * num_buffers)()
+                for i in range(num_buffers):
+                    c_buffers[i] = v[i].obj
+                if ion_port_bind_buffer_array(self.obj, c_buffers, num_buffers) != 0:
+                    raise Exception('Invalid operation')

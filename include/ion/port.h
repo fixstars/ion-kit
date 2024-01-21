@@ -6,12 +6,12 @@
 #include <stdexcept>
 #include <string>
 #include <type_traits>
+#include <unordered_map>
 #include <variant>
 #include <vector>
 
 #include <Halide.h>
 
-#include "json/json.hpp"
 #include "util.h"
 
 namespace ion {
@@ -45,17 +45,15 @@ int32_t unify_dimension(const std::vector<Halide::Buffer<T>>& bufs) {
  * Port class is used to create dynamic i/o for each node.
  */
 class Port {
+    friend class Builder;
+    friend class Node;
+
 public:
     using Channel = std::tuple<std::string, std::string>;
 
 private:
     struct Impl {
-        // std::string pred_id;
-        // std::string pred_name;
-
-        // std::string succ_id;
-        // std::string succ_name;
-
+        std::string id;
         Channel pred_chan;
         std::set<Channel> succ_chans;
 
@@ -65,84 +63,82 @@ private:
         std::unordered_map<int32_t, Halide::Internal::Parameter> params;
         std::unordered_map<int32_t, const void *> instances;
 
-        Impl() {}
-
-        Impl(const std::string& pid, const std::string& pn, const Halide::Type& t, int32_t d)
-            : pred_chan{pid, pn}, succ_chans{}, type(t), dimensions(d)
-        {
-            params[0] = Halide::Internal::Parameter(type, dimensions != 0, dimensions, argument_name(pid, pn, 0));
-        }
+        Impl();
+        Impl(const std::string& pid, const std::string& pn, const Halide::Type& t, int32_t d);
     };
 
- public:
-     friend class Builder;
-     friend class Node;
-     friend struct nlohmann::adl_serializer<Port>;
+public:
 
-     Port() : impl_(new Impl("", "", Halide::Type(), 0)), index_(-1) {}
+    Port() : impl_(new Impl("", "", Halide::Type(), 0)), index_(-1) {}
 
-     Port(const std::shared_ptr<Impl>& impl) : impl_(impl), index_(-1) {}
+    Port(const std::shared_ptr<Impl>& impl, int32_t index) : impl_(impl), index_(index) {}
 
-     /**
-      * Construct new port for scalar value.
-      * @arg k: The key of the port which should be matched with BuildingBlock Input/Output name.
-      * @arg t: The type of the value.
-      */
-     Port(const std::string& n, Halide::Type t) : impl_(new Impl("", n, t, 0)), index_(-1) {}
+    /**
+     * Construct new port for scalar value.
+     * @arg k: The key of the port which should be matched with BuildingBlock Input/Output name.
+     * @arg t: The type of the value.
+     */
+    Port(const std::string& n, Halide::Type t) : impl_(new Impl("", n, t, 0)), index_(-1) {}
 
-     /**
-      * Construct new port for vector value.
-      * @arg k: The key of the port which should be matched with BuildingBlock Input/Output name.
-      * @arg t: The type of the element value.
-      * @arg d: The dimension of the port. The range is 1 to 4.
-      */
-     Port(const std::string& n, Halide::Type t, int32_t d) : impl_(new Impl("", n, t, d)), index_(-1) {}
+    /**
+     * Construct new port for vector value.
+     * @arg k: The key of the port which should be matched with BuildingBlock Input/Output name.
+     * @arg t: The type of the element value.
+     * @arg d: The dimension of the port. The range is 1 to 4.
+     */
+    Port(const std::string& n, Halide::Type t, int32_t d) : impl_(new Impl("", n, t, d)), index_(-1) {}
 
+    /**
+     * Construct new port from scalar pointer
+     */
+    template<typename T,
+             typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
+    Port(T *vptr) : impl_(new Impl("", Halide::Internal::unique_name("_ion_port_"), Halide::type_of<T>(), 0)), index_(-1) {
+        this->bind(vptr);
+    }
 
-     /**
-      * Construct new port from scalar pointer
-      */
-     template<typename T,
-              typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-     Port(T *vptr) : impl_(new Impl("", Halide::Internal::unique_name("ion_port"), Halide::type_of<T>(), 0)), index_(-1) {
-         this->bind(vptr);
-     }
+    /**
+     * Construct new port from buffer
+     */
+    template<typename T>
+    Port(const Halide::Buffer<T>& buf) : impl_(new Impl("", buf.name(), Halide::type_of<T>(), buf.dimensions())), index_(-1) {
+        this->bind(buf);
+    }
 
-     /**
-      * Construct new port from buffer
-      */
-     template<typename T>
-     Port(const Halide::Buffer<T>& buf) : impl_(new Impl("", buf.name(), Halide::type_of<T>(), buf.dimensions())), index_(-1) {
-         this->bind(buf);
-     }
+    /**
+     * Construct new port from array of buffer
+     */
+    template<typename T>
+    Port(const std::vector<Halide::Buffer<T>>& bufs) : impl_(new Impl("", unify_name(bufs), Halide::type_of<T>(), unify_dimension(bufs))), index_(-1) {
+        this->bind(bufs);
+    }
 
-     /**
-      * Construct new port from array of buffer
-      */
-     template<typename T>
-     Port(const std::vector<Halide::Buffer<T>>& bufs) : impl_(new Impl("", unify_name(bufs), Halide::type_of<T>(), unify_dimension(bufs))), index_(-1) {
-         this->bind(bufs);
-     }
+    // Getter
+    const std::string& id() const { return impl_->id; }
+    const Channel& pred_chan() const { return impl_->pred_chan; }
+    const std::string& pred_id() const { return std::get<0>(impl_->pred_chan); }
+    const std::string& pred_name() const { return std::get<1>(impl_->pred_chan); }
+    const std::set<Channel>& succ_chans() const { return impl_->succ_chans; }
+    const Halide::Type& type() const { return impl_->type; }
+    int32_t dimensions() const { return impl_->dimensions; }
+    int32_t size() const { return static_cast<int32_t>(impl_->params.size()); }
+    int32_t index() const { return index_; }
 
-     const std::string& pred_id() const { return std::get<0>(impl_->pred_chan); }
-     const std::string& pred_name() const { return std::get<1>(impl_->pred_chan); }
+    // Setter
+    void set_index(int index) { index_ = index; }
 
-     const Halide::Type& type() const { return impl_->type; }
+    // Util
+    bool has_pred() const { return !std::get<0>(impl_->pred_chan).empty(); }
+    bool has_pred_by_nid(const std::string& nid) const { return !std::get<0>(impl_->pred_chan).empty(); }
+    bool has_succ() const { return !impl_->succ_chans.empty(); }
+    bool has_succ(const Channel& c) const { return impl_->succ_chans.count(c); }
+    bool has_succ_by_nid(const std::string& nid) const {
+        return std::count_if(impl_->succ_chans.begin(),
+                             impl_->succ_chans.end(),
+                             [&](const Port::Channel& c) { return std::get<0>(c) == nid; });
+    }
 
-     int32_t dimensions() const { return impl_->dimensions; }
-
-     // const std::string& succ_id() const { return impl_->succ_id; }
-
-     int32_t size() const { return static_cast<int32_t>(impl_->params.size()); }
-
-     int32_t index() const { return index_; }
-
-     bool has_pred() const { return !std::get<0>(impl_->pred_chan).empty(); }
-
-     bool has_succ() const { return !impl_->succ_chans.empty(); }
-     bool has_succ(const Channel& c) const { return impl_->succ_chans.count(c); }
-
-     void set_index(int index) { index_ = index; }
+    void determine_succ(const std::string& nid, const std::string& old_pn, const std::string& new_pn);
 
     /**
      * Overloaded operator to set the port index and return a reference to the current port. eg. port[0]
@@ -191,22 +187,16 @@ private:
          }
      }
 
-     static std::shared_ptr<Impl> find_impl(uintptr_t ptr) {
-         static std::unordered_map<uintptr_t, std::shared_ptr<Impl>> impls;
-         static std::mutex mutex;
-         std::scoped_lock lock(mutex);
-         if (!impls.count(ptr)) {
-             impls[ptr] = std::make_shared<Impl>();
-         }
-         return impls[ptr];
-     }
+     static std::tuple<std::shared_ptr<Impl>, bool> find_impl(const std::string& id);
 
 private:
     /**
-     * This port is created from another node
+     * This port is created from another node.
+     * In this case, it is not sure what this port is input or output.
+     * pid and pn is stored in both pred and succ,
+     * then it will determined through pipeline build process.
      */
      Port(const std::string& pid, const std::string& pn) : impl_(new Impl(pid, pn, Halide::Type(), 0)), index_(-1) {}
-
 
      std::vector<Halide::Argument> as_argument() const {
          std::vector<Halide::Argument> args;

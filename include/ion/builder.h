@@ -1,7 +1,6 @@
 #ifndef ION_BUILDER_H
 #define ION_BUILDER_H
 
-#include <deque>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -100,6 +99,8 @@ public:
 private:
 
     Halide::Pipeline build(bool implicit_output = false);
+
+    void determine_and_validate();
 
     std::vector<Halide::Argument> get_arguments_stub() const;
     std::vector<const void*> get_arguments_instance() const;
