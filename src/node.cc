@@ -18,10 +18,9 @@ Node::Impl::Impl(const std::string& id_, const std::string& name_, const Halide:
 
 void Node::set_iport(const std::vector<Port>& ports) {
 
-    std::remove_if(impl_->ports.begin(), impl_->ports.end(),
-                   [&](const Port& p) {
-                       return p.has_succ_by_nid(this->id());
-                   });
+    impl_->ports.erase(std::remove_if(impl_->ports.begin(), impl_->ports.end(),
+                                      [&](const Port &p) { return p.has_succ_by_nid(this->id()); }),
+                       impl_->ports.end());
 
     size_t i = 0;
     for (auto& port : ports) {
