@@ -10,11 +10,11 @@ from .native import (
 
 class Param:
     def __init__(self,
-                 key: Optional[str] = None,
-                 val: Any = None,
-                 # -- or
-                 obj_: Optional[c_ion_param_t] = None,
-                 ):
+        key: Optional[str] = None,
+        val: Any = None,
+        # -- or
+        obj_: Optional[c_ion_param_t] = None,
+    ):
         if obj_ is None:
             obj_ = c_ion_param_t()
             if isinstance(val, bool):
@@ -29,5 +29,5 @@ class Param:
         self.obj = obj_
 
     def __del__(self):
-        if self.obj:  # check not nullptr
+        if self.obj: # check not nullptr
             ion_param_destroy(self.obj)
