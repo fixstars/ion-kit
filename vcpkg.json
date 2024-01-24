@@ -1,12 +1,9 @@
 {
-	"name": "ion-kit",
-	"version-semver": "1.2.0",
-	"builtin-baseline":"fe8951881845289968427114f1b069475d607309",
-	"dependencies": [
-		{ "name": "halide", "version>=": "16.0.0"},
-		{ "name": "zlib"},
-		{ "name": "libjpeg-turbo"},
-		{ "name": "libpng"}
-	]
+    "name": "ion-kit",
+    "version-semver": "1.2.0",
+    "builtin-baseline":"2b681d95e08447fde261b4404fbeab324f7d1e5b",
+    "dependencies": [
+        {"name":"halide", "version>=": "16.0.0"},
+        "zlib", "libjpeg-turbo", "libpng"
+    ]
 }
-
