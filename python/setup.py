@@ -27,7 +27,6 @@ elif platform.system() == 'Darwin':
     package_data = ["module/macos/*"]
 elif platform.system() == 'Linux':
     package_data = ["module/linux/*"]
-    plat_form = "manylinux1_x86_64"
 
 setup(
     packages=["ionpy"],
