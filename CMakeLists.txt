@@ -26,7 +26,7 @@ elseif(UNIX)
 endif()
 
 
-# Dependent librariesgit
+# Dependent libraries
 #
 # NOTE: WIP: It's for static linking
 # set(ZLIB_USE_STATIC_LIBS "ON")
