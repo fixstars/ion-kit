@@ -1,5 +1,5 @@
 [project]
-name = 'ionpy'
+name = 'ion-python'
 dynamic = ["version"]
 authors = [
   { name="Takuro Iizuka", email="t_iizuka@fixstars.com" }
@@ -10,6 +10,10 @@ requires-python = ">=3.8"
 classifiers=[
     "Development Status :: 3 - Alpha",
     "Programming Language :: Python"
+]
+
+dependencies = [
+    "numpy"
 ]
 
 [project.urls]
@@ -32,6 +36,3 @@ packages = ["ionpy"]
 
 [tool.setuptools.dynamic]
 version = {attr = "ionpy.__version__"}
-
-[tool.setuptools.package-data]
-ionpy = ["module/macos/*", "module/linux/*", "module/windows/*"]
