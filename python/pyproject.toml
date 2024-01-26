@@ -12,6 +12,10 @@ classifiers=[
     "Programming Language :: Python"
 ]
 
+dependencies = [
+    "numpy"
+]
+
 [project.urls]
 Documentation = "https://sensing-dev.github.io/doc/"
 Repository = "https://github.com/fixstars/ion-kit"

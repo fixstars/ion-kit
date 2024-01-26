@@ -2,13 +2,15 @@ from setuptools import setup, find_namespace_packages
 import sys
 from typing import List
 import platform
-
-install_requires: List[str] = []
 import sysconfig
 
-python_version = sys.version_info
-if python_version < (3, 7):
-    install_requires += ['dataclasses']
+
+def get_plat():
+    if platform.system() == 'Linux':
+        plat_form = "manylinux1_x86_64"
+    else:
+        plat_form = sysconfig.get_platform()
+    return plat_form
 
 
 # This creates a list which is empty but returns a length of 1.
@@ -16,7 +18,6 @@ if python_version < (3, 7):
 # class EmptyListWithLength(list):
 #     def __len__(self):
 #         return 1
-
 
 package_data: List[str] = []
 
@@ -26,16 +27,16 @@ elif platform.system() == 'Darwin':
     package_data = ["module/macos/*"]
 elif platform.system() == 'Linux':
     package_data = ["module/linux/*"]
+    plat_form = "manylinux1_x86_64"
 
 setup(
     packages=["ionpy"],
-    install_requires=install_requires,
     package_data={"ionpy": package_data},
     # ext_modules=EmptyListWithLength(),
     include_package_data=False,
     options={
         "bdist_wheel": {
-            "plat_name": sysconfig.get_platform(),
+            "plat_name": get_plat(),
             "python_tag": "py3",
         },
     },
