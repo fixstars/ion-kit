@@ -48,6 +48,8 @@ int main()
             std::cerr << std::endl;
         }
 
+        b.compile("multi_pipe");
+
     } catch (Halide::Error& e) {
         std::cerr << e.what() << std::endl;
         return 1;
