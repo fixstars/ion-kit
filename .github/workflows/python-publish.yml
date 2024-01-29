@@ -1,0 +1,130 @@
+# This workflow will upload a Python Package using Twine when a release is created
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python#publishing-to-package-registries
+
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+name: Upload Python Package
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  publish-on-linux:
+
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.9'
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y curl cmake build-essential libopencv-dev
+        sudo apt-get clean
+        sudo rm -rf /var/lib/apt/lists/*
+        python -m pip install --upgrade pip
+        pip install build
+
+    - name: Download Linux Binary
+      shell: bash
+      run: |
+        mkdir linux
+        curl -L  $(curl -s https://api.github.com/repos/fixstars/ion-kit/releases/latest | grep browser_download_url | grep linux | cut -d'"' -f4)| tar zx -C  linux --strip-components 1
+        cp  linux/lib/libion-bb.so python/ionpy/module/linux/libion-bb.so
+        cp  linux/lib/libion-core.so python/ionpy/module/linux/libion-core.so
+        cp  linux/lib/libHalide.so.16.0.0 python/ionpy/module/linux/libHalide.so.16
+        ls python/ionpy/module/linux
+        sudo rm -rf linux
+
+    - name: Build package
+      run: |
+        mkdir dist
+        cd python && python -m build && mv dist ../dist
+
+    - name: Publish package distributions to TestPyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://test.pypi.org/legacy/
+        user: __token__
+        password: ${{ secrets.PYPI_API_TOKEN }}
+
+  publish-on-macos:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Download OS Binary
+      shell: bash
+      run: |
+        mkdir macos
+        curl -L  $(curl -s https://api.github.com/repos/fixstars/ion-kit/releases/latest | grep browser_download_url | grep macos| cut -d'"' -f4)| tar zx -C  macos --strip-components 1
+        cp  macos/lib/libHalide.16.0.0.dylib python/ionpy/module/macos/libHalide.16.dylib
+        cp  macos/lib/libion-core.dylib python/ionpy/module/macos/libion-core.dylib
+        cp  macos/lib/libion-bb.dylib python/ionpy/module/macos/libion-bb.dylib
+
+    - name: Build package
+      run: |
+        mkdir dist
+        pip install build
+        cd python && python -m build && mv dist ../dist
+
+
+    - name: Publish package distributions to TestPyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://test.pypi.org/legacy/
+        user: __token__
+        password: ${{ secrets.PYPI_API_TOKEN }}
+
+#  publish-on-windows:
+#
+#    runs-on: windows-2019
+#    permissions:
+#      id-token: write
+#
+#    steps:
+#      - uses: actions/checkout@v3
+#      - name: Set up Python
+#        uses: actions/setup-python@v3
+#        with:
+#          python-version: '3.9'
+#
+#      - name: Download Windows Binary
+#        shell: bash
+#        run: |
+#          mkdir windows
+#          curl -L  $(curl -s https://api.github.com/repos/fixstars/ion-kit/releases/latest | grep browser_download_url | grep windows| cut -d'"' -f4)  -o ion_kit_windows.zip
+##          unzip ion_kit_windows.zip
+##          mv ion-kit*/*  windows
+##          cp  windows/bin/Halide.dll python/ionpy/module/windows/Halide.dll
+##          cp  windows/bin/ion-core.dll python/ionpy/module/windows/ion-core.dll
+##          cp  windows/bin/ion-bb.dll python/ionpy/module/windows/ion-bb.dll
+##          ls  python/ionpy/module/windows
+#
+#      - name: Build package
+#        run: |
+#          cd python && python -m build && cd ../
+#          mv python/dist dist
+#          ls
+#    - name: Publish package distributions to TestPyPI
+#      uses: pypa/gh-action-pypi-publish@release/v1
+#      with:
+#        repository-url: https://test.pypi.org/legacy/
+#        user: __token__
+#        password: ${{ secrets.PYPI_API_TOKEN }}
+
+
