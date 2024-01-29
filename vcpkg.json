@@ -3,7 +3,6 @@
 	"version-semver": "1.3.0",
 	"builtin-baseline":"fe8951881845289968427114f1b069475d607309",
 	"dependencies": [
-		{ "name": "halide", "version>=": "16.0.0"},
 		{ "name": "zlib"},
 		{ "name": "libjpeg-turbo"},
 		{ "name": "libpng"}

@@ -44,7 +44,7 @@ jobs:
           sudo cp -r ${HOME}/onnxruntime/* /usr/
 
           # zlib, libjpeg, libpng
-          vcpkg install zlib libjpeg-turbo libpng
+          vcpkg install
 
       - name: Configure
         shell: bash
