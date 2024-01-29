@@ -25,9 +25,11 @@ struct Logger {
      {
          auto log_level = spdlog::level::off;
          auto env_val = spdlog::details::os::getenv("ION_LOG_LEVEL");
-         if (!env_val.empty()) {
-             log_level = spdlog::level::from_str(env_val);
+         if (env_val.empty()) {
+             return;
          }
+
+         log_level = spdlog::level::from_str(env_val);
 
          auto console_sink = std::make_shared<spdlog::sinks::stderr_color_sink_mt>();
          console_sink->set_level(log_level);
