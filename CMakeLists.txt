@@ -67,7 +67,7 @@ endif()
 file(GLOB ION_CORE_SRC LIST_DIRECTORIES false ${PROJECT_SOURCE_DIR}/src/*)
 add_library(ion-core SHARED ${ION_CORE_SRC})
 target_include_directories(ion-core PUBLIC ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/src)
-target_link_libraries(ion-core PUBLIC Halide::Halide Threads::Threads ${CMAKE_DL_LIBS} )
+target_link_libraries(ion-core PUBLIC Halide::Halide Halide::Runtime Threads::Threads ${CMAKE_DL_LIBS} )
 
 #
 # ion-bb
@@ -148,33 +148,30 @@ install(FILES
 
 # Halide
 set(HALIDE_ROOT ${Halide_DIR}/../../..)
-message("${HALIDE_ROOT}")
 
-file(GLOB_RECURSE HALIDE_HEADERS Halide*.h)
+file(GLOB HALIDE_HEADERS ${HALIDE_ROOT}/include/Halide*.h ${HALIDE_ROOT}/include/wasm*.h)
 install(FILES ${HALIDE_HEADERS} DESTINATION include)
-#
-# file(GLOB HALIDE_BINS
-#     ${HALIDE_ROOT}/bin/featurization_to_sample*
-#     ${HALIDE_ROOT}/bin/get_host_target*
-#     ${HALIDE_ROOT}/bin/retrain_cost_model*
-#     ${HALIDE_ROOT}/bin/weightsdir_to_weightsfile*)
-# install(FILES ${HALIDE_BINS} DESTINATION bin)
-#
-# # install(DIRECTORY ${HALIDE_ROOT}/lib/cmake/Halide DESTINATION lib/cmake/)
-# if (EXISTS ${HALIDE_ROOT}/lib/cmake/HalideHelpers)
-#     install(DIRECTORY ${HALIDE_ROOT}/lib/cmake/HalideHelpers DESTINATION lib/cmake/)
-# endif()
-# if (UNIX)
-#     file(GLOB HALIDE_LIBRARIES ${HALIDE_ROOT}/lib/libHalide*)
-#     install(FILES ${HALIDE_LIBRARIES} DESTINATION lib)
-#     file(GLOB HALIDE_LIBRARIES ${HALIDE_ROOT}/lib/libautoschedule*)
-#     install(FILES ${HALIDE_LIBRARIES} DESTINATION lib)
-# else()
-#     install(FILES ${HALIDE_ROOT}/bin/Release/Halide.dll DESTINATION bin)
-#     install(FILES ${HALIDE_ROOT}/lib/Release/Halide.lib DESTINATION lib)
-# endif()
 
-install(IMPORTED_RUNTIME_ARTIFACTS Halide::Halide)
+file(GLOB HALIDE_BINS
+    ${HALIDE_ROOT}/bin/featurization_to_sample*
+    ${HALIDE_ROOT}/bin/get_host_target*
+    ${HALIDE_ROOT}/bin/retrain_cost_model*
+    ${HALIDE_ROOT}/bin/weightsdir_to_weightsfile*)
+install(FILES ${HALIDE_BINS} DESTINATION bin)
+
+install(DIRECTORY ${HALIDE_ROOT}/lib/cmake/Halide DESTINATION lib/cmake/)
+if (EXISTS ${HALIDE_ROOT}/lib/cmake/HalideHelpers)
+    install(DIRECTORY ${HALIDE_ROOT}/lib/cmake/HalideHelpers DESTINATION lib/cmake/)
+endif()
+if (UNIX)
+    file(GLOB HALIDE_LIBRARIES ${HALIDE_ROOT}/lib/libHalide*)
+    install(FILES ${HALIDE_LIBRARIES} DESTINATION lib)
+    file(GLOB HALIDE_LIBRARIES ${HALIDE_ROOT}/lib/libautoschedule*)
+    install(FILES ${HALIDE_LIBRARIES} DESTINATION lib)
+else()
+    install(FILES ${HALIDE_ROOT}/bin/Release/Halide.dll DESTINATION bin)
+    install(FILES ${HALIDE_ROOT}/lib/Release/Halide.lib DESTINATION lib)
+endif()
 
 #
 # Packaging
