@@ -13,7 +13,7 @@ classifiers=[
 ]
 
 dependencies = [
-    "numpy"
+    "numpy>=1.24"
 ]
 
 [project.urls]
