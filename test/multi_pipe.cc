@@ -35,15 +35,17 @@ int main()
                     return -1;
                 }
             }
+            std::cerr << std::endl;
         }
 
         for (int y=0; y<size; ++y) {
             for (int x=0; x<size; ++x) {
-                std::cerr << out0(x, y) << " ";
+                std::cerr << out1(x, y) << " ";
                 if (out1(x, y) != 2) {
                     return -1;
                 }
             }
+            std::cerr << std::endl;
         }
 
     } catch (Halide::Error& e) {
