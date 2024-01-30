@@ -13,118 +13,92 @@ on:
     tags:
       - v*
 
+
 jobs:
-  publish-on-linux:
+  build-os-wheel:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, macos-11, windows-2019]
 
+    steps:
+      - uses: actions/checkout@v4
+      - uses: robinraju/release-downloader@v1.9
+        with:
+          repository: "fixstars/ion-kit"
+          latest: true
+          fileName: "ion-kit*"
+      - name: check
+        run: |
+          ls
+
+      - name: Copy macos file
+        if: runner.os == 'macOS'
+        run: |
+          mkdir $GITHUB_WORKSPACE/macos
+          tar xzf  ion-kit-*macos.tar.gz  -C $GITHUB_WORKSPACE/macos --strip-components 1
+          cp  $GITHUB_WORKSPACE/macos/lib/libHalide.16.0.0.dylib python/ionpy/module/macos/libHalide.16.dylib
+          cp  $GITHUB_WORKSPACE/macos/lib/libion-core.dylib python/ionpy/module/macos/libion-core.dylib
+          cp  $GITHUB_WORKSPACE/macos/lib/libion-bb.dylib python/ionpy/module/macos/libion-bb.dylib
+          ls python/ionpy/module/macos
+
+      - name: Copy linux file
+        if: runner.os == 'Linux'
+        run: |
+          mkdir $GITHUB_WORKSPACE/linux
+          tar xzf  ion-kit-*linux.tar.gz  -C $GITHUB_WORKSPACE/linux --strip-components 1
+          cp  $GITHUB_WORKSPACE/linux/lib/libion-bb.so python/ionpy/module/linux/libion-bb.so
+          cp  $GITHUB_WORKSPACE/linux/lib/libion-core.so python/ionpy/module/linux/libion-core.so
+          cp  $GITHUB_WORKSPACE/linux/lib/libHalide.so.16.0.0 python/ionpy/module/linux/libHalide.so.16
+          ls python/ionpy/module/linux
+
+      - name: Copy windows file
+        if: runner.os == 'Windows'
+        run: |
+          mkdir windows
+          unzip  ion-kit-*windows.zip  && mv ion-kit*/*  windows
+          cp  windows/bin/Halide.dll python/ionpy/module/windows/Halide.dll
+          cp  windows/bin/ion-core.dll python/ionpy/module/windows/ion-core.dll
+          cp  windows/bin/ion-bb.dll python/ionpy/module/windows/ion-bb.dll
+          ls  python/ionpy/module/windows
+
+      # Used to host cibuildwheel
+      - uses: actions/setup-python@v3
+        with:
+          python-version: '3.9'
+
+      - name: Install cibuildwheel
+        run: python -m pip install cibuildwheel==2.16.4
+
+      - name: Build wheels
+        run: |
+          cd python && python -m cibuildwheel --output-dir wheelhouse
+        env:
+          CIBW_ARCHS_MACOS: universal2
+          CIBW_REPAIR_WHEEL_COMMAND_MACOS: ""
+          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: ""
+          CIBW_REPAIR_WHEEL_COMMAND_LINUX: ""
+          CIBW_BUILD: cp39-*
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
+          path: python/wheelhouse/*.whl
+
+  build_sdist:
+    name: Build source distribution
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python
-      uses: actions/setup-python@v3
-      with:
-        python-version: '3.9'
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y curl cmake build-essential libopencv-dev
-        sudo apt-get clean
-        sudo rm -rf /var/lib/apt/lists/*
-        python -m pip install --upgrade pip
-        pip install build
+      - uses: actions/checkout@v4
 
-    - name: Download Linux Binary
-      shell: bash
-      run: |
-        mkdir linux
-        curl -L  $(curl -s https://api.github.com/repos/fixstars/ion-kit/releases/latest | grep browser_download_url | grep linux | cut -d'"' -f4)| tar zx -C  linux --strip-components 1
-        cp  linux/lib/libion-bb.so python/ionpy/module/linux/libion-bb.so
-        cp  linux/lib/libion-core.so python/ionpy/module/linux/libion-core.so
-        cp  linux/lib/libHalide.so.16.0.0 python/ionpy/module/linux/libHalide.so.16
-        ls python/ionpy/module/linux
-        sudo rm -rf linux
+      - name: Build sdist
+        run: cd python && pipx run build --sdist
 
-    - name: Build package
-      run: |
-        mkdir dist
-        cd python && python -m build && mv dist ../dist
-
-    - name: Publish package distributions to TestPyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        repository-url: https://test.pypi.org/legacy/
-        user: __token__
-        password: ${{ secrets.PYPI_API_TOKEN }}
-
-  publish-on-macos:
-    runs-on: macos-latest
-
-    steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
-
-    - name: Download OS Binary
-      shell: bash
-      run: |
-        mkdir macos
-        curl -L  $(curl -s https://api.github.com/repos/fixstars/ion-kit/releases/latest | grep browser_download_url | grep macos| cut -d'"' -f4)| tar zx -C  macos --strip-components 1
-        cp  macos/lib/libHalide.16.0.0.dylib python/ionpy/module/macos/libHalide.16.dylib
-        cp  macos/lib/libion-core.dylib python/ionpy/module/macos/libion-core.dylib
-        cp  macos/lib/libion-bb.dylib python/ionpy/module/macos/libion-bb.dylib
-
-    - name: Build package
-      run: |
-        mkdir dist
-        pip install build
-        cd python && python -m build && mv dist ../dist
-
-
-    - name: Publish package distributions to TestPyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        repository-url: https://test.pypi.org/legacy/
-        user: __token__
-        password: ${{ secrets.PYPI_API_TOKEN }}
-
-#  publish-on-windows:
-#
-#    runs-on: windows-2019
-#    permissions:
-#      id-token: write
-#
-#    steps:
-#      - uses: actions/checkout@v3
-#      - name: Set up Python
-#        uses: actions/setup-python@v3
-#        with:
-#          python-version: '3.9'
-#
-#      - name: Download Windows Binary
-#        shell: bash
-#        run: |
-#          mkdir windows
-#          curl -L  $(curl -s https://api.github.com/repos/fixstars/ion-kit/releases/latest | grep browser_download_url | grep windows| cut -d'"' -f4)  -o ion_kit_windows.zip
-##          unzip ion_kit_windows.zip
-##          mv ion-kit*/*  windows
-##          cp  windows/bin/Halide.dll python/ionpy/module/windows/Halide.dll
-##          cp  windows/bin/ion-core.dll python/ionpy/module/windows/ion-core.dll
-##          cp  windows/bin/ion-bb.dll python/ionpy/module/windows/ion-bb.dll
-##          ls  python/ionpy/module/windows
-#
-#      - name: Build package
-#        run: |
-#          cd python && python -m build && cd ../
-#          mv python/dist dist
-#          ls
-#    - name: Publish package distributions to TestPyPI
-#      uses: pypa/gh-action-pypi-publish@release/v1
-#      with:
-#        repository-url: https://test.pypi.org/legacy/
-#        user: __token__
-#        password: ${{ secrets.PYPI_API_TOKEN }}
-
-
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cibw-sdist
+          path: python/dist/*.tar.gz
+        # to supply options, put them in 'env', like:
+        # env:
+        #   CIBW_SOME_OPTION: value
