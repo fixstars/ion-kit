@@ -84,7 +84,7 @@ int main() {
 Assuming binary package is extracted in `ION_KIT_PATH`.
 
 ```bash
-$ c++ -std=c++17 -fno-rtti main.cc -o main -I ${ION_KIT_PATH}/include -L ${ION_KIT_PATH}/lib -lion-core -lHalide && LD_LIBRARY_PATH=${ION_KIT_PATH}/lib ./main
+$ c++ -std=c++17 -fno-rtti main.cc -o main -I ${ION_KIT_PATH}/include -L ${ION_KIT_PATH}/lib -lion-core ${ION_KIT_PATH}/lib/libHalide.so.16 && LD_LIBRARY_PATH=${ION_KIT_PATH}/lib ./main
 42 42 42 42
 ```
 

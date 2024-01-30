@@ -1,5 +1,6 @@
 
-__version__ = "1.0.0"
+__version__ = "1.3.0"
+
 from .Port import Port
 from .Param import Param
 from .Node import Node

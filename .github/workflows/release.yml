@@ -23,7 +23,7 @@ jobs:
           sudo apt-get clean
           sudo rm -rf /var/lib/apt/lists/*
 
-      - name: Download Halide package
+      - name: Setup dependencies
         run: |
           # Halide
           mkdir ${HOME}/Halide
@@ -31,7 +31,7 @@ jobs:
           find ${HOME}/Halide -type d | xargs chmod 755
 
           # zlib, libjpeg, libpng
-          vcpkg install zlib libjpeg-turbo libpng
+          vcpkg install
 
       - name: Configure
         run: cmake -D CMAKE_TOOLCHAIN_FILE=${VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake -D CMAKE_BUILD_TYPE=Release -D ION_BUILD_TEST=OFF -D ION_BUILD_EXAMPLE=OFF -D ION_BUNDLE_HALIDE=ON -D HalideHelpers_DIR=${HOME}/Halide/lib/cmake/HalideHelpers -D Halide_DIR=${HOME}/Halide/lib/cmake/Halide $GITHUB_WORKSPACE
@@ -59,7 +59,7 @@ jobs:
       - name: Setup msbuild
         uses: microsoft/setup-msbuild@v1
 
-      - name: Setup extra dependencies
+      - name: Setup dependencies
         shell: bash
         run: |
           # Halide
@@ -70,7 +70,7 @@ jobs:
           mv Halide*/* ${HOME}/Halide
 
           # zlib, libjpeg, libpng
-          vcpkg install zlib:x64-windows-static libjpeg-turbo:x64-windows-static libpng:x64-windows-static
+          vcpkg install --triplet=x64-windows-static
 
       - name: Configure
         shell: bash

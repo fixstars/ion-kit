@@ -1,10 +1,6 @@
 #include <algorithm>
 #include <fstream>
 
-#ifdef __linux__
-#include <unistd.h>
-#endif
-
 #include <Halide.h>
 
 #include "ion/builder.h"
@@ -303,7 +299,7 @@ Halide::Pipeline Builder::build(bool implicit_output) {
                         bb->bind_input(arginfo.name, fs);
                     } else {
                         // access to Port[index]
-                        if (index>=fs.size()){
+                        if (index>=static_cast<decltype(index)>(fs.size())){
                             throw std::runtime_error("Port index out of range: " + port.pred_name());
                         }
                         bb->bind_input(arginfo.name, {fs[index]});

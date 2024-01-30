@@ -60,8 +60,8 @@ private:
         Halide::Type type;
         int32_t dimensions;
 
-        std::unordered_map<int32_t, Halide::Internal::Parameter> params;
-        std::unordered_map<int32_t, const void *> instances;
+        std::unordered_map<uint32_t, Halide::Internal::Parameter> params;
+        std::unordered_map<uint32_t, const void *> instances;
 
         Impl();
         Impl(const std::string& pid, const std::string& pn, const Halide::Type& t, int32_t d);
@@ -201,7 +201,7 @@ private:
      std::vector<Halide::Argument> as_argument() const {
          std::vector<Halide::Argument> args;
          for (const auto& [i, param] : impl_->params) {
-             if (static_cast<int>(args.size()) <= i) {
+             if (args.size() <= i) {
                  args.resize(i+1, Halide::Argument());
              }
              auto kind = dimensions() == 0 ? Halide::Argument::InputScalar : Halide::Argument::InputBuffer;
@@ -213,7 +213,7 @@ private:
      std::vector<const void *> as_instance() const {
          std::vector<const void *> instances;
         for (const auto& [i, instance] : impl_->instances) {
-             if (static_cast<int>(instances.size()) <= i) {
+             if (instances.size() <= i) {
                  instances.resize(i+1, nullptr);
              }
              instances[i] = instance;
@@ -228,7 +228,7 @@ private:
 
          std::vector<Halide::Expr> es;
          for (const auto& [i, param] : impl_->params) {
-             if (static_cast<int>(es.size()) <= i) {
+             if (es.size() <= i) {
                  es.resize(i+1, Halide::Expr());
              }
              es[i] = Halide::Internal::Variable::make(type(), argument_name(pred_id(), pred_name(), i), param);
@@ -243,7 +243,7 @@ private:
 
          std::vector<Halide::Func> fs;
          for (const auto& [i, param] : impl_->params ) {
-             if (static_cast<int>(fs.size()) <= i) {
+             if (fs.size() <= i) {
                  fs.resize(i+1, Halide::Func());
              }
              std::vector<Halide::Var> args;

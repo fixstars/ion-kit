@@ -37,7 +37,7 @@ jobs:
           mv Halide*/* ${HOME}/Halide
 
           # zlib, libjpeg, libpng
-          vcpkg install zlib:x64-windows-static libjpeg-turbo:x64-windows-static libpng:x64-windows-static
+          vcpkg install --triplet=x64-windows-static
 
       - name: Configure
         shell: bash
