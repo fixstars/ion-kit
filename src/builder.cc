@@ -136,8 +136,8 @@ Builder& Builder::set_target(const Halide::Target& target) {
     return *this;
 }
 
-Builder& Builder::with_bb_module(const std::string& module_path) {
-    bb_modules_[module_path] = std::make_shared<DynamicModule>(module_path);
+Builder& Builder::with_bb_module(const std::string& module_name_or_path) {
+    bb_modules_[module_name_or_path] = std::make_shared<DynamicModule>(module_name_or_path);
     return *this;
 }
 
@@ -466,6 +466,45 @@ void Builder::determine_and_validate() {
     }
 }
 
+std::vector<std::string> Builder::bb_names(void) {
+    std::vector<std::string> names;
+    for (auto n : Halide::Internal::GeneratorRegistry::enumerate()) {
+         names.push_back(n);
+    }
+    return names;
+}
+
+
+std::vector<ArgInfo> Builder::bb_arginfos(const std::string& name) {
+    auto generator_names = Halide::Internal::GeneratorRegistry::enumerate();
+
+    if (std::find(generator_names.begin(), generator_names.end(), name) == generator_names.end()) {
+        throw std::runtime_error(fmt::format("Cannot find generator : {}", name));
+    }
+
+    auto bb(Halide::Internal::GeneratorRegistry::create(name, Halide::GeneratorContext(get_host_target())));
+
+    // TODO: Arginfos with parameters
+    // for (const auto& p : n.params()) {
+    //     try {
+    //         bb->set_generatorparam_value(p.key(), p.val());
+    //     } catch (const Halide::CompileError& e) {
+    //         auto msg = fmt::format("BuildingBlock \"{}\" has no parameter \"{}\"", n.name(), p.key());
+    //         log::error(msg);
+    //         throw std::runtime_error(msg);
+    //     }
+    // }
+
+    try {
+        bb->build_pipeline();
+    } catch (const Halide::CompileError& e) {
+        log::error(e.what());
+        throw std::runtime_error(e.what());
+    }
+
+    return bb->arginfos();
+}
+
 std::string Builder::bb_metadata(void) {
 
     std::vector<Metadata> md;
@@ -477,6 +516,7 @@ std::string Builder::bb_metadata(void) {
 
     return j.dump();
 }
+
 
 void Builder::register_disposer(const std::string& bb_id, const std::string& disposer_symbol) {
     log::info("Builder::register_disposer");

@@ -143,7 +143,6 @@ install(FILES
 
 # Halide
 set(HALIDE_ROOT ${Halide_DIR}/../../..)
-message("${HALIDE_ROOT}")
 
 file(GLOB_RECURSE HALIDE_HEADERS Halide*.h)
 install(FILES ${HALIDE_HEADERS} DESTINATION include)

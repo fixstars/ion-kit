@@ -101,7 +101,7 @@ public:
      * Construct new port from buffer
      */
     template<typename T>
-    Port(const Halide::Buffer<T>& buf) : impl_(new Impl("", buf.name(), Halide::type_of<T>(), buf.dimensions())), index_(-1) {
+    Port(const Halide::Buffer<T>& buf) : impl_(new Impl("", buf.name(), buf.type(), buf.dimensions())), index_(-1) {
         this->bind(buf);
     }
 
@@ -201,7 +201,7 @@ private:
      std::vector<Halide::Argument> as_argument() const {
          std::vector<Halide::Argument> args;
          for (const auto& [i, param] : impl_->params) {
-             if (args.size() <= i) {
+             if (static_cast<int>(args.size()) <= i) {
                  args.resize(i+1, Halide::Argument());
              }
              auto kind = dimensions() == 0 ? Halide::Argument::InputScalar : Halide::Argument::InputBuffer;
@@ -213,7 +213,7 @@ private:
      std::vector<const void *> as_instance() const {
          std::vector<const void *> instances;
         for (const auto& [i, instance] : impl_->instances) {
-             if (instances.size() <= i) {
+             if (static_cast<int>(instances.size()) <= i) {
                  instances.resize(i+1, nullptr);
              }
              instances[i] = instance;
@@ -228,7 +228,7 @@ private:
 
          std::vector<Halide::Expr> es;
          for (const auto& [i, param] : impl_->params) {
-             if (es.size() <= i) {
+             if (static_cast<int>(es.size()) <= i) {
                  es.resize(i+1, Halide::Expr());
              }
              es[i] = Halide::Internal::Variable::make(type(), argument_name(pred_id(), pred_name(), i), param);
@@ -243,7 +243,7 @@ private:
 
          std::vector<Halide::Func> fs;
          for (const auto& [i, param] : impl_->params ) {
-             if (fs.size() <= i) {
+             if (static_cast<int>(fs.size()) <= i) {
                  fs.resize(i+1, Halide::Func());
              }
              std::vector<Halide::Var> args;

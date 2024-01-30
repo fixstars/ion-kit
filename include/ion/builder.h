@@ -15,6 +15,8 @@
 
 namespace ion {
 
+using ArgInfo = Halide::Internal::AbstractGenerator::ArgInfo;
+
 class DynamicModule;
 
 /**
@@ -77,6 +79,15 @@ public:
 
     void run(ion::PortMap& ports);
 
+    /**
+     * Retrieve names of BBs
+     */
+    std::vector<std::string> bb_names(void);
+
+    /**
+     * Retrieve arginfo of specific bb
+     */
+    std::vector<ArgInfo> bb_arginfos(const std::string& name);
 
     /**
      * Retrieve metadata of Building Block in json format.
