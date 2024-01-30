@@ -9,6 +9,10 @@
 
 namespace ion {
 
+using ArgInfo = Halide::Internal::AbstractGenerator::ArgInfo;
+using ArgInfoKind = Halide::Internal::ArgInfoKind;
+using ArgInfoDirection = Halide::Internal::ArgInfoDirection;
+
 template<typename T>
 using BuildingBlockParam = Halide::GeneratorParam<T>;
 
