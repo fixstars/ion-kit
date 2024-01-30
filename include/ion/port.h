@@ -60,8 +60,8 @@ private:
         Halide::Type type;
         int32_t dimensions;
 
-        std::unordered_map<int32_t, Halide::Internal::Parameter> params;
-        std::unordered_map<int32_t, const void *> instances;
+        std::unordered_map<uint32_t, Halide::Internal::Parameter> params;
+        std::unordered_map<uint32_t, const void *> instances;
 
         Impl();
         Impl(const std::string& pid, const std::string& pn, const Halide::Type& t, int32_t d);
@@ -213,7 +213,7 @@ private:
      std::vector<const void *> as_instance() const {
          std::vector<const void *> instances;
         for (const auto& [i, instance] : impl_->instances) {
-             if (instances.size() <= i) {
+             if (instances.size() <= static_cast<decltype(instances.size())>(i)) {
                  instances.resize(i+1, nullptr);
              }
              instances[i] = instance;
