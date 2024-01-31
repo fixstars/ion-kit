@@ -898,19 +898,11 @@ class U3V {
         }
 
         for (auto i=0; i<devices_.size(); ++i) {
-            arv_device_execute_command(devices_[i].device_, "AcquisitionStop", &err_);
-            if (err_) {
-                throw std::runtime_error(err_->message);
-            }
-            log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionStop");
-        }
-
-        for (auto i=0; i<devices_.size(); ++i) {
             arv_device_execute_command(devices_[i].device_, "AcquisitionStart", &err_);
             if (err_) {
                 throw std::runtime_error(err_->message);
             }
-            log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionMode");
+            log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionStart");
         }
     }
 
