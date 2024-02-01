@@ -137,9 +137,13 @@ install(FILES
     DESTINATION license)
 
 # Halide
-file(GLOB_RECURSE HALIDE_HEADERS "${Halide_DIR}/../../../Halide*.h")
+file(GLOB_RECURSE HALIDE_HEADERS "${Halide_DIR}/../../../include/Halide*.h")
 install(FILES ${HALIDE_HEADERS} DESTINATION include)
 install(IMPORTED_RUNTIME_ARTIFACTS Halide::Halide)
+if(WIN32)
+    file(GLOB_RECURSE HALIDE_IMPLIB "${Halide_DIR}/../../../Halide.lib")
+    install(FILES ${HALIDE_IMPLIB} DESTINATION lib)
+endif()
 
 #
 # Packaging
