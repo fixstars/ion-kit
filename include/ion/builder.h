@@ -9,6 +9,7 @@
 
 #include "def.h"
 #include "buffer.h"
+#include "graph.h"
 #include "node.h"
 #include "target.h"
 #include "port_map.h"
@@ -107,11 +108,15 @@ public:
      */
     void register_disposer(const std::string& bb_id, const std::string& disposer_symbol);
 
+
+    Graph add_graph(const std::string& n) {
+        // TODO: Implement this
+        return Graph();
+    }
+
 private:
 
     Halide::Pipeline build(bool implicit_output = false);
-
-    void determine_and_validate();
 
     std::vector<Halide::Argument> get_arguments_stub() const;
     std::vector<const void*> get_arguments_instance() const;
@@ -120,15 +125,19 @@ private:
         pipeline_.set_jit_externs(externs);
     }
 
+    // Essential
     Halide::Target target_;
-    std::vector<Node> nodes_;
     std::unordered_map<std::string, std::shared_ptr<DynamicModule>> bb_modules_;
+    std::vector<Graph> graphs_;
+    std::vector<Node> nodes_;
+    std::vector<std::tuple<std::string, std::function<void(const char*)>>> disposers_;
+
+    // Cacheable
     Halide::Pipeline pipeline_;
     Halide::Callable callable_;
     std::unique_ptr<Halide::JITUserContext> jit_ctx_;
     Halide::JITUserContext* jit_ctx_ptr_;
     std::vector<const void*> args_;
-    std::vector<std::tuple<std::string, std::function<void(const char*)>>> disposers_;
 };
 
 } // namespace ion

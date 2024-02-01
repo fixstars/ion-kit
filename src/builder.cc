@@ -11,6 +11,7 @@
 
 #include "dynamic_module.h"
 #include "log.h"
+#include "lower.h"
 #include "metadata.h"
 #include "serializer.h"
 
@@ -30,48 +31,6 @@ std::map<Halide::OutputFileType, std::string> compute_output_files(const Halide:
     return output_files;
 }
 
-bool is_ready(const std::vector<Node>& sorted, const Node& n) {
-    bool ready = true;
-    for (const auto& [pn, port] : n.iports()) {
-        // This port has predecessor dependency. Always ready to add.
-        if (!port.has_pred()) {
-            continue;
-        }
-
-        const auto& port_(port); // This is workaround for Clang-14 (MacOS)
-
-        // Check port dependent node is already added
-        ready &= std::find_if(sorted.begin(), sorted.end(),
-                              [&](const Node& n) {
-                                return n.id() == port_.pred_id();
-                              }) != sorted.end();
-    }
-    return ready;
-}
-
-std::vector<Node> topological_sort(std::vector<Node> nodes) {
-    std::vector<Node> sorted;
-    if (nodes.empty()) {
-        return sorted;
-    }
-
-    auto it = nodes.begin();
-    while (!nodes.empty()) {
-        if (is_ready(sorted, *it)) {
-            sorted.push_back(*it);
-            nodes.erase(it);
-            it = nodes.begin();
-        } else {
-            it++;
-            if (it == nodes.end()) {
-                it = nodes.begin();
-            }
-        }
-    }
-
-    return sorted;
-}
-
 Halide::Internal::AbstractGenerator::ArgInfo make_arginfo(const std::string& name,
                                                           Halide::Internal::ArgInfoDirection dir,
                                                           Halide::Internal::ArgInfoKind kind,
@@ -80,27 +39,6 @@ Halide::Internal::AbstractGenerator::ArgInfo make_arginfo(const std::string& nam
     return Halide::Internal::AbstractGenerator::ArgInfo {
         name, dir, kind, types, dimensions
     };
-}
-
-bool is_free(const std::string& pn) {
-    return pn.find("_ion_iport_") != std::string::npos;
-}
-
-std::tuple<Halide::Internal::AbstractGenerator::ArgInfo, bool> find_ith_input(const std::vector<Halide::Internal::AbstractGenerator::ArgInfo>& arginfos, int i) {
-    int j = 0;
-    for (const auto& arginfo : arginfos) {
-        if (arginfo.dir != Halide::Internal::ArgInfoDirection::Input) {
-            continue;
-        }
-
-        if (i == j) {
-            return std::make_tuple(arginfo, true);
-        }
-
-        j++;
-    }
-
-    return std::make_tuple(Halide::Internal::AbstractGenerator::ArgInfo(), false);
 }
 
 } // anonymous
@@ -139,7 +77,7 @@ Builder& Builder::with_bb_module(const std::string& module_name_or_path) {
 
 
 void Builder::save(const std::string& file_name) {
-    determine_and_validate();
+    determine_and_validate(nodes_);
     std::ofstream ofs(file_name);
     json j;
     j["target"] = target_.to_string();
@@ -252,11 +190,11 @@ Halide::Pipeline Builder::build(bool implicit_output) {
 
     log::info("Start building pipeline");
 
-    determine_and_validate();
+    determine_and_validate(nodes_);
 
     // Sort nodes prior to build.
     // This operation is required especially for the graph which is loaded from JSON definition.
-    nodes_ = topological_sort(nodes_);
+    topological_sort(nodes_);
 
     // Constructing Generator object and setting static parameters
     std::unordered_map<std::string, Halide::Internal::AbstractGeneratorPtr> bbs;
@@ -390,76 +328,6 @@ Halide::Pipeline Builder::build(bool implicit_output) {
     }
 
     return Halide::Pipeline(output_funcs);
-}
-
-void Builder::determine_and_validate() {
-
-    auto generator_names = Halide::Internal::GeneratorRegistry::enumerate();
-
-    for (auto n : nodes_) {
-        if (std::find(generator_names.begin(), generator_names.end(), n.name()) == generator_names.end()) {
-            throw std::runtime_error("Cannot find generator : " + n.name());
-        }
-
-        auto bb(Halide::Internal::GeneratorRegistry::create(n.name(), Halide::GeneratorContext(n.target())));
-
-        // Validate and set parameters
-        for (const auto& p : n.params()) {
-            try {
-                bb->set_generatorparam_value(p.key(), p.val());
-            } catch (const Halide::CompileError& e) {
-                auto msg = fmt::format("BuildingBlock \"{}\" has no parameter \"{}\"", n.name(), p.key());
-                log::error(msg);
-                throw std::runtime_error(msg);
-            }
-        }
-
-        try {
-            bb->build_pipeline();
-        } catch (const Halide::CompileError& e) {
-            log::error(e.what());
-            throw std::runtime_error(e.what());
-        }
-
-        const auto& arginfos(bb->arginfos());
-
-        // validate input port
-        auto i = 0;
-        for (auto& [pn, port] : n.iports()) {
-            if (is_free(pn)) {
-                const auto& [arginfo, found] = find_ith_input(arginfos, i);
-                if (!found) {
-                    auto msg = fmt::format("BuildingBlock \"{}\" has no input #{}", n.name(), i);
-                    log::error(msg);
-                    throw std::runtime_error(msg);
-                }
-
-                port.determine_succ(n.id(), pn, arginfo.name);
-                pn = arginfo.name;
-            }
-
-            const auto& pn_(pn); // This is workaround for Clang-14 (MacOS)
-            if (!std::count_if(arginfos.begin(), arginfos.end(),
-                               [&](Halide::Internal::AbstractGenerator::ArgInfo arginfo){ return pn_ == arginfo.name && Halide::Internal::ArgInfoDirection::Input == arginfo.dir; })) {
-                auto msg = fmt::format("BuildingBlock \"{}\" has no input \"{}\"", n.name(), pn);
-                log::error(msg);
-                throw std::runtime_error(msg);
-            }
-
-            i++;
-        }
-
-        // validate output
-        for (const auto& [pn, port] : n.oports()) {
-            const auto& pn_(pn); // This is workaround for Clang-14 (MacOS)
-            if (!std::count_if(arginfos.begin(), arginfos.end(),
-                               [&](Halide::Internal::AbstractGenerator::ArgInfo arginfo){ return pn_ == arginfo.name && Halide::Internal::ArgInfoDirection::Output == arginfo.dir; })) {
-                auto msg = fmt::format("BuildingBlock \"{}\" has no output \"{}\"", n.name(), pn);
-                log::error(msg);
-                throw std::runtime_error(msg);
-            }
-        }
-    }
 }
 
 std::vector<std::string> Builder::bb_names(void) {

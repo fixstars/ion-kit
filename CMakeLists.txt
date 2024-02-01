@@ -64,6 +64,14 @@ add_library(ion-core SHARED ${ION_CORE_SRC})
 target_include_directories(ion-core PUBLIC ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/src)
 target_link_libraries(ion-core PUBLIC Halide::Halide Threads::Threads ${CMAKE_DL_LIBS} )
 
+# NOTE: This should be gone when ion::PortMap is removed
+if(UNIX AND NOT APPLE)
+    target_compile_options(ion-core PRIVATE "-Wno-deprecated-declarations")
+else()
+    # TODO:
+endif()
+
+
 #
 # ion-bb
 #

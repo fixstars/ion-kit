@@ -42,6 +42,11 @@ ion_jit_executable(dup SRCS dup.cc)
 
 # Port binding in compatible style
 ion_jit_executable(port-binding-compat SRCS port-binding-compat.cc)
+if(UNIX AND NOT APPLE)
+    target_compile_options(port-binding-compat_jit PRIVATE "-Wno-deprecated-declarations")
+else()
+    # TODO:
+endif()
 
 # Port binding
 ion_jit_executable(port-binding SRCS port-binding.cc)
@@ -72,6 +77,9 @@ ion_jit_executable(validation SRCS validation.cc)
 
 # Multi
 ion_jit_executable(multi_pipe SRCS multi_pipe.cc)
+
+# Graph
+ion_jit_executable(graph SRCS graph.cc)
 
 ion_aot_executable(simple_graph SRCS_COMPILE simple_graph_compile.cc SRCS_RUN simple_graph_run.cc LIBS ion-bb-test)
 ion_jit_executable(simple_graph SRCS simple_graph_jit.cc)
