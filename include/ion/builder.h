@@ -76,9 +76,12 @@ public:
      */
     void compile(const std::string& function_name, const CompileOption& option = CompileOption{});
 
-    void run();
-
-    void run(ion::PortMap& ports);
+    /**
+     * Run the pipeline immediately.
+     * @arg pm: This remains just for backward compatibility. Port::bind can be used instead of PortMap.
+     * This argument will be removed in coming major release.
+     */
+   void run(const PortMap& pm = PortMap());
 
     /**
      * Retrieve names of BBs
@@ -115,8 +118,6 @@ public:
     }
 
 private:
-
-    Halide::Pipeline build(bool implicit_output = false);
 
     std::vector<Halide::Argument> get_arguments_stub() const;
     std::vector<const void*> get_arguments_instance() const;

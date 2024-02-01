@@ -189,38 +189,6 @@ public:
 
      static std::tuple<std::shared_ptr<Impl>, bool> find_impl(const std::string& id);
 
-private:
-    /**
-     * This port is created from another node.
-     * In this case, it is not sure what this port is input or output.
-     * pid and pn is stored in both pred and succ,
-     * then it will determined through pipeline build process.
-     */
-     Port(const std::string& pid, const std::string& pn) : impl_(new Impl(pid, pn, Halide::Type(), 0)), index_(-1) {}
-
-     std::vector<Halide::Argument> as_argument() const {
-         std::vector<Halide::Argument> args;
-         for (const auto& [i, param] : impl_->params) {
-             if (args.size() <= i) {
-                 args.resize(i+1, Halide::Argument());
-             }
-             auto kind = dimensions() == 0 ? Halide::Argument::InputScalar : Halide::Argument::InputBuffer;
-             args[i] = Halide::Argument(argument_name(pred_id(), pred_name(), i),  kind, type(), dimensions(), Halide::ArgumentEstimates());
-         }
-         return args;
-     }
-
-     std::vector<const void *> as_instance() const {
-         std::vector<const void *> instances;
-        for (const auto& [i, instance] : impl_->instances) {
-             if (instances.size() <= i) {
-                 instances.resize(i+1, nullptr);
-             }
-             instances[i] = instance;
-        }
-         return instances;
-     }
-
      std::vector<Halide::Expr> as_expr() const {
          if (dimensions() != 0) {
             throw std::runtime_error("Unreachable");
@@ -258,6 +226,38 @@ private:
          }
          return fs;
      }
+
+     std::vector<Halide::Argument> as_argument() const {
+         std::vector<Halide::Argument> args;
+         for (const auto& [i, param] : impl_->params) {
+             if (args.size() <= i) {
+                 args.resize(i+1, Halide::Argument());
+             }
+             auto kind = dimensions() == 0 ? Halide::Argument::InputScalar : Halide::Argument::InputBuffer;
+             args[i] = Halide::Argument(argument_name(pred_id(), pred_name(), i),  kind, type(), dimensions(), Halide::ArgumentEstimates());
+         }
+         return args;
+     }
+
+     std::vector<const void *> as_instance() const {
+         std::vector<const void *> instances;
+        for (const auto& [i, instance] : impl_->instances) {
+             if (instances.size() <= i) {
+                 instances.resize(i+1, nullptr);
+             }
+             instances[i] = instance;
+        }
+         return instances;
+     }
+
+private:
+    /**
+     * This port is created from another node.
+     * In this case, it is not sure what this port is input or output.
+     * pid and pn is stored in both pred and succ,
+     * then it will determined through pipeline build process.
+     */
+     Port(const std::string& pid, const std::string& pn) : impl_(new Impl(pid, pn, Halide::Type(), 0)), index_(-1) {}
 
      std::shared_ptr<Impl> impl_;
 

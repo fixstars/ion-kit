@@ -144,7 +144,7 @@ void topological_sort(std::vector<Node>& nodes) {
 }
 
 Halide::Pipeline lower(const Builder* builder_ptr, std::vector<Node>& nodes, bool implicit_output) {
-#if 0
+
     log::info("Start building pipeline");
 
     determine_and_validate(nodes);
@@ -285,9 +285,6 @@ Halide::Pipeline lower(const Builder* builder_ptr, std::vector<Node>& nodes, boo
     }
 
     return Halide::Pipeline(output_funcs);
-#else
-    return Halide::Pipeline();
-#endif
 }
 
 } // namespace ion
