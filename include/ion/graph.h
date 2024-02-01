@@ -7,19 +7,34 @@
 
 namespace ion {
 
+class Builder;
+
 class Graph {
+
+    struct Impl;
+
 public:
+    Graph(Builder builder, const std::string& name);
 
     /**
      * Adding new node to the graph.
-     * @arg k: The key of the node which should be matched with second argument of ION_REGISTER_BUILDING_BLOCK().
+     * @arg n: The name of the building block which should be matched with second argument of ION_REGISTER_BUILDING_BLOCK().
      */
-    Node add(const std::string& k);
+    Node add(const std::string& name);
 
+    /**
+     * Run the pipeline immediately.
+     */
     void run();
 
+    /**
+     * Get the node list.
+     */
+    const std::vector<Node>& nodes() const;
+    std::vector<Node>& nodes();
+
 private:
-    std::vector<Node> nodes_;
+    std::shared_ptr<Impl> impl_;
 };
 
 } // namespace ion

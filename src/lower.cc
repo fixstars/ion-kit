@@ -143,7 +143,60 @@ void topological_sort(std::vector<Node>& nodes) {
     nodes.swap(sorted);
 }
 
-Halide::Pipeline lower(const Builder* builder_ptr, std::vector<Node>& nodes, bool implicit_output) {
+std::vector<Halide::Argument> get_arguments_stub(const std::vector<Node>& nodes) {
+    std::set<Port::Channel> added_ports;
+    std::vector<Halide::Argument> args;
+    for (const auto& node : nodes) {
+        for (const auto& [pn, port] : node.iports()) {
+            if (port.has_pred()) {
+                continue;
+            }
+
+            if (added_ports.count(port.pred_chan())) {
+                continue;
+            }
+            added_ports.insert(port.pred_chan());
+
+            const auto& port_args(port.as_argument());
+            args.insert(args.end(), port_args.begin(), port_args.end());
+        }
+    }
+    return args;
+}
+
+std::vector<const void*> get_arguments_instance(const std::vector<Node>& nodes) {
+    std::set<Port::Channel> added_args;
+    std::vector<const void*> instances;
+
+    // Input
+    for (const auto& node : nodes) {
+        for (const auto& [pn, port] : node.iports()) {
+            if (port.has_pred()) {
+                continue;
+            }
+
+            if (added_args.count(port.pred_chan())) {
+                continue;
+            }
+            added_args.insert(port.pred_chan());
+
+            const auto& port_instances(port.as_instance());
+            instances.insert(instances.end(), port_instances.begin(), port_instances.end());
+        }
+    }
+
+    // Output
+    for (const auto& node : nodes) {
+        for (const auto& [pn, port] : node.oports()) {
+            const auto& port_instances(port.as_instance());
+            instances.insert(instances.end(), port_instances.begin(), port_instances.end());
+        }
+    }
+
+    return instances;
+}
+
+Halide::Pipeline lower(Builder builder, std::vector<Node>& nodes, bool implicit_output) {
 
     log::info("Start building pipeline");
 
@@ -160,7 +213,7 @@ Halide::Pipeline lower(const Builder* builder_ptr, std::vector<Node>& nodes, boo
 
         // Default parameter
         Halide::GeneratorParamsMap params;
-        params["builder_ptr"] = std::to_string(reinterpret_cast<uint64_t>(builder_ptr));
+        params["builder_impl_ptr"] = std::to_string(reinterpret_cast<uint64_t>(builder.impl_ptr()));
         params["bb_id"] = n.id();
 
         // User defined parameter

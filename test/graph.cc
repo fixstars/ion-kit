@@ -18,10 +18,10 @@ int main()
         out0.fill(0);
 
         Buffer<int32_t> out1(size, size);
-        out0.fill(1);
+        out0.fill(0);
 
         Graph g0 = b.add_graph("graph0");
-        Node n0 = g0.add("test_inc")(in).set_param(Param("v", 40));
+        Node n0 = g0.add("test_inc_i32x2")(in).set_param(Param("v", 40));
         n0["output"].bind(out0);
         g0.run();
 
@@ -30,14 +30,14 @@ int main()
                 if (out0(x, y) != 41) {
                     return 1;
                 }
-                if (out1(x, y) != 1) {
+                if (out1(x, y) != 0) {
                     return 1;
                 }
             }
         }
 
         Graph g1 = b.add_graph("graph1");
-        Node n1 = g1.add("test_inc")(in).set_param(Param("v", 41));
+        Node n1 = g1.add("test_inc_i32x2")(in).set_param(Param("v", 41));
         n1["output"].bind(out1);
         g1.run();
 

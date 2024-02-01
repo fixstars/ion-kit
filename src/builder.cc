@@ -45,43 +45,73 @@ Halide::Internal::AbstractGenerator::ArgInfo make_arginfo(const std::string& nam
 
 using json = nlohmann::json;
 
+struct Builder::Impl {
+    // Essential
+    Halide::Target target;
+    std::unordered_map<std::string, std::shared_ptr<DynamicModule>> bb_modules;
+    std::map<std::string, Halide::JITExtern> jit_externs;
+    std::vector<Graph> graphs;
+    std::vector<Node> nodes;
+    std::vector<std::tuple<std::string, std::function<void(const char*)>>> disposers;
+
+    // Cacheable
+    Halide::Pipeline pipeline;
+    Halide::Callable callable;
+    std::unique_ptr<Halide::JITUserContext> jit_ctx;
+    Halide::JITUserContext* jit_ctx_ptr;
+    std::vector<const void*> args;
+
+    Impl() : jit_ctx(new Halide::JITUserContext), jit_ctx_ptr(jit_ctx.get()) {
+    }
+};
+
 Builder::Builder()
-    : jit_ctx_(new Halide::JITUserContext), jit_ctx_ptr_(jit_ctx_.get())
+    : impl_(new Impl)
 {
 }
 
 Builder::~Builder()
 {
-    for (auto [bb_id, disposer] : disposers_) {
+    for (auto [bb_id, disposer] : impl_->disposers) {
         disposer(bb_id.c_str());
     }
 }
 
-Node Builder::add(const std::string& k)
+Node Builder::add(const std::string& name)
 {
-    // TODO: Validate bb is existing
-    Node n(sole::uuid4().str(), k, target_);
-    nodes_.push_back(n);
+    Node n(sole::uuid4().str(), name, impl_->target);
+    impl_->nodes.push_back(n);
     return n;
 }
 
+Graph Builder::add_graph(const std::string& name) {
+    Graph g(*this, name);
+    impl_->graphs.push_back(g);
+    return g;
+}
+
 Builder& Builder::set_target(const Halide::Target& target) {
-    target_ = target;
+    impl_->target = target;
     return *this;
 }
 
 Builder& Builder::with_bb_module(const std::string& module_name_or_path) {
-    bb_modules_[module_name_or_path] = std::make_shared<DynamicModule>(module_name_or_path);
+    auto bb_module = std::make_shared<DynamicModule>(module_name_or_path);
+    auto register_extern = bb_module->get_symbol<void (*)(std::map<std::string, Halide::JITExtern>&)>("register_externs");
+    if (register_extern) {
+        register_extern(impl_->jit_externs);
+
+    }
+    impl_->bb_modules[module_name_or_path] = bb_module;
     return *this;
 }
 
-
 void Builder::save(const std::string& file_name) {
-    determine_and_validate(nodes_);
+    determine_and_validate(impl_->nodes);
     std::ofstream ofs(file_name);
     json j;
-    j["target"] = target_.to_string();
-    j["nodes"] = nodes_;
+    j["target"] = impl_->target.to_string();
+    j["nodes"] = impl_->nodes;
     ofs << j;
     return;
 }
@@ -90,8 +120,8 @@ void Builder::load(const std::string& file_name) {
     std::ifstream ifs(file_name);
     json j;
     ifs >> j;
-    target_ = Halide::Target(j["target"].get<std::string>());
-    nodes_ = j["nodes"].get<std::vector<Node>>();
+    impl_->target = Halide::Target(j["target"].get<std::string>());
+    impl_->nodes = j["nodes"].get<std::vector<Node>>();
     return;
 }
 
@@ -99,13 +129,13 @@ void Builder::compile(const std::string& function_name, const CompileOption& opt
     using namespace Halide;
 
     // Build pipeline and module first
-    Pipeline p = lower(this, nodes_, true);
+    Pipeline p = lower(*this, impl_->nodes, true);
     if (!p.defined()) {
         log::warn("This pipeline doesn't produce any outputs. Please bind a buffer with output port.");
         return;
     }
 
-    Module m = p.compile_to_module(p.infer_arguments(), function_name, target_);
+    Module m = p.compile_to_module(p.infer_arguments(), function_name, impl_->target);
 
     // Tailor prefix
     auto output_prefix = option.output_directory.empty() ? "." : option.output_directory + "/";
@@ -114,7 +144,7 @@ void Builder::compile(const std::string& function_name, const CompileOption& opt
     std::set<OutputFileType> outputs;
 
 #ifdef HALIDE_FOR_FPGA
-    if (target_.has_fpga_feature()) {
+    if (impl_->target.has_fpga_feature()) {
         outputs.insert(OutputFileType::hls_package);
     } else {
 #endif
@@ -124,12 +154,12 @@ void Builder::compile(const std::string& function_name, const CompileOption& opt
     }
 #endif
 
-    const auto output_files = compute_output_files(target_, output_prefix, outputs);
+    const auto output_files = compute_output_files(impl_->target, output_prefix, outputs);
     m.compile(output_files);
 
 #ifdef HALIDE_FOR_FPGA
 #ifdef __linux__
-    if (target_.has_fpga_feature()) {
+    if (impl_->target.has_fpga_feature()) {
         std::string hls_dir = output_files.at(OutputFileType::hls_package);
         chdir(hls_dir.c_str());
         int ret = std::getenv("ION_CSIM") ? system("make -f Makefile.csim.static") : system("make -f Makefile.ultra96v2");
@@ -147,38 +177,38 @@ void Builder::compile(const std::string& function_name, const CompileOption& opt
 }
 
 void Builder::run(const ion::PortMap&) {
-     if (!pipeline_.defined()) {
-        pipeline_ = lower(this, nodes_, false);
-        if (!pipeline_.defined()) {
+     if (!impl_->pipeline.defined()) {
+        impl_->pipeline = lower(*this, impl_->nodes, false);
+        if (!impl_->pipeline.defined()) {
             log::warn("This pipeline doesn't produce any outputs. Please bind a buffer with output port.");
             return;
         }
     }
 
-    if (!callable_.defined()) {
+    if (!impl_->callable.defined()) {
         std::map<std::string, Halide::JITExtern> jit_externs;
-        for (auto bb : bb_modules_) {
+        for (auto bb : impl_->bb_modules) {
             auto register_extern = bb.second->get_symbol<void (*)(std::map<std::string, Halide::JITExtern>&)>("register_externs");
             if (register_extern) {
                 register_extern(jit_externs);
 
             }
         }
-        pipeline_.set_jit_externs(jit_externs);
+        impl_->pipeline.set_jit_externs(jit_externs);
 
         // TODO: Validate argument list
-        // pipeline_.infer_arguments()) {
+        // impl_->pipeline.infer_arguments()) {
 
-        callable_ = pipeline_.compile_to_callable(get_arguments_stub(), target_);
+        impl_->callable = impl_->pipeline.compile_to_callable(get_arguments_stub(impl_->nodes), impl_->target);
 
-        args_.clear();
-        args_.push_back(&jit_ctx_ptr_);
+        impl_->args.clear();
+        impl_->args.push_back(&impl_->jit_ctx_ptr);
 
-        const auto& args(get_arguments_instance());
-        args_.insert(args_.end(), args.begin(), args.end());
+        const auto& args(get_arguments_instance(impl_->nodes));
+        impl_->args.insert(impl_->args.end(), args.begin(), args.end());
     }
 
-    callable_.call_argv_fast(args_.size(), args_.data());
+    impl_->callable.call_argv_fast(impl_->args.size(), impl_->args.data());
 }
 
 std::vector<std::string> Builder::bb_names(void) {
@@ -231,69 +261,36 @@ std::string Builder::bb_metadata(void) {
     return j.dump();
 }
 
+Target Builder::target() const {
+    return impl_->target;
+}
 
-void Builder::register_disposer(const std::string& bb_id, const std::string& disposer_symbol) {
+const std::vector<Node>& Builder::nodes() const {
+    return impl_->nodes;
+}
+
+std::vector<Node>& Builder::nodes() {
+    return impl_->nodes;
+}
+
+const std::map<std::string, Halide::JITExtern>& Builder::jit_externs() const {
+    return impl_->jit_externs;
+}
+
+void Builder::register_disposer(Impl *impl, const std::string& bb_id, const std::string& disposer_symbol) {
     log::info("Builder::register_disposer");
-    for (const auto& kv : bb_modules_) {
+    for (const auto& kv : impl->bb_modules) {
         const auto& dm(kv.second);
         auto disposer_ptr = dm->get_symbol<void (*)(const char*)>(disposer_symbol);
         if (disposer_ptr) {
-            disposers_.push_back(std::make_tuple(bb_id, disposer_ptr));
+            impl->disposers.push_back(std::make_tuple(bb_id, disposer_ptr));
         }
     }
 }
 
-std::vector<Halide::Argument> Builder::get_arguments_stub() const {
-    std::set<Port::Channel> added_ports;
-    std::vector<Halide::Argument> args;
-    for (const auto& node : nodes_) {
-        for (const auto& [pn, port] : node.iports()) {
-            if (port.has_pred()) {
-                continue;
-            }
-
-            if (added_ports.count(port.impl_->pred_chan)) {
-                continue;
-            }
-            added_ports.insert(port.impl_->pred_chan);
-
-            const auto& port_args(port.as_argument());
-            args.insert(args.end(), port_args.begin(), port_args.end());
-        }
-    }
-    return args;
+const Builder::Impl* Builder::impl_ptr() const {
+    return impl_.get();
 }
 
-std::vector<const void*> Builder::get_arguments_instance() const {
-    std::set<Port::Channel> added_args;
-    std::vector<const void*> instances;
-
-    // Input
-    for (const auto& node : nodes_) {
-        for (const auto& [pn, port] : node.iports()) {
-            if (port.has_pred()) {
-                continue;
-            }
-
-            if (added_args.count(port.impl_->pred_chan)) {
-                continue;
-            }
-            added_args.insert(port.impl_->pred_chan);
-
-            const auto& port_instances(port.as_instance());
-            instances.insert(instances.end(), port_instances.begin(), port_instances.end());
-        }
-    }
-
-    // Output
-    for (const auto& node : nodes_) {
-        for (const auto& [pn, port] : node.oports()) {
-            const auto& port_instances(port.as_instance());
-            instances.insert(instances.end(), port_instances.begin(), port_instances.end());
-        }
-    }
-
-    return instances;
-}
 
 } //namespace ion
