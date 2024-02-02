@@ -14,7 +14,13 @@ class Graph {
     struct Impl;
 
 public:
-    Graph(Builder builder, const std::string& name);
+
+    Graph& operator+=(const Graph& rhs);
+
+    friend Graph operator+(const Graph& lhs, const Graph& rhs);
+
+    // TODO: Naming
+    Graph(Builder builder, const std::string& name = "");
 
     /**
      * Adding new node to the graph.

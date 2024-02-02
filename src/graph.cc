@@ -23,6 +23,20 @@ struct Graph::Impl {
     {}
 };
 
+Graph& Graph::operator+=(const Graph& rhs)
+{
+    impl_->nodes.insert(impl_->nodes.end(), rhs.impl_->nodes.begin(), rhs.impl_->nodes.end());
+    return *this;
+}
+
+Graph operator+(const Graph& lhs, const Graph& rhs)
+{
+    Graph g(lhs.impl_->builder);
+    g += lhs;
+    g += rhs;
+    return g;
+}
+
 Graph::Graph(Builder builder, const std::string& name)
     : impl_(new Impl(builder, name))
 {
