@@ -130,7 +130,11 @@ public:
     }
 
     ~Writer() {
-        dispose();
+        if (!disposed_){
+            ion::log::debug("Trying to call dispose from distructor since disposed_ is {}", disposed_);
+            dispose();
+        }
+
     }
 
     void post_images(std::vector<void *>& outs, std::vector<size_t>& size, 
@@ -179,6 +183,7 @@ public:
     }
 
     void dispose() {
+         ion::log::debug("Writer::dispose() :: is called");
         // Already disposed if thread is not joinable
         if (thread_ && thread_->joinable()) {
             keep_running_ = false;
@@ -186,6 +191,8 @@ public:
             thread_->join();
             thread_ = nullptr;
         }
+         ion::log::debug("Writer::dispose() :: is finished");
+         disposed_ = true;
     }
 
 
@@ -198,7 +205,7 @@ public:
         Writer & writer = *instances[id].get();
         writer.dispose();
         instances.erase(id);
-        ion::log::debug("Writer::release_instance() :: is finished");
+        ion::log::debug("Writer::release_instance() :: Instance is delete");
 
        }
 
@@ -223,7 +230,7 @@ public:
 
 private:
     Writer(std::vector<int32_t>& payload_size, const ::std::string& output_directory, bool write_framecount)
-        : keep_running_(true), output_directory_(output_directory), with_header_(true)
+        : keep_running_(true), output_directory_(output_directory), with_header_(true), disposed_(false)
     {
         int total_payload_size = 0;
         for (auto s : payload_size){
@@ -346,6 +353,7 @@ private:
     uint32_t width_;
     uint32_t height_;
     std::filesystem::path output_directory_;
+    bool disposed_;
 
     bool with_header_;
 };
