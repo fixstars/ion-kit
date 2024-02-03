@@ -1,8 +1,5 @@
 
-<<<<<<< Updated upstream
-__version__ = "1.0.0"
-=======
->>>>>>> Stashed changes
+
 from .Port import Port
 from .Param import Param
 from .Node import Node
