@@ -18,6 +18,10 @@ Node::Impl::Impl(const std::string& id_, const std::string& name_, const Halide:
 
 void Node::set_iport(const std::vector<Port>& ports) {
 
+    impl_->ports.erase(std::remove_if(impl_->ports.begin(), impl_->ports.end(),
+                                      [&](const Port &p) { return p.has_succ_by_nid(this->id()); }),
+                       impl_->ports.end());
+
     size_t i = 0;
     for (auto& port : ports) {
         // TODO: Validation is better to be done lazily after BuildingBlock::configure
@@ -32,7 +36,7 @@ void Node::set_iport(const std::vector<Port>& ports) {
         // }
 
         // NOTE: Is succ_chans name OK to be just leave as it is?
-        port.impl_->succ_chans.insert({id(), "_ion_iport_" + i});
+        port.impl_->succ_chans.insert({id(), "_ion_iport_" + std::to_string(i)});
 
         impl_->ports.push_back(port);
 
@@ -41,28 +45,68 @@ void Node::set_iport(const std::vector<Port>& ports) {
 }
 
 Port Node::operator[](const std::string& name) {
-        // TODO: Validation is better to be done lazily after BuildingBlock::configure
-        //
-        // if (std::find_if(impl_->arginfos.begin(), impl_->arginfos.end(),
-        //                  [&](const Halide::Internal::AbstractGenerator::ArgInfo& info) { return info.name == name; }) == impl_->arginfos.end()) {
-        //     log::error("Port {} is not found", name);
-        //     throw std::runtime_error("Failed to find port");
-        // }
+    auto it = std::find_if(impl_->ports.begin(), impl_->ports.end(),
+                           [&](const Port& p){ return p.pred_id() == impl_->id && p.pred_name() == name; });
+    if (it == impl_->ports.end()) {
+        // This is output port which is never referenced.
+        // Bind myself as a predecessor and register
+        Port port(impl_->id, name);
+        impl_->ports.push_back(port);
+        return port;
+    } else {
+        // Port is already registered
+        return *it;
+    }
+}
 
-        auto it = std::find_if(impl_->ports.begin(), impl_->ports.end(),
-                               [&](const Port& p){ return (p.pred_name() == name && p.pred_id() == impl_->id) || p.has_succ({impl_->id, name}); });
-        if (it == impl_->ports.end()) {
-            // This is output port which is never referenced.
-            // Bind myself as a predecessor and register
-
-            // TODO: Validate with arginfo
-            Port port(impl_->id, name);
-            impl_->ports.push_back(port);
-            return port;
-        } else {
-            // Port is already registered
-            return *it;
+Port Node::iport(const std::string& pn) {
+    for (const auto& p: impl_->ports) {
+        auto it = std::find_if(p.impl_->succ_chans.begin(), p.impl_->succ_chans.end(),
+                               [&](const Port::Channel& c) { return std::get<0>(c) == impl_->id && std::get<1>(c) == pn; });
+        if (it != p.impl_->succ_chans.end()) {
+            return p;
         }
     }
+
+    auto msg = fmt::format("BuildingBlock \"{}\" has no input \"{}\"", name(), pn);
+    log::error(msg);
+    throw std::runtime_error(msg);
+}
+
+std::vector<std::tuple<std::string, Port>> Node::iports() const {
+    std::vector<std::tuple<std::string, Port>> iports;
+    for (const auto& p: impl_->ports) {
+        auto it = std::find_if(p.impl_->succ_chans.begin(), p.impl_->succ_chans.end(),
+                               [&](const Port::Channel& c) { return std::get<0>(c) == impl_->id; });
+        if (it != p.impl_->succ_chans.end()) {
+            iports.push_back(std::make_tuple(std::get<1>(*it), p));
+        }
+    }
+    return iports;
+}
+
+Port Node::oport(const std::string& pn) {
+    return this->operator[](pn);
+    // auto it = std::find_if(impl_->ports.begin(), impl_->ports.end(),
+    //                        [&](const Port& p) { return p.pred_id() == id() && p.pred_name() == pn; });
+
+    // if (it != impl_->ports.end()) {
+    //     return *it;
+    // }
+
+    // auto msg = fmt::format("BuildingBlock \"{}\" has no output \"{}\"", name(), pn);
+    // log::error(msg);
+    // throw std::runtime_error(msg);
+}
+
+std::vector<std::tuple<std::string, Port>> Node::oports() const {
+    std::vector<std::tuple<std::string, Port>> oports;
+    for (const auto& p: impl_->ports) {
+        if (id() == p.pred_id()) {
+            oports.push_back(std::make_tuple(p.pred_name(), p));
+        }
+    }
+    return oports;
+}
 
 } // namespace ion

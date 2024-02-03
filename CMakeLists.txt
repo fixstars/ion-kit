@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.25)
 project(ion-kit LANGUAGES C CXX)
 
 #
@@ -19,15 +19,16 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON) # This is required to export symbols on windows platform
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
+if(APPLE)
+    set(CMAKE_INSTALL_RPATH "@loader_path")
+elseif(UNIX)
+    set(CMAKE_INSTALL_RPATH "$ORIGIN")
+endif()
 
-#
+
 # Dependent libraries
 #
-# NOTE: WIP: It's for static linking
-# set(ZLIB_USE_STATIC_LIBS "ON")
-# find_package(ZLIB REQUIRED)
-# find_package(LLVM REQUIRED)
-# find_package(Halide REQUIRED COMPONENTS static)
+find_package(Threads REQUIRED)
 find_package(Halide REQUIRED COMPONENTS shared)
 find_package(CUDA)
 
@@ -61,11 +62,7 @@ endif()
 file(GLOB ION_CORE_SRC LIST_DIRECTORIES false ${PROJECT_SOURCE_DIR}/src/*)
 add_library(ion-core SHARED ${ION_CORE_SRC})
 target_include_directories(ion-core PUBLIC ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/src)
-if (UNIX)
-  target_link_libraries(ion-core PUBLIC Halide::Halide Halide::Runtime dl pthread z m stdc++)
-else()
-  target_link_libraries(ion-core PUBLIC Halide::Halide Halide::Runtime)
-endif()
+target_link_libraries(ion-core PUBLIC Halide::Halide Threads::Threads ${CMAKE_DL_LIBS} )
 
 #
 # ion-bb
@@ -126,11 +123,6 @@ if (UNIX)
 else()
     install(FILES ${CMAKE_BINARY_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>/ion-core.dll DESTINATION bin)
     install(FILES ${CMAKE_BINARY_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>/ion-core.lib DESTINATION lib)
-
-    # These lines is for backward compatibility.
-    # TODO: Deprecate old name of dll/lib.
-    install(FILES ${CMAKE_BINARY_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>/ion-core.dll DESTINATION bin RENAME ion.dll)
-    install(FILES ${CMAKE_BINARY_DIR}/$<$<CONFIG:Release>:Release>$<$<CONFIG:Debug>:Debug>/ion-core.lib DESTINATION lib RENAME ion.lib)
 endif()
 
 install(DIRECTORY include DESTINATION .)
@@ -145,30 +137,12 @@ install(FILES
     DESTINATION license)
 
 # Halide
-set(HALIDE_ROOT ${Halide_DIR}/../../..)
-
-file(GLOB HALIDE_HEADERS ${HALIDE_ROOT}/include/Halide*.h ${HALIDE_ROOT}/include/wasm*.h)
+file(GLOB_RECURSE HALIDE_HEADERS "${Halide_DIR}/../../../include/Halide*.h")
 install(FILES ${HALIDE_HEADERS} DESTINATION include)
-
-file(GLOB HALIDE_BINS
-    ${HALIDE_ROOT}/bin/featurization_to_sample*
-    ${HALIDE_ROOT}/bin/get_host_target*
-    ${HALIDE_ROOT}/bin/retrain_cost_model*
-    ${HALIDE_ROOT}/bin/weightsdir_to_weightsfile*)
-install(FILES ${HALIDE_BINS} DESTINATION bin)
-
-install(DIRECTORY ${HALIDE_ROOT}/lib/cmake/Halide DESTINATION lib/cmake/)
-if (EXISTS ${HALIDE_ROOT}/lib/cmake/HalideHelpers)
-    install(DIRECTORY ${HALIDE_ROOT}/lib/cmake/HalideHelpers DESTINATION lib/cmake/)
-endif()
-if (UNIX)
-    file(GLOB HALIDE_LIBRARIES ${HALIDE_ROOT}/lib/libHalide*)
-    install(FILES ${HALIDE_LIBRARIES} DESTINATION lib)
-    file(GLOB HALIDE_LIBRARIES ${HALIDE_ROOT}/lib/libautoschedule*)
-    install(FILES ${HALIDE_LIBRARIES} DESTINATION lib)
-else()
-    install(FILES ${HALIDE_ROOT}/bin/Release/Halide.dll DESTINATION bin)
-    install(FILES ${HALIDE_ROOT}/lib/Release/Halide.lib DESTINATION lib)
+install(IMPORTED_RUNTIME_ARTIFACTS Halide::Halide)
+if(WIN32)
+    file(GLOB_RECURSE HALIDE_IMPLIB "${Halide_DIR}/../../../Halide.lib")
+    install(FILES ${HALIDE_IMPLIB} DESTINATION lib)
 endif()
 
 #

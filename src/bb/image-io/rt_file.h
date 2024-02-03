@@ -99,9 +99,6 @@ extern "C" int ION_EXPORT ion_bb_image_io_image_saver(halide_buffer_t *in, int32
             in->dim[2].min = 0;
             in->dim[2].extent = height;
         } else {
-
-
-
             Halide::Runtime::Buffer<uint8_t> obuf = Halide::Runtime::Buffer<uint8_t>::make_interleaved(width, height, 3);
             std::memcpy(obuf.data(), in->host, 3* width*height*sizeof(uint8_t));
             Halide::Tools::save_image(obuf, reinterpret_cast<const char *>(path->host));
@@ -123,17 +120,21 @@ namespace {
 
 class Writer {
 public:
-    static Writer& get_instance(std::vector<int32_t>& payload_size, const ::std::string& output_directory, bool write_framecount)
+    static Writer& get_instance(const std::string& id, std::vector<int32_t>& payload_size, const ::std::string& output_directory, bool write_framecount)
     {
-        auto itr = instances.find(output_directory);
-        if (itr == instances.end()) {
-            instances[output_directory] = std::unique_ptr<Writer>(new Writer(payload_size, output_directory, write_framecount));
+
+        if (instances.count(id) == 0) {
+            instances[id] = std::unique_ptr<Writer>(new Writer(payload_size, output_directory, write_framecount));
         }
-        return *instances[output_directory];
+        return *instances[id];
     }
 
     ~Writer() {
-        dispose();
+        if (!disposed_){
+            ion::log::debug("Trying to call dispose from distructor since disposed_ is {}", disposed_);
+            dispose();
+        }
+
     }
 
     void post_images(std::vector<void *>& outs, std::vector<size_t>& size, 
@@ -182,6 +183,7 @@ public:
     }
 
     void dispose() {
+         ion::log::debug("Writer::dispose() :: is called");
         // Already disposed if thread is not joinable
         if (thread_ && thread_->joinable()) {
             keep_running_ = false;
@@ -189,11 +191,23 @@ public:
             thread_->join();
             thread_ = nullptr;
         }
+         ion::log::debug("Writer::dispose() :: is finished");
+         disposed_ = true;
     }
 
-    void release_instance(const ::std::string& output_directory) {
-        instances.erase(output_directory);
-    }
+
+    static void release_instance(const char * id) {
+        ion::log::debug("Writer::release_instance() :: is called");
+        if (instances.count(id) == 0) {
+             return;
+        }
+
+        Writer & writer = *instances[id].get();
+        writer.dispose();
+        instances.erase(id);
+        ion::log::debug("Writer::release_instance() :: Instance is delete");
+
+       }
 
     void write_config_file(std::vector<ion::bb::image_io::rawHeader>& header_infos){
         nlohmann::json j;
@@ -216,7 +230,7 @@ public:
 
 private:
     Writer(std::vector<int32_t>& payload_size, const ::std::string& output_directory, bool write_framecount)
-        : keep_running_(true), output_directory_(output_directory), with_header_(true)
+        : keep_running_(true), output_directory_(output_directory), with_header_(true), disposed_(false)
     {
         int total_payload_size = 0;
         for (auto s : payload_size){
@@ -339,6 +353,7 @@ private:
     uint32_t width_;
     uint32_t height_;
     std::filesystem::path output_directory_;
+    bool disposed_;
 
     bool with_header_;
 };
@@ -346,15 +361,24 @@ private:
 ::std::unordered_map< ::std::string, std::unique_ptr<Writer>> Writer::instances; // defines Writer::instance
 } // namespace
 
+
+extern "C"
+int ION_EXPORT writer_dispose(const char *id) {
+    Writer::release_instance(id);
+    return 0;
+}
+
+
 extern "C" ION_EXPORT
-int ion_bb_image_io_binary_2gendc_saver(halide_buffer_t * in0, halide_buffer_t * in1, halide_buffer_t * in2, halide_buffer_t * in3,
-    bool dispose, int payloadsize, halide_buffer_t*  output_directory_buf,
+int ion_bb_image_io_binary_2gendc_saver( halide_buffer_t * id_buf, halide_buffer_t * in0, halide_buffer_t * in1, halide_buffer_t * in2, halide_buffer_t * in3,
+    int payloadsize, halide_buffer_t*  output_directory_buf,
     halide_buffer_t * out)
     {
     try {
+        const std::string id(reinterpret_cast<const char *>(id_buf->host));
         const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
         std::vector<int32_t>payloadsize_list{payloadsize, payloadsize};
-        auto& w(Writer::get_instance(payloadsize_list,  output_directory, false));
+        auto& w(Writer::get_instance(id, payloadsize_list,  output_directory, false));
         if (in0->is_bounds_query() || in1->is_bounds_query() || in2->is_bounds_query() || in3->is_bounds_query()) {
             int i = 1;
             if (in0->is_bounds_query()) {
@@ -385,11 +409,7 @@ int ion_bb_image_io_binary_2gendc_saver(halide_buffer_t * in0, halide_buffer_t *
             std::vector<size_t> size_in_bytes{in0->size_in_bytes(), in1->size_in_bytes()};
             w.post_gendc(obufs, size_in_bytes, header_infos);
 
-            if (dispose) {
-                w.dispose();
-                w.release_instance(output_directory);
-                return 0;
-            }
+
         }
 
         return 0;
@@ -407,14 +427,15 @@ int ion_bb_image_io_binary_2gendc_saver(halide_buffer_t * in0, halide_buffer_t *
 ION_REGISTER_EXTERN(ion_bb_image_io_binary_2gendc_saver);
 
 extern "C" ION_EXPORT
-int ion_bb_image_io_binary_1gendc_saver(halide_buffer_t * gendc, halide_buffer_t * deviceinfo,
-    bool dispose, int payloadsize, halide_buffer_t*  output_directory_buf,
+int ion_bb_image_io_binary_1gendc_saver( halide_buffer_t * id_buf, halide_buffer_t * gendc, halide_buffer_t * deviceinfo,
+    int payloadsize, halide_buffer_t*  output_directory_buf,
     halide_buffer_t * out)
     {
     try {
+        const std::string id(reinterpret_cast<const char *>(id_buf->host));
         const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
         std::vector<int32_t>payloadsize_list{payloadsize};
-        auto& w(Writer::get_instance(payloadsize_list, output_directory, false));
+        auto& w(Writer::get_instance(id,payloadsize_list, output_directory, false));
         if (gendc->is_bounds_query() || deviceinfo->is_bounds_query()) {
             if (gendc->is_bounds_query()) {
                 gendc->dim[0].min = 0;
@@ -435,11 +456,7 @@ int ion_bb_image_io_binary_1gendc_saver(halide_buffer_t * gendc, halide_buffer_t
             std::vector<size_t> size_in_bytes{gendc->size_in_bytes()};
             w.post_gendc(obufs, size_in_bytes, header_infos);
 
-            if (dispose) {
-                w.dispose();
-                w.release_instance(output_directory);
-                return 0;
-            }
+
         }
 
         return 0;
@@ -458,16 +475,18 @@ ION_REGISTER_EXTERN(ion_bb_image_io_binary_1gendc_saver);
 
 extern "C" ION_EXPORT
 int ion_bb_image_io_binary_1image_saver(
+    halide_buffer_t * id_buf,
     halide_buffer_t * image, halide_buffer_t * deviceinfo, halide_buffer_t * frame_count,
-    bool dispose, int width, int height, int dim, int byte_depth, halide_buffer_t*  output_directory_buf,
+    int width, int height, int dim, int byte_depth, halide_buffer_t*  output_directory_buf,
     halide_buffer_t * out)
     {
     try {
         int num_output = 1;
+        const std::string id(reinterpret_cast<const char *>(id_buf->host));
         int32_t frame_size = dim == 2 ? width * height * byte_depth : width * height * 3 * byte_depth;
         std::vector<int32_t>frame_size_list{frame_size};
         const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
-        auto& w(Writer::get_instance(frame_size_list, output_directory, true));
+        auto& w(Writer::get_instance(id, frame_size_list, output_directory, true));
 
         if (image->is_bounds_query() || deviceinfo->is_bounds_query() || frame_count->is_bounds_query()) {
             if (image->is_bounds_query()) {
@@ -491,11 +510,7 @@ int ion_bb_image_io_binary_1image_saver(
             return 0;
         }
         else {
-            if (dispose) {
-                w.dispose();
-                w.release_instance(output_directory);
-                return 0;
-            }
+
 
             ion::bb::image_io::rawHeader header_info0;
             ::memcpy(&header_info0, deviceinfo->host, sizeof(ion::bb::image_io::rawHeader));
@@ -522,17 +537,19 @@ ION_REGISTER_EXTERN(ion_bb_image_io_binary_1image_saver);
 
 extern "C" ION_EXPORT
 int ion_bb_image_io_binary_2image_saver(
+    halide_buffer_t * id_buf,
     halide_buffer_t * image0, halide_buffer_t * image1,
     halide_buffer_t * deviceinfo0, halide_buffer_t * deviceinfo1, halide_buffer_t * frame_count,
-    bool dispose, int32_t width, int32_t height, int32_t dim, int byte_depth, halide_buffer_t*  output_directory_buf,
+    int32_t width, int32_t height, int32_t dim, int byte_depth, halide_buffer_t*  output_directory_buf,
     halide_buffer_t * out)
     {
     try {
         int num_output = 2;
+        const std::string id(reinterpret_cast<const char *>(id_buf->host));
         int32_t frame_size = dim == 2 ? width * height * byte_depth : width * height * 3 * byte_depth;
         std::vector<int32_t>frame_size_list{frame_size, frame_size};
         const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
-        auto& w(Writer::get_instance(frame_size_list, output_directory, true));
+        auto& w(Writer::get_instance(id, frame_size_list, output_directory, true));
 
         if (image0->is_bounds_query() || deviceinfo0->is_bounds_query() || 
             image1->is_bounds_query() || deviceinfo1->is_bounds_query() || frame_count->is_bounds_query()) {
@@ -571,11 +588,7 @@ int ion_bb_image_io_binary_2image_saver(
             return 0;
         }
         else {
-            if (dispose) {
-                w.dispose();
-                w.release_instance(output_directory);
-                return 0;
-            }
+
             ion::bb::image_io::rawHeader header_info0, header_info1;
             ::memcpy(&header_info0, deviceinfo0->host, sizeof(ion::bb::image_io::rawHeader));
             ::memcpy(&header_info1, deviceinfo1->host, sizeof(ion::bb::image_io::rawHeader));

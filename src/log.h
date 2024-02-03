@@ -11,12 +11,12 @@ namespace log {
 
 std::shared_ptr<spdlog::logger> get();
 
-template<typename... Args> inline void critical(Args... args) { get()->critical(args...); }
-template<typename... Args> inline void error   (Args... args) { get()->error   (args...); }
-template<typename... Args> inline void warn    (Args... args) { get()->warn    (args...); }
-template<typename... Args> inline void info    (Args... args) { get()->info    (args...); }
-template<typename... Args> inline void debug   (Args... args) { get()->debug   (args...); }
-template<typename... Args> inline void trace   (Args... args) { get()->trace   (args...); }
+template<typename... Args> inline void critical(Args... args) { if (get()) get()->critical(args...); }
+template<typename... Args> inline void error   (Args... args) { if (get()) get()->error   (args...); }
+template<typename... Args> inline void warn    (Args... args) { if (get()) get()->warn    (args...); }
+template<typename... Args> inline void info    (Args... args) { if (get()) get()->info    (args...); }
+template<typename... Args> inline void debug   (Args... args) { if (get()) get()->debug   (args...); }
+template<typename... Args> inline void trace   (Args... args) { if (get()) get()->trace   (args...); }
 } // log
 } // ion
 

@@ -34,7 +34,10 @@ class BuildingBlock : public Halide::Generator<T> {
 
      template<typename... Ts>
      void register_disposer(const std::string& n) {
-         reinterpret_cast<Builder*>(static_cast<uint64_t>(builder_ptr))->register_disposer(bb_id, n);
+         auto bb(reinterpret_cast<Builder*>(static_cast<uint64_t>(builder_ptr)));
+         if (bb) {
+             bb->register_disposer(bb_id, n);
+         }
      }
 
      ion::Buffer<uint8_t> get_id() {
