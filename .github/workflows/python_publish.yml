@@ -81,7 +81,7 @@ jobs:
         run: |
           cd python && python -m cibuildwheel --output-dir wheelhouse
         env:
-          CIBW_ARCHS_MACOS:  universal2 arm64
+          CIBW_ARCHS_MACOS:  universal2
           CIBW_REPAIR_WHEEL_COMMAND_MACOS: ""
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: ""
           CIBW_REPAIR_WHEEL_COMMAND_LINUX: ""
