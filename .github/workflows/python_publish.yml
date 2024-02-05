@@ -85,8 +85,8 @@ jobs:
           CIBW_REPAIR_WHEEL_COMMAND_MACOS: ""
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: ""
           CIBW_REPAIR_WHEEL_COMMAND_LINUX: ""
-          CIBW_SKIP: "*-win32 *i686"
-          CIBW_BUILD: cp38-* cp39-* cp310-* cp311-* cp312-*
+          CIBW_SKIP: "*-win32 *i686 *musllinux*"
+          CIBW_BUILD: cp39-*
           CIBW_ENVIRONMENT: ION_KIT_VERSION=${{ github.event.release.tag_name }}
 
 
@@ -152,7 +152,7 @@ jobs:
           python-version: '3.9'
       - name: test
         run: |
-          sleep 300 # wait package to upload
+          sleep 60 # wait package to upload
           pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple ion-python==${{ github.event.release.tag_name }}
           python -c "import ionpy"
       
