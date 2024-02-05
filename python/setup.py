@@ -19,8 +19,8 @@ def get_plat():
 
 
 def get_version():
-    if os.environ.get("VERSION") is not None:
-        tag = os.environ.get("VERSION")
+    if os.environ.get("ION_KIT_VERSION") is not None:
+        tag = os.environ.get("ION_KIT_VERSION")
     else:
         main_ns = {}
         ver_path = convert_path('./ionpy/version.py')

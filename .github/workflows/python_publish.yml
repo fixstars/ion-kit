@@ -39,7 +39,7 @@ jobs:
       - name: Copy macos file
         if: runner.os == 'macOS'
         run: |
-          export VERSION=${{ github.event.release.tag_name }}
+          export ION_KIT_VERSION=${{ github.event.release.tag_name }}
           mkdir $GITHUB_WORKSPACE/macos
           tar xzf  ion-kit-*macos.tar.gz  -C $GITHUB_WORKSPACE/macos --strip-components 1
           cp  $GITHUB_WORKSPACE/macos/lib/libHalide.16.0.0.dylib python/ionpy/module/macos/libHalide.16.dylib
@@ -50,7 +50,7 @@ jobs:
       - name: Copy linux file
         if: runner.os == 'Linux'
         run: |
-          export VERSION=${{ github.event.release.tag_name }}
+          export ION_KIT_VERSION=${{ github.event.release.tag_name }}
           mkdir $GITHUB_WORKSPACE/linux
           tar xzf  ion-kit-*linux.tar.gz  -C $GITHUB_WORKSPACE/linux --strip-components 1
           cp  $GITHUB_WORKSPACE/linux/lib/libion-bb.so python/ionpy/module/linux/libion-bb.so
@@ -62,7 +62,7 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           mkdir windows
-          set VERSION=${{ github.event.release.tag_name }}
+          set ION_KIT_VERSION=${{ github.event.release.tag_name }}
           unzip  ion-kit-*windows.zip  && mv ion-kit*/*  windows
           cp  windows/bin/Halide.dll python/ionpy/module/windows/Halide.dll
           cp  windows/bin/ion-core.dll python/ionpy/module/windows/ion-core.dll
@@ -87,7 +87,7 @@ jobs:
           CIBW_REPAIR_WHEEL_COMMAND_LINUX: ""
           CIBW_SKIP: "*-win32 *i686"
           CIBW_BUILD: cp38-* cp39-* cp310-* cp311-* cp312-*
-          CIBW_ENVIRONMENT: VERSION=${{ github.event.release.tag_name }}
+          CIBW_ENVIRONMENT: ION_KIT_VERSION=${{ github.event.release.tag_name }}
 
 
       - uses: actions/upload-artifact@v4
@@ -103,7 +103,7 @@ jobs:
 #
 #      - name: Build sdist
 #        run: |
-#          export VERSION=${{ github.event.release.tag_name }}
+#          export ION_KIT_VERSION=${{ github.event.release.tag_name }}
 #          pip install build && cd python && python -m build --sdist
 #
 
