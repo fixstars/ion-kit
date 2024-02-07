@@ -1052,7 +1052,6 @@ public:
 
     Input<int32_t> width{ "width" };
     Input<int32_t> height{ "height" };
-    Input<int32_t> color_channel{ "color_channel" };
 
     Output<int32_t> output{"output"};
 
