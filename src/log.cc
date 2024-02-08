@@ -15,6 +15,14 @@ std::shared_ptr<spdlog::logger> get() {
     return spdlog::get("ion");
 }
 
+bool should_log(level::level_enum level) {
+    if (get()) {
+        return get()->should_log(static_cast<spdlog::level::level_enum>(level));
+    } else {
+        return false;
+    }
+}
+
 } // log
 } // ion
 

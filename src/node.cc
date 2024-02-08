@@ -44,6 +44,12 @@ void Node::set_iport(const std::vector<Port>& ports) {
     }
 }
 
+void Node::set_iport(Port port) {
+    port.impl_->succ_chans.insert({id(), port.pred_name()});
+    impl_->ports.push_back(port);
+}
+
+
 Port Node::operator[](const std::string& name) {
     auto it = std::find_if(impl_->ports.begin(), impl_->ports.end(),
                            [&](const Port& p){ return p.pred_id() == impl_->id && p.pred_name() == name; });

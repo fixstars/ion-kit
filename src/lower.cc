@@ -48,6 +48,15 @@ bool is_ready(const std::vector<Node>& sorted, const Node& n) {
     return ready;
 }
 
+std::string to_string(Halide::Argument::Kind kind) {
+    switch (kind) {
+    case Halide::Argument::Kind::InputScalar: return "InputScalar";
+    case Halide::Argument::Kind::InputBuffer: return "InputBuffer";
+    case Halide::Argument::Kind::OutputBuffer: return "OutputBuffer";
+    default: return "Unknown";
+    }
+}
+
 } // anonymous
 
 void determine_and_validate(std::vector<Node>& nodes) {
@@ -161,6 +170,15 @@ std::vector<Halide::Argument> get_arguments_stub(const std::vector<Node>& nodes)
             args.insert(args.end(), port_args.begin(), port_args.end());
         }
     }
+
+    if (log::should_log(log::level::debug)) {
+        int i=0;
+        log::debug("Generating arguments stub");
+        for (auto arg : args) {
+            log::debug("  #{} name({}) kind({}) dimensions({}) type({})", i++, arg.name, to_string(arg.kind), arg.dimensions, Halide::type_to_c_type(arg.type, false));
+        }
+    }
+
     return args;
 }
 
@@ -190,6 +208,14 @@ std::vector<const void*> get_arguments_instance(const std::vector<Node>& nodes) 
         for (const auto& [pn, port] : node.oports()) {
             const auto& port_instances(port.as_instance());
             instances.insert(instances.end(), port_instances.begin(), port_instances.end());
+        }
+    }
+
+    if (log::should_log(log::level::debug)) {
+        int i=0;
+        log::debug("Generating arguments instance");
+        for (auto instance : instances) {
+            log::debug("  #{} {}", i++, instance);
         }
     }
 

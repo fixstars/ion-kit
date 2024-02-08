@@ -56,6 +56,10 @@ if(${OpenCV_DIR})
     ion_jit_executable(port-access SRCS port-access.cc)
 endif()
 
+# Asigning port in arbitrary order
+ion_jit_executable(port-assign SRCS port-assign.cc)
+
+# zero copy i/o for extern functions
 ion_jit_executable(direct-extern SRCS direct-extern.cc)
 
 if (${CUDA_FOUND})

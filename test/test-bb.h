@@ -270,6 +270,30 @@ public:
     }
 };
 
+class AddI32x2 : public BuildingBlock<AddI32x2> {
+public:
+    Input<Halide::Func> input0{"input0", Halide::type_of<int32_t>(), 2};
+    Input<Halide::Func> input1{"input1", Halide::type_of<int32_t>(), 2};
+    Output<Halide::Func> output{"output", Halide::type_of<int32_t>(), 2};
+
+    void generate() {
+        Halide::Var x, y;
+        output(x, y) = input0(x, y) + input1(x, y);
+    }
+};
+
+class SubI32x2 : public BuildingBlock<SubI32x2> {
+public:
+    Input<Halide::Func> input0{"input0", Halide::type_of<int32_t>(), 2};
+    Input<Halide::Func> input1{"input1", Halide::type_of<int32_t>(), 2};
+    Output<Halide::Func> output{"output", Halide::type_of<int32_t>(), 2};
+
+    void generate() {
+        Halide::Var x, y;
+        output(x, y) = input0(x, y) - input1(x, y);
+    }
+};
+
 } // test
 } // bb
 } // ion
@@ -287,5 +311,7 @@ ION_REGISTER_BUILDING_BLOCK(ion::bb::test::ArrayInput, test_array_input);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::test::ArrayOutput, test_array_output);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::test::ArrayCopy, test_array_copy);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::test::ExternIncI32x2, test_extern_inc_i32x2);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::test::AddI32x2, test_add_i32x2);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::test::SubI32x2, test_sub_i32x2);
 
 #endif
