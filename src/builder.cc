@@ -31,14 +31,13 @@ std::map<Halide::OutputFileType, std::string> compute_output_files(const Halide:
     return output_files;
 }
 
-Halide::Internal::AbstractGenerator::ArgInfo make_arginfo(const std::string& name,
-                                                          Halide::Internal::ArgInfoDirection dir,
-                                                          Halide::Internal::ArgInfoKind kind,
-                                                          const std::vector<Halide::Type>& types,
-                                                          int dimensions) {
-    return Halide::Internal::AbstractGenerator::ArgInfo {
-        name, dir, kind, types, dimensions
-    };
+std::string to_string(Halide::Argument::Kind kind) {
+    switch (kind) {
+    case Halide::Argument::Kind::InputScalar: return "InputScalar";
+    case Halide::Argument::Kind::InputBuffer: return "InputBuffer";
+    case Halide::Argument::Kind::OutputBuffer: return "OutputBuffer";
+    default: return "Unknown";
+    }
 }
 
 } // anonymous
@@ -196,15 +195,15 @@ void Builder::run(const ion::PortMap&) {
         }
         impl_->pipeline.set_jit_externs(jit_externs);
 
-        // TODO: Validate argument list
-        // impl_->pipeline.infer_arguments()) {
+        auto inferred_args = impl_->pipeline.infer_arguments();
+        // auto inferred_args = generate_arguments_stub(impl_->nodes);
 
-        impl_->callable = impl_->pipeline.compile_to_callable(get_arguments_stub(impl_->nodes), impl_->target);
+        impl_->callable = impl_->pipeline.compile_to_callable(inferred_args, impl_->target);
 
         impl_->args.clear();
         impl_->args.push_back(&impl_->jit_ctx_ptr);
 
-        const auto& args(get_arguments_instance(impl_->nodes));
+        const auto& args(generate_arguments_instance(inferred_args, impl_->nodes));
         impl_->args.insert(impl_->args.end(), args.begin(), args.end());
     }
 

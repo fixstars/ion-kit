@@ -63,15 +63,14 @@ void Graph::run()
 
         impl_->pipeline.set_jit_externs(impl_->builder.jit_externs());
 
-        // TODO: Validate argument list
-        // impl_->pipeline.infer_arguments()) {
+        auto inferred_args = impl_->pipeline.infer_arguments();
 
-        impl_->callable = impl_->pipeline.compile_to_callable(get_arguments_stub(impl_->nodes), impl_->builder.target());
+        impl_->callable = impl_->pipeline.compile_to_callable(inferred_args, impl_->builder.target());
 
         impl_->args.clear();
         impl_->args.push_back(&impl_->jit_ctx_ptr);
 
-        const auto& args(get_arguments_instance(impl_->nodes));
+        const auto& args(generate_arguments_instance(inferred_args, impl_->nodes));
         impl_->args.insert(impl_->args.end(), args.begin(), args.end());
     }
 

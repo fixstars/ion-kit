@@ -152,7 +152,7 @@ void topological_sort(std::vector<Node>& nodes) {
     nodes.swap(sorted);
 }
 
-std::vector<Halide::Argument> get_arguments_stub(const std::vector<Node>& nodes) {
+std::vector<Halide::Argument> generate_arguments_stub(const std::vector<Node>& nodes) {
     std::set<Port::Channel> added_ports;
     std::vector<Halide::Argument> args;
     for (const auto& node : nodes) {
@@ -182,7 +182,7 @@ std::vector<Halide::Argument> get_arguments_stub(const std::vector<Node>& nodes)
     return args;
 }
 
-std::vector<const void*> get_arguments_instance(const std::vector<Node>& nodes) {
+std::vector<const void*> generate_arguments_instance(const std::vector<Node>& nodes) {
     std::set<Port::Channel> added_args;
     std::vector<const void*> instances;
 
@@ -220,6 +220,65 @@ std::vector<const void*> get_arguments_instance(const std::vector<Node>& nodes) 
     }
 
     return instances;
+}
+
+std::vector<const void*> generate_arguments_instance(const std::vector<Halide::Argument>& inferred_args, const std::vector<Node>& nodes) {
+#if 1
+    std::vector<const void*> instances(inferred_args.size(), nullptr);
+
+    // Input
+    for (const auto& node : nodes) {
+        for (const auto& [pn, port] : node.iports()) {
+            if (port.has_pred()) {
+                continue;
+            }
+
+            auto i = 0;
+            for (auto arg : port.as_argument()) {
+                auto it = std::find_if(inferred_args.begin(), inferred_args.end(), [arg](const Halide::Argument& inferred_arg) { return inferred_arg.name == arg.name; });
+                if (it == inferred_args.end()) {
+                    log::warn("Argument \"{}\" is not found in the inferred arguements", arg.name);
+                    i++;
+                    continue;
+                }
+
+                auto idx = it-inferred_args.begin();
+                log::debug("Inserted \"{}\" instance at #{}", arg.name, idx);
+                instances[idx] = port.as_instance()[i++];
+            }
+        }
+    }
+
+    // Output
+    for (const auto& node : nodes) {
+        for (const auto& [pn, port] : node.oports()) {
+            const auto& port_instances(port.as_instance());
+            instances.insert(instances.end(), port_instances.begin(), port_instances.end());
+        }
+    }
+
+    if (std::count(instances.begin(), instances.end(), nullptr)) {
+        throw std::runtime_error("Failed to determine arguemnt instance");
+    }
+
+    if (log::should_log(log::level::debug)) {
+        int i=0;
+        log::debug("Inferred arguments stub");
+        for (auto arg : inferred_args) {
+            log::debug("  #{} name({}) kind({}) dimensions({}) type({})", i++, arg.name, to_string(arg.kind), arg.dimensions, Halide::type_to_c_type(arg.type, false));
+        }
+
+        i=0;
+        log::debug("Generating arguments instance");
+        for (auto instance : instances) {
+            log::debug("  #{} {}", i++, instance);
+        }
+    }
+
+    return instances;
+#else
+    return generate_arguments_instance(nodes);
+#endif
 }
 
 Halide::Pipeline lower(Builder builder, std::vector<Node>& nodes, bool implicit_output) {
@@ -282,6 +341,11 @@ Halide::Pipeline lower(Builder builder, std::vector<Node>& nodes, bool implicit_
                     throw std::runtime_error("fixme");
                 }
             } else {
+
+                if (arginfo.name != pn) {
+                    log::warn("Expect({}), Actual({})", arginfo.name, pn);
+                }
+
                 if (arginfo.kind == Halide::Internal::ArgInfoKind::Scalar) {
                     bb->bind_input(arginfo.name, port.as_expr());
                 } else if (arginfo.kind == Halide::Internal::ArgInfoKind::Function) {

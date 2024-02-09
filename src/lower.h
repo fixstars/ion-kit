@@ -6,6 +6,7 @@
 #include "ion/builder.h"
 
 namespace Halide {
+class Argument;
 class Pipeline;
 }
 
@@ -17,9 +18,11 @@ void determine_and_validate(std::vector<Node>& nodes);
 
 void topological_sort(std::vector<Node>& nodes);
 
-std::vector<Halide::Argument> get_arguments_stub(const std::vector<Node>& nodes);
+std::vector<Halide::Argument> generate_arguments_stub(const std::vector<Node>& nodes);
 
-std::vector<const void*> get_arguments_instance(const std::vector<Node>& nodes);
+std::vector<const void*> generate_arguments_instance(const std::vector<Node>& nodes);
+
+std::vector<const void*> generate_arguments_instance(const std::vector<Halide::Argument>& args, const std::vector<Node>& nodes);
 
 Halide::Pipeline lower(Builder builder, std::vector<Node>& nodes, bool implicit_output);
 

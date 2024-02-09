@@ -76,7 +76,7 @@ public:
      */
     template<typename... Args>
     Node operator()(Args ...args) {
-        set_iport({args...});
+        set_iport(std::vector<Port>{args...});
         return *this;
     }
 
