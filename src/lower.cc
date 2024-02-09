@@ -57,6 +57,29 @@ std::string to_string(Halide::Argument::Kind kind) {
     }
 }
 
+void topological_sort(std::vector<Node>& nodes) {
+    std::vector<Node> sorted;
+    if (nodes.empty()) {
+        return;
+    }
+
+    auto it = nodes.begin();
+    while (!nodes.empty()) {
+        if (is_ready(sorted, *it)) {
+            sorted.push_back(*it);
+            nodes.erase(it);
+            it = nodes.begin();
+        } else {
+            it++;
+            if (it == nodes.end()) {
+                it = nodes.begin();
+            }
+        }
+    }
+
+    nodes.swap(sorted);
+}
+
 } // anonymous
 
 void determine_and_validate(std::vector<Node>& nodes) {
@@ -129,101 +152,7 @@ void determine_and_validate(std::vector<Node>& nodes) {
     }
 }
 
-void topological_sort(std::vector<Node>& nodes) {
-    std::vector<Node> sorted;
-    if (nodes.empty()) {
-        return;
-    }
-
-    auto it = nodes.begin();
-    while (!nodes.empty()) {
-        if (is_ready(sorted, *it)) {
-            sorted.push_back(*it);
-            nodes.erase(it);
-            it = nodes.begin();
-        } else {
-            it++;
-            if (it == nodes.end()) {
-                it = nodes.begin();
-            }
-        }
-    }
-
-    nodes.swap(sorted);
-}
-
-std::vector<Halide::Argument> generate_arguments_stub(const std::vector<Node>& nodes) {
-    std::set<Port::Channel> added_ports;
-    std::vector<Halide::Argument> args;
-    for (const auto& node : nodes) {
-        for (const auto& [pn, port] : node.iports()) {
-            if (port.has_pred()) {
-                continue;
-            }
-
-            if (added_ports.count(port.pred_chan())) {
-                continue;
-            }
-            added_ports.insert(port.pred_chan());
-
-            const auto& port_args(port.as_argument());
-            args.insert(args.end(), port_args.begin(), port_args.end());
-        }
-    }
-
-    if (log::should_log(log::level::debug)) {
-        int i=0;
-        log::debug("Generating arguments stub");
-        for (auto arg : args) {
-            log::debug("  #{} name({}) kind({}) dimensions({}) type({})", i++, arg.name, to_string(arg.kind), arg.dimensions, Halide::type_to_c_type(arg.type, false));
-        }
-    }
-
-    return args;
-}
-
-std::vector<const void*> generate_arguments_instance(const std::vector<Node>& nodes) {
-    std::set<Port::Channel> added_args;
-    std::vector<const void*> instances;
-
-    // Input
-    for (const auto& node : nodes) {
-        for (const auto& [pn, port] : node.iports()) {
-            if (port.has_pred()) {
-                continue;
-            }
-
-            if (added_args.count(port.pred_chan())) {
-                continue;
-            }
-            added_args.insert(port.pred_chan());
-
-            const auto& port_instances(port.as_instance());
-            instances.insert(instances.end(), port_instances.begin(), port_instances.end());
-        }
-    }
-
-    // Output
-    for (const auto& node : nodes) {
-        for (const auto& [pn, port] : node.oports()) {
-            const auto& port_instances(port.as_instance());
-            instances.insert(instances.end(), port_instances.begin(), port_instances.end());
-        }
-    }
-
-    if (log::should_log(log::level::debug)) {
-        int i=0;
-        log::debug("Generating arguments instance");
-        for (auto instance : instances) {
-            log::debug("  #{} {}", i++, instance);
-        }
-    }
-
-    return instances;
-}
-
 std::vector<const void*> generate_arguments_instance(const std::vector<Halide::Argument>& inferred_args, const std::vector<Node>& nodes) {
-#if 1
     std::vector<const void*> instances(inferred_args.size(), nullptr);
 
     // Input
@@ -276,9 +205,6 @@ std::vector<const void*> generate_arguments_instance(const std::vector<Halide::A
     }
 
     return instances;
-#else
-    return generate_arguments_instance(nodes);
-#endif
 }
 
 Halide::Pipeline lower(Builder builder, std::vector<Node>& nodes, bool implicit_output) {
@@ -314,15 +240,21 @@ Halide::Pipeline lower(Builder builder, std::vector<Node>& nodes, bool implicit_
         auto n = nodes[i];
         const auto& bb = bbs[n.id()];
         auto arginfos = bb->arginfos();
-        const auto& iports(n.iports());
-        for (size_t j=0; j<iports.size(); ++j) {
-            const auto& [pn, port] = iports[j];
+        for (const auto& [pn, port] : n.iports()) {
+
+            // Find arginfo
+            auto it = std::find_if(arginfos.begin(), arginfos.end(), [pn](const ArgInfo& arginfo) { return arginfo.name == pn; });
+            if (it == arginfos.end()) {
+                auto msg = fmt::format("Argument {} is not defined in node {}", pn, n.name());
+                log::error(msg);
+                throw std::runtime_error(msg);
+            }
+            const auto& arginfo = *it;
+
             auto index = port.index();
-            const auto& arginfo = arginfos[j];
+
             if (port.has_pred()) {
-
                 const auto& pred_bb(bbs[port.pred_id()]);
-
                 auto fs = pred_bb->output_func(port.pred_name());
                 if (arginfo.kind == Halide::Internal::ArgInfoKind::Scalar) {
                     bb->bind_input(arginfo.name, fs);
