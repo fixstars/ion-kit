@@ -15,12 +15,13 @@ class Graph {
 
 public:
 
+    Graph();
+
+    Graph(Builder builder, const std::string& name = "");
+
     Graph& operator+=(const Graph& rhs);
 
     friend Graph operator+(const Graph& lhs, const Graph& rhs);
-
-    // TODO: Naming
-    Graph(Builder builder, const std::string& name = "");
 
     /**
      * Adding new node to the graph.
@@ -38,6 +39,10 @@ public:
      */
     const std::vector<Node>& nodes() const;
     std::vector<Node>& nodes();
+
+    bool is_defined() const {
+        return impl_.get() != nullptr;
+    }
 
 private:
     std::shared_ptr<Impl> impl_;
