@@ -15,10 +15,10 @@ For Halide, please find latest binary release [here](https://github.com/halide/H
 curl -sL https://github.com/halide/Halide/releases/download/v16.0.0/Halide-16.0.0-x86-64-linux-1e963ff817ef0968cc25d811a25a7350c8953ee6.tar.gz | tar zx
 ```
 
-We recommend to setup libjpeg, libpng and zlib by [vcpkg](https://vcpkg.io/).
+We recommend to setup libjpeg-turbo, libpng and zlib by [vcpkg](https://vcpkg.io/).
 
 ```sh
-vcpkg install libjpeg libpng zlib
+vcpkg install libjpeg-turbo libpng zlib
 ```
 
 ## 2. Build

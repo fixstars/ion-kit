@@ -11,10 +11,10 @@ Here is the list of dependent software.
 
 For Halide, please find latest binary release [here](https://github.com/halide/Halide/releases) and extract it.
 
-We recommend to setup libjpeg, libpng and zlib by [vcpkg](https://vcpkg.io/).
+We recommend to setup libjpeg-turbo, libpng and zlib by [vcpkg](https://vcpkg.io/).
 
 ```sh
-vcpkg install libjpeg:x64-windows-static libpng:x64-windows-static zlib:x64-windows-static
+vcpkg install libjpeg-turbo:x64-windows-static libpng:x64-windows-static zlib:x64-windows-static
 ```
 
 ## 2. Build
