@@ -976,14 +976,6 @@ public:
     void generate() {
         using namespace Halide;
 
-        // Func gain_func;
-        // gain_func(_) = gain(_);
-        // gain_func.compute_root();
-
-        // Func exposure_func;
-        // exposure_func(_) = exposure(_);
-        // exposure_func.compute_root();
-
         Func u3v_gendc("u3v_gendc");
         {
             Buffer<uint8_t> id_buf =  this->get_id();
