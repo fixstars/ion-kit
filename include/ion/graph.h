@@ -40,7 +40,7 @@ public:
     const std::vector<Node>& nodes() const;
     std::vector<Node>& nodes();
 
-    bool is_defined() const {
+    bool defined() const {
         return impl_.get() != nullptr;
     }
 

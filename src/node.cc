@@ -93,6 +93,9 @@ std::vector<std::tuple<std::string, Port>> Node::iports() const {
 
 Port Node::oport(const std::string& pn) {
     return this->operator[](pn);
+
+    // TODO: It is better to just return exisitng output port?
+    //
     // auto it = std::find_if(impl_->ports.begin(), impl_->ports.end(),
     //                        [&](const Port& p) { return p.pred_id() == id() && p.pred_name() == pn; });
 
