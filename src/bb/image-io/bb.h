@@ -831,13 +831,11 @@ class U3VCameraN : public ion::BuildingBlock<U3VCameraN<T, D>> {
 public:
     BuildingBlockParam<int32_t> num_devices{"num_devices", 2};
     BuildingBlockParam<bool> frame_sync{"frame_sync", false};
-
-    BuildingBlockParam<std::string> gain_key_ptr{"gain_key", "Gain"};
-    BuildingBlockParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
-
     BuildingBlockParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
 
     BuildingBlockParam<bool> enable_control{"enable_control", false};
+    BuildingBlockParam<std::string> gain_key_ptr{"gain_key", "Gain"};
+    BuildingBlockParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
 
     Output<Halide::Func[]> output{ "output", Halide::type_of<T>(), D};
     Output<Halide::Func[]> device_info{ "device_info", Halide::type_of<uint8_t>(), 1};
@@ -874,7 +872,9 @@ public:
 
             std::vector<ExternFuncArgument> params{
                 id_buf,
-                static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode), static_cast<bool>(enable_control),
+                static_cast<bool>(frame_sync),
+                static_cast<bool>(realtime_diaplay_mode),
+                static_cast<bool>(enable_control),
                 gain_key_buf, exposure_key_buf
             };
 
@@ -951,28 +951,30 @@ using U3VCameraN_U16x2 = U3VCameraN<uint16_t, 2>;
 class U3VGenDC : public ion::BuildingBlock<U3VGenDC> {
 public:
     BuildingBlockParam<int32_t> num_devices{"num_devices", 2};
-
     BuildingBlockParam<bool> frame_sync{"frame_sync", false};
-    BuildingBlockParam<std::string> gain_key_ptr{"gain_key", "Gain"};
-    BuildingBlockParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
     BuildingBlockParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
 
-    Input<Halide::Func> gain{ "gain", Halide::type_of<double>(), 1};
-    Input<Halide::Func> exposure{ "exposure", Halide::type_of<double>(), 1};
+    BuildingBlockParam<bool> enable_control{"enable_control", false};
+    BuildingBlockParam<std::string> gain_key_ptr{"gain_key", "Gain"};
+    BuildingBlockParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
 
     Output<Halide::Func[]> gendc{ "gendc", Halide::type_of<uint8_t>(), 1};
     Output<Halide::Func[]> device_info{ "device_info", Halide::type_of<uint8_t>(), 1};
 
+    std::vector<Input<double> *> gain;
+    std::vector<Input<double> *> exposure;
+
+    void configure() {
+        if (enable_control) {
+            for (auto i=0; i<num_devices; ++i) {
+                gain.push_back(Halide::Internal::GeneratorBase::add_input<double>("gain_" + std::to_string(i)));
+                exposure.push_back(Halide::Internal::GeneratorBase::add_input<double>("exposure_" + std::to_string(i)));
+            }
+        }
+    }
+
     void generate() {
         using namespace Halide;
-
-        Func gain_func;
-        gain_func(_) = gain(_);
-        gain_func.compute_root();
-
-        Func exposure_func;
-        exposure_func(_) = exposure(_);
-        exposure_func.compute_root();
 
         Func u3v_gendc("u3v_gendc");
         {
@@ -989,10 +991,25 @@ public:
             std::memcpy(exposure_key_buf.data(), exposure_key.c_str(), exposure_key.size());
 
             std::vector<ExternFuncArgument> params{
-                static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
-                gain_func, exposure_func,
-                id_buf, gain_key_buf, exposure_key_buf
+                id_buf, 
+                static_cast<bool>(frame_sync), 
+                static_cast<bool>(realtime_diaplay_mode),
+                static_cast<bool>(enable_control),
+                gain_key_buf, exposure_key_buf
             };
+
+            for (int i = 0; i<num_devices; i++) {
+                if (i < gain.size()) {
+                    params.push_back(*gain[i]);
+                } else {
+                    params.push_back(Internal::make_const(type_of<double>(), 0.0));
+                }
+                if (i < exposure.size()) {
+                    params.push_back(*exposure[i]);
+                } else {
+                    params.push_back(Internal::make_const(type_of<double>(), 0.0));
+                }
+            }
 
             gendc.resize(num_devices);
             std::vector<Halide::Type> output_type;
