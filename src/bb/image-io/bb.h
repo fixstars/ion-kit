@@ -831,13 +831,11 @@ class U3VCameraN : public ion::BuildingBlock<U3VCameraN<T, D>> {
 public:
     BuildingBlockParam<int32_t> num_devices{"num_devices", 2};
     BuildingBlockParam<bool> frame_sync{"frame_sync", false};
-
-    BuildingBlockParam<std::string> gain_key_ptr{"gain_key", "Gain"};
-    BuildingBlockParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
-
     BuildingBlockParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
 
     BuildingBlockParam<bool> enable_control{"enable_control", false};
+    BuildingBlockParam<std::string> gain_key_ptr{"gain_key", "Gain"};
+    BuildingBlockParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
 
     Output<Halide::Func[]> output{ "output", Halide::type_of<T>(), D};
     Output<Halide::Func[]> device_info{ "device_info", Halide::type_of<uint8_t>(), 1};
@@ -874,7 +872,9 @@ public:
 
             std::vector<ExternFuncArgument> params{
                 id_buf,
-                static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode), static_cast<bool>(enable_control),
+                static_cast<bool>(frame_sync),
+                static_cast<bool>(realtime_diaplay_mode),
+                static_cast<bool>(enable_control),
                 gain_key_buf, exposure_key_buf
             };
 
@@ -951,28 +951,30 @@ using U3VCameraN_U16x2 = U3VCameraN<uint16_t, 2>;
 class U3VGenDC : public ion::BuildingBlock<U3VGenDC> {
 public:
     BuildingBlockParam<int32_t> num_devices{"num_devices", 2};
-
     BuildingBlockParam<bool> frame_sync{"frame_sync", false};
-    BuildingBlockParam<std::string> gain_key_ptr{"gain_key", "Gain"};
-    BuildingBlockParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
     BuildingBlockParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
 
-    Input<Halide::Func> gain{ "gain", Halide::type_of<double>(), 1};
-    Input<Halide::Func> exposure{ "exposure", Halide::type_of<double>(), 1};
+    BuildingBlockParam<bool> enable_control{"enable_control", false};
+    BuildingBlockParam<std::string> gain_key_ptr{"gain_key", "Gain"};
+    BuildingBlockParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
 
     Output<Halide::Func[]> gendc{ "gendc", Halide::type_of<uint8_t>(), 1};
     Output<Halide::Func[]> device_info{ "device_info", Halide::type_of<uint8_t>(), 1};
 
+    std::vector<Input<double> *> gain;
+    std::vector<Input<double> *> exposure;
+
+    void configure() {
+        if (enable_control) {
+            for (auto i=0; i<num_devices; ++i) {
+                gain.push_back(Halide::Internal::GeneratorBase::add_input<double>("gain_" + std::to_string(i)));
+                exposure.push_back(Halide::Internal::GeneratorBase::add_input<double>("exposure_" + std::to_string(i)));
+            }
+        }
+    }
+
     void generate() {
         using namespace Halide;
-
-        Func gain_func;
-        gain_func(_) = gain(_);
-        gain_func.compute_root();
-
-        Func exposure_func;
-        exposure_func(_) = exposure(_);
-        exposure_func.compute_root();
 
         Func u3v_gendc("u3v_gendc");
         {
@@ -989,10 +991,25 @@ public:
             std::memcpy(exposure_key_buf.data(), exposure_key.c_str(), exposure_key.size());
 
             std::vector<ExternFuncArgument> params{
-                static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
-                gain_func, exposure_func,
-                id_buf, gain_key_buf, exposure_key_buf
+                id_buf, 
+                static_cast<bool>(frame_sync), 
+                static_cast<bool>(realtime_diaplay_mode),
+                static_cast<bool>(enable_control),
+                gain_key_buf, exposure_key_buf
             };
+
+            for (int i = 0; i<num_devices; i++) {
+                if (i < gain.size()) {
+                    params.push_back(*gain[i]);
+                } else {
+                    params.push_back(Internal::make_const(type_of<double>(), 0.0));
+                }
+                if (i < exposure.size()) {
+                    params.push_back(*exposure[i]);
+                } else {
+                    params.push_back(Internal::make_const(type_of<double>(), 0.0));
+                }
+            }
 
             gendc.resize(num_devices);
             std::vector<Halide::Type> output_type;
@@ -1049,10 +1066,9 @@ public:
     Input<Halide::Func[]> input_deviceinfo{ "input_deviceinfo", Halide::type_of<uint8_t>(), 1 };
     Input<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
 
-    Input<bool> dispose{ "dispose" };
+
     Input<int32_t> width{ "width" };
     Input<int32_t> height{ "height" };
-    Input<int32_t> color_channel{ "color_channel" };
 
     Output<int32_t> output{"output"};
 
@@ -1073,7 +1089,8 @@ public:
         int32_t dim = D;
         int32_t byte_depth = sizeof(T);
 
-        if (num_gendc==1){
+         Buffer<uint8_t> id_buf = this->get_id();
+        if (num_devices==1){
             Func image;
             image(_) = input_images(_);
             image.compute_root();
@@ -1082,7 +1099,7 @@ public:
             deviceinfo(_) = input_deviceinfo(_);
             deviceinfo.compute_root();
 
-            std::vector<ExternFuncArgument> params = { image, deviceinfo, fc, dispose, width, height, dim, byte_depth, output_directory_buf };
+            std::vector<ExternFuncArgument> params = {id_buf, image, deviceinfo, fc, width, height, dim, byte_depth, output_directory_buf };
             Func ion_bb_image_io_binary_image_saver;
             ion_bb_image_io_binary_image_saver.define_extern("ion_bb_image_io_binary_1image_saver", params, Int(32), 0);
             ion_bb_image_io_binary_image_saver.compute_root();
@@ -1100,7 +1117,7 @@ public:
             deviceinfo0.compute_root();
             deviceinfo1.compute_root();
 
-            std::vector<ExternFuncArgument> params = { image0, image1, deviceinfo0, deviceinfo1, fc, dispose, width, height, dim, byte_depth, output_directory_buf };
+            std::vector<ExternFuncArgument> params = {id_buf, image0, image1, deviceinfo0, deviceinfo1, fc, width, height, dim, byte_depth, output_directory_buf };
             Func ion_bb_image_io_binary_image_saver;
             ion_bb_image_io_binary_image_saver.define_extern("ion_bb_image_io_binary_2image_saver", params, Int(32), 0);
             ion_bb_image_io_binary_image_saver.compute_root();
@@ -1108,6 +1125,8 @@ public:
         }else{
             std::runtime_error("device number > 2 is not supported");
         }
+
+        this->register_disposer("writer_dispose");
     }
 };
 
@@ -1125,7 +1144,7 @@ public:
     Input<Halide::Func[]> input_gendc{ "input_gendc", Halide::type_of<uint8_t>(), 1 };
     Input<Halide::Func[]> input_deviceinfo{ "input_deviceinfo", Halide::type_of<uint8_t>(), 1 };
 
-    Input<bool> dispose{ "dispose" };
+
     Input<int32_t> payloadsize{ "payloadsize" };
 
     Output<int> output{ "output" };
@@ -1138,7 +1157,7 @@ public:
         Halide::Buffer<uint8_t> output_directory_buf(static_cast<int>(output_directory.size() + 1));
         output_directory_buf.fill(0);
         std::memcpy(output_directory_buf.data(), output_directory.c_str(), output_directory.size());
-
+        Buffer<uint8_t> id_buf = this->get_id();
         if (num_gendc==1){
             Func gendc;
             gendc(_) = input_gendc(_);
@@ -1148,7 +1167,7 @@ public:
             deviceinfo(_) = input_deviceinfo(_);
             deviceinfo.compute_root();
 
-            std::vector<ExternFuncArgument> params = { gendc, deviceinfo, dispose, payloadsize, output_directory_buf };
+            std::vector<ExternFuncArgument> params = { id_buf, gendc, deviceinfo, payloadsize, output_directory_buf };
             Func image_io_binary_gendc_saver;
             image_io_binary_gendc_saver.define_extern("ion_bb_image_io_binary_1gendc_saver", params, Int(32), 0);
             image_io_binary_gendc_saver.compute_root();
@@ -1167,7 +1186,7 @@ public:
             deviceinfo0.compute_root();
             deviceinfo1.compute_root();
 
-            std::vector<ExternFuncArgument> params = { gendc0, gendc1, deviceinfo0, deviceinfo1, dispose, payloadsize, output_directory_buf };
+            std::vector<ExternFuncArgument> params = { id_buf, gendc0, gendc1, deviceinfo0, deviceinfo1,  payloadsize, output_directory_buf };
             Func image_io_binary_gendc_saver;
             image_io_binary_gendc_saver.define_extern("ion_bb_image_io_binary_2gendc_saver", params, Int(32), 0);
             image_io_binary_gendc_saver.compute_root();
@@ -1175,8 +1194,7 @@ public:
         }else{
             std::runtime_error("device number > 2 is not supported");
         }
-
-
+        this->register_disposer("writer_dispose");
     }
 };
 

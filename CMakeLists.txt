@@ -145,15 +145,20 @@ install(FILES
     DESTINATION license)
 
 # Halide
-file(GLOB_RECURSE HALIDE_HEADERS "${Halide_DIR}/../../../Halide*.h")
+file(GLOB_RECURSE HALIDE_HEADERS "${Halide_DIR}/../../../include/Halide*.h")
 install(FILES ${HALIDE_HEADERS} DESTINATION include)
 install(IMPORTED_RUNTIME_ARTIFACTS Halide::Halide)
 if(UNIX)
-    # On unix-like system, RELEASE/DEBUG doesn't matter
+    # On unix-like system, create include unversioned symlink
+    # NOTE: RELEASE/DEBUG doesn't matter for the naming
     get_target_property(HALIDE_SONAME Halide::Halide IMPORTED_SONAME_RELEASE)
     set(HALIDE_SYMFILE ${CMAKE_BINARY_DIR}/libHalide${CMAKE_SHARED_LIBRARY_SUFFIX})
     file(CREATE_LINK ${HALIDE_SONAME} ${HALIDE_SYMFILE} SYMBOLIC)
     install(FILES ${HALIDE_SYMFILE} DESTINATION lib)
+elseif(WIN32)
+    # On windows system, include import library
+    file(GLOB_RECURSE HALIDE_IMPLIB "${Halide_DIR}/../../../Halide.lib")
+    install(FILES ${HALIDE_IMPLIB} DESTINATION lib)
 endif()
 
 #
