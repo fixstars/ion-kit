@@ -49,6 +49,10 @@ void Node::set_iport(Port port) {
     impl_->ports.push_back(port);
 }
 
+void Node::set_iport(const std::string& name, Port port) {
+    port.impl_->succ_chans.insert({id(), name});
+    impl_->ports.push_back(port);
+}
 
 Port Node::operator[](const std::string& name) {
     auto it = std::find_if(impl_->ports.begin(), impl_->ports.end(),

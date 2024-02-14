@@ -84,6 +84,8 @@ public:
 
     void set_iport(Port port);
 
+    void set_iport(const std::string& name, Port port);
+
     /**
      * Retrieve relevant port of the node.
      * @arg name: The name of port name which is matched with first argument of Input/Output declared in user-defined class deriving BuildingBlock.
