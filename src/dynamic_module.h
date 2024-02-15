@@ -20,6 +20,12 @@
 
 #include "log.h"
 
+namespace {
+bool has_prefix_and_ext(const std::string& n) {
+    return n.find(ION_DYNAMIC_MODULE_PREFIX) != std::string::npos && n.find(ION_DYNAMIC_MODULE_EXT) != std::string::npos;
+}
+}
+
 namespace ion {
 
 class DynamicModule {
@@ -38,7 +44,8 @@ class DynamicModule {
          }
 
          std::string target;
-         if (std::filesystem::exists(module_name_or_path)) {
+         if (std::filesystem::exists(module_name_or_path) || has_prefix_and_ext(module_name_or_path)) {
+             // This is absolute path or file name
              target = module_name_or_path;
          } else {
              target = std::string(ION_DYNAMIC_MODULE_PREFIX) + module_name_or_path + std::string(ION_DYNAMIC_MODULE_EXT);

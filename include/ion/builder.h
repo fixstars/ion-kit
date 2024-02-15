@@ -9,11 +9,14 @@
 
 #include "def.h"
 #include "buffer.h"
+#include "graph.h"
 #include "node.h"
 #include "target.h"
 #include "port_map.h"
 
 namespace ion {
+
+using ArgInfo = Halide::Internal::AbstractGenerator::ArgInfo;
 
 class DynamicModule;
 
@@ -22,6 +25,9 @@ class DynamicModule;
  */
 class Builder {
 public:
+
+    struct Impl;
+
     /**
      * CompileOption class holds option field for compilation.
      */
@@ -30,14 +36,19 @@ public:
     };
 
     Builder();
-
     ~Builder();
 
     /**
      * Adding new node to the graph.
      * @arg k: The key of the node which should be matched with second argument of ION_REGISTER_BUILDING_BLOCK().
      */
-    Node add(const std::string& k);
+    Node add(const std::string& name);
+
+
+    /**
+     *
+     */
+    Graph add_graph(const std::string& name);
 
     /**
      * Set the target of the pipeline built with this builder.
@@ -73,51 +84,59 @@ public:
      */
     void compile(const std::string& function_name, const CompileOption& option = CompileOption{});
 
-    void run();
+    /**
+     * Run the pipeline immediately.
+     * @arg pm: This remains just for backward compatibility. Port::bind can be used instead of PortMap.
+     * This argument will be removed in coming major release.
+     */
+    void run(const PortMap& pm = PortMap());
 
-    void run(ion::PortMap& ports);
+    /**
+     * Retrieve names of BBs
+     */
+    std::vector<std::string> bb_names(void);
 
+    /**
+     * Retrieve arginfo of specific bb
+     */
+    std::vector<ArgInfo> bb_arginfos(const std::string& name);
 
     /**
      * Retrieve metadata of Building Block in json format.
      */
     std::string bb_metadata(void);
 
+
+    /**
+     * Get target
+     */
+    Target target() const;
+
     /**
      * Get the node list.
      */
-    const std::vector<Node>& nodes() const { return nodes_; }
-    std::vector<Node>& nodes() { return nodes_; }
+    const std::vector<Node>& nodes() const;
+    std::vector<Node>& nodes();
 
+    /**
+     * Get registered externs
+     */
+    const std::map<std::string, Halide::JITExtern>& jit_externs() const;
 
     /**
      * Register disposer hook which will be called from Builder destructor.
      * This is available only for JIT mode.
      */
-    void register_disposer(const std::string& bb_id, const std::string& disposer_symbol);
+    static void register_disposer(Impl* impl, const std::string& bb_id, const std::string& disposer_symbol);
+
+    /**
+     * Retrieve impl pointer for lowering
+     */
+    const Impl *impl_ptr() const;
 
 private:
 
-    Halide::Pipeline build(bool implicit_output = false);
-
-    void determine_and_validate();
-
-    std::vector<Halide::Argument> get_arguments_stub() const;
-    std::vector<const void*> get_arguments_instance() const;
-
-    void set_jit_externs(const std::map<std::string, Halide::JITExtern> &externs) {
-        pipeline_.set_jit_externs(externs);
-    }
-
-    Halide::Target target_;
-    std::vector<Node> nodes_;
-    std::unordered_map<std::string, std::shared_ptr<DynamicModule>> bb_modules_;
-    Halide::Pipeline pipeline_;
-    Halide::Callable callable_;
-    std::unique_ptr<Halide::JITUserContext> jit_ctx_;
-    Halide::JITUserContext* jit_ctx_ptr_;
-    std::vector<const void*> args_;
-    std::vector<std::tuple<std::string, std::function<void(const char*)>>> disposers_;
+    std::shared_ptr<Impl> impl_;
 };
 
 } // namespace ion

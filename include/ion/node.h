@@ -76,11 +76,15 @@ public:
      */
     template<typename... Args>
     Node operator()(Args ...args) {
-        set_iport({args...});
+        set_iport(std::vector<Port>{args...});
         return *this;
     }
 
     void set_iport(const std::vector<Port>& ports);
+
+    void set_iport(Port port);
+
+    void set_iport(const std::string& name, Port port);
 
     /**
      * Retrieve relevant port of the node.
