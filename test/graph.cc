@@ -21,7 +21,7 @@ int main()
         out0.fill(0);
 
         Buffer<int32_t> out1(size, size);
-        out0.fill(0);
+        out1.fill(0);
 
         Graph g0 = b.add_graph("graph0");
         Node n0 = g0.add("test_inc_i32x2")(in0).set_param(Param("v", 40));
