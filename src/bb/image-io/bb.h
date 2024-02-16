@@ -948,6 +948,55 @@ using U3VCameraN_U8x3 = U3VCameraN<uint8_t, 3>;
 using U3VCameraN_U8x2 = U3VCameraN<uint8_t, 2>;
 using U3VCameraN_U16x2 = U3VCameraN<uint16_t, 2>;
 
+
+
+template<typename T, int D>
+class U3VCameraFake : public ion::BuildingBlock<U3VCameraFake<T, D>> {
+public:
+    BuildingBlockParam<int32_t> num_devices{"num_devices", 2};
+    BuildingBlockParam<int32_t> width{"width", 640};
+    BuildingBlockParam<int32_t> height{"height", 480};
+
+    Output<Halide::Func[]> output{ "output", Halide::type_of<T>(), D};
+
+
+    void generate() {
+        using namespace Halide;
+
+        Func cameraN("u3v_cameraN");
+        {
+            Buffer<uint8_t> id_buf = this->get_id();
+
+
+            std::vector<ExternFuncArgument> params{
+                id_buf,static_cast<int32_t>(num_devices),static_cast<int32_t>(width), static_cast<int32_t>(height),
+            };
+
+
+            output.resize(num_devices);
+            cameraN.define_extern("ion_bb_image_io_u3v_fake_camera" + std::to_string(num_devices), params, std::vector<Halide::Type>(num_devices, Halide::type_of<T>()), D);
+            cameraN.compute_root();
+            if (num_devices == 1){
+                output[0](_) = cameraN(_);
+            } else {
+                for (int i = 0; i<num_devices; i++) {
+                    output[i](_) = cameraN(_)[i];
+                }
+            }
+        }
+
+
+
+        this->register_disposer("u3v_dispose");
+    }
+
+};
+
+using U3VCameraFake_U8x3 = U3VCameraFake<uint8_t, 3>;
+using U3VCameraFake_U8x2 = U3VCameraFake<uint8_t, 2>;
+using U3VCameraFake_U16x2 = U3VCameraFake<uint16_t, 2>;
+
+
 class U3VGenDC : public ion::BuildingBlock<U3VGenDC> {
 public:
     BuildingBlockParam<int32_t> num_devices{"num_devices", 2};
@@ -1054,6 +1103,8 @@ public:
         this->register_disposer("u3v_dispose");
     }
 };
+
+
 
 template<typename T, int D>
 class BinarySaver : public ion::BuildingBlock<BinarySaver<T, D>> {
@@ -1269,6 +1320,10 @@ ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera1_U8x2, image_io_u3v_cam
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera2_U8x3, image_io_u3v_camera2_u8x3);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera2_U8x2, image_io_u3v_camera2_u8x2);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera2_U16x2, image_io_u3v_camera2_u16x2);
+
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCameraFake_U8x2, image_io_u3v_camera_fake_u8x2);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCameraFake_U8x3, image_io_u3v_camera_fake_u8x3);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCameraFake_U16x2, image_io_u3v_camera_fake_u16x2);
 
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCameraN_U8x3, image_io_u3v_cameraN_u8x3);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCameraN_U8x2, image_io_u3v_cameraN_u8x2);
