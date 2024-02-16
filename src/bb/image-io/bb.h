@@ -948,8 +948,6 @@ using U3VCameraN_U8x3 = U3VCameraN<uint8_t, 3>;
 using U3VCameraN_U8x2 = U3VCameraN<uint8_t, 2>;
 using U3VCameraN_U16x2 = U3VCameraN<uint16_t, 2>;
 
-
-
 template<typename T, int D>
 class U3VCameraFake : public ion::BuildingBlock<U3VCameraFake<T, D>> {
 public:
@@ -1033,7 +1031,6 @@ public:
 using U3VCameraFake_U8x3 = U3VCameraFake<uint8_t, 3>;
 using U3VCameraFake_U8x2 = U3VCameraFake<uint8_t, 2>;
 using U3VCameraFake_U16x2 = U3VCameraFake<uint16_t, 2>;
-
 
 class U3VGenDC : public ion::BuildingBlock<U3VGenDC> {
 public:

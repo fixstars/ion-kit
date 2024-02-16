@@ -1637,6 +1637,7 @@ int ION_EXPORT ion_bb_image_io_u3v_multiple_camera_frame_count2(
 }
 ION_REGISTER_EXTERN(ion_bb_image_io_u3v_multiple_camera_frame_count2);
 
+
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_fake_camera1(
     halide_buffer_t * id_buf, int32_t num_sensor,
@@ -1667,7 +1668,6 @@ int ION_EXPORT ion_bb_image_io_u3v_fake_camera1(
     }
 }
 ION_REGISTER_EXTERN(ion_bb_image_io_u3v_fake_camera1);
-
 
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_fake_camera2(
