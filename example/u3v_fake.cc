@@ -27,8 +27,7 @@ int main(int argc, char *argv[])
         int width = 500;
         int height = 500;
         int num_device = 2;
-        Node n = b.add("image_io_u3v_camera_fake_u8x2")().set_param(
-                Param("num_devices", num_device),
+        Node n = b.add("image_io_u3v_cameraN_u8x2")().set_param(
                 Param("width", width),
                 Param("height", height),
                 Param("fps", 30)
