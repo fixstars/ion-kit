@@ -132,7 +132,6 @@ class U3V {
     using arv_buffer_get_data_t = void*(*)(ArvBuffer*, size_t*);
     using arv_buffer_get_part_data_t = void*(*)(ArvBuffer*, uint_fast32_t, size_t*);
     using arv_buffer_get_timestamp_t = uint64_t(*)(ArvBuffer*);
-    using arv_buffer_get_system_timestamp_t = uint64_t(*)(ArvBuffer*);
     using arv_device_get_feature_t = ArvGcNode*(*)(ArvDevice*, const char*);
 
     using arv_buffer_has_gendc_t = bool*(*)(ArvBuffer*);
@@ -189,27 +188,20 @@ class U3V {
                               bool frame_sync,
                               bool realtime_display_mode,
                               bool sim_mode = false,
-                              int32_t width = 0,
-                              int32_t height = 0,
-                              float_t fps = 0)
+                              int32_t width = 640,
+                              int32_t height = 480,
+                              float_t fps = 25)
     {
 
         if (instances_.count(id) == 0) {
-
-            if (sim_mode){
+            if (sim_mode)
                 ion::log::info("Create Fake U3V instance: {}", id);
-                instances_[id] = std::unique_ptr<U3V>(new U3V(num_sensor, frame_sync, realtime_display_mode, true, width, height, fps));
-            }else{
+            else
                 ion::log::info("Create U3V instance: {}", id);
-                instances_[id] = std::unique_ptr<U3V>(new U3V(num_sensor, frame_sync, realtime_display_mode));
-            }
-
+            instances_[id] = std::unique_ptr<U3V>(new U3V(num_sensor, frame_sync, realtime_display_mode, sim_mode, width, height, fps));
         }
+
         return *instances_[id].get();
-        //if (instance_ == nullptr){
-        //     instance_ = std::unique_ptr<U3V>(new U3V(num_sensor, frame_sync, realtime_display_mode));
-        // }
-        // return *instance_;
     }
 
     void dispose(){
@@ -334,28 +326,34 @@ class U3V {
         return frame_count;
     }
 
-    void get(std::vector<Halide::Buffer<>>& outs) {
-
+    void get_buf_sim(std::vector<Halide::Buffer<>>& outs) {
         auto timeout_us = 30 * 1000 * 1000;
-
-        int32_t num_device = num_sensor_;
-        std::vector<ArvBuffer *> bufs(num_device);
-
-        if (sim_mode_){
-            for (int i = 0;i< num_sensor_;i++){
-                arv_stream_push_buffer (devices_[i].stream_,  arv_buffer_new_allocate (devices_[i].u3v_payload_size_));
+        std::vector<ArvBuffer *> bufs(num_sensor_);
+        for (int i = 0;i< num_sensor_;i++){
+                auto size = devices_[i].u3v_payload_size_;
+                arv_stream_push_buffer (devices_[i].stream_,  arv_buffer_new_allocate (size));
                 bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, timeout_us);
                 if (bufs[i] == nullptr){
                     log::error("pop_buffer(L1) failed due to timeout ({}s)", timeout_us*1e-6f);
                     throw ::std::runtime_error("Buffer is null");
                 }
                 devices_[i].frame_count_ += 1;
-                auto size = devices_[i].u3v_payload_size_;
                 memcpy(outs[i].data(), arv_buffer_get_part_data(bufs[i], 0, nullptr), size);
             }
+
+    }
+
+    void get(std::vector<Halide::Buffer<>>& outs) {
+
+        if (sim_mode_){
+            get_buf_sim(outs);
             return;
         }
 
+        auto timeout_us = 30 * 1000 * 1000;
+
+        int32_t num_device = num_sensor_;
+        std::vector<ArvBuffer *> bufs(num_device);
 
         // default is OperationMode::Came1USB1
         if (operation_mode_ == OperationMode::Came2USB2 || operation_mode_ == OperationMode::Came1USB1){
@@ -725,7 +723,7 @@ class U3V {
     }
 
     private:
-    U3V(int32_t num_sensor, bool frame_sync, bool realtime_display_mode, bool sim_mode = false, int32_t width = 0, int32_t height = 0, float_t fps = 0, char* dev_id = nullptr)
+    U3V(int32_t num_sensor, bool frame_sync, bool realtime_display_mode, bool sim_mode, int32_t width, int32_t height , float_t fps, char* dev_id = nullptr)
     : gobject_(GOBJECT_FILE, true), aravis_(ARAVIS_FILE, true),
         num_sensor_(num_sensor),
         frame_sync_(frame_sync), realtime_display_mode_(realtime_display_mode), is_gendc_(false), is_param_integer_(false),
@@ -735,8 +733,27 @@ class U3V {
 
         log::debug("U3V:: 23-11-18 : updating obtain and write");
         log::info("Using aravis-{}.{}.{}", arv_get_major_version(), arv_get_minor_version(), arv_get_micro_version());
-        if (sim_mode_){
 
+        // check if the camera is available
+        int n_devices = 0;
+        if (!sim_mode_){
+            arv_update_device_list();
+            n_devices = arv_get_n_devices ();
+            if (n_devices == 0){
+                log::warn("Fallback to simulation mode: Could not find camera");
+                sim_mode_ = true;
+            }
+        }
+
+        if (sim_mode_){
+            start_aravis_sim(width, height, fps);
+        }else{
+            start_aravis_no_sim(n_devices, frame_sync, realtime_display_mode, dev_id);
+        }
+
+    }
+
+    void start_aravis_sim(int32_t width, int32_t height, float_t fps){
             auto path = std::getenv("GENICAM_FILENAME");
             if (path == nullptr){
                 throw std::runtime_error("Please define GENICAM_FILENAME by `set GENICAM_FILENAME=` or `export GENICAM_FILENAME=`");
@@ -762,10 +779,17 @@ class U3V {
             }
             // Config fake cameras
             for (int i = 0;i< num_sensor_;i++){
-                arv_device_set_integer_feature_value (devices_[i].device_, "Width", width, NULL);
-                arv_device_set_integer_feature_value (devices_[i].device_, "Height", height, NULL);
-                arv_device_set_float_feature_value (devices_[i].device_, "AcquisitionFrameRate",fps, NULL);
-                devices_[i].u3v_payload_size_ =  arv_device_get_integer_feature_value (devices_[i].device_, "PayloadSize", NULL);
+                // setting the params if it is not zero
+                if (width > 0){
+                    arv_device_set_integer_feature_value (devices_[i].device_, "Width", width, &err_);
+                }
+                if (height > 0){
+                    arv_device_set_integer_feature_value (devices_[i].device_, "Height", height, &err_);
+                }
+                if (fps > 0){
+                    arv_device_set_float_feature_value (devices_[i].device_, "AcquisitionFrameRate",fps, &err_);
+                }
+                devices_[i].u3v_payload_size_ =  arv_device_get_integer_feature_value (devices_[i].device_, "PayloadSize", &err_);
                 auto px =arv_device_get_integer_feature_value(devices_[i].device_, "PixelFormat", &err_);
                 auto fps = arv_device_get_float_feature_value(devices_[i].device_, "AcquisitionFrameRate", &err_);
                 struct rawHeader header=  { 1, width, height,
@@ -773,7 +797,8 @@ class U3V {
                     width, height, width, height, static_cast<float>(fps), px};
                 devices_[i].header_info_ = header;
                 devices_[i].image_payload_size_ = devices_[i].u3v_payload_size_;
-                devices_[i].frame_count_ = 0;
+                devices_[i].frame_count_  = 0;
+
             }
 
             // Start streaming and start acquisition
@@ -786,15 +811,9 @@ class U3V {
                 arv_device_execute_command(devices_[i].device_, "AcquisitionStart", &err_);
                 log::info("\tFake Device {}::{} : {}", i, "Command", "AcquisitionStart");
             }
+    }
 
-            return;
-
-        }
-
-
-        arv_update_device_list();
-        unsigned int n_devices = arv_get_n_devices ();
-
+    void start_aravis_no_sim (int n_devices, bool frame_sync, bool realtime_display_mode, char* dev_id = nullptr){
         if (n_devices < num_sensor_){
             log::info("{} device is found; but the num_device is set to {}", n_devices, num_sensor_);
             throw std::runtime_error("Device number is not match");
@@ -1004,7 +1023,10 @@ class U3V {
             }
             log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionStart");
         }
+
+
     }
+
 
     void init_symbols_gobject() {
 	if (!gobject_.is_available()) {
@@ -1072,7 +1094,6 @@ class U3V {
         GET_SYMBOL(arv_buffer_get_data, "arv_buffer_get_data");
         GET_SYMBOL(arv_buffer_get_part_data, "arv_buffer_get_part_data");
         GET_SYMBOL(arv_buffer_get_timestamp, "arv_buffer_get_timestamp");
-        GET_SYMBOL(arv_buffer_get_system_timestamp, "arv_buffer_get_system_timestamp");
         GET_SYMBOL(arv_device_get_feature, "arv_device_get_feature");
 
         GET_SYMBOL(arv_buffer_has_gendc, "arv_buffer_has_gendc");
@@ -1189,7 +1210,6 @@ class U3V {
     arv_buffer_get_data_t arv_buffer_get_data;
     arv_buffer_get_part_data_t arv_buffer_get_part_data;
     arv_buffer_get_timestamp_t arv_buffer_get_timestamp;
-    arv_buffer_get_system_timestamp_t arv_buffer_get_system_timestamp;
     arv_device_get_feature_t arv_device_get_feature;
 
     arv_buffer_has_gendc_t arv_buffer_has_gendc;
@@ -1365,7 +1385,7 @@ extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_camera2_frame_count(
     halide_buffer_t *,
     halide_buffer_t *,
-    int32_t num_sensor, bool frame_sync, bool realtime_display_mode, 
+    int32_t num_sensor, bool frame_sync, bool realtime_display_mode,
     halide_buffer_t * id_buf, halide_buffer_t* out)
 {    const std::string id(reinterpret_cast<const char *>(id_buf->host));
     return ion::bb::image_io::u3v_camera_frame_count(id, num_sensor, frame_sync, realtime_display_mode, out);
@@ -1374,7 +1394,7 @@ ION_REGISTER_EXTERN(ion_bb_image_io_u3v_camera2_frame_count);
 
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_gendc_camera1(
-    halide_buffer_t * id_buf, 
+    halide_buffer_t * id_buf,
     bool frame_sync, bool realtime_display_mode, bool enable_control,
     halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
     double gain0, double exposure0,
@@ -1413,7 +1433,7 @@ ION_REGISTER_EXTERN(ion_bb_image_io_u3v_gendc_camera1);
 
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_gendc_camera2(
-    halide_buffer_t * id_buf, 
+    halide_buffer_t * id_buf,
     bool frame_sync, bool realtime_display_mode, bool enable_control,
     halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
     double gain0, double exposure0,
@@ -1457,82 +1477,12 @@ int ION_EXPORT ion_bb_image_io_u3v_gendc_camera2(
 ION_REGISTER_EXTERN(ion_bb_image_io_u3v_gendc_camera2);
 
 extern "C"
-int ION_EXPORT ion_bb_image_io_u3v_device_info1(
-    halide_buffer_t *,
-    int32_t num_sensor,
-    bool frame_sync, bool realtime_display_mode,
-    halide_buffer_t * id_buf,
-    halide_buffer_t * out_deviceinfo
-    )
-{
-    using namespace Halide;
-    int num_output = 1;
-    try {
-        const std::string id(reinterpret_cast<const char *>(id_buf->host));
-        auto &u3v(ion::bb::image_io::U3V::get_instance(id, num_sensor, false, realtime_display_mode));
-
-        if (out_deviceinfo->is_bounds_query()){
-            out_deviceinfo->dim[0].min = 0;
-            out_deviceinfo->dim[0].extent = sizeof(ion::bb::image_io::rawHeader);
-            return 0;
-        }else{
-            std::vector<void *> obufs{out_deviceinfo->host};
-            u3v.get_device_info(obufs);
-        }
-        return 0;
-    } catch (const std::exception &e) {
-        ion::log::error("Exception was thrown: {}", e.what());
-        return 1;
-    } catch (...) {
-        ion::log::error("Unknown exception was thrown");
-        return 1;
-    }
-}
-ION_REGISTER_EXTERN(ion_bb_image_io_u3v_device_info1);
-
-extern "C"
-int ION_EXPORT ion_bb_image_io_u3v_device_info2(
-    halide_buffer_t *, halide_buffer_t *,
-    int32_t num_sensor,
-    bool frame_sync, bool realtime_display_mode,
-    halide_buffer_t * id_buf,
-    halide_buffer_t * deviceinfo0, halide_buffer_t * deviceinfo1
-    )
-{
-    using namespace Halide;
-    try {
-        const std::string id(reinterpret_cast<const char *>(id_buf->host));
-        int num_output = 2;
-        auto &u3v(ion::bb::image_io::U3V::get_instance(id, num_sensor, frame_sync, realtime_display_mode));
-        if (deviceinfo0->is_bounds_query() || deviceinfo1->is_bounds_query()) {
-            if (deviceinfo0->is_bounds_query()){
-                deviceinfo0->dim[0].min = 0;
-                deviceinfo0->dim[0].extent = sizeof(ion::bb::image_io::rawHeader);
-            }
-            if (deviceinfo1->is_bounds_query()){
-                deviceinfo1->dim[0].min = 0;
-                deviceinfo1->dim[0].extent = sizeof(ion::bb::image_io::rawHeader);
-            }
-            return 0;
-        }else{
-            std::vector<void *> obufs{deviceinfo0->host, deviceinfo1->host};
-            u3v.get_device_info(obufs);
-        }
-        return 0;
-    } catch (const std::exception &e) {
-        ion::log::error("Exception was thrown: {}", e.what());
-        return 1;
-    } catch (...) {
-        ion::log::error("Unknown exception was thrown");
-        return 1;
-    }
-}
-ION_REGISTER_EXTERN(ion_bb_image_io_u3v_device_info2);
-
-extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_multiple_camera1(
     halide_buffer_t * id_buf,
-    bool frame_sync, bool realtime_display_mode, bool enable_control,
+    bool force_sim_mode,
+    int32_t width, int32_t height, float_t fps,
+    bool frame_sync, bool realtime_display_mode,
+    bool enable_control,
     halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
     double gain0, double exposure0,
     halide_buffer_t * out0)
@@ -1543,8 +1493,7 @@ int ION_EXPORT ion_bb_image_io_u3v_multiple_camera1(
         const std::string id(reinterpret_cast<const char *>(id_buf->host));
         const std::string gain_key(reinterpret_cast<const char*>(gain_key_buf->host));
         const std::string exposure_key(reinterpret_cast<const char*>(exposure_key_buf->host));
-        auto &u3v(ion::bb::image_io::U3V::get_instance(id, num_output, false, realtime_display_mode));
-
+        auto &u3v(ion::bb::image_io::U3V::get_instance(id, num_output, frame_sync, realtime_display_mode, force_sim_mode, width, height, fps));
         if (out0->is_bounds_query()) {
             return 0;
         }
@@ -1573,6 +1522,8 @@ ION_REGISTER_EXTERN(ion_bb_image_io_u3v_multiple_camera1);
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_multiple_camera2(
     halide_buffer_t * id_buf,
+    bool force_sim_mode,
+    int32_t width, int32_t height, float_t fps,
     bool frame_sync, bool realtime_display_mode, bool enable_control,
     halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
     double gain0, double exposure0,
@@ -1585,7 +1536,7 @@ int ION_EXPORT ion_bb_image_io_u3v_multiple_camera2(
         const std::string id(reinterpret_cast<const char *>(id_buf->host));
         const std::string gain_key(reinterpret_cast<const char*>(gain_key_buf->host));
         const std::string exposure_key(reinterpret_cast<const char*>(exposure_key_buf->host));
-        auto &u3v(ion::bb::image_io::U3V::get_instance(id, 2, frame_sync, realtime_display_mode));
+        auto &u3v(ion::bb::image_io::U3V::get_instance(id, num_output, frame_sync, realtime_display_mode, force_sim_mode, width, height, fps));
         if (out0->is_bounds_query() || out1->is_bounds_query()) {
             return 0;
         }
@@ -1618,10 +1569,33 @@ ION_REGISTER_EXTERN(ion_bb_image_io_u3v_multiple_camera2);
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_multiple_camera_frame_count1(
     halide_buffer_t *,
-    int32_t num_sensor, bool frame_sync, bool realtime_display_mode,
-    halide_buffer_t* id_buf, halide_buffer_t* out)
-{   const std::string id(reinterpret_cast<const char *>(id_buf->host));
-    return ion::bb::image_io::u3v_camera_frame_count(id, num_sensor, frame_sync, realtime_display_mode, out);
+    halide_buffer_t * id_buf, int32_t num_sensor,
+    bool force_sim_mode,
+    int32_t width, int32_t height, float_t fps,
+    bool frame_sync, bool realtime_display_mode,
+    halide_buffer_t* out)
+{
+
+    try {
+        const std::string id(reinterpret_cast<const char *>(id_buf->host));
+        auto &u3v(ion::bb::image_io::U3V::get_instance(id, 1, frame_sync, realtime_display_mode, force_sim_mode, width, height, fps));
+        if (out->is_bounds_query()) {
+            out->dim[0].min = 0;
+            out->dim[0].extent = num_sensor;
+            return 0;
+        }
+        else {
+            u3v.get_frame_count(reinterpret_cast<uint32_t*>(out->host));
+        }
+
+        return 0;
+    } catch (const std::exception &e) {
+        ion::log::error("Exception was thrown when get frame count: {}", e.what());
+        return 1;
+    } catch (...) {
+        ion::log::error("Unknown exception was thrown");
+        return 1;
+    }
 }
 ION_REGISTER_EXTERN(ion_bb_image_io_u3v_multiple_camera_frame_count1);
 
@@ -1629,146 +1603,44 @@ extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_multiple_camera_frame_count2(
     halide_buffer_t *,
     halide_buffer_t *,
-    int32_t num_sensor, bool frame_sync, bool realtime_display_mode,
-    halide_buffer_t* id_buf, halide_buffer_t* out)
+    halide_buffer_t * id_buf, int32_t num_sensor,
+    bool force_sim_mode,
+    int32_t width, int32_t height, float_t fps,
+    bool frame_sync, bool realtime_display_mode,
+    halide_buffer_t* out)
 {
-    const std::string id(reinterpret_cast<const char *>(id_buf->host));
-    return ion::bb::image_io::u3v_camera_frame_count(id, num_sensor, frame_sync, realtime_display_mode, out);
+    try {
+        const std::string id(reinterpret_cast<const char *>(id_buf->host));
+        auto &u3v(ion::bb::image_io::U3V::get_instance(id, num_sensor, frame_sync, realtime_display_mode, force_sim_mode, width, height, fps));
+        if (out->is_bounds_query()) {
+            out->dim[0].min = 0;
+            out->dim[0].extent = num_sensor;
+            return 0;
+        }
+        else {
+            u3v.get_frame_count(reinterpret_cast<uint32_t*>(out->host));
+        }
+
+        return 0;
+    } catch (const std::exception &e) {
+        ion::log::error("Exception was thrown when get frame count: {}", e.what());
+        return 1;
+    } catch (...) {
+        ion::log::error("Unknown exception was thrown");
+        return 1;
+    }
+
 }
 ION_REGISTER_EXTERN(ion_bb_image_io_u3v_multiple_camera_frame_count2);
 
 
 extern "C"
-int ION_EXPORT ion_bb_image_io_u3v_fake_camera1(
+int ION_EXPORT ion_bb_image_io_u3v_device_info1(
+    halide_buffer_t *,
     halide_buffer_t * id_buf, int32_t num_sensor,
-    int32_t width,int32_t height,float_t fps,
-    halide_buffer_t* out0)
-{
-        using namespace Halide;
-
-    try {
-        const std::string id(reinterpret_cast<const char *>(id_buf->host));
-
-        auto &u3v(ion::bb::image_io::U3V::get_instance(id, num_sensor, false,false, true, width, height, fps));
-
-        if (out0->is_bounds_query()) {
-            return 0;
-        }
-
-        std::vector<Halide::Buffer<>> obufs{Halide::Buffer<>(*out0)};
-        u3v.get(obufs);
-
-        return 0;
-    } catch (const std::exception &e) {
-        ion::log::error("Exception was thrown: {}", e.what());
-        return 1;
-    } catch (...) {
-        ion::log::error("Unknown exception was thrown");
-        return 1;
-    }
-}
-ION_REGISTER_EXTERN(ion_bb_image_io_u3v_fake_camera1);
-
-extern "C"
-int ION_EXPORT ion_bb_image_io_u3v_fake_camera2(
-    halide_buffer_t * id_buf, int32_t num_sensor,
+    bool force_sim_mode,
     int32_t width, int32_t height, float_t fps,
-    halide_buffer_t * out0, halide_buffer_t * out1)
-{
-    using namespace Halide;
-    try {
-        const std::string id(reinterpret_cast<const char *>(id_buf->host));
-
-        if (out0->is_bounds_query() || out1->is_bounds_query()) {
-            return 0;
-        }
-
-        auto &u3v(ion::bb::image_io::U3V::get_instance(id, num_sensor, false,false, true, width, height, fps));
-        std::vector<Halide::Buffer<>> obufs{Halide::Buffer<>(*out0), Halide::Buffer<>(*out1)};
-        u3v.get(obufs);
-
-        return 0;
-    } catch (const std::exception &e) {
-        ion::log::error("Exception was thrown: {}", e.what());
-        return 1;
-    } catch (...) {
-        ion::log::error("Unknown exception was thrown");
-        return 1;
-    }
-}
-ION_REGISTER_EXTERN(ion_bb_image_io_u3v_fake_camera2);
-
-extern "C"
-int ION_EXPORT ion_bb_image_io_u3v_fake_camera_frame_count1(
-    halide_buffer_t *,
-    halide_buffer_t * id_buf, int32_t num_sensor,
-    int32_t width, int32_t height, float_t fps,
-    halide_buffer_t* out)
-{
-
-    try {
-        const std::string id(reinterpret_cast<const char *>(id_buf->host));
-        auto &u3v(ion::bb::image_io::U3V::get_instance(id, num_sensor, false,false, true, width, height, fps));
-        if (out->is_bounds_query()) {
-            out->dim[0].min = 0;
-            out->dim[0].extent = num_sensor;
-            return 0;
-        }
-        else {
-            u3v.get_frame_count(reinterpret_cast<uint32_t*>(out->host));
-        }
-
-        return 0;
-    } catch (const std::exception &e) {
-        ion::log::error("Exception was thrown when get frame count: {}", e.what());
-        return 1;
-    } catch (...) {
-        ion::log::error("Unknown exception was thrown");
-        return 1;
-    }
-}
-ION_REGISTER_EXTERN(ion_bb_image_io_u3v_fake_camera_frame_count1);
-
-extern "C"
-int ION_EXPORT ion_bb_image_io_u3v_fake_camera_frame_count2(
-    halide_buffer_t *,
-    halide_buffer_t *,
-    halide_buffer_t * id_buf, int32_t num_sensor,
-    int32_t width, int32_t height, float_t fps,
-    halide_buffer_t* out)
-{
-    try {
-        const std::string id(reinterpret_cast<const char *>(id_buf->host));
-        auto &u3v(ion::bb::image_io::U3V::get_instance(id, num_sensor, false,false, true, width, height, fps));
-        if (out->is_bounds_query()) {
-            out->dim[0].min = 0;
-            out->dim[0].extent = num_sensor;
-            return 0;
-        }
-        else {
-            u3v.get_frame_count(reinterpret_cast<uint32_t*>(out->host));
-        }
-
-        return 0;
-    } catch (const std::exception &e) {
-        ion::log::error("Exception was thrown when get frame count: {}", e.what());
-        return 1;
-    } catch (...) {
-        ion::log::error("Unknown exception was thrown");
-        return 1;
-    }
-
-}
-ION_REGISTER_EXTERN(ion_bb_image_io_u3v_fake_camera_frame_count2);
-
-extern "C"
-int ION_EXPORT ion_bb_image_io_u3v_fake_device_info1(
-    halide_buffer_t *,
-    halide_buffer_t * id_buf,
-    int32_t num_sensor,
-    int32_t width,
-    int32_t height,
-    float_t fps,
+    bool frame_sync, bool realtime_display_mode,
     halide_buffer_t * out_deviceinfo
     )
 {
@@ -1776,7 +1648,7 @@ int ION_EXPORT ion_bb_image_io_u3v_fake_device_info1(
     int num_output = 1;
     try {
         const std::string id(reinterpret_cast<const char *>(id_buf->host));
-        auto &u3v(ion::bb::image_io::U3V::get_instance(id, num_sensor, false, false, true, width, height, fps));
+        auto &u3v(ion::bb::image_io::U3V::get_instance(id, num_sensor, frame_sync, realtime_display_mode, force_sim_mode, width, height, fps));
 
         if (out_deviceinfo->is_bounds_query()){
             out_deviceinfo->dim[0].min = 0;
@@ -1795,16 +1667,15 @@ int ION_EXPORT ion_bb_image_io_u3v_fake_device_info1(
         return 1;
     }
 }
-ION_REGISTER_EXTERN(ion_bb_image_io_u3v_fake_device_info1);
+ION_REGISTER_EXTERN(ion_bb_image_io_u3v_device_info1);
 
 extern "C"
-int ION_EXPORT ion_bb_image_io_u3v_fake_device_info2(
+int ION_EXPORT ion_bb_image_io_u3v_device_info2(
     halide_buffer_t *, halide_buffer_t *,
-    halide_buffer_t * id_buf,
-    int32_t num_sensor,
-    int32_t width,
-    int32_t height,
-    int32_t fps,
+    halide_buffer_t * id_buf, int32_t num_sensor,
+    bool force_sim_mode,
+    int32_t width, int32_t height, float_t fps,
+    bool frame_sync, bool realtime_display_mode,
     halide_buffer_t * deviceinfo0, halide_buffer_t * deviceinfo1
     )
 {
@@ -1813,7 +1684,8 @@ int ION_EXPORT ion_bb_image_io_u3v_fake_device_info2(
     try {
         const std::string id(reinterpret_cast<const char *>(id_buf->host));
         int num_output = 2;
-        auto &u3v(ion::bb::image_io::U3V::get_instance(id, 2, false, false, true, width, height, fps));
+
+        auto &u3v(ion::bb::image_io::U3V::get_instance(id, 2, frame_sync, realtime_display_mode, force_sim_mode, width, height, fps));
 
         if (deviceinfo0->is_bounds_query() || deviceinfo1->is_bounds_query()) {
             if (deviceinfo0->is_bounds_query()){
@@ -1838,5 +1710,5 @@ int ION_EXPORT ion_bb_image_io_u3v_fake_device_info2(
         return 1;
     }
 }
-ION_REGISTER_EXTERN(ion_bb_image_io_u3v_fake_device_info2);
+ION_REGISTER_EXTERN(ion_bb_image_io_u3v_device_info2);
 #endif

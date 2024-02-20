@@ -844,6 +844,12 @@ public:
     std::vector<Input<double> *> gain;
     std::vector<Input<double> *> exposure;
 
+    BuildingBlockParam<int32_t> fps{"fps", 25};
+    BuildingBlockParam<int32_t> width{"width", 640};
+    BuildingBlockParam<int32_t> height{"height", 480};
+    BuildingBlockParam<bool> force_sim_mode{"force_sim_mode", false};
+
+
     void configure() {
         if (enable_control) {
             for (auto i=0; i<num_devices; ++i) {
@@ -872,10 +878,11 @@ public:
 
             std::vector<ExternFuncArgument> params{
                 id_buf,
-                static_cast<bool>(frame_sync),
-                static_cast<bool>(realtime_diaplay_mode),
+                static_cast<bool>(force_sim_mode),
+                static_cast<int32_t>(width), static_cast<int32_t>(height),static_cast<float_t>(fps),
+                static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
                 static_cast<bool>(enable_control),
-                gain_key_buf, exposure_key_buf
+                gain_key_buf, exposure_key_buf,
             };
 
             for (int i = 0; i<num_devices; i++) {
@@ -908,8 +915,10 @@ public:
 
             Buffer<uint8_t> id_buf = this->get_id();
             std::vector<ExternFuncArgument> params{
-                cameraN, static_cast<int32_t>(num_devices), static_cast<bool>(frame_sync),
-                static_cast<bool>(realtime_diaplay_mode), id_buf
+                cameraN, id_buf, static_cast<int32_t>(num_devices),
+                static_cast<bool>(force_sim_mode),
+                static_cast<int32_t>(width), static_cast<int32_t>(height), static_cast<float_t>(fps),
+                static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
             };
 
             device_info.resize(num_devices);
@@ -932,9 +941,15 @@ public:
         {
             Buffer<uint8_t> id_buf = this->get_id();
             std::vector<ExternFuncArgument> params{
-                cameraN, static_cast<int32_t>(output.size()), static_cast<bool>(frame_sync),
-                static_cast<bool>(realtime_diaplay_mode), id_buf
+                cameraN, id_buf, static_cast<int32_t>(num_devices),
+                static_cast<bool>(force_sim_mode),
+                static_cast<int32_t>(width), static_cast<int32_t>(height), static_cast<float_t>(fps),
+                static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
             };
+//            std::vector<ExternFuncArgument> params{
+//                cameraN, static_cast<int32_t>(output.size()), static_cast<bool>(frame_sync),
+//                static_cast<bool>(realtime_diaplay_mode), id_buf
+//            };
             cameraN_fc.define_extern("ion_bb_image_io_u3v_multiple_camera_frame_count" + std::to_string(output.size()), params, type_of<uint32_t>(), 1);
             cameraN_fc.compute_root();
             frame_count(_) = cameraN_fc(_);
