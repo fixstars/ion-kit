@@ -28,10 +28,11 @@ int main(int argc, char *argv[])
         int height = 500;
         int num_device = 2;
         Node n = b.add("image_io_u3v_cameraN_u8x2")().set_param(
+                Param("num_devices", num_device),
+                Param("force_sim_mode", true),
                 Param("width", width),
                 Param("height", height),
-                Param("fps", 30)
-                );
+                Param("fps", 30));
 
 
         // Map output buffer and ports by using Port::bind.

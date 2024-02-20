@@ -190,7 +190,7 @@ class U3V {
                               bool sim_mode = false,
                               int32_t width = 640,
                               int32_t height = 480,
-                              float_t fps = 25)
+                              float_t fps = 25.0)
     {
 
         if (instances_.count(id) == 0) {
