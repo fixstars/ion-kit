@@ -146,7 +146,6 @@ class U3V {
     using arv_enable_interface_t = void(*)(const char*);
     using arv_camera_create_stream_t = ArvStream*(*)(ArvCamera*, ArvStreamCallback*, void*, GError**);
     using arv_fake_device_get_fake_camera_t = ArvCamera*(*)(ArvFakeDevice*);
-    using arv_camera_set_pixel_format_from_string_t = void(*)(ArvCamera*, const char*, GError**);
 
     struct DeviceInfo {
         const char* dev_id_;
@@ -1108,7 +1107,6 @@ class U3V {
         GET_SYMBOL(arv_set_fake_camera_genicam_filename, "arv_set_fake_camera_genicam_filename");
         GET_SYMBOL(arv_enable_interface, "arv_enable_interface");
         GET_SYMBOL(arv_fake_device_get_fake_camera, "arv_fake_device_get_fake_camera");
-        GET_SYMBOL(arv_camera_set_pixel_format_from_string, "arv_camera_set_pixel_format_from_string");
         #undef GET_SYMBOL
     }
 
@@ -1220,7 +1218,6 @@ class U3V {
 
     arv_camera_new_t  arv_camera_new;
     arv_camera_get_device_t arv_camera_get_device;
-    arv_camera_set_pixel_format_from_string_t arv_camera_set_pixel_format_from_string;
     arv_camera_create_stream_t arv_camera_create_stream;
 
     arv_fake_device_new_t arv_fake_device_new;
