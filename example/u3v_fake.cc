@@ -20,26 +20,40 @@ int main(int argc, char *argv[])
 
         // Set the target hardware. The default is CPU.
         b.set_target(ion::get_host_target());
-
         // Load standard building block
         b.with_bb_module("ion-bb");
 
-        int width = 500;
-        int height = 500;
+        int width = 640;
+        int height = 480;
         int num_device = 2;
+        // if you don't set width and height, default width is 640 and default height is 480
         Node n = b.add("image_io_u3v_cameraN_u8x2")().set_param(
                 Param("num_devices", num_device),
-                Param("force_sim_mode", true),
-                Param("width", width),
-                Param("height", height),
-                Param("fps", 30));
+                Param("pixel_format", "Mono8"));
+
+/******************** force simulation mode*************************/
+//        int width = 960;
+//        int height = 640;
+//        int num_device = 2;
+//        Node n = b.add("image_io_u3v_cameraN_u8x2")().set_param(
+//        Param("num_devices", num_device),
+//        Param("force_sim_mode", true),
+//        Param("width", width),
+//        Param("height", height));
+
+/********************RGB 8*************************/
+//        Node n = b.add("image_io_u3v_cameraN_u8x3")().set_param(
+//                Param("num_devices", num_device),
+//                Param("pixel_format", "RGB8"));
+
+/********************Mono16*************************/
+//        Node n = b.add("image_io_u3v_cameraN_u16x2")().set_param(
+//                Param("num_devices", num_device),
+//                Param("pixel_format", "Mono16"));
 
 
-        // Map output buffer and ports by using Port::bind.
-        // - output: output of the obtained video data
-        // - frame_count: output of the frame number of the obtained video
-        std::vector< int > buf_size = std::vector < int >{ width, height };
 
+        std::vector< int > buf_size = std::vector < int >{ width, height};
 
         std::vector<Halide::Buffer<uint8_t>> output;
         for (int i = 0; i < num_device; ++i){
@@ -47,7 +61,7 @@ int main(int argc, char *argv[])
         }
         n["output"].bind(output);
         Buffer<uint32_t> frame_count(1);
-        n["frame_count"].bind(frame_count);
+
         
         // Obtain image data continuously for 100 frames to facilitate operation check.
         int user_input = -1;
@@ -63,7 +77,7 @@ int main(int argc, char *argv[])
             cv::Mat img(height, width, CV_8UC1, output[i].data());
             cv::imshow("Fake Camera" + std::to_string(i), img);
         }
-        std::cout << frame_count(0) << std::endl;
+
         user_input = cv::waitKeyEx(1);
         }
       cv::destroyAllWindows();
