@@ -61,6 +61,7 @@ int main(int argc, char *argv[])
         }
         n["output"].bind(output);
         Buffer<uint32_t> frame_count(1);
+        n["frame_count"].bind(frame_count);
 
         
         // Obtain image data continuously for 100 frames to facilitate operation check.
@@ -79,7 +80,9 @@ int main(int argc, char *argv[])
         }
 
         user_input = cv::waitKeyEx(1);
+        std::cout<<frame_count(0)<<std::endl;
         }
+
       cv::destroyAllWindows();
 
     } catch (const ion::Error& e) {
