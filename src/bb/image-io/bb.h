@@ -847,7 +847,7 @@ public:
     BuildingBlockParam<bool> force_sim_mode{"force_sim_mode", false};
     BuildingBlockParam<int32_t> width{"width", 640};
     BuildingBlockParam<int32_t> height{"height", 480};
-    BuildingBlockParam<std::string> pixelFormat{"pixelFormat", "Mono8"};
+    BuildingBlockParam<std::string> pixel_format{"pixel_format", "Mono8"};
     BuildingBlockParam<float_t> fps{"fps", 25.0};
 
     void configure() {
@@ -876,13 +876,18 @@ public:
             exposure_key_buf.fill(0);
             std::memcpy(exposure_key_buf.data(), exposure_key.c_str(), exposure_key.size());
 
+            std::string pixel_format_str = pixel_format;
+            Halide::Buffer<uint8_t> pixel_format_buf(pixel_format_str.size() + 1);
+            pixel_format_buf.fill(0);
+            std::memcpy(pixel_format_buf.data(), pixel_format_str.c_str(), pixel_format_str.size());
+
             std::vector<ExternFuncArgument> params{
                 id_buf,
                 static_cast<bool>(force_sim_mode),
                 static_cast<int32_t>(width), static_cast<int32_t>(height),static_cast<float_t>(fps),
                 static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
                 static_cast<bool>(enable_control),
-                gain_key_buf, exposure_key_buf,
+                gain_key_buf, exposure_key_buf, pixel_format_buf
             };
 
             for (int i = 0; i<num_devices; i++) {
@@ -914,11 +919,17 @@ public:
         {
 
             Buffer<uint8_t> id_buf = this->get_id();
+            std::string pixel_format_str = pixel_format;
+            Halide::Buffer<uint8_t> pixel_format_buf(pixel_format_str.size() + 1);
+            pixel_format_buf.fill(0);
+            std::memcpy(pixel_format_buf.data(), pixel_format_str.c_str(), pixel_format_str.size());
+
             std::vector<ExternFuncArgument> params{
                 cameraN, id_buf, static_cast<int32_t>(num_devices),
                 static_cast<bool>(force_sim_mode),
                 static_cast<int32_t>(width), static_cast<int32_t>(height), static_cast<float_t>(fps),
                 static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
+                pixel_format_buf
             };
 
             device_info.resize(num_devices);
@@ -940,13 +951,19 @@ public:
         Func cameraN_fc("u3v_cameraN_fc");
         {
             Buffer<uint8_t> id_buf = this->get_id();
+            std::string pixel_format_str = pixel_format;
+            Halide::Buffer<uint8_t> pixel_format_buf(pixel_format_str.size() + 1);
+            pixel_format_buf.fill(0);
+            std::memcpy(pixel_format_buf.data(), pixel_format_str.c_str(), pixel_format_str.size());
+
             std::vector<ExternFuncArgument> params{
                 cameraN, id_buf, static_cast<int32_t>(num_devices),
                 static_cast<bool>(force_sim_mode),
                 static_cast<int32_t>(width), static_cast<int32_t>(height), static_cast<float_t>(fps),
                 static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
+                pixel_format_buf
             };
-            
+
             cameraN_fc.define_extern("ion_bb_image_io_u3v_multiple_camera_frame_count" + std::to_string(output.size()), params, type_of<uint32_t>(), 1);
             cameraN_fc.compute_root();
             frame_count(_) = cameraN_fc(_);
