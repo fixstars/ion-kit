@@ -139,13 +139,14 @@ class U3V {
 
     using arv_shutdown_t = void(*)(void);
 
-    using arv_camera_new_t = ArvCamera *(*)(const char*, GError**);
-    using arv_camera_get_device_t = ArvDevice *(*)(ArvCamera *);
-    using arv_fake_device_new_t = ArvDevice *(*)(const char*, GError**);
+    using arv_camera_new_t = ArvCamera*(*)(const char*, GError**);
+    using arv_camera_get_device_t = ArvDevice*(*)(ArvCamera *);
+    using arv_fake_device_new_t = ArvDevice*(*)(const char*, GError**);
     using arv_set_fake_camera_genicam_filename_t = void(*)(const char*);
     using arv_enable_interface_t = void(*)(const char*);
-    using arv_camera_create_stream_t = ArvStream*(*)(ArvCamera *, ArvStreamCallback*, void*, GError**);
-    using arv_fake_device_get_fake_camera_t = ArvCamera *(*)(ArvFakeDevice *);
+    using arv_camera_create_stream_t = ArvStream*(*)(ArvCamera*, ArvStreamCallback*, void*, GError**);
+    using arv_fake_device_get_fake_camera_t = ArvCamera*(*)(ArvFakeDevice*);
+    using arv_camera_set_pixel_format_from_string_t = void(*)(ArvCamera*, const char*, GError**);
 
     struct DeviceInfo {
         const char* dev_id_;
@@ -748,7 +749,7 @@ class U3V {
         if (sim_mode_){
             start_aravis_sim(width, height, fps);
         }else{
-            start_aravis_no_sim(n_devices, frame_sync, realtime_display_mode, dev_id);
+            start_aravis_no_sim(n_devices, dev_id);
         }
 
     }
@@ -780,15 +781,12 @@ class U3V {
             // Config fake cameras
             for (int i = 0;i< num_sensor_;i++){
                 // setting the params if it is not zero
-                if (width > 0){
-                    arv_device_set_integer_feature_value (devices_[i].device_, "Width", width, &err_);
-                }
-                if (height > 0){
-                    arv_device_set_integer_feature_value (devices_[i].device_, "Height", height, &err_);
-                }
-                if (fps > 0){
-                    arv_device_set_float_feature_value (devices_[i].device_, "AcquisitionFrameRate",fps, &err_);
-                }
+
+                log::info("Width {}, Height {}...", width, height);
+                arv_device_set_integer_feature_value (devices_[i].device_, "Width", width, &err_);
+                arv_device_set_integer_feature_value (devices_[i].device_, "Height", height, &err_);
+                arv_device_set_float_feature_value (devices_[i].device_, "AcquisitionFrameRate",fps, &err_);
+
                 devices_[i].u3v_payload_size_ =  arv_device_get_integer_feature_value (devices_[i].device_, "PayloadSize", &err_);
                 auto px =arv_device_get_integer_feature_value(devices_[i].device_, "PixelFormat", &err_);
                 auto fps = arv_device_get_float_feature_value(devices_[i].device_, "AcquisitionFrameRate", &err_);
@@ -813,7 +811,7 @@ class U3V {
             }
     }
 
-    void start_aravis_no_sim (int n_devices, bool frame_sync, bool realtime_display_mode, char* dev_id = nullptr){
+    void start_aravis_no_sim (int n_devices, char* dev_id = nullptr){
         if (n_devices < num_sensor_){
             log::info("{} device is found; but the num_device is set to {}", n_devices, num_sensor_);
             throw std::runtime_error("Device number is not match");
@@ -1108,6 +1106,7 @@ class U3V {
         GET_SYMBOL(arv_set_fake_camera_genicam_filename, "arv_set_fake_camera_genicam_filename");
         GET_SYMBOL(arv_enable_interface, "arv_enable_interface");
         GET_SYMBOL(arv_fake_device_get_fake_camera, "arv_fake_device_get_fake_camera");
+        GET_SYMBOL(arv_camera_set_pixel_format_from_string, "arv_camera_set_pixel_format_from_string");
         #undef GET_SYMBOL
     }
 
@@ -1224,6 +1223,7 @@ class U3V {
 
     arv_enable_interface_t arv_enable_interface;
     arv_fake_device_get_fake_camera_t arv_fake_device_get_fake_camera;
+    arv_camera_set_pixel_format_from_string_t arv_camera_set_pixel_format_from_string;
 
     static std::unique_ptr<U3V> instance_;
     static std::map<std::string, std::shared_ptr<U3V>> instances_;

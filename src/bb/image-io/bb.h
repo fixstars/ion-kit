@@ -844,11 +844,11 @@ public:
     std::vector<Input<double> *> gain;
     std::vector<Input<double> *> exposure;
 
-    BuildingBlockParam<float_t> fps{"fps", 25.0};
+    BuildingBlockParam<bool> force_sim_mode{"force_sim_mode", false};
     BuildingBlockParam<int32_t> width{"width", 640};
     BuildingBlockParam<int32_t> height{"height", 480};
-    BuildingBlockParam<bool> force_sim_mode{"force_sim_mode", false};
-
+    BuildingBlockParam<std::string> pixelFormat{"pixelFormat", "Mono8"};
+    BuildingBlockParam<float_t> fps{"fps", 25.0};
 
     void configure() {
         if (enable_control) {
