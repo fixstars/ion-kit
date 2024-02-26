@@ -286,7 +286,7 @@ class U3V {
         }
     }
 
-    void setFrameSync(std::vector<ArvBuffer *> &bufs, int timeout_us){
+     void setFrameSync(std::vector<ArvBuffer *> &bufs, int timeout_us){
         uint32_t max_cnt = 0;
         while (true) {
             // Update max_cnt
@@ -363,7 +363,6 @@ class U3V {
             }
         }
     }
-
 
     void get(std::vector<Halide::Buffer<>>& outs) {
         auto timeout_us = 30 * 1000 * 1000;
@@ -462,7 +461,7 @@ class U3V {
                         : static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[cameN_idx_]) & 0x00000000FFFFFFFF);
                 latest_cnt = devices_[cameN_idx_].frame_count_;
 
-                    cameN_idx_ == 0 ?
+                cameN_idx_ == 0 ?
                     log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", devices_[cameN_idx_].frame_count_, "") :
                     log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", "", devices_[cameN_idx_].frame_count_);
 
@@ -477,7 +476,7 @@ class U3V {
             ::memcpy(outs[0].data(), arv_buffer_get_part_data(bufs[cameN_idx_], 0, nullptr), sz);
             arv_stream_push_buffer(devices_[cameN_idx_].stream_, bufs[cameN_idx_]);
 
-                log::trace("Obtained Frame from USB{}: {}", cameN_idx_, frame_cnt_);
+            log::trace("Obtained Frame from USB{}: {}", cameN_idx_, frame_cnt_);
             }
         }
     }
