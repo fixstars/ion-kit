@@ -1,6 +1,4 @@
 import ctypes
-from ctypes.util import find_library
-
 import os
 import platform
 

@@ -1,7 +1,4 @@
 import ctypes
-from typing import Optional
-from ctypes.util import find_library
-import os
 
 from .native import (
     c_ion_builder_t,
