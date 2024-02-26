@@ -34,6 +34,13 @@ class U3V {
         const char     *message;
     };
 
+    enum OperationMode
+    {   Came2USB1,
+        Came1USB1,
+        Came2USB2,
+        Came1USB2
+    };
+
     using gpointer = struct gpointer_*;
 
     using g_object_unref_t = void (*)(gpointer);
@@ -169,14 +176,12 @@ class U3V {
     };
 
     public:
-
     ~U3V(){
         if (!disposed_){
             log::debug("Trying to call dispose from distructor since disposed_ is {}", disposed_);
             dispose();
         }
     }
-
 
     void dispose(){
         log::debug("U3V::dispose() :: is called");
@@ -204,7 +209,6 @@ class U3V {
 
         // arv_shutdown();
         disposed_ = true;
-        // instance_.reset(nullptr);
 
         log::debug("U3V::dispose() :: Instance is deleted");
     }
@@ -478,13 +482,6 @@ class U3V {
         }
     }
 
-
-    int32_t get_frame_count_from_genDC_descriptor(ArvBuffer * buf, DeviceInfo& d){
-        int32_t frame_count = 0;;
-        memcpy (&frame_count, ((char *) arv_buffer_get_data(buf, nullptr) + d.framecount_offset_), sizeof(int32_t));
-        return frame_count;
-    }
-
     void get_frame_count(uint32_t * out){
         if (num_sensor_ != devices_.size()){
             ::memcpy(out, &frame_cnt_, sizeof(uint32_t));
@@ -611,9 +608,20 @@ protected:
         devices_(num_sensor), buffers_(num_sensor), operation_mode_(OperationMode::Came1USB1), frame_cnt_(0), cameN_idx_(-1), disposed_(false), sim_mode_(sim_mode)
     {
         init_symbols();
+        log::debug("U3V:: 23-11-18 : updating obtain and write");
+        log::info("Using aravis-{}.{}.{}", arv_get_major_version(), arv_get_minor_version(), arv_get_micro_version());
+
+        if (!sim_mode_){
+            arv_update_device_list();
+            auto n_devices = arv_get_n_devices ();
+            if (n_devices == 0){
+                log::warn("Fallback to simulation mode: Could not find camera");
+                sim_mode_ = true;
+            }
+        }
     }
 
-    void start_aravis_sim(int32_t width, int32_t height, float_t fps, const std::string& pixel_format){
+    void start_stream_sim(int32_t width, int32_t height, float_t fps, const std::string& pixel_format){
             auto path = std::getenv("GENICAM_FILENAME");
             if (path == nullptr){
                 throw std::runtime_error("Please define GENICAM_FILENAME by `set GENICAM_FILENAME=` or `export GENICAM_FILENAME=`");
@@ -671,13 +679,12 @@ protected:
             }
     }
 
-    void start_aravis_no_sim (int n_devices, char* dev_id = nullptr){
+    void start_stream_no_sim (int n_devices, char* dev_id = nullptr){
         if (n_devices < num_sensor_){
-            log::info("{} device is found; but the num_device is set to {}", n_devices, num_sensor_);
-            throw std::runtime_error("Device number is not match");
+                log::info("{} device is found; but the num_device is set to {}", n_devices, num_sensor_);
+                throw std::runtime_error("Device number is not match, please set num_devices again");
         }
         frame_sync_ = num_sensor_ > 1 ? frame_sync_ : false;
-
         unsigned int target_device_idx;
         if (n_devices != num_sensor_ && dev_id == nullptr) {
             n_devices = num_sensor_;
@@ -885,6 +892,92 @@ protected:
 
     }
 
+    static std::map<std::string, std::shared_ptr<U3V>> instances_;
+
+    int32_t num_sensor_;
+
+    DynamicModule gobject_;
+    DynamicModule aravis_;
+    GError *err_ = nullptr;
+
+    bool frame_sync_;
+    bool realtime_display_mode_;
+    bool is_gendc_;
+    bool is_param_integer_;
+    int32_t operation_mode_;
+
+    uint32_t frame_cnt_;
+    int32_t cameN_idx_;
+
+    // genDC
+    ContainerHeader gendc_descriptor_;
+    std::string pixel_format_;
+    std::vector<DeviceInfo> devices_;
+    std::vector<std::vector<ArvBuffer*> > buffers_;
+
+    bool disposed_;
+    bool sim_mode_;
+
+private:
+
+    g_object_unref_t g_object_unref;
+
+    arv_get_major_version_t arv_get_major_version;
+    arv_get_minor_version_t arv_get_minor_version;
+    arv_get_micro_version_t arv_get_micro_version;
+
+    arv_update_device_list_t arv_update_device_list;
+    arv_get_n_devices_t arv_get_n_devices;
+
+    arv_get_device_id_t arv_get_device_id;
+    arv_get_device_model_t arv_get_device_model;
+    arv_get_device_serial_nbr_t arv_get_device_serial_nbr;
+
+    arv_open_device_t arv_open_device;
+    arv_device_set_string_feature_value_t arv_device_set_string_feature_value;
+    arv_device_set_float_feature_value_t arv_device_set_float_feature_value;
+    arv_device_set_integer_feature_value_t arv_device_set_integer_feature_value;
+
+    arv_device_get_string_feature_value_t arv_device_get_string_feature_value;
+    arv_device_get_integer_feature_value_t arv_device_get_integer_feature_value;
+    arv_device_get_float_feature_value_t arv_device_get_float_feature_value;
+
+    arv_device_get_integer_feature_bounds_t arv_device_get_integer_feature_bounds;
+    arv_device_get_float_feature_bounds_t arv_device_get_float_feature_bounds;
+
+    arv_device_is_feature_available_t arv_device_is_feature_available;
+
+    arv_device_get_register_feature_length_t arv_device_get_register_feature_length;
+    arv_device_get_register_feature_value_t arv_device_get_register_feature_value;
+
+    arv_device_create_stream_t arv_device_create_stream;
+
+    arv_buffer_new_allocate_t arv_buffer_new_allocate;
+    arv_stream_push_buffer_t arv_stream_push_buffer;
+    arv_stream_get_n_buffers_t arv_stream_get_n_buffers;
+    arv_acquisition_mode_to_string_t arv_acquisition_mode_to_string;
+    arv_device_execute_command_t arv_device_execute_command;
+    arv_stream_timeout_pop_buffer_t arv_stream_timeout_pop_buffer;
+    arv_buffer_get_status_t arv_buffer_get_status;
+    arv_buffer_get_payload_type_t arv_buffer_get_payload_type;
+    arv_buffer_get_data_t arv_buffer_get_data;
+    arv_buffer_get_part_data_t arv_buffer_get_part_data;
+    arv_buffer_get_timestamp_t arv_buffer_get_timestamp;
+    arv_device_get_feature_t arv_device_get_feature;
+
+    arv_buffer_has_gendc_t arv_buffer_has_gendc;
+    arv_buffer_get_gendc_descriptor_t arv_buffer_get_gendc_descriptor;
+
+    arv_shutdown_t arv_shutdown;
+
+    arv_camera_new_t  arv_camera_new;
+    arv_camera_get_device_t arv_camera_get_device;
+    arv_camera_create_stream_t arv_camera_create_stream;
+
+    arv_fake_device_new_t arv_fake_device_new;
+    arv_enable_interface_t arv_enable_interface;
+    arv_set_fake_camera_genicam_filename_t   arv_set_fake_camera_genicam_filename;
+    arv_fake_device_get_fake_camera_t arv_fake_device_get_fake_camera;
 
     void init_symbols_gobject() {
 	if (!gobject_.is_available()) {
@@ -974,6 +1067,11 @@ protected:
         init_symbols_aravis();
     }
 
+    int32_t get_frame_count_from_genDC_descriptor(ArvBuffer * buf, DeviceInfo& d){
+        int32_t frame_count = 0;;
+        memcpy (&frame_count, ((char *) arv_buffer_get_data(buf, nullptr) + d.framecount_offset_), sizeof(int32_t));
+        return frame_count;
+    }
 
     template<typename T>
     GError* Set(ArvDevice* dev_handle, const char* key, T v) {
@@ -1025,104 +1123,10 @@ protected:
         return err_;
     }
 
-    g_object_unref_t g_object_unref;
-
-    arv_get_major_version_t arv_get_major_version;
-    arv_get_minor_version_t arv_get_minor_version;
-    arv_get_micro_version_t arv_get_micro_version;
-
-    arv_update_device_list_t arv_update_device_list;
-    arv_get_n_devices_t arv_get_n_devices;
-
-    arv_get_device_id_t arv_get_device_id;
-    arv_get_device_model_t arv_get_device_model;
-    arv_get_device_serial_nbr_t arv_get_device_serial_nbr;
-
-    arv_open_device_t arv_open_device;
-    arv_device_set_string_feature_value_t arv_device_set_string_feature_value;
-    arv_device_set_float_feature_value_t arv_device_set_float_feature_value;
-    arv_device_set_integer_feature_value_t arv_device_set_integer_feature_value;
-
-    arv_device_get_string_feature_value_t arv_device_get_string_feature_value;
-    arv_device_get_integer_feature_value_t arv_device_get_integer_feature_value;
-    arv_device_get_float_feature_value_t arv_device_get_float_feature_value;
-
-    arv_device_get_integer_feature_bounds_t arv_device_get_integer_feature_bounds;
-    arv_device_get_float_feature_bounds_t arv_device_get_float_feature_bounds;
-
-    arv_device_is_feature_available_t arv_device_is_feature_available;
-
-    arv_device_get_register_feature_length_t arv_device_get_register_feature_length;
-    arv_device_get_register_feature_value_t arv_device_get_register_feature_value;
-
-    arv_device_create_stream_t arv_device_create_stream;
-
-    arv_buffer_new_allocate_t arv_buffer_new_allocate;
-    arv_stream_push_buffer_t arv_stream_push_buffer;
-    arv_stream_get_n_buffers_t arv_stream_get_n_buffers;
-    arv_acquisition_mode_to_string_t arv_acquisition_mode_to_string;
-    arv_device_execute_command_t arv_device_execute_command;
-    arv_stream_timeout_pop_buffer_t arv_stream_timeout_pop_buffer;
-    arv_buffer_get_status_t arv_buffer_get_status;
-    arv_buffer_get_payload_type_t arv_buffer_get_payload_type;
-    arv_buffer_get_data_t arv_buffer_get_data;
-    arv_buffer_get_part_data_t arv_buffer_get_part_data;
-    arv_buffer_get_timestamp_t arv_buffer_get_timestamp;
-    arv_device_get_feature_t arv_device_get_feature;
-
-    arv_buffer_has_gendc_t arv_buffer_has_gendc;
-    arv_buffer_get_gendc_descriptor_t arv_buffer_get_gendc_descriptor;
-
-    arv_shutdown_t arv_shutdown;
-
-    arv_camera_new_t  arv_camera_new;
-    arv_camera_get_device_t arv_camera_get_device;
-    arv_camera_create_stream_t arv_camera_create_stream;
-
-    arv_fake_device_new_t arv_fake_device_new;
-    arv_enable_interface_t arv_enable_interface;
-    arv_set_fake_camera_genicam_filename_t   arv_set_fake_camera_genicam_filename;
-    arv_fake_device_get_fake_camera_t arv_fake_device_get_fake_camera;
-
-    static std::unique_ptr<U3V> instance_;
-    static std::map<std::string, std::shared_ptr<U3V>> instances_;
-
-    enum OperationMode
-    {   Came2USB1,
-        Came1USB1,
-        Came2USB2,
-        Came1USB2
-    };
-
-    int32_t num_sensor_;
-
-    DynamicModule gobject_;
-    DynamicModule aravis_;
-    GError *err_ = nullptr;
-
-    bool frame_sync_;
-    bool realtime_display_mode_;
-    bool is_gendc_;
-    bool is_param_integer_;
-    int32_t operation_mode_;
-
-    uint32_t frame_cnt_;
-    int32_t cameN_idx_;
-
-    // genDC
-    ContainerHeader gendc_descriptor_;
-    std::string pixel_format_;
-    std::vector<DeviceInfo> devices_;
-    std::vector<std::vector<ArvBuffer*> > buffers_;
-
-    bool disposed_;
-    bool sim_mode_;
-
 }; // class U3V
 
-
-std::unique_ptr<U3V> U3V::instance_;
 std::map<std::string, std::shared_ptr<U3V>>  U3V::instances_;
+
 
 class U3VFakeCam : public U3V{
 public:
@@ -1135,7 +1139,7 @@ public:
                               )
     {
         if (instances_.count(id) == 0) {
-            ion::log::info("Create U3VFakeCam Fake U3V instance: {}", id);
+            ion::log::info("Create U3VFakeCam U3V instance: {}", id);
             instances_[id] = std::unique_ptr<U3V>(new U3VFakeCam(num_sensor,  width, height, fps, pixel_format));
         }
 
@@ -1144,9 +1148,7 @@ public:
 private:
     U3VFakeCam(int32_t num_sensor, int32_t width, int32_t height , float_t fps, const std::string & pixel_format,  char* dev_id = nullptr)
      : U3V(num_sensor,  false, false, true,  width, height , fps, pixel_format,  nullptr){
-        log::debug("U3V:: updating obtain and write");
-        log::info("Using aravis-{}.{}.{}", arv_get_major_version(), arv_get_minor_version(), arv_get_micro_version());
-        start_aravis_sim(width, height, fps, pixel_format);
+         start_stream_sim(width, height, fps, pixel_format);
     };
 
 };
@@ -1166,7 +1168,7 @@ public:
                               )
     {
         if (instances_.count(id) == 0) {
-            ion::log::info("Create U3VRealCam U3V instance: {}", id);
+            ion::log::info("Create U3VRealCam instance: {}", id);
             instances_[id] = std::unique_ptr<U3V>(new U3VRealCam(num_sensor, frame_sync, realtime_display_mode, sim_mode, width, height, fps, pixel_format));
         }
 
@@ -1177,26 +1179,18 @@ public:
 private:
     U3VRealCam(int32_t num_sensor, bool frame_sync, bool realtime_display_mode, bool sim_mode, int32_t width, int32_t height , float_t fps, const std::string & pixel_format,  char* dev_id = nullptr)
      : U3V(num_sensor,  frame_sync, realtime_display_mode, sim_mode,  width, height , fps, pixel_format,  nullptr){
-        log::debug("U3V:: updating obtain and write");
-        log::info("Using aravis-{}.{}.{}", arv_get_major_version(), arv_get_minor_version(), arv_get_micro_version());
-
         // check if the camera is available
-        int n_devices = 0;
-        if (!sim_mode_){
-            arv_update_device_list();
-            n_devices = arv_get_n_devices ();
-            if (n_devices == 0){
-                log::warn("Fallback to simulation mode: Could not find camera");
-                sim_mode_ = true;
-            }
-        }
         if (sim_mode_){
-            start_aravis_sim(width, height, fps, pixel_format);
+            start_stream_sim(width, height, fps, pixel_format);
         }else{
-            start_aravis_no_sim(n_devices, dev_id);
+            start_stream_no_sim(num_sensor_, dev_id);
         }
     };
 };
+
+}  // namespace image_io
+}  // namespace bb
+}  // namespace ion
 
 extern "C"
 int ION_EXPORT u3v_dispose(const char *id) {
@@ -1229,10 +1223,6 @@ int u3v_camera_frame_count(
         return 1;
     }
 }
-
-}  // namespace image_io
-}  // namespace bb
-}  // namespace ion
 
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_camera1(
@@ -1314,7 +1304,7 @@ int ION_EXPORT ion_bb_image_io_u3v_camera1_frame_count(
     halide_buffer_t * id_buf, halide_buffer_t* out)
 {
     const std::string id(reinterpret_cast<const char *>(id_buf->host));
-    return ion::bb::image_io::u3v_camera_frame_count(id, num_sensor, frame_sync, realtime_display_mode, out);
+    return u3v_camera_frame_count(id, num_sensor, frame_sync, realtime_display_mode, out);
 }
 ION_REGISTER_EXTERN(ion_bb_image_io_u3v_camera1_frame_count);
 
@@ -1325,7 +1315,7 @@ int ION_EXPORT ion_bb_image_io_u3v_camera2_frame_count(
     int32_t num_sensor, bool frame_sync, bool realtime_display_mode,
     halide_buffer_t * id_buf, halide_buffer_t* out)
 {    const std::string id(reinterpret_cast<const char *>(id_buf->host));
-    return ion::bb::image_io::u3v_camera_frame_count(id, num_sensor, frame_sync, realtime_display_mode, out);
+    return u3v_camera_frame_count(id, num_sensor, frame_sync, realtime_display_mode, out);
 }
 ION_REGISTER_EXTERN(ion_bb_image_io_u3v_camera2_frame_count);
 
@@ -1441,18 +1431,13 @@ int ION_EXPORT ion_bb_image_io_u3v_multiple_camera1(
         }else{
              auto &u3v(ion::bb::image_io::U3VRealCam::get_instance(id, num_output, frame_sync, realtime_display_mode, force_sim_mode, width, height, fps, pixel_format));
              if (enable_control) {
+                 // set gain & exposure
                 ion::log::debug("Setting gain0:{} exposure0:{}", gain0, exposure0);
                 u3v.SetGain(0, gain_key, gain0);
                 u3v.SetExposure(0, exposure_key, exposure0);
-            }
+             }
              u3v.get(obufs);
-
         }
-
-
-
-        // set gain & exposure
-
         return 0;
     } catch (const std::exception &e) {
         ion::log::error("Exception was thrown: {}", e.what());
