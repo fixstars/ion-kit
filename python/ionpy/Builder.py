@@ -17,8 +17,7 @@ from .native import (
 
     ion_builder_run,
     ion_builder_run_with_port_map,
-    
-    ion_bb_module
+
 )
 
 from .Node import Node
@@ -49,7 +48,6 @@ class Builder:
 
     def with_bb_module(self, path: str) -> 'Builder':
         ret = ion_builder_with_bb_module(self.obj,path.encode())
-
         if ret != 0:
             raise Exception('Invalid operation')
 
