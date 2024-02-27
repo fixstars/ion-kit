@@ -487,6 +487,8 @@ public:
             Expr(make_pixel_format(bayer_pattern, bit_width)),
             cast<uint32_t>(1),
             url_buf,
+
+
             cast<float>(gain_r), cast<float>(gain_g), cast<float>(gain_b),
             cast<float>(offset),
             cast<int32_t>(bit_width), cast<int32_t>(bit_shift)
@@ -1025,12 +1027,18 @@ public:
             exposure_key_buf.fill(0);
             std::memcpy(exposure_key_buf.data(), exposure_key.c_str(), exposure_key.size());
 
+            std::string pixel_format_str = pixel_format;
+            Halide::Buffer<uint8_t> pixel_format_buf(pixel_format_str.size() + 1);
+            pixel_format_buf.fill(0);
+            std::memcpy(pixel_format_buf.data(), pixel_format_str.c_str(), pixel_format_str.size());
+
             std::vector<ExternFuncArgument> params{
                 id_buf,
-                static_cast<bool>(frame_sync),
-                static_cast<bool>(realtime_diaplay_mode),
+                static_cast<bool>(force_sim_mode),
+                static_cast<int32_t>(width), static_cast<int32_t>(height),static_cast<float_t>(fps),
+                static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
                 static_cast<bool>(enable_control),
-                gain_key_buf, exposure_key_buf
+                gain_key_buf, exposure_key_buf, pixel_format_buf
             };
 
             for (int i = 0; i<num_devices; i++) {

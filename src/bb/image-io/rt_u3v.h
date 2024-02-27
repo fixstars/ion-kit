@@ -1324,8 +1324,10 @@ ION_REGISTER_EXTERN(ion_bb_image_io_u3v_camera2_frame_count);
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_gendc_camera1(
     halide_buffer_t * id_buf,
+    bool force_sim_mode,
+    int32_t width, int32_t height, float_t fps,
     bool frame_sync, bool realtime_display_mode, bool enable_control,
-    halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
+    halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf, halide_buffer_t * pixel_format_buf,
     double gain0, double exposure0,
     halide_buffer_t * out_gendc
     )
@@ -1336,19 +1338,24 @@ int ION_EXPORT ion_bb_image_io_u3v_gendc_camera1(
         const std::string id(reinterpret_cast<const char *>(id_buf->host));
         const std::string gain_key(reinterpret_cast<const char*>(gain_key_buf->host));
         const std::string exposure_key(reinterpret_cast<const char*>(exposure_key_buf->host));
-        auto &u3v(ion::bb::image_io::U3VRealCam::get_instance(id, num_output, frame_sync, realtime_display_mode));
+        const std::string pixel_format(reinterpret_cast<const char *>(pixel_format_buf->host));
         if (out_gendc->is_bounds_query()) {
             return 0;
         }
-        // set gain & exposure
-        if (enable_control){
+        std::vector<void *> obufs{out_gendc->host};
+        if(force_sim_mode){
+             auto &u3v(ion::bb::image_io::U3VFakeCam::get_instance(id, 2, width, height, fps, pixel_format));
+             u3v.get_gendc(obufs);
+        }else{
+             auto &u3v(ion::bb::image_io::U3VRealCam::get_instance(id, 2, frame_sync, realtime_display_mode, force_sim_mode, width, height, fps, pixel_format));
+             // set gain & exposure
+            if (enable_control){
             ion::log::debug("Setting gain0:{} exposure0:{}", gain0, exposure0);
             u3v.SetGain(0, gain_key, gain0);
             u3v.SetExposure(0, exposure_key, exposure0);
         }
-        std::vector<void *> obufs{out_gendc->host};
-        u3v.get_gendc(obufs);
-
+             u3v.get_gendc(obufs);
+        }
         return 0;
     } catch (const std::exception &e) {
         ion::log::error("Exception was thrown: {}", e.what());
@@ -1363,8 +1370,11 @@ ION_REGISTER_EXTERN(ion_bb_image_io_u3v_gendc_camera1);
 extern "C"
 int ION_EXPORT ion_bb_image_io_u3v_gendc_camera2(
     halide_buffer_t * id_buf,
-    bool frame_sync, bool realtime_display_mode, bool enable_control,
-    halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf,
+    bool force_sim_mode,
+    int32_t width, int32_t height, float_t fps,
+    bool frame_sync, bool realtime_display_mode,
+    bool enable_control,
+    halide_buffer_t * gain_key_buf, halide_buffer_t * exposure_key_buf, halide_buffer_t * pixel_format_buf,
     double gain0, double exposure0,
     double gain1, double exposure1,
     halide_buffer_t * out_gendc0, halide_buffer_t * out_gendc1
@@ -1375,11 +1385,17 @@ int ION_EXPORT ion_bb_image_io_u3v_gendc_camera2(
         const std::string id(reinterpret_cast<const char *>(id_buf->host));
         const std::string gain_key(reinterpret_cast<const char*>(gain_key_buf->host));
         const std::string exposure_key(reinterpret_cast<const char*>(exposure_key_buf->host));
-        auto &u3v(ion::bb::image_io::U3VRealCam::get_instance(id, 2, frame_sync, realtime_display_mode));
+        const std::string pixel_format(reinterpret_cast<const char *>(pixel_format_buf->host));
         if (out_gendc0->is_bounds_query() || out_gendc1->is_bounds_query() ) {
             return 0;
+        }
+        std::vector<void *> obufs{out_gendc0->host, out_gendc1->host};
+        if(force_sim_mode){
+             auto &u3v(ion::bb::image_io::U3VFakeCam::get_instance(id, 2, width, height, fps, pixel_format));
+             u3v.get_gendc(obufs);
         }else{
-            // set gain & exposure
+             auto &u3v(ion::bb::image_io::U3VRealCam::get_instance(id, 2, frame_sync, realtime_display_mode, force_sim_mode, width, height, fps, pixel_format));
+             // set gain & exposure
             if (enable_control) {
                 ion::log::debug("Setting gain0:{} exposure0:{}", gain0, exposure0);
                 u3v.SetGain(0, gain_key, gain0);
@@ -1389,10 +1405,7 @@ int ION_EXPORT ion_bb_image_io_u3v_gendc_camera2(
                 u3v.SetGain(1, gain_key, gain1);
                 u3v.SetExposure(1, exposure_key, exposure1);
             }
-
-            std::vector<void *> obufs{out_gendc0->host, out_gendc1->host};
-            u3v.get_gendc(obufs);
-
+             u3v.get_gendc(obufs);
         }
         return 0;
     } catch (const std::exception &e) {
