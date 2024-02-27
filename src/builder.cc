@@ -75,7 +75,6 @@ Builder::~Builder()
 
 }
 
-
 Builder::Impl::~Impl()
 {
     for (auto [bb_id, disposer] :disposers) {
