@@ -993,6 +993,12 @@ public:
     std::vector<Input<double> *> gain;
     std::vector<Input<double> *> exposure;
 
+    BuildingBlockParam<bool> force_sim_mode{"force_sim_mode", false};
+    BuildingBlockParam<int32_t> width{"width", 640};
+    BuildingBlockParam<int32_t> height{"height", 480};
+    BuildingBlockParam<std::string> pixel_format{"pixel_format", "Mono8"};
+    BuildingBlockParam<float_t> fps{"fps", 25.0};
+
     void configure() {
         if (enable_control) {
             for (auto i=0; i<num_devices; ++i) {
@@ -1058,10 +1064,19 @@ public:
 
         Func u3v_device_info("u3v_device_info");
         {
-            Buffer<uint8_t> id_buf =  this->get_id();
+
+            Buffer<uint8_t> id_buf = this->get_id();
+            std::string pixel_format_str = pixel_format;
+            Halide::Buffer<uint8_t> pixel_format_buf(pixel_format_str.size() + 1);
+            pixel_format_buf.fill(0);
+            std::memcpy(pixel_format_buf.data(), pixel_format_str.c_str(), pixel_format_str.size());
+
             std::vector<ExternFuncArgument> params{
-                u3v_gendc, static_cast<int32_t>(num_devices), static_cast<bool>(frame_sync),
-                static_cast<bool>(realtime_diaplay_mode), id_buf
+                u3v_gendc, id_buf, static_cast<int32_t>(num_devices),
+                static_cast<bool>(force_sim_mode),
+                static_cast<int32_t>(width), static_cast<int32_t>(height), static_cast<float_t>(fps),
+                static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
+                pixel_format_buf
             };
 
             device_info.resize(num_devices);
