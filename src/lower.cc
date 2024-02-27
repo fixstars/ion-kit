@@ -207,7 +207,7 @@ std::vector<const void*> generate_arguments_instance(const std::vector<Halide::A
     return instances;
 }
 
-Halide::Pipeline lower(Builder builder, std::vector<Node>& nodes, bool implicit_output) {
+Halide::Pipeline lower(Builder &builder, std::vector<Node>& nodes, bool implicit_output) {
 
     log::info("Start building pipeline");
 
