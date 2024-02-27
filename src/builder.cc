@@ -62,6 +62,7 @@ struct Builder::Impl {
 
     Impl() : jit_ctx(new Halide::JITUserContext), jit_ctx_ptr(jit_ctx.get()) {
     }
+    ~Impl();
 };
 
 Builder::Builder()
@@ -71,7 +72,13 @@ Builder::Builder()
 
 Builder::~Builder()
 {
-    for (auto [bb_id, disposer] : impl_->disposers) {
+
+}
+
+
+Builder::Impl::~Impl()
+{
+    for (auto [bb_id, disposer] :disposers) {
         disposer(bb_id.c_str());
     }
 }
@@ -286,6 +293,7 @@ void Builder::register_disposer(Impl *impl, const std::string& bb_id, const std:
         }
     }
 }
+
 
 const Builder::Impl* Builder::impl_ptr() const {
     return impl_.get();

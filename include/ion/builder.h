@@ -28,6 +28,7 @@ public:
 
     struct Impl;
 
+
     /**
      * CompileOption class holds option field for compilation.
      */
