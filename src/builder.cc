@@ -72,12 +72,11 @@ Builder::Builder()
 
 Builder::~Builder()
 {
-
 }
 
 Builder::Impl::~Impl()
 {
-    for (auto [bb_id, disposer] :disposers) {
+    for (auto [bb_id, disposer] : disposers) {
         disposer(bb_id.c_str());
     }
 }
