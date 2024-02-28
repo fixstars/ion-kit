@@ -3,23 +3,26 @@
 
 #include "log.h"
 #include "lower.h"
-
+#include "uuid/sole.hpp"
 namespace ion {
 
 struct Graph::Impl {
     Builder builder;
     std::string name;
-    std::vector<Node> nodes;
+    std::string id;
 
+    std::vector<Node> nodes;
     // Cacheable
     Halide::Pipeline pipeline;
     Halide::Callable callable;
     std::unique_ptr<Halide::JITUserContext> jit_ctx;
     Halide::JITUserContext* jit_ctx_ptr;
     std::vector<const void*> args;
-
+    Impl()
+    : id(sole::uuid4().str())
+    {}
     Impl(Builder b, const std::string& n)
-        : builder(b), name(n), jit_ctx(new Halide::JITUserContext), jit_ctx_ptr(jit_ctx.get())
+        : id(sole::uuid4().str()), builder(b), name(n), jit_ctx(new Halide::JITUserContext), jit_ctx_ptr(jit_ctx.get())
     {}
 };
 
@@ -48,7 +51,8 @@ Graph operator+(const Graph& lhs, const Graph& rhs)
 
 Node Graph::add(const std::string& name)
 {
-    auto n = impl_->builder.add(name);
+    auto n = impl_->builder.add(name,impl_->id);
+
     impl_->nodes.push_back(n);
     return n;
 }

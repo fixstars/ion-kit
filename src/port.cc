@@ -10,10 +10,10 @@ Port::Impl::Impl()
 {
 }
 
-Port::Impl::Impl(const std::string& pid, const std::string& pn, const Halide::Type& t, int32_t d)
+Port::Impl::Impl(const std::string& pid, const std::string& pn, const Halide::Type& t, int32_t d )
     : id(sole::uuid4().str()), pred_chan{pid, pn}, succ_chans{}, type(t), dimensions(d)
 {
-    params[0] = Halide::Internal::Parameter(type, dimensions != 0, dimensions, argument_name(pid, pn, 0));
+    params[0] = Halide::Internal::Parameter(type, dimensions != 0, dimensions, argument_name(pid, pn, 0, graph_id));
 }
 
 void Port::determine_succ(const std::string& nid, const std::string& old_pn, const std::string& new_pn) {

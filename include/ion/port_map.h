@@ -16,7 +16,7 @@ public:
     template<typename T>
     [[deprecated("Port::bind can be used instead of PortMap.")]]
     void set(Port port, T v) {
-        auto& buf(scalar_buffer_[argument_name(port.pred_id(), port.pred_name(), port.index())]);
+        auto& buf(scalar_buffer_[argument_name(port.pred_id(), port.pred_name(), port.index(), "")]);
         buf.resize(sizeof(v));
         std::memcpy(buf.data(), &v, sizeof(v));
         port.bind(reinterpret_cast<T*>(buf.data()));

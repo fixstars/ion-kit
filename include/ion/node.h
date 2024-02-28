@@ -22,14 +22,15 @@ public:
     struct Impl {
         std::string id;
         std::string name;
+        std::string graph_id;
         Halide::Target target;
         std::vector<Param> params;
         std::vector<Port> ports;
         std::vector<Halide::Internal::AbstractGenerator::ArgInfo> arginfos;
 
         Impl(): id(), name(), target(), params(), ports() {}
-
         Impl(const std::string& id_, const std::string& name_, const Halide::Target& target_);
+        Impl(const std::string& id_, const std::string& name_, const Halide::Target& target_, const std::string& graph_id_);
     };
 
 public:
@@ -123,6 +124,11 @@ public:
 private:
     Node(const std::string& id, const std::string& name, const Halide::Target& target)
         : impl_(new Impl{id, name, target})
+    {
+    }
+
+    Node(const std::string& id, const std::string& name, const Halide::Target& target, const std::string& graph_id)
+        : impl_(new Impl{id, name, target, graph_id})
     {
     }
 

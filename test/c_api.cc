@@ -478,14 +478,14 @@ int main()
                 out1[i] =0;
             }
            ion_graph_t g2;
-           ret = ion_graph_create_with_multiple(&g2,g0,g0);
+           ret = ion_graph_create_with_multiple(&g2,g0,g1);
            if (ret != 0)
                 return ret;
             ret = ion_graph_run(g2);
             if (ret != 0)
                 return ret;
-      ret = ion_buffer_read(obuf0, out0, 16*16*sizeof(int));
-      ret = ion_buffer_read(obuf1, out1, 16*16*sizeof(int));
+            ret = ion_buffer_read(obuf0, out0, 16*16*sizeof(int));
+            ret = ion_buffer_read(obuf1, out1, 16*16*sizeof(int));
             for (int i=0;i<16*16; ++i) {
                 if (out0[i] != 41 ) {
                     printf("%d\n", out0[i]);
