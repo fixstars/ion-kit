@@ -437,6 +437,23 @@ int ion_builder_with_bb_module(ion_builder_t obj, const char *module_name)
         log::error("Unknown exception was happened");
         return 1;
     }
+    return 0;
+}
+
+int ion_builder_add_graph(ion_builder_t obj, const char *name, ion_graph_t *graph_ptr)
+{
+    try {
+        *graph_ptr = reinterpret_cast<ion_graph_t>(new Graph(reinterpret_cast<Builder*>(obj)->add_graph(name)));
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
+    } catch (const std::exception& e) {
+        log::error(e.what());
+        return 1;
+    } catch (...) {
+        log::error("Unknown exception was happened");
+        return 1;
+    }
 
     return 0;
 }
@@ -1024,5 +1041,93 @@ int ion_port_map_set_buffer_array(ion_port_map_t obj, ion_port_t p, ion_buffer_t
     }
 
 
+    return 0;
+}
+
+
+int ion_graph_create(ion_graph_t *ptr, ion_builder_t obj, const char * name)
+{
+    try {
+        *ptr = reinterpret_cast<ion_graph_t>(new Graph(*reinterpret_cast<Builder*>(obj), name));
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
+    } catch (const std::exception& e) {
+        log::error(e.what());
+        return 1;
+    } catch (...) {
+        log::error("Unknown exception was happened");
+        return 1;
+    }
+
+    return 0;
+}
+
+int ion_graph_add_node(ion_graph_t obj, const char *name, ion_node_t *node_ptr)
+{
+    try {
+        *node_ptr = reinterpret_cast<ion_node_t>(new Node(reinterpret_cast<Graph*>(obj)->add(name)));
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
+    } catch (const std::exception& e) {
+        log::error(e.what());
+        return 1;
+    } catch (...) {
+        log::error("Unknown exception was happened");
+        return 1;
+    }
+
+    return 0;
+}
+
+int ion_graph_create_with_multiple(ion_graph_t * ptr, ion_graph_t obj1, ion_graph_t obj2){
+     try {
+        *ptr = reinterpret_cast<ion_graph_t>(new Graph(*reinterpret_cast<Graph*>(obj1)+*reinterpret_cast<Graph*>(obj2)));
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
+    } catch (const std::exception& e) {
+        log::error(e.what());
+        return 1;
+    } catch (...) {
+        log::error("Unknown exception was happened");
+        return 1;
+    }
+
+    return 0;
+}
+
+int ion_graph_run(ion_graph_t obj)
+{
+    try {
+        reinterpret_cast<Graph*>(obj)->run();
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
+    } catch (const std::exception& e) {
+        log::error(e.what());
+        return 1;
+    } catch (...) {
+        log::error("Unknown exception was happened");
+        return 1;
+    }
+
+    return 0;
+}
+
+int ion_graph_destroy(ion_graph_t obj){
+    try {
+        delete reinterpret_cast<Graph*>(obj);
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
+    } catch (const std::exception& e) {
+        log::error(e.what());
+        return 1;
+    } catch (...) {
+        log::error("Unknown exception was happened");
+        return 1;
+    }
     return 0;
 }

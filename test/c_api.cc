@@ -159,6 +159,8 @@ int main()
             ion_builder_compile_option_t op;
             op.output_directory = ".";
 
+
+
             ret = ion_builder_compile(b, "simple_graph", op);
             if (ret != 0)
                 return ret;
@@ -310,6 +312,195 @@ int main()
             ret = ion_builder_destroy(b);
             if (ret != 0)
                 return ret;
+        }
+        {
+            ion_type_t t = {.code=ion_type_int, .bits=32, .lanes=1};
+
+
+            ion_builder_t b;
+            ret = ion_builder_create(&b);
+            if (ret != 0)
+                return ret;
+
+            ret = ion_builder_set_target(b, "host");
+            if (ret != 0)
+                return ret;
+
+            ret = ion_builder_with_bb_module(b, "ion-bb-test");
+            if (ret != 0)
+                return ret;
+
+            ion_graph_t g0;
+            ret = ion_builder_add_graph(b, "graph0", &g0);
+            if (ret != 0)
+                return ret;
+
+            ion_param_t v41;
+            ret = ion_param_create(&v41, "v", "41");
+            if (ret != 0)
+                return ret;
+
+            ion_node_t n0;
+            ret = ion_graph_add_node(g0, "test_inc_i32x2" , &n0);
+            if (ret != 0)
+                return ret;
+            int sizes[] = {16, 16};
+
+            ret = ion_node_set_param(n0, &v41, 1);
+            if (ret != 0)
+                return ret;
+
+            ion_port_t ip0;
+            ret = ion_port_create(&ip0, "input0", t, 2);
+            if (ret != 0)
+                return ret;
+            ret = ion_node_set_iport(n0, &ip0, 1);
+            if (ret != 0)
+                return ret;
+
+
+            ion_buffer_t ibuf0;
+            ret = ion_buffer_create(&ibuf0, t, sizes, 2);
+            if (ret != 0)
+                return ret;
+
+            int in0[16*16];
+            for (int i=0; i<16*16; ++i) {
+                in0[i] = 0;
+            }
+            ret = ion_buffer_write(ibuf0, in0, 16*16*sizeof(int));
+            if (ret != 0)
+                return ret;
+
+            ret = ion_port_bind_buffer(ip0, ibuf0);
+            if (ret != 0)
+                return ret;
+
+            ion_port_t op0;
+            ret = ion_node_get_port(n0, "output", &op0);
+            if (ret != 0)
+                return ret;
+
+            ion_buffer_t obuf0;
+            ret = ion_buffer_create(&obuf0, t, sizes, 2);
+            if (ret != 0)
+                return ret;
+
+            ret = ion_port_bind_buffer(op0, obuf0);
+            if (ret != 0)
+                return ret;
+
+            ret = ion_graph_run(g0);
+            if (ret != 0)
+                return ret;
+
+            int out0[16*16] = {0};
+            ret = ion_buffer_read(obuf0, out0, 16*16*sizeof(int));
+            for (int i=0;i<16*16; ++i) {
+                if (out0[i] != 41) {
+                    printf("%d\n", out0[i]);
+
+                }
+            }
+
+
+
+            ion_graph_t g1;
+            ret = ion_builder_add_graph(b, "graph1", &g1);
+            if (ret != 0)
+                return ret;
+
+
+
+            ion_node_t n1;
+            ret = ion_graph_add_node(g1, "test_inc_i32x2" , &n1);
+            if (ret != 0)
+                return ret;
+
+            ret = ion_node_set_param(n1, &v41, 1);
+            if (ret != 0)
+                return ret;
+
+            ion_port_t ip1;
+            ret = ion_port_create(&ip1, "input1", t, 2);
+            if (ret != 0)
+                return ret;
+            ret = ion_node_set_iport(n1, &ip1, 1);
+            if (ret != 0)
+                return ret;
+
+
+            ion_buffer_t ibuf1;
+            ret = ion_buffer_create(&ibuf1, t, sizes, 2);
+            if (ret != 0)
+                return ret;
+
+            int in1[16*16];
+            for (int i=0; i<16*16; ++i) {
+                in1[i] = 1;
+            }
+            ret = ion_buffer_write(ibuf1, in1, 16*16*sizeof(int));
+            if (ret != 0)
+                return ret;
+
+            ret = ion_port_bind_buffer(ip1, ibuf1);
+            if (ret != 0)
+                return ret;
+
+            ion_port_t op1;
+            ret = ion_node_get_port(n1, "output", &op1);
+            if (ret != 0)
+                return ret;
+
+            ion_buffer_t obuf1;
+            ret = ion_buffer_create(&obuf1, t, sizes, 2);
+            if (ret != 0)
+                return ret;
+
+            ret = ion_port_bind_buffer(op1, obuf1);
+            if (ret != 0)
+                return ret;
+
+            ret = ion_graph_run(g1);
+            if (ret != 0)
+                return ret;
+
+            int out1[16*16] = {0};
+            ret = ion_buffer_read(obuf1, out1, 16*16*sizeof(int));
+            for (int i=0;i<16*16; ++i) {
+                if (out1[i] != 42) {
+                    printf("%d\n", out1[i]);
+                }
+            }
+
+            for (int i=0;i<16*16; ++i) {
+                out0[i] =0;
+                out1[i] =0;
+            }
+           ion_graph_t g2;
+           ret = ion_graph_create_with_multiple(&g2,g0,g0);
+           if (ret != 0)
+                return ret;
+            ret = ion_graph_run(g2);
+            if (ret != 0)
+                return ret;
+      ret = ion_buffer_read(obuf0, out0, 16*16*sizeof(int));
+      ret = ion_buffer_read(obuf1, out1, 16*16*sizeof(int));
+            for (int i=0;i<16*16; ++i) {
+                if (out0[i] != 41 ) {
+                    printf("%d\n", out0[i]);
+
+                }
+                if (out1[i] != 42 ) {
+                    printf("%d\n", out1[i]);
+
+                }
+            }
+
+
+//           ret = ion_graph_destroy(g);
+//           if (ret != 0)
+//                return ret;
         }
 
     } catch (Halide::Error &e) {

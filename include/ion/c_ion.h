@@ -31,6 +31,7 @@ typedef struct ion_node_t_ *ion_node_t;
 typedef struct ion_builder_t_ *ion_builder_t;
 typedef struct ion_buffer_t_ *ion_buffer_t;
 typedef struct ion_port_map_t_ *ion_port_map_t;
+typedef struct ion_graph_t_ *ion_graph_t;
 
 int ion_port_create(ion_port_t *, const char *, ion_type_t, int);
 int ion_port_create_with_index(ion_port_t *, ion_port_t , int);
@@ -62,6 +63,7 @@ int ion_builder_create(ion_builder_t *);
 int ion_builder_destroy(ion_builder_t);
 int ion_builder_set_target(ion_builder_t, const char *);
 int ion_builder_with_bb_module(ion_builder_t, const char *);
+int ion_builder_add_graph(ion_builder_t, const char *, ion_graph_t *);
 int ion_builder_add_node(ion_builder_t, const char *, ion_node_t *);
 int ion_builder_compile(ion_builder_t, const char *, ion_builder_compile_option_t option);
 int ion_builder_save(ion_builder_t, const char *);
@@ -75,6 +77,14 @@ int ion_buffer_create_with_data(ion_buffer_t *, ion_type_t, void *, int *, int);
 int ion_buffer_destroy(ion_buffer_t);
 int ion_buffer_write(ion_buffer_t, void *, int size);
 int ion_buffer_read(ion_buffer_t, void *, int size);
+
+int ion_graph_create(ion_graph_t *, ion_builder_t, const char *);
+int ion_graph_add_node(ion_graph_t, const char*, ion_node_t *);
+int ion_graph_destroy(ion_graph_t);
+int ion_graph_run(ion_graph_t);
+int ion_graph_create_with_multiple(ion_graph_t *, ion_graph_t obj1, ion_graph_t obj2);
+
+
 
 [[deprecated("ion_port_bind* can be used instead of ion_port_map.")]]
 int ion_port_map_create(ion_port_map_t *);
