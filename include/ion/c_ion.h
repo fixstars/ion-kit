@@ -84,8 +84,6 @@ int ion_graph_destroy(ion_graph_t);
 int ion_graph_run(ion_graph_t);
 int ion_graph_create_with_multiple(ion_graph_t *, ion_graph_t obj1, ion_graph_t obj2);
 
-
-
 [[deprecated("ion_port_bind* can be used instead of ion_port_map.")]]
 int ion_port_map_create(ion_port_map_t *);
 [[deprecated("ion_port_bind* can be used instead of ion_port_map.")]]

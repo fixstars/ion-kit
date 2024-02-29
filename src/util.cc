@@ -10,7 +10,7 @@ std::string argument_name(const std::string& node_id, const std::string& name, i
         index = 0;
     }
 
-    std::string s = "_" + node_id + "_" + name + std::to_string(index) +  "_" + graph_id;;
+    std::string s = "_" + node_id + "_" + name + std::to_string(index) +  "_" + graph_id;
     std::replace(s.begin(), s.end(), '-', '_');
 
     return s;
