@@ -487,8 +487,6 @@ public:
             Expr(make_pixel_format(bayer_pattern, bit_width)),
             cast<uint32_t>(1),
             url_buf,
-
-
             cast<float>(gain_r), cast<float>(gain_g), cast<float>(gain_b),
             cast<float>(offset),
             cast<int32_t>(bit_width), cast<int32_t>(bit_shift)
