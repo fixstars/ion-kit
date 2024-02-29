@@ -26,7 +26,6 @@ Node::Impl::Impl(const std::string& id_, const std::string& name_, const Halide:
     }
 
     arginfos = bb->arginfos();
-    std::cout<<graph_id<<std::endl;
 }
 
 void Node::set_iport(const std::vector<Port>& ports) {

@@ -65,12 +65,12 @@ private:
         std::unordered_map<uint32_t, const void *> instances;
 
         Impl();
-        Impl(const std::string& pid, const std::string& pn, const Halide::Type& t, int32_t d);
+        Impl(const std::string& pid, const std::string& pn, const Halide::Type& t, int32_t d, const std::string& gid );
     };
 
 public:
 
-    Port() : impl_(new Impl("", "", Halide::Type(), 0)), index_(-1) {}
+    Port() : impl_(new Impl("", "", Halide::Type(), 0, "")), index_(-1) {}
 
     Port(const std::shared_ptr<Impl>& impl, int32_t index) : impl_(impl), index_(index) {}
 
@@ -79,7 +79,7 @@ public:
      * @arg k: The key of the port which should be matched with BuildingBlock Input/Output name.
      * @arg t: The type of the value.
      */
-    Port(const std::string& n, Halide::Type t) : impl_(new Impl("", n, t, 0)), index_(-1) {}
+    Port(const std::string& n, Halide::Type t) : impl_(new Impl("", n, t, 0, "")), index_(-1) {}
 
     /**
      * Construct new port for vector value.
@@ -87,14 +87,14 @@ public:
      * @arg t: The type of the element value.
      * @arg d: The dimension of the port. The range is 1 to 4.
      */
-    Port(const std::string& n, Halide::Type t, int32_t d) : impl_(new Impl("", n, t, d)), index_(-1) {}
+    Port(const std::string& n, Halide::Type t, int32_t d) : impl_(new Impl("", n, t, d, "")), index_(-1) {}
 
     /**
      * Construct new port from scalar pointer
      */
     template<typename T,
              typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-    Port(T *vptr) : impl_(new Impl("", Halide::Internal::unique_name("_ion_port_"), Halide::type_of<T>(), 0)), index_(-1) {
+    Port(T *vptr) : impl_(new Impl("", Halide::Internal::unique_name("_ion_port_"), Halide::type_of<T>(), 0, "")), index_(-1) {
         this->bind(vptr);
     }
 
@@ -102,7 +102,15 @@ public:
      * Construct new port from buffer
      */
     template<typename T>
-    Port(const Halide::Buffer<T>& buf) : impl_(new Impl("", buf.name(), buf.type(), buf.dimensions())), index_(-1) {
+    Port(const Halide::Buffer<T>& buf) : impl_(new Impl("", buf.name(), buf.type(), buf.dimensions(), "")), index_(-1) {
+        this->bind(buf);
+    }
+
+    /**
+     * Construct new port from buffer and bind graph id to port
+     */
+    template<typename T>
+    Port(const Halide::Buffer<T>& buf, const std::string& gid) : impl_(new Impl("", buf.name(), buf.type(), buf.dimensions(), gid)), index_(-1) {
         this->bind(buf);
     }
 
@@ -110,7 +118,15 @@ public:
      * Construct new port from array of buffer
      */
     template<typename T>
-    Port(const std::vector<Halide::Buffer<T>>& bufs) : impl_(new Impl("", unify_name(bufs), Halide::type_of<T>(), unify_dimension(bufs))), index_(-1) {
+    Port(const std::vector<Halide::Buffer<T>>& bufs) : impl_(new Impl("", unify_name(bufs), Halide::type_of<T>(), unify_dimension(bufs), "")), index_(-1) {
+        this->bind(bufs);
+    }
+
+     /**
+     * Construct new port from array of buffer and bind graph id to port
+     */
+    template<typename T>
+    Port(const std::vector<Halide::Buffer<T>>& bufs, const std::string& gid) : impl_(new Impl("", unify_name(bufs), Halide::type_of<T>(), unify_dimension(bufs), gid)), index_(-1) {
         this->bind(bufs);
     }
 
@@ -259,7 +275,7 @@ private:
      * pid and pn is stored in both pred and succ,
      * then it will determined through pipeline build process.
      */
-     Port(const std::string& pid, const std::string& pn) : impl_(new Impl(pid, pn, Halide::Type(), 0)), index_(-1) {}
+     Port(const std::string& pid, const std::string& pn) : impl_(new Impl(pid, pn, Halide::Type(), 0, "")), index_(-1) {}
 
      std::shared_ptr<Impl> impl_;
 
