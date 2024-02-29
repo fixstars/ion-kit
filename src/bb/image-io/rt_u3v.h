@@ -494,8 +494,8 @@ protected:
         init_symbols();
         log::debug("U3V:: 23-11-18 : updating obtain and write");
         log::info("Using aravis-{}.{}.{}", arv_get_major_version(), arv_get_minor_version(), arv_get_micro_version());
-
     }
+
 
     void init_symbols_gobject() {
 	if (!gobject_.is_available()) {
@@ -641,8 +641,6 @@ protected:
         return err_;
     }
 
-    static std::map<std::string, std::shared_ptr<U3V>> instances_;
-
     g_object_unref_t g_object_unref;
 
     arv_get_major_version_t arv_get_major_version;
@@ -702,6 +700,7 @@ protected:
     arv_set_fake_camera_genicam_filename_t   arv_set_fake_camera_genicam_filename;
     arv_fake_device_get_fake_camera_t arv_fake_device_get_fake_camera;
 
+    static std::map<std::string, std::shared_ptr<U3V>> instances_;
 
     int32_t num_sensor_;
 
@@ -730,6 +729,7 @@ protected:
     bool disposed_;
     bool sim_mode_;
 
+
 }; // class U3V
 
 std::map<std::string, std::shared_ptr<U3V>>  U3V::instances_;
@@ -752,7 +752,6 @@ public:
 
         return *instances_[id].get();
     }
-
     void get(std::vector<Halide::Buffer<>>& outs) override {
         auto timeout_us = 30 * 1000 * 1000;
         std::vector<ArvBuffer *> bufs(num_sensor_);
@@ -773,7 +772,7 @@ private:
     U3VFakeCam(int32_t num_sensor, int32_t width, int32_t height , float_t fps, const std::string & pixel_format,  char* dev_id = nullptr)
      : U3V(num_sensor,  false, false, true,  width, height , fps, pixel_format,  nullptr){
          auto path = std::getenv("GENICAM_FILENAME");
-         if (path == nullptr){
+        if (path == nullptr){
             throw std::runtime_error("Please define GENICAM_FILENAME by `set GENICAM_FILENAME=` or `export GENICAM_FILENAME=`");
 
         }
@@ -827,7 +826,8 @@ private:
             arv_device_execute_command(devices_[i].device_, "AcquisitionStart", &err_);
             log::info("\tFake Device {}::{} : {}", i, "Command", "AcquisitionStart");
         }
-     };
+    };
+
 };
 
 
@@ -851,8 +851,7 @@ public:
 
         return *instances_[id].get();
     }
-
-    void get(std::vector<Halide::Buffer<>>& outs) override{
+        void get(std::vector<Halide::Buffer<>>& outs) override{
         auto timeout_us = 30 * 1000 * 1000;
         if (sim_mode_){
             std::vector<ArvBuffer *> bufs(num_sensor_);
@@ -968,10 +967,10 @@ public:
             }
         }
     }
-
 private:
     U3VRealCam(int32_t num_sensor, bool frame_sync, bool realtime_display_mode, bool sim_mode, int32_t width, int32_t height , float_t fps, const std::string & pixel_format,  char* dev_id = nullptr)
      : U3V(num_sensor,  frame_sync, realtime_display_mode, sim_mode,  width, height , fps, pixel_format,  nullptr){
+        // check if the camera is available
         arv_update_device_list();
         auto n_devices = arv_get_n_devices ();
         if (n_devices == 0){
