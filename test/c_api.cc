@@ -159,8 +159,6 @@ int main()
             ion_builder_compile_option_t op;
             op.output_directory = ".";
 
-
-
             ret = ion_builder_compile(b, "simple_graph", op);
             if (ret != 0)
                 return ret;
