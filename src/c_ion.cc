@@ -2,7 +2,8 @@
 
 #include <ion/ion.h>
 #include <ion/c_ion.h>
-
+#include <stdarg.h>
+#include <stdlib.h>
 #include <HalideBuffer.h>
 
 #include "log.h"
@@ -1081,9 +1082,13 @@ int ion_graph_add_node(ion_graph_t obj, const char *name, ion_node_t *node_ptr)
     return 0;
 }
 
-int ion_graph_create_with_multiple(ion_graph_t * ptr, ion_graph_t obj1, ion_graph_t obj2){
-     try {
-        *ptr = reinterpret_cast<ion_graph_t>(new Graph(*reinterpret_cast<Graph*>(obj1)+*reinterpret_cast<Graph*>(obj2)));
+int ion_graph_create_with_multiple(ion_graph_t * ptr, const std::vector<ion_graph_t>& objs){
+    try {
+        auto sum_graph = *reinterpret_cast<Graph*>(objs[0]);
+        for (size_t i = 1; i < objs.size(); ++i) {
+            sum_graph = sum_graph + *reinterpret_cast<Graph*>(objs[i]);
+        }
+        *ptr = reinterpret_cast<ion_graph_t>(new Graph(sum_graph));
     } catch (const Halide::Error& e) {
         log::error(e.what());
         return 1;

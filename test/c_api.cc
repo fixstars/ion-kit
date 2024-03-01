@@ -312,6 +312,7 @@ int main()
                 return ret;
         }
         {
+
             ion_type_t t = {.code=ion_type_int, .bits=32, .lanes=1};
 
 
@@ -396,12 +397,10 @@ int main()
             ret = ion_buffer_read(obuf0, out0, 16*16*sizeof(int));
             for (int i=0;i<16*16; ++i) {
                 if (out0[i] != 41) {
-                    printf("%d\n", out0[i]);
+                    printf("out0: %d\n", out0[i]);
 
                 }
             }
-
-
 
             ion_graph_t g1;
             ret = ion_builder_add_graph(b, "graph1", &g1);
@@ -467,7 +466,7 @@ int main()
             ret = ion_buffer_read(obuf1, out1, 16*16*sizeof(int));
             for (int i=0;i<16*16; ++i) {
                 if (out1[i] != 42) {
-                    printf("%d\n", out1[i]);
+                    printf("out1: %d\n", out1[i]);
                 }
             }
 
@@ -475,8 +474,12 @@ int main()
                 out0[i] =0;
                 out1[i] =0;
             }
+
+
            ion_graph_t g2;
-           ret = ion_graph_create_with_multiple(&g2,g0,g1);
+            ion_graph_create(&g2, b,"graph2");
+            std::vector<ion_graph_t>graphs{g1, g0};
+           ret = ion_graph_create_with_multiple(&g2, graphs);
            if (ret != 0)
                 return ret;
             ret = ion_graph_run(g2);
@@ -484,21 +487,20 @@ int main()
                 return ret;
             ret = ion_buffer_read(obuf0, out0, 16*16*sizeof(int));
             ret = ion_buffer_read(obuf1, out1, 16*16*sizeof(int));
+
             for (int i=0;i<16*16; ++i) {
                 if (out0[i] != 41 ) {
-                    printf("%d\n", out0[i]);
-
+                    printf("out0: %d\n", out0[i]);
+                   ;
                 }
                 if (out1[i] != 42 ) {
-                    printf("%d\n", out1[i]);
-
+                    printf("out1: %d\n", out1[i]);
                 }
             }
+            ret = ion_graph_destroy(g0);
+            ret = ion_graph_destroy(g1);
+            ret = ion_graph_destroy(g2);
 
-
-//           ret = ion_graph_destroy(g);
-//           if (ret != 0)
-//                return ret;
         }
 
     } catch (Halide::Error &e) {

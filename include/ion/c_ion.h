@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+
 #if defined __cplusplus
 extern "C" {
 #endif
@@ -82,7 +83,7 @@ int ion_graph_create(ion_graph_t *, ion_builder_t, const char *);
 int ion_graph_add_node(ion_graph_t, const char*, ion_node_t *);
 int ion_graph_destroy(ion_graph_t);
 int ion_graph_run(ion_graph_t);
-int ion_graph_create_with_multiple(ion_graph_t *, ion_graph_t obj1, ion_graph_t obj2);
+int ion_graph_create_with_multiple(ion_graph_t *ptr, const std::vector<ion_graph_t>& objs);
 
 [[deprecated("ion_port_bind* can be used instead of ion_port_map.")]]
 int ion_port_map_create(ion_port_map_t *);

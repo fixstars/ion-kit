@@ -137,6 +137,14 @@ private:
     }
 
     template<typename T>
+    Port get_iport(T *vptr) const {
+        if (impl_->graph_id.empty())
+            return Port(vptr);
+        else
+            return Port(vptr, impl_->graph_id);
+    }
+
+    template<typename T>
     Port get_iport(Halide::Buffer<T>& arg) const {
         if (impl_->graph_id.empty())
             return Port(arg);

@@ -98,6 +98,16 @@ public:
         this->bind(vptr);
     }
 
+        /**
+     * Construct new port from scalar pointer
+     */
+    template<typename T,
+             typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
+    Port(T *vptr,  const std::string& gid) : impl_(new Impl("", Halide::Internal::unique_name("_ion_port_"), Halide::type_of<T>(), 0, gid)), index_(-1) {
+        this->bind(vptr);
+    }
+
+
     /**
      * Construct new port from buffer
      */
