@@ -77,7 +77,7 @@ public:
      */
     template<typename... Args>
     Node operator()(Args ...args) {
-        set_iport(create_ports_vector(args...));
+        set_iport(std::vector<Port>{get_iport(args)...});
         return *this;
     }
 
@@ -132,25 +132,26 @@ private:
     {
     }
 
-
-    template<typename... Args>
-    std::vector<Port> create_ports_vector(Args... args) const {
-        return {get_iport(args)...};
-    }
-
     Port get_iport(Port arg) const {
-        // if input is port
         return arg;
     }
 
-   template<typename T>
-   Port get_iport(Halide::Buffer<T>&  arg) const {
-        // if input is halide buffer
+    template<typename T>
+    Port get_iport(Halide::Buffer<T>& arg) const {
         if (impl_->graph_id.empty())
             return Port(arg);
         else
             return Port(arg, impl_->graph_id);
-   }
+    }
+
+    template<typename T>
+    Port get_iport(std::vector<Halide::Buffer<T>>& arg) const {
+        if (impl_->graph_id.empty())
+            return Port(arg);
+        else
+            return Port(arg, impl_->graph_id);
+    }
+
 
     std::shared_ptr<Impl> impl_;
 };

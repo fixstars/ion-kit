@@ -75,6 +75,7 @@ Port Node::operator[](const std::string& name) {
         // This is output port which is never referenced.
         // Bind myself as a predecessor and register
         Port port(impl_->id, name);
+        port.impl_ ->graph_id = impl_->graph_id;
         impl_->ports.push_back(port);
         return port;
     } else {
