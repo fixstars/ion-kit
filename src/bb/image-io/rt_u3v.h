@@ -130,6 +130,7 @@ class U3V {
     using arv_buffer_get_data_t = void*(*)(ArvBuffer*, size_t*);
     using arv_buffer_get_part_data_t = void*(*)(ArvBuffer*, uint_fast32_t, size_t*);
     using arv_buffer_get_timestamp_t = uint64_t(*)(ArvBuffer*);
+    using arv_buffer_get_frame_id_t = uint64_t(*)(ArvBuffer*);
     using arv_device_get_feature_t = ArvGcNode*(*)(ArvDevice*, const char*);
 
     using arv_buffer_has_gendc_t = bool*(*)(ArvBuffer*);
@@ -334,7 +335,7 @@ class U3V {
                         }
                         devices_[i].frame_count_ = is_gendc_
                             ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
-                            : static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
+                            : is_timestamp_framecount_ ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF) : static_cast<uint32_t>(arv_buffer_get_frame_id(bufs[i]));
                         i == 0 ?
                             log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]", devices_[i].frame_count_, "") :
                             log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]", "", devices_[i].frame_count_);
@@ -353,7 +354,7 @@ class U3V {
                 }
                 devices_[i].frame_count_ = is_gendc_
                     ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
-                    : static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
+                    : is_timestamp_framecount_ ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF) : static_cast<uint32_t>(arv_buffer_get_frame_id(bufs[i]));
                 i == 0 ?
                     log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", devices_[i].frame_count_, "") :
                     log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", "", devices_[i].frame_count_);
@@ -392,7 +393,7 @@ class U3V {
                             }
                             devices_[i].frame_count_ = is_gendc_
                                 ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
-                                : static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
+                                : is_timestamp_framecount_ ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF) : static_cast<uint32_t>(arv_buffer_get_frame_id(bufs[i]));
 
                             i == 0 ?
                                 log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", devices_[i].frame_count_, "") :
@@ -432,7 +433,7 @@ class U3V {
                         }
                         devices_[i].frame_count_ = is_gendc_
                             ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
-                            : static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
+                            : is_timestamp_framecount_ ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF) : static_cast<uint32_t>(arv_buffer_get_frame_id(bufs[i]));
                         i == 0 ?
                             log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]", devices_[i].frame_count_, "") :
                             log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]", "", devices_[i].frame_count_);
@@ -449,8 +450,8 @@ class U3V {
                 throw ::std::runtime_error("buffer is null");
             }
             devices_[cameN_idx_].frame_count_ = is_gendc_
-                    ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[cameN_idx_], devices_[cameN_idx_]))
-                    : static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[cameN_idx_]) & 0x00000000FFFFFFFF);
+                ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[cameN_idx_], devices_[cameN_idx_]))
+                : is_timestamp_framecount_ ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[cameN_idx_]) & 0x00000000FFFFFFFF) : static_cast<uint32_t>(arv_buffer_get_frame_id(bufs[cameN_idx_]));
             latest_cnt = devices_[cameN_idx_].frame_count_;
             cameN_idx_ == 0 ?
                 log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", devices_[cameN_idx_].frame_count_, "") :
@@ -467,8 +468,8 @@ class U3V {
                     throw ::std::runtime_error("buffer is null");
                 }
                 devices_[cameN_idx_].frame_count_ = is_gendc_
-                        ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[cameN_idx_], devices_[cameN_idx_]))
-                        : static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[cameN_idx_]) & 0x00000000FFFFFFFF);
+                    ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[cameN_idx_], devices_[cameN_idx_]))
+                    : is_timestamp_framecount_ ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[cameN_idx_]) & 0x00000000FFFFFFFF) : static_cast<uint32_t>(arv_buffer_get_frame_id(bufs[cameN_idx_]));
                 latest_cnt = devices_[cameN_idx_].frame_count_;
 
                 cameN_idx_ == 0 ?
@@ -516,7 +517,7 @@ class U3V {
                         }
                         devices_[i].frame_count_ = is_gendc_
                             ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
-                            : static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
+                            : is_timestamp_framecount_ ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF) : static_cast<uint32_t>(arv_buffer_get_frame_id(bufs[i]));
 
                         i == 0 ?
                             log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]", devices_[i].frame_count_, "") :
@@ -536,7 +537,7 @@ class U3V {
                 }
                 devices_[i].frame_count_ = is_gendc_
                     ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
-                    : static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
+                    : is_timestamp_framecount_ ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF) : static_cast<uint32_t>(arv_buffer_get_frame_id(bufs[i]));
 
                 i == 0 ?
                     log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", devices_[i].frame_count_, "") :
@@ -575,7 +576,7 @@ class U3V {
                             }
                             devices_[i].frame_count_ = is_gendc_
                                 ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
-                                : static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
+                                : is_timestamp_framecount_ ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF) : static_cast<uint32_t>(arv_buffer_get_frame_id(bufs[i]));
                             i == 0 ?
                                 log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", devices_[i].frame_count_, "") :
                                 log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", "", devices_[i].frame_count_);
@@ -612,7 +613,7 @@ class U3V {
                         }
                         devices_[i].frame_count_ = is_gendc_
                             ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
-                            : static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF);
+                            : is_timestamp_framecount_ ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF) : static_cast<uint32_t>(arv_buffer_get_frame_id(bufs[i]));
                         i == 0 ?
                             log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]", devices_[i].frame_count_, "") :
                             log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]", "", devices_[i].frame_count_);
@@ -629,8 +630,8 @@ class U3V {
                 throw ::std::runtime_error("buffer is null");
             }
             devices_[cameN_idx_].frame_count_ = is_gendc_
-                    ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[cameN_idx_], devices_[cameN_idx_]))
-                    : static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[cameN_idx_]) & 0x00000000FFFFFFFF);
+                ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[cameN_idx_], devices_[cameN_idx_]))
+                : is_timestamp_framecount_ ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[cameN_idx_]) & 0x00000000FFFFFFFF) : static_cast<uint32_t>(arv_buffer_get_frame_id(bufs[cameN_idx_]));
             latest_cnt = devices_[cameN_idx_].frame_count_;
             cameN_idx_ == 0 ?
                 log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", devices_[cameN_idx_].frame_count_, "") :
@@ -648,8 +649,8 @@ class U3V {
                             throw ::std::runtime_error("buffer is null");
                     }
                     devices_[cameN_idx_].frame_count_ = is_gendc_
-                            ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[cameN_idx_], devices_[cameN_idx_]))
-                            : static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[cameN_idx_]) & 0x00000000FFFFFFFF);
+                        ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[cameN_idx_], devices_[cameN_idx_]))
+                        : is_timestamp_framecount_ ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[cameN_idx_]) & 0x00000000FFFFFFFF) : static_cast<uint32_t>(arv_buffer_get_frame_id(bufs[cameN_idx_]));
                     cameN_idx_ == 0 ?
                         log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", devices_[cameN_idx_].frame_count_, "") :
                         log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", "", devices_[cameN_idx_].frame_count_);
@@ -684,7 +685,7 @@ class U3V {
     U3V(int32_t num_sensor, bool frame_sync, bool realtime_display_mode, char* dev_id = nullptr)
     : gobject_(GOBJECT_FILE, true), aravis_(ARAVIS_FILE, true),
         num_sensor_(num_sensor),
-        frame_sync_(frame_sync), realtime_display_mode_(realtime_display_mode), is_gendc_(false), is_param_integer_(false),
+        frame_sync_(frame_sync), realtime_display_mode_(realtime_display_mode), is_gendc_(false), is_param_integer_(false), is_timestamp_framecount_(false),
         devices_(num_sensor), buffers_(num_sensor), operation_mode_(OperationMode::Came1USB1), frame_cnt_(0), cameN_idx_(-1), disposed_(false)
     {
         init_symbols();
@@ -747,6 +748,7 @@ class U3V {
                 device_model_name = arv_device_get_string_feature_value(devices_[i].device_, "DeviceModelName", &err_);
                 if (strcmp(device_model_name, "    ")==0){
                     is_param_integer_ = true;
+                    is_timestamp_framecount_ = true;
                 }
             }
 
@@ -972,6 +974,7 @@ class U3V {
         GET_SYMBOL(arv_buffer_get_data, "arv_buffer_get_data");
         GET_SYMBOL(arv_buffer_get_part_data, "arv_buffer_get_part_data");
         GET_SYMBOL(arv_buffer_get_timestamp, "arv_buffer_get_timestamp");
+        GET_SYMBOL(arv_buffer_get_frame_id , "arv_buffer_get_frame_id");
         GET_SYMBOL(arv_device_get_feature, "arv_device_get_feature");
 
         GET_SYMBOL(arv_buffer_has_gendc, "arv_buffer_has_gendc");
@@ -1081,6 +1084,7 @@ class U3V {
     arv_buffer_get_data_t arv_buffer_get_data;
     arv_buffer_get_part_data_t arv_buffer_get_part_data;
     arv_buffer_get_timestamp_t arv_buffer_get_timestamp;
+    arv_buffer_get_frame_id_t arv_buffer_get_frame_id;
     arv_device_get_feature_t arv_device_get_feature;
 
     arv_buffer_has_gendc_t arv_buffer_has_gendc;
@@ -1101,6 +1105,7 @@ class U3V {
     bool realtime_display_mode_;
     bool is_gendc_;
     bool is_param_integer_;
+    bool is_timestamp_framecount_;
     int32_t operation_mode_;
 
     uint32_t frame_cnt_;
