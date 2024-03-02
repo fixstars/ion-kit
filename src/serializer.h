@@ -70,7 +70,7 @@ struct adl_serializer<ion::Port> {
 template <>
 struct adl_serializer<ion::Node> {
      static void to_json(json& j, const ion::Node& v) {
-         j["id"] = v.id();
+         j["id"] = v.id_to_string();
          j["name"] = v.name();
          j["target"] = v.target().to_string();
          j["params"] = v.params();

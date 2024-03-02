@@ -22,7 +22,7 @@ class Node {
 
 public:
     struct Impl {
-        std::string id;
+        NodeID id;
         std::string name;
         GraphID graph_id;
         Halide::Target target;
@@ -97,8 +97,12 @@ public:
     Port operator[](const std::string& name);
 
     // Getter
-    const std::string& id() const {
+    const NodeID & id() const {
         return impl_->id;
+    }
+
+     const std::string& id_to_string() const {
+        return impl_->id.value();
     }
 
     const std::string& name() const {
