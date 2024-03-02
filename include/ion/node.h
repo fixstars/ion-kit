@@ -102,7 +102,7 @@ public:
     }
 
      const std::string& id_to_string() const {
-        return impl_->id.value();
+        return to_string(impl_->id);
     }
 
     const std::string& name() const {

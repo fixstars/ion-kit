@@ -49,7 +49,7 @@ class Port {
     friend class Node;
 
 public:
-    using Channel = std::tuple<std::string, std::string>;
+    using Channel = std::tuple<NodeID, std::string>;
 
 private:
     struct Impl {
@@ -142,22 +142,24 @@ public:
 
     // Getter
     const PortID id() const { return impl_->id; }
+    const std::string& id_to_string() const { return to_string(impl_->id); }
     const Channel& pred_chan() const { return impl_->pred_chan; }
-    const std::string& pred_id() const { return std::get<0>(impl_->pred_chan); }
+    const NodeID& pred_id() const { return std::get<0>(impl_->pred_chan); }
+    const std::string& pred_id_to_string() const { return to_string(std::get<0>(impl_->pred_chan)); }
     const std::string& pred_name() const { return std::get<1>(impl_->pred_chan); }
     const std::set<Channel>& succ_chans() const { return impl_->succ_chans; }
     const Halide::Type& type() const { return impl_->type; }
     int32_t dimensions() const { return impl_->dimensions; }
     int32_t size() const { return static_cast<int32_t>(impl_->params.size()); }
     int32_t index() const { return index_; }
-    const std::string& graph_id_to_string() const { return impl_->graph_id.value(); }
+    const std::string& graph_id_to_string() const { return to_string(impl_->graph_id); }
 
     // Setter
     void set_index(int index) { index_ = index; }
 
     // Util
-    bool has_pred() const { return !std::get<0>(impl_->pred_chan).empty(); }
-    bool has_pred_by_nid(const std::string& nid) const { return !std::get<0>(impl_->pred_chan).empty(); }
+    bool has_pred() const { return !std::get<0>(impl_->pred_chan).value().empty(); }
+    bool has_pred_by_nid(const std::string& nid) const { return !to_string(std::get<0>(impl_->pred_chan)).empty(); }
     bool has_succ() const { return !impl_->succ_chans.empty(); }
     bool has_succ(const Channel& c) const { return impl_->succ_chans.count(c); }
     bool has_succ_by_nid(const std::string& nid) const {

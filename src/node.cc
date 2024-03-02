@@ -32,7 +32,7 @@ Node::Impl::Impl(const std::string& id_, const std::string& name_, const Halide:
 void Node::set_iport(const std::vector<Port>& ports) {
 
     impl_->ports.erase(std::remove_if(impl_->ports.begin(), impl_->ports.end(),
-                                      [&](const Port &p) { return p.has_succ_by_nid(to_string(this->id())); }),
+                                      [&](const Port &p) { return p.has_succ_by_nid(this->id_to_string()); }),
                        impl_->ports.end());
 
     size_t i = 0;
@@ -75,7 +75,7 @@ Port Node::operator[](const std::string& name) {
     if (it == impl_->ports.end()) {
         // This is output port which is never referenced.
         // Bind myself as a predecessor and register
-        Port port(to_string(impl_->id), name);
+        Port port(id_to_string(), name);
         port.impl_ ->graph_id = impl_->graph_id;
         impl_->ports.push_back(port);
         return port;
