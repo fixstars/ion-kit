@@ -88,7 +88,7 @@ Node Builder::add(const std::string& name)
     return n;
 }
 
-Node Builder::add(const std::string& name, const std::string& graph_id)
+Node Builder::add(const std::string& name, const GraphID & graph_id)
 {
     Node n(sole::uuid4().str(), name, impl_->target, graph_id);
     impl_->nodes.push_back(n);

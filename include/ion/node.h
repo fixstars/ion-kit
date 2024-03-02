@@ -15,6 +15,8 @@ namespace ion {
 /**
  * Node class is used to manage node which consists graph structure.
  */
+
+
 class Node {
     friend class Builder;
 
@@ -22,7 +24,7 @@ public:
     struct Impl {
         std::string id;
         std::string name;
-        std::string graph_id;
+        GraphID graph_id;
         Halide::Target target;
         std::vector<Param> params;
         std::vector<Port> ports;
@@ -30,7 +32,7 @@ public:
 
         Impl(): id(), name(), target(), params(), ports() {}
         Impl(const std::string& id_, const std::string& name_, const Halide::Target& target_);
-        Impl(const std::string& id_, const std::string& name_, const Halide::Target& target_, const std::string& graph_id_);
+        Impl(const std::string& id_, const std::string& name_, const Halide::Target& target_, const GraphID &graph_id_);
     };
 
 public:
@@ -127,7 +129,7 @@ private:
     {
     }
 
-    Node(const std::string& id, const std::string& name, const Halide::Target& target, const std::string& graph_id)
+    Node(const std::string& id, const std::string& name, const Halide::Target& target, const GraphID& graph_id)
         : impl_(new Impl{id, name, target, graph_id})
     {
     }
@@ -138,7 +140,7 @@ private:
 
     template<typename T>
     Port get_iport(T *vptr) const {
-        if (impl_->graph_id.empty())
+        if (impl_->graph_id.value().empty())
             return Port(vptr);
         else
             return Port(vptr, impl_->graph_id);
@@ -146,7 +148,7 @@ private:
 
     template<typename T>
     Port get_iport(Halide::Buffer<T>& arg) const {
-        if (impl_->graph_id.empty())
+        if (impl_->graph_id.value().empty())
             return Port(arg);
         else
             return Port(arg, impl_->graph_id);
@@ -154,7 +156,7 @@ private:
 
     template<typename T>
     Port get_iport(std::vector<Halide::Buffer<T>>& arg) const {
-        if (impl_->graph_id.empty())
+        if (impl_->graph_id.value().empty())
             return Port(arg);
         else
             return Port(arg, impl_->graph_id);

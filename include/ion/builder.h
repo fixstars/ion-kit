@@ -49,7 +49,7 @@ public:
      * @arg k: The key of the node which should be matched with second argument of ION_REGISTER_BUILDING_BLOCK().
      * @arg id: graph unique identifier
      */
-    Node add(const std::string& name, const std::string& graph_id);
+    Node add(const std::string& name, const GraphID& graph_id);
 
     /**
      * Adding new node to the graph.

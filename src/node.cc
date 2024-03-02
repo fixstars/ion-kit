@@ -4,6 +4,7 @@
 
 namespace ion {
 
+
 Node::Impl::Impl(const std::string& id_, const std::string& name_, const Halide::Target& target_)
     : id(id_), name(name_), target(target_), params(), ports()
 {
@@ -16,8 +17,8 @@ Node::Impl::Impl(const std::string& id_, const std::string& name_, const Halide:
     arginfos = bb->arginfos();
 }
 
-Node::Impl::Impl(const std::string& id_, const std::string& name_, const Halide::Target& target_, const std::string& graph_id)
-    : id(id_), name(name_), target(target_), params(), ports(), graph_id(graph_id)
+Node::Impl::Impl(const std::string& id_, const std::string& name_, const Halide::Target& target_, const GraphID& graph_id_)
+    : id(id_), name(name_), target(target_), params(), ports(), graph_id(graph_id_)
 {
     auto bb(Halide::Internal::GeneratorRegistry::create(name_, Halide::GeneratorContext(target_)));
     if (!bb) {

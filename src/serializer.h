@@ -42,7 +42,7 @@ static void from_json(const json& j, ion::Param& v) {
 template<>
 struct adl_serializer<ion::Port> {
      static void to_json(json& j, const ion::Port& v) {
-         j["id"] = v.id();
+         j["id"] = v.id().value();
          j["pred_chan"] = v.pred_chan();
          j["succ_chans"] = v.succ_chans();
          j["type"] = static_cast<halide_type_t>(v.type());
@@ -60,7 +60,7 @@ struct adl_serializer<ion::Port> {
              impl->dimensions = j["dimensions"];
              for (auto i=0; i<j["size"]; ++i) {
                  impl->params[i] = Halide::Internal::Parameter(impl->type, impl->dimensions != 0, impl->dimensions,
-                                                               ion::argument_name(std::get<0>(impl->pred_chan), std::get<1>(impl->pred_chan), i, impl->graph_id));
+                                                               ion::argument_name(std::get<0>(impl->pred_chan), std::get<1>(impl->pred_chan), i, impl->graph_id.value()));
              }
          }
          v = ion::Port(impl, j["index"]);

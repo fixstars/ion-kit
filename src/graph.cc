@@ -9,8 +9,7 @@ namespace ion {
 struct Graph::Impl {
     Builder builder;
     std::string name;
-    std::string id;
-
+    GraphID id;
     std::vector<Node> nodes;
     // Cacheable
     Halide::Pipeline pipeline;
@@ -23,7 +22,8 @@ struct Graph::Impl {
     {}
     Impl(Builder b, const std::string& n)
         : id(sole::uuid4().str()), builder(b), name(n), jit_ctx(new Halide::JITUserContext), jit_ctx_ptr(jit_ctx.get())
-    {}
+    {
+    }
 };
 
 Graph::Graph()

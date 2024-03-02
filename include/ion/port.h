@@ -53,8 +53,8 @@ public:
 
 private:
     struct Impl {
-        std::string id;
-        std::string graph_id;
+        PortID id;
+        GraphID graph_id;
         Channel pred_chan;
         std::set<Channel> succ_chans;
 
@@ -65,12 +65,12 @@ private:
         std::unordered_map<uint32_t, const void *> instances;
 
         Impl();
-        Impl(const std::string& pid, const std::string& pn, const Halide::Type& t, int32_t d, const std::string& gid );
+        Impl(const std::string& pid, const std::string& pn, const Halide::Type& t, int32_t d, const GraphID &gid );
     };
 
 public:
 
-    Port() : impl_(new Impl("", "", Halide::Type(), 0, "")), index_(-1) {}
+    Port() : impl_(new Impl("", "", Halide::Type(), 0, GraphID())), index_(-1) {}
 
     Port(const std::shared_ptr<Impl>& impl, int32_t index) : impl_(impl), index_(index) {}
 
@@ -79,7 +79,7 @@ public:
      * @arg k: The key of the port which should be matched with BuildingBlock Input/Output name.
      * @arg t: The type of the value.
      */
-    Port(const std::string& n, Halide::Type t) : impl_(new Impl("", n, t, 0, "")), index_(-1) {}
+    Port(const std::string& n, Halide::Type t) : impl_(new Impl("", n, t, 0,  GraphID(""))), index_(-1) {}
 
     /**
      * Construct new port for vector value.
@@ -87,14 +87,14 @@ public:
      * @arg t: The type of the element value.
      * @arg d: The dimension of the port. The range is 1 to 4.
      */
-    Port(const std::string& n, Halide::Type t, int32_t d) : impl_(new Impl("", n, t, d, "")), index_(-1) {}
+    Port(const std::string& n, Halide::Type t, int32_t d) : impl_(new Impl("", n, t, d, GraphID(""))), index_(-1) {}
 
     /**
      * Construct new port from scalar pointer
      */
     template<typename T,
              typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-    Port(T *vptr) : impl_(new Impl("", Halide::Internal::unique_name("_ion_port_"), Halide::type_of<T>(), 0, "")), index_(-1) {
+    Port(T *vptr) : impl_(new Impl("", Halide::Internal::unique_name("_ion_port_"), Halide::type_of<T>(), 0, GraphID(""))), index_(-1) {
         this->bind(vptr);
     }
 
@@ -103,7 +103,7 @@ public:
      */
     template<typename T,
              typename std::enable_if<std::is_arithmetic<T>::value>::type* = nullptr>
-    Port(T *vptr,  const std::string& gid) : impl_(new Impl("", Halide::Internal::unique_name("_ion_port_"), Halide::type_of<T>(), 0, gid)), index_(-1) {
+    Port(T *vptr, const GraphID & gid) : impl_(new Impl("", Halide::Internal::unique_name("_ion_port_"), Halide::type_of<T>(), 0, gid)), index_(-1) {
         this->bind(vptr);
     }
 
@@ -112,7 +112,7 @@ public:
      * Construct new port from buffer
      */
     template<typename T>
-    Port(const Halide::Buffer<T>& buf) : impl_(new Impl("", buf.name(), buf.type(), buf.dimensions(), "")), index_(-1) {
+    Port(const Halide::Buffer<T>& buf) : impl_(new Impl("", buf.name(), buf.type(), buf.dimensions(), GraphID(""))), index_(-1) {
         this->bind(buf);
     }
 
@@ -120,7 +120,7 @@ public:
      * Construct new port from buffer and bind graph id to port
      */
     template<typename T>
-    Port(const Halide::Buffer<T>& buf, const std::string& gid) : impl_(new Impl("", buf.name(), buf.type(), buf.dimensions(), gid)), index_(-1) {
+    Port(const Halide::Buffer<T>& buf, const GraphID & gid) : impl_(new Impl("", buf.name(), buf.type(), buf.dimensions(), gid)), index_(-1) {
         this->bind(buf);
     }
 
@@ -128,7 +128,7 @@ public:
      * Construct new port from array of buffer
      */
     template<typename T>
-    Port(const std::vector<Halide::Buffer<T>>& bufs) : impl_(new Impl("", unify_name(bufs), Halide::type_of<T>(), unify_dimension(bufs), "")), index_(-1) {
+    Port(const std::vector<Halide::Buffer<T>>& bufs) : impl_(new Impl("", unify_name(bufs), Halide::type_of<T>(), unify_dimension(bufs), GraphID(""))), index_(-1) {
         this->bind(bufs);
     }
 
@@ -136,12 +136,12 @@ public:
      * Construct new port from array of buffer and bind graph id to port
      */
     template<typename T>
-    Port(const std::vector<Halide::Buffer<T>>& bufs, const std::string& gid) : impl_(new Impl("", unify_name(bufs), Halide::type_of<T>(), unify_dimension(bufs), gid)), index_(-1) {
+    Port(const std::vector<Halide::Buffer<T>>& bufs, const GraphID & gid) : impl_(new Impl("", unify_name(bufs), Halide::type_of<T>(), unify_dimension(bufs), gid)), index_(-1) {
         this->bind(bufs);
     }
 
     // Getter
-    const std::string& id() const { return impl_->id; }
+    const PortID id() const { return impl_->id; }
     const Channel& pred_chan() const { return impl_->pred_chan; }
     const std::string& pred_id() const { return std::get<0>(impl_->pred_chan); }
     const std::string& pred_name() const { return std::get<1>(impl_->pred_chan); }
@@ -150,7 +150,7 @@ public:
     int32_t dimensions() const { return impl_->dimensions; }
     int32_t size() const { return static_cast<int32_t>(impl_->params.size()); }
     int32_t index() const { return index_; }
-    const std::string& graph_id() const { return impl_->graph_id; }
+    const std::string& graph_id_to_string() const { return impl_->graph_id.value(); }
 
     // Setter
     void set_index(int index) { index_ = index; }
@@ -181,9 +181,9 @@ public:
      void bind(T *v) {
          auto i = index_ == -1 ? 0 : index_;
          if (has_pred()) {
-             impl_->params[i] = Halide::Internal::Parameter{Halide::type_of<T>(), false, 0, argument_name(pred_id(), pred_name(), i, graph_id())};
+             impl_->params[i] = Halide::Internal::Parameter{Halide::type_of<T>(), false, 0, argument_name(pred_id(), pred_name(), i, graph_id_to_string())};
          } else {
-             impl_->params[i] = Halide::Internal::Parameter{type(), false, dimensions(), argument_name(pred_id(), pred_name(), i,graph_id())};
+             impl_->params[i] = Halide::Internal::Parameter{type(), false, dimensions(), argument_name(pred_id(), pred_name(), i,graph_id_to_string())};
          }
 
          impl_->instances[i] = v;
@@ -194,9 +194,9 @@ public:
      void bind(const Halide::Buffer<T>& buf) {
          auto i = index_ == -1 ? 0 : index_;
          if (has_pred()) {
-             impl_->params[i] = Halide::Internal::Parameter{buf.type(), true, buf.dimensions(), argument_name(pred_id(), pred_name(), i,graph_id())};
+             impl_->params[i] = Halide::Internal::Parameter{buf.type(), true, buf.dimensions(), argument_name(pred_id(), pred_name(), i,graph_id_to_string())};
          } else {
-             impl_->params[i] = Halide::Internal::Parameter{type(), true, dimensions(), argument_name(pred_id(), pred_name(), i,graph_id())};
+             impl_->params[i] = Halide::Internal::Parameter{type(), true, dimensions(), argument_name(pred_id(), pred_name(), i,graph_id_to_string())};
          }
 
          impl_->instances[i] = buf.raw_buffer();
@@ -206,9 +206,9 @@ public:
      void bind(const std::vector<Halide::Buffer<T>>& bufs) {
          for (int i=0; i<static_cast<int>(bufs.size()); ++i) {
              if (has_pred()) {
-                 impl_->params[i] = Halide::Internal::Parameter{bufs[i].type(), true, bufs[i].dimensions(), argument_name(pred_id(), pred_name(), i, graph_id())};
+                 impl_->params[i] = Halide::Internal::Parameter{bufs[i].type(), true, bufs[i].dimensions(), argument_name(pred_id(), pred_name(), i, graph_id_to_string())};
              } else {
-                 impl_->params[i] = Halide::Internal::Parameter{type(), true, dimensions(), argument_name(pred_id(), pred_name(), i, graph_id())};
+                 impl_->params[i] = Halide::Internal::Parameter{type(), true, dimensions(), argument_name(pred_id(), pred_name(), i, graph_id_to_string())};
              }
 
              impl_->instances[i] = bufs[i].raw_buffer();
@@ -227,7 +227,7 @@ public:
              if (es.size() <= i) {
                  es.resize(i+1, Halide::Expr());
              }
-             es[i] = Halide::Internal::Variable::make(type(), argument_name(pred_id(), pred_name(), i, graph_id()), param);
+             es[i] = Halide::Internal::Variable::make(type(), argument_name(pred_id(), pred_name(), i, graph_id_to_string()), param);
          }
          return es;
      }
@@ -248,7 +248,7 @@ public:
                  args.push_back(Halide::Var::implicit(i));
                  args_expr.push_back(Halide::Var::implicit(i));
              }
-             Halide::Func f(param.type(), param.dimensions(), argument_name(pred_id(), pred_name(), i, graph_id()) + "_im");
+             Halide::Func f(param.type(), param.dimensions(), argument_name(pred_id(), pred_name(), i, graph_id_to_string()) + "_im");
              f(args) = Halide::Internal::Call::make(param, args_expr);
              fs[i] = f;
          }
@@ -262,7 +262,7 @@ public:
                  args.resize(i+1, Halide::Argument());
              }
              auto kind = dimensions() == 0 ? Halide::Argument::InputScalar : Halide::Argument::InputBuffer;
-             args[i] = Halide::Argument(argument_name(pred_id(), pred_name(), i, graph_id()),  kind, type(), dimensions(), Halide::ArgumentEstimates());
+             args[i] = Halide::Argument(argument_name(pred_id(), pred_name(), i, graph_id_to_string()),  kind, type(), dimensions(), Halide::ArgumentEstimates());
          }
          return args;
      }
@@ -285,7 +285,7 @@ private:
      * pid and pn is stored in both pred and succ,
      * then it will determined through pipeline build process.
      */
-     Port(const std::string& pid, const std::string& pn) : impl_(new Impl(pid, pn, Halide::Type(), 0, "")), index_(-1) {}
+     Port(const std::string& pid, const std::string& pn) : impl_(new Impl(pid, pn, Halide::Type(), 0, GraphID(""))), index_(-1) {}
 
      std::shared_ptr<Impl> impl_;
 
