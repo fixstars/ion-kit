@@ -13,7 +13,6 @@ Port::Impl::Impl()
 Port::Impl::Impl(const std::string& pid, const std::string& pn, const Halide::Type& t, int32_t d, const GraphID & gid)
     : id(sole::uuid4().str()), pred_chan{pid, pn}, succ_chans{}, type(t), dimensions(d), graph_id(gid)
 {
-    \
     params[0] = Halide::Internal::Parameter(type, dimensions != 0, dimensions, argument_name(pid, pn, 0, gid.value()));
 }
 

@@ -15,8 +15,6 @@ namespace ion {
 /**
  * Node class is used to manage node which consists graph structure.
  */
-
-
 class Node {
     friend class Builder;
 

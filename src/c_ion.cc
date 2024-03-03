@@ -2,8 +2,6 @@
 
 #include <ion/ion.h>
 #include <ion/c_ion.h>
-#include <stdarg.h>
-#include <stdlib.h>
 #include <HalideBuffer.h>
 
 #include "log.h"
