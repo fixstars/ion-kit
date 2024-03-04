@@ -977,7 +977,7 @@ using U3VCameraN_U8x3 = U3VCameraN<uint8_t, 3>;
 using U3VCameraN_U8x2 = U3VCameraN<uint8_t, 2>;
 using U3VCameraN_U16x2 = U3VCameraN<uint16_t, 2>;
 
-class U3VGenDC : public ion::BuildingBlock<U3VGenDC> {
+class U3VCameraGenDC : public ion::BuildingBlock<U3VCameraGenDC> {
 public:
     BuildingBlockParam<int32_t> num_devices{"num_devices", 2};
     BuildingBlockParam<bool> frame_sync{"frame_sync", false};
@@ -1326,7 +1326,7 @@ ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCameraN_U8x3, image_io_u3v_cam
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCameraN_U8x2, image_io_u3v_cameraN_u8x2);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCameraN_U16x2, image_io_u3v_cameraN_u16x2);
 
-ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VGenDC, image_io_u3v_gendc);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCameraGenDC, image_io_u3v_gendc);
 
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinarySaver_U16x2, image_io_binarysaver);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinarySaver_U8x3, image_io_binarysaver_u8x3);
