@@ -226,10 +226,10 @@ protected:
 
        }
 
-    void SetGain(int32_t sensor_idx, const std::string key, double v) {
+    void set_gain(int32_t sensor_idx, const std::string key, double v) {
 
         if (is_param_integer_){
-            SetGain(sensor_idx, key, static_cast<int32_t>(v));
+            set_gain(sensor_idx, key, static_cast<int32_t>(v));
             return;
         }
 
@@ -244,7 +244,7 @@ protected:
         }
     }
 
-    void SetGain(int32_t sensor_idx, const std::string key, int32_t v) {
+    void set_gain(int32_t sensor_idx, const std::string key, int32_t v) {
         if (sensor_idx < num_sensor_ ){
             if(devices_[sensor_idx].int_gain_ != v){
                 err_ =  Set(devices_[sensor_idx].device_, key.c_str(), static_cast<int64_t>(v));
@@ -256,10 +256,10 @@ protected:
         }
     }
 
-    void SetExposure(int32_t sensor_idx, const std::string key, double v) {
+    void set_exposure(int32_t sensor_idx, const std::string key, double v) {
 
         if (is_param_integer_){
-            SetExposure(sensor_idx, key, static_cast<int32_t>(v));
+            set_exposure(sensor_idx, key, static_cast<int32_t>(v));
             return;
         }
 
@@ -274,7 +274,7 @@ protected:
         }
     }
 
-    void SetExposure(int32_t sensor_idx, const std::string key, int32_t v) {
+    void set_exposure(int32_t sensor_idx, const std::string key, int32_t v) {
         if (sensor_idx < num_sensor_ ){
             if(devices_[sensor_idx].int_exposure_ != v){
                 err_ = Set(devices_[sensor_idx].device_, key.c_str(), static_cast<int64_t>(v));
@@ -286,83 +286,6 @@ protected:
         }
     }
 
-     void setFrameSync(std::vector<ArvBuffer *> &bufs, int timeout_us){
-        uint32_t max_cnt = 0;
-        while (true) {
-            // Update max_cnt
-            for (int i = 0; i < num_sensor_; ++i) {
-                if (max_cnt < devices_[i].frame_count_) {
-                    max_cnt = devices_[i].frame_count_;
-                }
-            }
-
-            // Check all count is same as max_cnt;
-            bool synchronized = true;
-            for (int i = 0; i < num_sensor_; ++i) {
-                synchronized &= devices_[i].frame_count_ == max_cnt;
-            }
-
-            // If it is synchronized, break the loop
-            if (synchronized) {
-                break;
-            }
-
-            // Acquire buffer until cnt is at least max_cnt
-            for (int i = 0; i < devices_.size(); ++i) {
-                while (devices_[i].frame_count_ < max_cnt) {
-                    arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
-                    bufs[i] = arv_stream_timeout_pop_buffer(devices_[i].stream_, timeout_us);
-
-                    if (bufs[i] == nullptr) {
-                        log::error("pop_buffer failed  when sync frame due to timeout ({}s)", timeout_us * 1e-6f);
-                        throw ::std::runtime_error("buffer is null");
-                    }
-                    devices_[i].frame_count_ = is_gendc_
-                                               ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(
-                                    bufs[i], devices_[i]))
-                                               : static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) &
-                                                                       0x00000000FFFFFFFF);
-
-                    i == 0 ?
-                    log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", devices_[i].frame_count_,
-                               "") :
-                    log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", "",
-                               devices_[i].frame_count_);
-                }
-            }
-        }
-
-    }
-
-    void setRealTime(std::vector<ArvBuffer *> &bufs, int timeout_us = 3 * 1000 * 1000){
-        std::vector<int32_t> N_output_buffers(num_sensor_);
-        for (auto i = 0; i < num_sensor_; ++i) {
-            int32_t num_input_buffer;
-            arv_stream_get_n_buffers(devices_[i].stream_, &num_input_buffer, &(N_output_buffers[i]));
-        }
-        // if all stream has N output buffers, discard N-1 of them
-        for (auto i = 0; i < num_sensor_; ++i) {
-            for (auto j = 0; j < N_output_buffers[i] - 1; ++j) {
-                bufs[i] = arv_stream_timeout_pop_buffer(devices_[i].stream_, timeout_us);
-                if (bufs[i] == nullptr) {
-                    log::error("pop_buffer(L2) failed due to timeout ({}s)", timeout_us * 1e-6f);
-                    throw ::std::runtime_error("buffer is null");
-                }
-                devices_[i].frame_count_ = is_gendc_
-                                           ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(
-                                bufs[i], devices_[i]))
-                                           : static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) &
-                                                                   0x00000000FFFFFFFF);
-                i == 0 ?
-                log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]",
-                           devices_[i].frame_count_, "") :
-                log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]",
-                           "", devices_[i].frame_count_);
-                arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
-
-            }
-        }
-    }
 
     virtual void get(std::vector<Halide::Buffer<>>& outs){};
     virtual void get(std::vector<void *>& outs){};
@@ -756,6 +679,37 @@ public:
         return *instances_[id].get();
     }
 
+
+    void set_realtime(std::vector<ArvBuffer *> &bufs, int timeout_us = 3 * 1000 * 1000){
+        std::vector<int32_t> N_output_buffers(num_sensor_);
+        for (auto i = 0; i < num_sensor_; ++i) {
+            int32_t num_input_buffer;
+            arv_stream_get_n_buffers(devices_[i].stream_, &num_input_buffer, &(N_output_buffers[i]));
+        }
+        // if all stream has N output buffers, discard N-1 of them
+        for (auto i = 0; i < num_sensor_; ++i) {
+            for (auto j = 0; j < N_output_buffers[i] - 1; ++j) {
+                bufs[i] = arv_stream_timeout_pop_buffer(devices_[i].stream_, timeout_us);
+                if (bufs[i] == nullptr) {
+                    log::error("pop_buffer(L2) failed due to timeout ({}s)", timeout_us * 1e-6f);
+                    throw ::std::runtime_error("buffer is null");
+                }
+                devices_[i].frame_count_ = is_gendc_
+                                           ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(
+                                bufs[i], devices_[i]))
+                                           : static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) &
+                                                                   0x00000000FFFFFFFF);
+                i == 0 ?
+                log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]",
+                           devices_[i].frame_count_, "") :
+                log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]",
+                           "", devices_[i].frame_count_);
+                arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
+
+            }
+        }
+    }
+
     void get(std::vector<Halide::Buffer<>>& outs) override{
         auto timeout_us = 30 * 1000 * 1000;
         if (sim_mode_){
@@ -780,7 +734,7 @@ public:
 
                 // if aravis output queue length is more than N (where N > 1) for all devices, pop all N-1 buffer
                 if (realtime_display_mode_) {
-                    setRealTime(bufs,timeout_us);
+                    set_realtime(bufs,timeout_us);
                 }
 
                 // get the first buffer for each stream
@@ -801,7 +755,7 @@ public:
                 }
 
                 if (frame_sync_) {
-                    setFrameSync(bufs,timeout_us);
+                    sync_frame_count(bufs,timeout_us);
                 }
 
                 for (int i = 0; i < num_sensor_; ++i) {
@@ -818,7 +772,7 @@ public:
 
                 // if aravis output queue length is more than N (where N > 1) for all devices, pop all N-1 buffer
                 if (realtime_display_mode_) {
-                    setRealTime(bufs,timeout_us);
+                    set_realtime(bufs,timeout_us);
                 }
 
                 //first buffer
@@ -1148,6 +1102,54 @@ private:
             }
         }
     };
+
+
+    void sync_frame_count(std::vector<ArvBuffer *> &bufs, int timeout_us){
+        uint32_t max_cnt = 0;
+        while (true) {
+            // Update max_cnt
+            for (int i = 0; i < num_sensor_; ++i) {
+                if (max_cnt < devices_[i].frame_count_) {
+                    max_cnt = devices_[i].frame_count_;
+                }
+            }
+
+            // Check all count is same as max_cnt;
+            bool synchronized = true;
+            for (int i = 0; i < num_sensor_; ++i) {
+                synchronized &= devices_[i].frame_count_ == max_cnt;
+            }
+
+            // If it is synchronized, break the loop
+            if (synchronized) {
+                break;
+            }
+
+            // Acquire buffer until cnt is at least max_cnt
+            for (int i = 0; i < devices_.size(); ++i) {
+                while (devices_[i].frame_count_ < max_cnt) {
+                    arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
+                    bufs[i] = arv_stream_timeout_pop_buffer(devices_[i].stream_, timeout_us);
+
+                    if (bufs[i] == nullptr) {
+                        log::error("pop_buffer failed  when sync frame due to timeout ({}s)", timeout_us * 1e-6f);
+                        throw ::std::runtime_error("buffer is null");
+                    }
+                    devices_[i].frame_count_ = is_gendc_
+                                               ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(
+                                    bufs[i], devices_[i]))
+                                               : static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) &
+                                                                       0x00000000FFFFFFFF);
+
+                    i == 0 ?
+                    log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", devices_[i].frame_count_,
+                               "") :
+                    log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", "",
+                               devices_[i].frame_count_);
+                }
+            }
+        }
+    }
 };
 
 
@@ -1172,6 +1174,7 @@ public:
         return *instances_[id].get();
     }
 
+
     void get(std::vector<void *>& outs) override{
         // TODO: Is 3 second fine?
         auto timeout_us = 3 * 1000 * 1000;
@@ -1182,7 +1185,7 @@ public:
         if (operation_mode_ == OperationMode::Came2USB2 || operation_mode_ == OperationMode::Came1USB1){
 
             if (realtime_display_mode_){
-                setRealTime(bufs,timeout_us);
+                set_realtime(bufs,timeout_us);
             }
 
             // get the first buffer for each stream
@@ -1202,7 +1205,7 @@ public:
             }
 
             if (frame_sync_) {
-                setFrameSync(bufs,timeout_us);
+                sync_frame_count(bufs,timeout_us);
             }
 
             for (int i = 0; i < num_sensor_; ++i){
@@ -1217,7 +1220,7 @@ public:
 
             // if aravis output queue length is more than N (where N > 1) for all devices, pop all N-1 buffer
             if (realtime_display_mode_){
-                setRealTime(bufs,timeout_us);
+                set_realtime(bufs,timeout_us);
             }
 
             //first buffer
@@ -1542,6 +1545,84 @@ private:
             }
         }
     };
+
+    void set_realtime(std::vector<ArvBuffer *> &bufs, int timeout_us = 3 * 1000 * 1000){
+        std::vector<int32_t> N_output_buffers(num_sensor_);
+        for (auto i = 0; i < num_sensor_; ++i) {
+            int32_t num_input_buffer;
+            arv_stream_get_n_buffers(devices_[i].stream_, &num_input_buffer, &(N_output_buffers[i]));
+        }
+        // if all stream has N output buffers, discard N-1 of them
+        for (auto i = 0; i < num_sensor_; ++i) {
+            for (auto j = 0; j < N_output_buffers[i] - 1; ++j) {
+                bufs[i] = arv_stream_timeout_pop_buffer(devices_[i].stream_, timeout_us);
+                if (bufs[i] == nullptr) {
+                    log::error("pop_buffer(L2) failed due to timeout ({}s)", timeout_us * 1e-6f);
+                    throw ::std::runtime_error("buffer is null");
+                }
+                devices_[i].frame_count_ = is_gendc_
+                                           ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(
+                                bufs[i], devices_[i]))
+                                           : static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) &
+                                                                   0x00000000FFFFFFFF);
+                i == 0 ?
+                log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]",
+                           devices_[i].frame_count_, "") :
+                log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]",
+                           "", devices_[i].frame_count_);
+                arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
+
+            }
+        }
+    }
+
+    void sync_frame_count(std::vector<ArvBuffer *> &bufs, int timeout_us){
+        uint32_t max_cnt = 0;
+        while (true) {
+            // Update max_cnt
+            for (int i = 0; i < num_sensor_; ++i) {
+                if (max_cnt < devices_[i].frame_count_) {
+                    max_cnt = devices_[i].frame_count_;
+                }
+            }
+
+            // Check all count is same as max_cnt;
+            bool synchronized = true;
+            for (int i = 0; i < num_sensor_; ++i) {
+                synchronized &= devices_[i].frame_count_ == max_cnt;
+            }
+
+            // If it is synchronized, break the loop
+            if (synchronized) {
+                break;
+            }
+
+            // Acquire buffer until cnt is at least max_cnt
+            for (int i = 0; i < devices_.size(); ++i) {
+                while (devices_[i].frame_count_ < max_cnt) {
+                    arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
+                    bufs[i] = arv_stream_timeout_pop_buffer(devices_[i].stream_, timeout_us);
+
+                    if (bufs[i] == nullptr) {
+                        log::error("pop_buffer failed  when sync frame due to timeout ({}s)", timeout_us * 1e-6f);
+                        throw ::std::runtime_error("buffer is null");
+                    }
+                    devices_[i].frame_count_ = is_gendc_
+                                               ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(
+                                    bufs[i], devices_[i]))
+                                               : static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) &
+                                                                       0x00000000FFFFFFFF);
+
+                    i == 0 ?
+                    log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", devices_[i].frame_count_,
+                               "") :
+                    log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", "",
+                               devices_[i].frame_count_);
+                }
+            }
+        }
+    }
+
 };
 
 }  // namespace image_io
@@ -1598,8 +1679,8 @@ int ION_EXPORT ion_bb_image_io_u3v_camera1(
             return 0;
         }else{
             // set gain & exposure
-            u3v.SetGain(0, gain_key, gain0);
-            u3v.SetExposure(0, exposure_key, exposure0);
+            u3v.set_gain(0, gain_key, gain0);
+            u3v.set_exposure(0, exposure_key, exposure0);
 
             std::vector<Halide::Buffer<> > obufs{Halide::Buffer<>(*out0)};
             u3v.get(obufs);
@@ -1633,10 +1714,10 @@ int ION_EXPORT ion_bb_image_io_u3v_camera2(
             return 0;
         }else{
             // set gain & exposure
-            u3v.SetGain(0, gain_key, gain0);
-            u3v.SetGain(1, gain_key, gain1);
-            u3v.SetExposure(0, exposure_key, exposure0);
-            u3v.SetExposure(1, exposure_key, exposure1);
+            u3v.set_gain(0, gain_key, gain0);
+            u3v.set_gain(1, gain_key, gain1);
+            u3v.set_exposure(0, exposure_key, exposure0);
+            u3v.set_exposure(1, exposure_key, exposure1);
 
             std::vector<Halide::Buffer<> > obufs{Halide::Buffer<>(*out0), Halide::Buffer<>(*out1)};
             u3v.get(obufs);
@@ -1701,8 +1782,8 @@ int ION_EXPORT ion_bb_image_io_u3v_gendc_camera1(
          // set gain & exposure
         if (enable_control){
             ion::log::debug("Setting gain0:{} exposure0:{}", gain0, exposure0);
-            u3v.SetGain(0, gain_key, gain0);
-            u3v.SetExposure(0, exposure_key, exposure0);
+            u3v.set_gain(0, gain_key, gain0);
+            u3v.set_exposure(0, exposure_key, exposure0);
         }
         std::vector<void *> obufs{out_gendc->host};
         u3v.get(obufs);
@@ -1746,12 +1827,12 @@ int ION_EXPORT ion_bb_image_io_u3v_gendc_camera2(
              // set gain & exposure
         if (enable_control) {
             ion::log::debug("Setting gain0:{} exposure0:{}", gain0, exposure0);
-            u3v.SetGain(0, gain_key, gain0);
-            u3v.SetExposure(0, exposure_key, exposure0);
+            u3v.set_gain(0, gain_key, gain0);
+            u3v.set_exposure(0, exposure_key, exposure0);
 
             ion::log::debug("Setting gain1:{} exposure1:{}", gain1, exposure1);
-            u3v.SetGain(1, gain_key, gain1);
-            u3v.SetExposure(1, exposure_key, exposure1);
+            u3v.set_gain(1, gain_key, gain1);
+            u3v.set_exposure(1, exposure_key, exposure1);
         }
          u3v.get(obufs);
 
@@ -1796,8 +1877,8 @@ int ION_EXPORT ion_bb_image_io_u3v_multiple_camera1(
              if (enable_control) {
                  // set gain & exposure
                 ion::log::debug("Setting gain0:{} exposure0:{}", gain0, exposure0);
-                u3v.SetGain(0, gain_key, gain0);
-                u3v.SetExposure(0, exposure_key, exposure0);
+                u3v.set_gain(0, gain_key, gain0);
+                u3v.set_exposure(0, exposure_key, exposure0);
              }
              u3v.get(obufs);
         }
@@ -1842,11 +1923,11 @@ int ION_EXPORT ion_bb_image_io_u3v_multiple_camera2(
              if (enable_control) {
                  // set gain & exposure
                 ion::log::debug("Setting gain0:{} exposure0:{}", gain0, exposure0);
-                u3v.SetGain(0, gain_key, gain0);
-                u3v.SetExposure(0, exposure_key, exposure0);
+                u3v.set_gain(0, gain_key, gain0);
+                u3v.set_exposure(0, exposure_key, exposure0);
                 ion::log::debug("Setting gain1:{} exposure1:{}", gain1, exposure1);
-                u3v.SetGain(1, gain_key, gain1);
-                u3v.SetExposure(1, exposure_key, exposure1);
+                u3v.set_gain(1, gain_key, gain1);
+                u3v.set_exposure(1, exposure_key, exposure1);
             }
              u3v.get(obufs);
         }
