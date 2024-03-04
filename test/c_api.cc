@@ -475,11 +475,14 @@ int main()
                 out1[i] =0;
             }
 
-
-           ion_graph_t g2;
+            ion_graph_t g2;
             ion_graph_create(&g2, b,"graph2");
-            std::vector<ion_graph_t>graphs{g1, g0};
-           ret = ion_graph_create_with_multiple(&g2, graphs);
+
+            ion_graph_t *graphs = (ion_graph_t*)malloc(2 * sizeof(ion_graph_t));
+            graphs[0] = g1;
+            graphs[1] = g2;
+
+           ret = ion_graph_create_with_multiple(&g2, graphs, 2);
            if (ret != 0)
                 return ret;
             ret = ion_graph_run(g2);
