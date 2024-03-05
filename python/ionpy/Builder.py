@@ -9,6 +9,7 @@ from .native import (
 
     ion_builder_set_target,
     ion_builder_with_bb_module,
+    ion_builder_add_graph,
     ion_builder_add_node,
     ion_builder_compile,
 
@@ -19,7 +20,7 @@ from .native import (
     ion_builder_run_with_port_map,
 
 )
-
+from .Graph import Graph
 from .Node import Node
 from .BuilderCompileOption import BuilderCompileOption
 from .PortMap import PortMap
@@ -61,6 +62,14 @@ class Builder:
             raise Exception('Invalid operation')
 
         return Node(obj_=c_node)
+
+    def add_graph(self, name: str) -> Graph:
+        c_graph = c_ion_node_t()
+        ret = ion_builder_add_graph(self.obj, name.encode(), ctypes.byref(c_graph))
+        if ret != 0:
+            raise Exception('Invalid operation')
+
+        return Graph(obj_=c_graph)
 
     def compile(self, function_name: str, option: BuilderCompileOption):
         ret = ion_builder_compile(self.obj, function_name.encode(), option.to_cobj())

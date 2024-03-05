@@ -1080,11 +1080,11 @@ int ion_graph_add_node(ion_graph_t obj, const char *name, ion_node_t *node_ptr)
     return 0;
 }
 
-int ion_graph_create_with_multiple(ion_graph_t * ptr, ion_graph_t* objs, int size) {
+int ion_graph_create_with_multiple(ion_graph_t * ptr, ion_graph_t* graphs_ptr, int graphs_num) {
     try {
-        auto sum_graph = *reinterpret_cast<Graph*>(objs[0]);
-        for (size_t i = 1; i < size; ++i) {
-        sum_graph = sum_graph + *reinterpret_cast<Graph*>(objs[i]);
+        auto sum_graph =  *reinterpret_cast<Graph*>(graphs_ptr[0]);
+        for (int i=1; i<graphs_num; ++i) {
+            sum_graph +=  *reinterpret_cast<Graph*>(graphs_ptr[i]);
         }
         *ptr = reinterpret_cast<ion_graph_t>(new Graph(sum_graph));
     } catch (const Halide::Error& e) {

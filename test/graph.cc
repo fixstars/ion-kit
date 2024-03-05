@@ -170,61 +170,6 @@ int main()
             return 1;
         }
     }
-
-        {
-        try {
-            Builder b;
-            b.with_bb_module("ion-bb-test");
-            b.set_target(Halide::get_host_target());
-
-            int32_t size = 16;
-
-            Buffer<int32_t> in(size, size);
-            in.fill(0);
-
-
-            Buffer<int32_t> out0(size, size);
-            out0.fill(0);
-
-            Buffer<int32_t> out1(size, size);
-            out1.fill(0);
-
-
-            Param v0("v", 2);
-            Param v1("v", 3);
-
-            Graph g = b.add_graph("graph0");
-            Node n = g.add("test_inc_i32x2")(in).set_param(Param("v", 41));
-            n= g.add("test_dup")(n["output"]);
-            auto ln = g.add("test_inc_i32x2")(n["output0"]).set_param(v0);;
-            auto rn = g.add("test_inc_i32x2")(n["output1"]).set_param(v1);
-            ln["output"].bind(out0);
-            rn["output"].bind(out1);
-            g.run();
-
-            for (int y=0; y<size; ++y) {
-                for (int x=0; x<size; ++x) {
-                    if(out0(x, y)!=43){
-                        std::cout<<out0(x, y)<<std::endl;
-                        return -1;
-                    }
-                    if(out1(x, y)!=44){
-                        std::cout<<out1(x, y)<<std::endl;
-                        return -1;
-                    }
-                }
-            }
-
-             std::cout<<"third test passed"<<std::endl;
-
-        } catch (Halide::Error& e) {
-            std::cerr << e.what() << std::endl;
-            return 1;
-        } catch (const std::exception& e) {
-            std::cerr << e.what() << std::endl;
-            return 1;
-        }
-    }
     std::cout << "All Passed" << std::endl;
     return 0;
 

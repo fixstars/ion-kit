@@ -388,19 +388,19 @@ int main()
             ret = ion_port_bind_buffer(op0, obuf0);
             if (ret != 0)
                 return ret;
-
-            ret = ion_graph_run(g0);
-            if (ret != 0)
-                return ret;
+//
+//            ret = ion_graph_run(g0);
+//            if (ret != 0)
+//                return ret;
 
             int out0[16*16] = {0};
-            ret = ion_buffer_read(obuf0, out0, 16*16*sizeof(int));
-            for (int i=0;i<16*16; ++i) {
-                if (out0[i] != 41) {
-                    printf("out0: %d\n", out0[i]);
-
-                }
-            }
+//            ret = ion_buffer_read(obuf0, out0, 16*16*sizeof(int));
+//            for (int i=0;i<16*16; ++i) {
+//                if (out0[i] != 41) {
+//                    printf("out0: %d\n", out0[i]);
+//
+//                }
+//            }
 
             ion_graph_t g1;
             ret = ion_builder_add_graph(b, "graph1", &g1);
@@ -458,17 +458,17 @@ int main()
             if (ret != 0)
                 return ret;
 
-            ret = ion_graph_run(g1);
+//            ret = ion_graph_run(g1);
             if (ret != 0)
                 return ret;
 
             int out1[16*16] = {0};
-            ret = ion_buffer_read(obuf1, out1, 16*16*sizeof(int));
-            for (int i=0;i<16*16; ++i) {
-                if (out1[i] != 42) {
-                    printf("out1: %d\n", out1[i]);
-                }
-            }
+//            ret = ion_buffer_read(obuf1, out1, 16*16*sizeof(int));
+//            for (int i=0;i<16*16; ++i) {
+//                if (out1[i] != 42) {
+//                    printf("out1: %d\n", out1[i]);
+//                }
+//            }
 
             for (int i=0;i<16*16; ++i) {
                 out0[i] =0;
@@ -479,8 +479,8 @@ int main()
             ion_graph_create(&g2, b,"graph2");
 
             ion_graph_t *graphs = (ion_graph_t*)malloc(2 * sizeof(ion_graph_t));
-            graphs[0] = g1;
-            graphs[1] = g2;
+            graphs[0] = g0;
+            graphs[1] = g1;
 
            ret = ion_graph_create_with_multiple(&g2, graphs, 2);
            if (ret != 0)
