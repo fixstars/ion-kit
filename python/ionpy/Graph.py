@@ -50,7 +50,6 @@ class Graph:
 
     def __add__(self, other):
         if isinstance(other, Graph):
-            print(self)
             c_ion_graph_sized_array_t = c_ion_graph_t * 2  # arraysize == num_graphs
             c_graphs = c_ion_graph_sized_array_t()  # instance
             c_graphs[0] = self.obj
