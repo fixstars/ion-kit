@@ -977,7 +977,7 @@ using U3VCameraN_U8x3 = U3VCameraN<uint8_t, 3>;
 using U3VCameraN_U8x2 = U3VCameraN<uint8_t, 2>;
 using U3VCameraN_U16x2 = U3VCameraN<uint16_t, 2>;
 
-class U3VGenDC : public ion::BuildingBlock<U3VGenDC> {
+class U3VCameraGenDC : public ion::BuildingBlock<U3VCameraGenDC> {
 public:
     BuildingBlockParam<int32_t> num_devices{"num_devices", 2};
     BuildingBlockParam<bool> frame_sync{"frame_sync", false};
@@ -992,6 +992,12 @@ public:
 
     std::vector<Input<double> *> gain;
     std::vector<Input<double> *> exposure;
+
+    BuildingBlockParam<bool> force_sim_mode{"force_sim_mode", false};
+    BuildingBlockParam<int32_t> width{"width", 640};
+    BuildingBlockParam<int32_t> height{"height", 480};
+    BuildingBlockParam<std::string> pixel_format{"pixel_format", "Mono8"};
+    BuildingBlockParam<float_t> fps{"fps", 25.0};
 
     void configure() {
         if (enable_control) {
@@ -1019,12 +1025,18 @@ public:
             exposure_key_buf.fill(0);
             std::memcpy(exposure_key_buf.data(), exposure_key.c_str(), exposure_key.size());
 
+            std::string pixel_format_str = pixel_format;
+            Halide::Buffer<uint8_t> pixel_format_buf(pixel_format_str.size() + 1);
+            pixel_format_buf.fill(0);
+            std::memcpy(pixel_format_buf.data(), pixel_format_str.c_str(), pixel_format_str.size());
+
             std::vector<ExternFuncArgument> params{
                 id_buf,
-                static_cast<bool>(frame_sync),
-                static_cast<bool>(realtime_diaplay_mode),
+                static_cast<bool>(force_sim_mode),
+                static_cast<int32_t>(width), static_cast<int32_t>(height),static_cast<float_t>(fps),
+                static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
                 static_cast<bool>(enable_control),
-                gain_key_buf, exposure_key_buf
+                gain_key_buf, exposure_key_buf, pixel_format_buf
             };
 
             for (int i = 0; i<num_devices; i++) {
@@ -1058,10 +1070,19 @@ public:
 
         Func u3v_device_info("u3v_device_info");
         {
-            Buffer<uint8_t> id_buf =  this->get_id();
+
+            Buffer<uint8_t> id_buf = this->get_id();
+            std::string pixel_format_str = pixel_format;
+            Halide::Buffer<uint8_t> pixel_format_buf(pixel_format_str.size() + 1);
+            pixel_format_buf.fill(0);
+            std::memcpy(pixel_format_buf.data(), pixel_format_str.c_str(), pixel_format_str.size());
+
             std::vector<ExternFuncArgument> params{
-                u3v_gendc, static_cast<int32_t>(num_devices), static_cast<bool>(frame_sync),
-                static_cast<bool>(realtime_diaplay_mode), id_buf
+                u3v_gendc, id_buf, static_cast<int32_t>(num_devices),
+                static_cast<bool>(force_sim_mode),
+                static_cast<int32_t>(width), static_cast<int32_t>(height), static_cast<float_t>(fps),
+                static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
+                pixel_format_buf
             };
 
             device_info.resize(num_devices);
@@ -1305,7 +1326,7 @@ ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCameraN_U8x3, image_io_u3v_cam
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCameraN_U8x2, image_io_u3v_cameraN_u8x2);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCameraN_U16x2, image_io_u3v_cameraN_u16x2);
 
-ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VGenDC, image_io_u3v_gendc);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCameraGenDC, image_io_u3v_gendc);
 
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinarySaver_U16x2, image_io_binarysaver);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinarySaver_U8x3, image_io_binarysaver_u8x3);
