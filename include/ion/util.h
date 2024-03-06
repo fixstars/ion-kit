@@ -14,11 +14,19 @@ template<class Tag>
 struct StringID {
     using tag_type = Tag;
 
-    // needs to be default-constuctable because of use in map[] below
+    // needs to be default-constructable because of use in map[] below
     StringID(std::string s) : _value(std::move(s)) {}
     StringID() : _value() {}
     // provide access to the underlying string value
     const std::string &value() const { return _value; }
+
+    struct  StringIDHash {
+    // Use hash of string as hash function.
+        size_t operator()(const StringID& id) const
+        {
+            return std::hash<std::string>()(id.value());
+        }
+    };
 
 private:
     std::string _value;

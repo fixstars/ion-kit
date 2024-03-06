@@ -29,8 +29,8 @@ public:
         std::vector<Halide::Internal::AbstractGenerator::ArgInfo> arginfos;
 
         Impl(): id(), name(), target(), params(), ports() {}
-        Impl(const std::string& id_, const std::string& name_, const Halide::Target& target_);
-        Impl(const std::string& id_, const std::string& name_, const Halide::Target& target_, const GraphID &graph_id_);
+        Impl(const NodeID& id_, const std::string& name_, const Halide::Target& target_);
+        Impl(const NodeID& id_, const std::string& name_, const Halide::Target& target_, const GraphID &graph_id_);
     };
 
 public:
@@ -77,7 +77,7 @@ public:
      */
     template<typename... Args>
     Node operator()(Args ...args) {
-        set_iport(std::vector<Port>{get_iport(args)...});
+        set_iport(std::vector<Port>{make_iport(args)...});
         return *this;
     }
 
@@ -97,10 +97,6 @@ public:
     // Getter
     const NodeID & id() const {
         return impl_->id;
-    }
-
-     const std::string& id_to_string() const {
-        return to_string(impl_->id);
     }
 
     const std::string& name() const {
@@ -127,38 +123,38 @@ public:
 
 private:
     Node(const std::string& id, const std::string& name, const Halide::Target& target)
-        : impl_(new Impl{id, name, target})
+        : impl_(new Impl{NodeID(id), name, target})
     {
     }
 
     Node(const std::string& id, const std::string& name, const Halide::Target& target, const GraphID& graph_id)
-        : impl_(new Impl{id, name, target, graph_id})
+        : impl_(new Impl{NodeID(id), name, target, graph_id})
     {
     }
 
-    Port get_iport(Port arg) const {
+    Port make_iport(Port arg) const {
         return arg;
     }
 
     template<typename T>
-    Port get_iport(T *vptr) const {
-        if (impl_->graph_id.value().empty())
+    Port make_iport(T *vptr) const {
+        if (to_string(impl_->graph_id).empty())
             return Port(vptr);
         else
             return Port(vptr, impl_->graph_id);
     }
 
     template<typename T>
-    Port get_iport(Halide::Buffer<T>& arg) const {
-        if (impl_->graph_id.value().empty())
+    Port make_iport(Halide::Buffer<T>& arg) const {
+        if (to_string(impl_->graph_id).empty())
             return Port(arg);
         else
             return Port(arg, impl_->graph_id);
     }
 
     template<typename T>
-    Port get_iport(std::vector<Halide::Buffer<T>>& arg) const {
-        if (impl_->graph_id.value().empty())
+    Port make_iport(std::vector<Halide::Buffer<T>>& arg) const {
+        if (to_string(impl_->graph_id).empty())
             return Port(arg);
         else
             return Port(arg, impl_->graph_id);

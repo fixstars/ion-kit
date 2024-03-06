@@ -44,7 +44,7 @@ struct adl_serializer<ion::Port> {
      static void to_json(json& j, const ion::Port& v) {
          j["id"] = to_string(v.id());
          std::map<std::string, std::string> stringMap;
-         j["pred_chan"] =std::make_tuple(to_string(std::get<0>(v.pred_chan())), std::get<1>(v.pred_chan()));
+         j["pred_chan"] = std::make_tuple(to_string(std::get<0>(v.pred_chan())), std::get<1>(v.pred_chan()));
          std::set<std::tuple<std::string, std::string>> succ_chans;
          for (auto& c:v.succ_chans()){
              succ_chans.insert(std::make_tuple(to_string(std::get<0>(c)), std::get<1>(c)));
@@ -62,8 +62,7 @@ struct adl_serializer<ion::Port> {
              impl->pred_chan = j["pred_chan"].get<std::tuple<std::string, std::string>>();
              std::set<ion::Port::Channel> succ_chans;
              for (auto & p : j["succ_chans"]){
-                 auto t = p.get<std::tuple<std::string, std::string>>();
-                 succ_chans.insert(std::make_tuple(std::get<0>(t),std::get<1>(t)));
+                 succ_chans.insert(p.get<std::tuple<std::string, std::string>>());
              }
              impl->succ_chans = succ_chans;
              impl->type = j["type"].get<halide_type_t>();
@@ -80,7 +79,7 @@ struct adl_serializer<ion::Port> {
 template <>
 struct adl_serializer<ion::Node> {
      static void to_json(json& j, const ion::Node& v) {
-         j["id"] = v.id_to_string();
+         j["id"] = to_string(v.id());
          j["name"] = v.name();
          j["target"] = v.target().to_string();
          j["params"] = v.params();

@@ -124,7 +124,7 @@ void determine_and_validate(std::vector<Node>& nodes) {
                     throw std::runtime_error(msg);
                 }
 
-                port.determine_succ(n.id_to_string(), pn, arginfo.name);
+                port.determine_succ(n.id(), pn, arginfo.name);
                 pn = arginfo.name;
             }
 
@@ -218,27 +218,27 @@ Halide::Pipeline lower(Builder builder, std::vector<Node>& nodes, bool implicit_
     topological_sort(nodes);
 
     // Constructing Generator object and setting static parameters
-    std::unordered_map<std::string, Halide::Internal::AbstractGeneratorPtr> bbs;
+    std::unordered_map<NodeID, Halide::Internal::AbstractGeneratorPtr, NodeID::StringIDHash> bbs;
     for (auto n : nodes) {
         auto bb(Halide::Internal::GeneratorRegistry::create(n.name(), Halide::GeneratorContext(n.target())));
 
         // Default parameter
         Halide::GeneratorParamsMap params;
         params["builder_impl_ptr"] = std::to_string(reinterpret_cast<uint64_t>(builder.impl_ptr()));
-        params["bb_id"] = n.id_to_string();
+        params["bb_id"] = to_string(n.id());
 
         // User defined parameter
         for (const auto& p : n.params()) {
             params[p.key()] =  p.val();
         }
         bb->set_generatorparam_values(params);
-        bbs[n.id_to_string()] = std::move(bb);
+        bbs[n.id()] = std::move(bb);
     }
 
     // Assigning ports and build pipeline
     for (size_t i=0; i<nodes.size(); ++i) {
         auto n = nodes[i];
-        const auto& bb = bbs[n.id_to_string()];
+        const auto& bb = bbs[n.id()];
         auto arginfos = bb->arginfos();
         for (const auto& [pn, port] : n.iports()) {
 
@@ -254,7 +254,7 @@ Halide::Pipeline lower(Builder builder, std::vector<Node>& nodes, bool implicit_
             auto index = port.index();
 
             if (port.has_pred()) {
-                const auto& pred_bb(bbs[port.pred_id_to_string()]);
+                const auto& pred_bb(bbs[port.pred_id()]);
                 auto fs = pred_bb->output_func(port.pred_name());
                 if (arginfo.kind == Halide::Internal::ArgInfoKind::Scalar) {
                     bb->bind_input(arginfo.name, fs);
@@ -295,19 +295,19 @@ Halide::Pipeline lower(Builder builder, std::vector<Node>& nodes, bool implicit_
     if (implicit_output) {
         // Collects all output which is never referenced.
         // This mode is used for AOT compilation
-        std::unordered_map<std::string, std::vector<std::string>> referenced;
+        std::unordered_map<NodeID , std::vector<std::string>, NodeID::StringIDHash> referenced;
         for (const auto& n : nodes) {
             for (const auto& [pn, port] : n.iports()) {
                 if (port.has_pred()) {
-                    for (const auto &f : bbs[port.pred_id_to_string()]->output_func(port.pred_name())) {
-                        referenced[port.pred_id_to_string()].emplace_back(f.name());
+                    for (const auto &f : bbs[port.pred_id()]->output_func(port.pred_name())) {
+                        referenced[port.pred_id()].emplace_back(f.name());
                     }
                 }
             }
         }
 
         for (const auto& node : nodes) {
-            auto node_id = node.id_to_string();
+            auto node_id = node.id();
             for (auto arginfo : bbs[node_id]->arginfos()) {
                 if (arginfo.dir != Halide::Internal::ArgInfoDirection::Output) {
                     continue;
@@ -336,7 +336,7 @@ Halide::Pipeline lower(Builder builder, std::vector<Node>& nodes, bool implicit_
                     continue;
                 }
 
-                const auto& pred_bb(bbs[port.pred_id_to_string()]);
+                const auto& pred_bb(bbs[port.pred_id()]);
 
                 // Validate port exists
                 const auto& port_(port); // This is workaround for Clang-14 (MacOS)
@@ -349,7 +349,7 @@ Halide::Pipeline lower(Builder builder, std::vector<Node>& nodes, bool implicit_
                 }
 
 
-                auto fs(bbs[port.pred_id_to_string()]->output_func(port.pred_name()));
+                auto fs(bbs[port.pred_id()]->output_func(port.pred_name()));
                 output_funcs.insert(output_funcs.end(), fs.begin(), fs.end());
             }
         }

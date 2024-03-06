@@ -6,24 +6,24 @@
 namespace ion {
 
 Port::Impl::Impl()
-    : id(sole::uuid4().str()), pred_chan{"", ""}, succ_chans{}, type(), dimensions(-1)
+    : id(PortID(sole::uuid4().str())), pred_chan{"", ""}, succ_chans{}, type(), dimensions(-1)
 {
 }
 
-Port::Impl::Impl(const std::string& pid, const std::string& pn, const Halide::Type& t, int32_t d, const GraphID & gid)
-    : id(sole::uuid4().str()), pred_chan{pid, pn}, succ_chans{}, type(t), dimensions(d), graph_id(gid)
+Port::Impl::Impl(const NodeID & nid, const std::string& pn, const Halide::Type& t, int32_t d, const GraphID & gid)
+    : id(PortID(sole::uuid4().str())), pred_chan{nid, pn}, succ_chans{}, type(t), dimensions(d), graph_id(gid)
 {
-    params[0] = Halide::Internal::Parameter(type, dimensions != 0, dimensions, argument_name(pid, pn, 0, gid.value()));
+    params[0] = Halide::Internal::Parameter(type, dimensions != 0, dimensions, argument_name(nid, pn, 0, gid));
 }
 
-void Port::determine_succ(const std::string& nid, const std::string& old_pn, const std::string& new_pn) {
+void Port::determine_succ(const NodeID& nid, const std::string& old_pn, const std::string& new_pn) {
     auto it = std::find(impl_->succ_chans.begin(), impl_->succ_chans.end(), Channel{nid, old_pn});
     if (it == impl_->succ_chans.end()) {
         log::error("fixme");
         throw std::runtime_error("fixme");
     }
 
-    log::debug("Determine free port {} as {} on Node {}", old_pn, new_pn, nid);
+    log::debug("Determine free port {} as {} on Node {}", old_pn, new_pn, nid.value());
     impl_->succ_chans.erase(it);
     impl_->succ_chans.insert(Channel{nid, new_pn});
 }
