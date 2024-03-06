@@ -15,7 +15,6 @@ from .native import (
 from .Node import Node
 
 
-
 class Graph:
     def __init__(self,
         builder = None,

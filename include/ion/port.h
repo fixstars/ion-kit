@@ -189,7 +189,6 @@ public:
          impl_->instances[i] = v;
      }
 
-
      template<typename T>
      void bind(const Halide::Buffer<T>& buf) {
          auto i = index_ == -1 ? 0 : index_;

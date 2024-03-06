@@ -2,7 +2,6 @@
 #define ION_UTIL_H
 
 #include <string>
-#include <typeinfo>
 namespace ion {
 
 class Port;

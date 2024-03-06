@@ -122,13 +122,13 @@ public:
     std::vector<std::tuple<std::string, Port>> oports() const;
 
 private:
-    Node(const std::string& id, const std::string& name, const Halide::Target& target)
-        : impl_(new Impl{NodeID(id), name, target})
+    Node(const NodeID& id, const std::string& name, const Halide::Target& target)
+        : impl_(new Impl{id, name, target})
     {
     }
 
-    Node(const std::string& id, const std::string& name, const Halide::Target& target, const GraphID& graph_id)
-        : impl_(new Impl{NodeID(id), name, target, graph_id})
+    Node(const NodeID&& id, const std::string& name, const Halide::Target& target, const GraphID& graph_id)
+        : impl_(new Impl{id, name, target, graph_id})
     {
     }
 
