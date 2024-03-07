@@ -72,6 +72,7 @@ Builder::Builder()
 
 Builder::~Builder()
 {
+    impl_->graphs.clear();
 }
 
 Builder::Impl::~Impl()
