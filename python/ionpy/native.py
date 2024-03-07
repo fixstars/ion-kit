@@ -38,6 +38,7 @@ c_ion_param_t = ctypes.POINTER(ctypes.c_int)
 c_ion_node_t = ctypes.POINTER(ctypes.c_int)
 
 c_ion_builder_t = ctypes.POINTER(ctypes.c_int)
+c_ion_graph_t = ctypes.POINTER(ctypes.c_int)
 c_ion_buffer_t = ctypes.POINTER(ctypes.c_int)
 c_ion_port_map_t = ctypes.POINTER(ctypes.c_int)
 
@@ -212,6 +213,11 @@ ion_builder_bb_metadata = ion_core.ion_builder_bb_metadata
 ion_builder_bb_metadata.restype = ctypes.c_int
 ion_builder_bb_metadata.argtypes = [ c_ion_builder_t, ctypes.c_char_p, ctypes.c_int, ctypes.POINTER(ctypes.c_int) ]
 
+# int ion_builder_add_graph(ion_builder_t, const char , ion_graph_t *)
+ion_builder_add_graph = ion_core.ion_builder_add_graph
+ion_builder_add_graph.restype = ctypes.c_int
+ion_builder_add_graph.argtypes = [ c_ion_builder_t, ctypes.c_char_p, ctypes.POINTER(c_ion_graph_t) ]
+
 
 # int ion_builder_run(ion_builder_t, ion_port_map_t);
 ion_builder_run = ion_core.ion_builder_run
@@ -251,6 +257,30 @@ ion_buffer_read = ion_core.ion_buffer_read
 ion_buffer_read.restype = ctypes.c_int
 ion_buffer_read.argtypes = [ c_ion_buffer_t, ctypes.c_void_p, ctypes.c_int ]
 
+# int ion_graph_create(ion_graph_t *, ion_builder_t, const char *)
+ion_graph_create = ion_core.ion_graph_create
+ion_graph_create.restype = ctypes.c_int
+ion_graph_create.argtypes =[ ctypes.POINTER(c_ion_graph_t), c_ion_builder_t, ctypes.c_char_p ]
+
+# int ion_graph_create_with_multiple(ion_graph_t*, ion_graph_t*, int size)
+ion_graph_create_with_multiple = ion_core.ion_graph_create_with_multiple
+ion_graph_create_with_multiple.restype = ctypes.c_int
+ion_graph_create_with_multiple.argtypes = [  ctypes.POINTER(c_ion_graph_t), ctypes.POINTER(c_ion_graph_t), ctypes.c_int]
+
+# int ion_graph_add_node(ion_graph_t, const char*, ion_node_t *)
+ion_graph_add_node = ion_core.ion_graph_add_node
+ion_graph_add_node.restype = ctypes.c_int
+ion_graph_add_node.argtypes =[ c_ion_graph_t, ctypes.c_char_p, ctypes.POINTER(c_ion_node_t) ]
+
+# int ion_graph_run(ion_graph_t)
+ion_graph_run=ion_core.ion_graph_run
+ion_graph_run.restype = ctypes.c_int
+ion_graph_run.argtypes =[ c_ion_graph_t]
+
+# ion_graph_destroy(ion_graph_t)
+ion_graph_destroy=ion_core.ion_graph_destroy
+ion_graph_destroy.restype = ctypes.c_int
+ion_graph_destroy.argtypes =[ c_ion_graph_t]
 
 
 # int ion_port_map_create(ion_port_map_t *);

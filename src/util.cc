@@ -5,12 +5,12 @@
 
 namespace ion {
 
-std::string argument_name(const std::string& node_id, const std::string& name, int32_t index) {
+std::string argument_name(const NodeID & node_id, const std::string& name, int32_t index, const GraphID & graph_id) {
     if (index == -1) {
         index = 0;
     }
 
-    std::string s = "_" + node_id + "_" + name + std::to_string(index);;
+    std::string s = "_" + node_id.value() + "_" + name + std::to_string(index) +  "_" + graph_id.value();
     std::replace(s.begin(), s.end(), '-', '_');
 
     return s;

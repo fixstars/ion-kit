@@ -4,8 +4,21 @@
 
 namespace ion {
 
-Node::Impl::Impl(const std::string& id_, const std::string& name_, const Halide::Target& target_)
+
+Node::Impl::Impl(const NodeID& id_, const std::string& name_, const Halide::Target& target_)
     : id(id_), name(name_), target(target_), params(), ports()
+{
+    auto bb(Halide::Internal::GeneratorRegistry::create(name_, Halide::GeneratorContext(target_)));
+    if (!bb) {
+        log::error("BuildingBlock {} is not found", name_);
+        throw std::runtime_error("Failed to create building block object");
+    }
+
+    arginfos = bb->arginfos();
+}
+
+Node::Impl::Impl(const NodeID& id_, const std::string& name_, const Halide::Target& target_, const GraphID& graph_id_)
+    : id(id_), name(name_), target(target_), params(), ports(), graph_id(graph_id_)
 {
     auto bb(Halide::Internal::GeneratorRegistry::create(name_, Halide::GeneratorContext(target_)));
     if (!bb) {
@@ -19,7 +32,7 @@ Node::Impl::Impl(const std::string& id_, const std::string& name_, const Halide:
 void Node::set_iport(const std::vector<Port>& ports) {
 
     impl_->ports.erase(std::remove_if(impl_->ports.begin(), impl_->ports.end(),
-                                      [&](const Port &p) { return p.has_succ_by_nid(this->id()); }),
+                                      [&](const Port &p) { return p.has_succ_by_nid(this->id());}),
                        impl_->ports.end());
 
     size_t i = 0;
@@ -37,7 +50,7 @@ void Node::set_iport(const std::vector<Port>& ports) {
 
         // NOTE: Is succ_chans name OK to be just leave as it is?
         port.impl_->succ_chans.insert({id(), "_ion_iport_" + std::to_string(i)});
-
+        port.impl_ ->graph_id = impl_->graph_id;
         impl_->ports.push_back(port);
 
         i++;
@@ -45,11 +58,13 @@ void Node::set_iport(const std::vector<Port>& ports) {
 }
 
 void Node::set_iport(Port port) {
+    port.impl_ ->graph_id = impl_->graph_id;
     port.impl_->succ_chans.insert({id(), port.pred_name()});
     impl_->ports.push_back(port);
 }
 
 void Node::set_iport(const std::string& name, Port port) {
+    port.impl_ ->graph_id = impl_->graph_id;
     port.impl_->succ_chans.insert({id(), name});
     impl_->ports.push_back(port);
 }
@@ -60,7 +75,8 @@ Port Node::operator[](const std::string& name) {
     if (it == impl_->ports.end()) {
         // This is output port which is never referenced.
         // Bind myself as a predecessor and register
-        Port port(impl_->id, name);
+        Port port(id(), name);
+        port.impl_ ->graph_id = impl_->graph_id;
         impl_->ports.push_back(port);
         return port;
     } else {

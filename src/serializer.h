@@ -42,9 +42,14 @@ static void from_json(const json& j, ion::Param& v) {
 template<>
 struct adl_serializer<ion::Port> {
      static void to_json(json& j, const ion::Port& v) {
-         j["id"] = v.id();
-         j["pred_chan"] = v.pred_chan();
-         j["succ_chans"] = v.succ_chans();
+         j["id"] = to_string(v.id());
+         std::map<std::string, std::string> stringMap;
+         j["pred_chan"] = std::make_tuple(to_string(std::get<0>(v.pred_chan())), std::get<1>(v.pred_chan()));
+         std::set<std::tuple<std::string, std::string>> succ_chans;
+         for (auto& c:v.succ_chans()){
+             succ_chans.insert(std::make_tuple(to_string(std::get<0>(c)), std::get<1>(c)));
+         }
+         j["succ_chans"] = succ_chans;
          j["type"] = static_cast<halide_type_t>(v.type());
          j["dimensions"] = v.dimensions();
          j["size"] = v.size();
@@ -54,13 +59,17 @@ struct adl_serializer<ion::Port> {
      static void from_json(const json& j, ion::Port& v) {
          auto [impl, found] = ion::Port::find_impl(j["id"].get<std::string>());
          if (!found) {
-             impl->pred_chan = j["pred_chan"].get<ion::Port::Channel>();
-             impl->succ_chans = j["succ_chans"].get<std::set<ion::Port::Channel>>();
+             impl->pred_chan = j["pred_chan"].get<std::tuple<std::string, std::string>>();
+             std::set<ion::Port::Channel> succ_chans;
+             for (auto & p : j["succ_chans"]){
+                 succ_chans.insert(p.get<std::tuple<std::string, std::string>>());
+             }
+             impl->succ_chans = succ_chans;
              impl->type = j["type"].get<halide_type_t>();
              impl->dimensions = j["dimensions"];
              for (auto i=0; i<j["size"]; ++i) {
                  impl->params[i] = Halide::Internal::Parameter(impl->type, impl->dimensions != 0, impl->dimensions,
-                                                               ion::argument_name(std::get<0>(impl->pred_chan), std::get<1>(impl->pred_chan), i));
+                                                               ion::argument_name(std::get<0>(impl->pred_chan), std::get<1>(impl->pred_chan), i, impl->graph_id.value()));
              }
          }
          v = ion::Port(impl, j["index"]);
@@ -70,7 +79,7 @@ struct adl_serializer<ion::Port> {
 template <>
 struct adl_serializer<ion::Node> {
      static void to_json(json& j, const ion::Node& v) {
-         j["id"] = v.id();
+         j["id"] = to_string(v.id());
          j["name"] = v.name();
          j["target"] = v.target().to_string();
          j["params"] = v.params();

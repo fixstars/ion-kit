@@ -218,14 +218,14 @@ Halide::Pipeline lower(Builder builder, std::vector<Node>& nodes, bool implicit_
     topological_sort(nodes);
 
     // Constructing Generator object and setting static parameters
-    std::unordered_map<std::string, Halide::Internal::AbstractGeneratorPtr> bbs;
+    std::unordered_map<NodeID, Halide::Internal::AbstractGeneratorPtr, NodeID::StringIDHash> bbs;
     for (auto n : nodes) {
         auto bb(Halide::Internal::GeneratorRegistry::create(n.name(), Halide::GeneratorContext(n.target())));
 
         // Default parameter
         Halide::GeneratorParamsMap params;
         params["builder_impl_ptr"] = std::to_string(reinterpret_cast<uint64_t>(builder.impl_ptr()));
-        params["bb_id"] = n.id();
+        params["bb_id"] = to_string(n.id());
 
         // User defined parameter
         for (const auto& p : n.params()) {
@@ -243,7 +243,7 @@ Halide::Pipeline lower(Builder builder, std::vector<Node>& nodes, bool implicit_
         for (const auto& [pn, port] : n.iports()) {
 
             // Find arginfo
-            auto it = std::find_if(arginfos.begin(), arginfos.end(), [pn](const ArgInfo& arginfo) { return arginfo.name == pn; });
+            auto it = std::find_if(arginfos.begin(), arginfos.end(), [&pn=pn](const ArgInfo& arginfo) { return arginfo.name == pn; });
             if (it == arginfos.end()) {
                 auto msg = fmt::format("Argument {} is not defined in node {}", pn, n.name());
                 log::error(msg);
@@ -295,7 +295,7 @@ Halide::Pipeline lower(Builder builder, std::vector<Node>& nodes, bool implicit_
     if (implicit_output) {
         // Collects all output which is never referenced.
         // This mode is used for AOT compilation
-        std::unordered_map<std::string, std::vector<std::string>> referenced;
+        std::unordered_map<NodeID , std::vector<std::string>, NodeID::StringIDHash> referenced;
         for (const auto& n : nodes) {
             for (const auto& [pn, port] : n.iports()) {
                 if (port.has_pred()) {
