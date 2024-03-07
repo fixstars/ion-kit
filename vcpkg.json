@@ -1,6 +1,6 @@
 {
 	"name": "ion-kit",
-	"version-semver": "1.6.0",
+	"version-semver": "1.7.0",
 	"builtin-baseline":"53bef8994c541b6561884a8395ea35715ece75db",
 	"dependencies": [
 		{ "name": "zlib"},
