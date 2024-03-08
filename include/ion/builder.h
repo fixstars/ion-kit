@@ -23,7 +23,7 @@ class DynamicModule;
 /**
  * Builder class is used to build graph, compile, run, save and load it.
  */
-class Builder  {
+class Builder {
 public:
 
     struct Impl;
