@@ -49,9 +49,7 @@ Graph operator+(const Graph& lhs, const Graph& rhs)
 
 Node Graph::add(const std::string& name)
 {
-    auto ptr =impl_->builder;
-    auto n = ptr.add(name,impl_->id);
-
+    auto n = impl_->builder.add(name,impl_->id);
     impl_->nodes.push_back(n);
     return n;
 }
@@ -91,7 +89,6 @@ const std::vector<Node>& Graph::nodes() const {
 std::vector<Node>& Graph::nodes() {
     return impl_->nodes;
 }
-
 
 
 } // namespace ion

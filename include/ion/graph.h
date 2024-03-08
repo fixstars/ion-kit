@@ -12,12 +12,9 @@ class Builder;
 class Graph {
 public:
 
-
     struct Impl;
 
     Graph();
-
-
 
     Graph(Builder & builder , const std::string& name = "");
 
@@ -48,7 +45,6 @@ public:
 
 private:
     std::shared_ptr<Impl> impl_;
-
 };
 
 } // namespace ion
