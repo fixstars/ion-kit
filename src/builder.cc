@@ -76,7 +76,6 @@ Builder::~Builder()
 
 Builder::Impl::~Impl()
 {
-    std::cout<<"Builder pointer is relaesed"<<std::endl;
     for (auto [bb_id, disposer] : disposers) {
         disposer(bb_id.c_str());
     }
@@ -97,7 +96,7 @@ Node Builder::add(const std::string& name, const GraphID & graph_id)
 }
 
 Graph Builder::add_graph(const std::string& name) {
-    Graph g(shared_from_this(), name);
+    Graph g(*this, name);
     impl_->graphs.push_back(g);
     return g;
 }

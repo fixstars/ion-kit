@@ -1047,8 +1047,7 @@ int ion_port_map_set_buffer_array(ion_port_map_t obj, ion_port_t p, ion_buffer_t
 int ion_graph_create(ion_graph_t *ptr, ion_builder_t obj, const char * name)
 {
     try {
-        std::shared_ptr<Builder> other_ptr(reinterpret_cast<Builder*>(obj));
-        *ptr = reinterpret_cast<ion_graph_t>(new Graph(other_ptr, name));
+        *ptr = reinterpret_cast<ion_graph_t>(new Graph(*reinterpret_cast<Builder*>(obj), name));
     } catch (const Halide::Error& e) {
         log::error(e.what());
         return 1;

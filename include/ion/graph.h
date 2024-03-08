@@ -19,7 +19,7 @@ public:
 
 
 
-    Graph(std::shared_ptr<Builder> builder , const std::string& name = "");
+    Graph(Builder & builder , const std::string& name = "");
 
     Graph& operator+=(const Graph& rhs);
 
