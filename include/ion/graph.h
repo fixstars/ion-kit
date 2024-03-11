@@ -10,14 +10,13 @@ namespace ion {
 class Builder;
 
 class Graph {
+public:
 
     struct Impl;
 
-public:
-
     Graph();
 
-    Graph(Builder builder, const std::string& name = "");
+    Graph(Builder & builder , const std::string& name = "");
 
     Graph& operator+=(const Graph& rhs);
 

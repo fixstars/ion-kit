@@ -7,7 +7,7 @@
 namespace ion {
 
 struct Graph::Impl {
-    Builder builder;
+    Builder & builder;
     std::string name;
     GraphID id;
     std::vector<Node> nodes;
@@ -17,10 +17,8 @@ struct Graph::Impl {
     std::unique_ptr<Halide::JITUserContext> jit_ctx;
     Halide::JITUserContext* jit_ctx_ptr;
     std::vector<const void*> args;
-    Impl()
-    : id(sole::uuid4().str())
-    {}
-    Impl(Builder b, const std::string& n)
+
+    Impl(Builder & b, const std::string& n)
         : id(sole::uuid4().str()), builder(b), name(n), jit_ctx(new Halide::JITUserContext), jit_ctx_ptr(jit_ctx.get())
     {
     }
@@ -30,7 +28,7 @@ Graph::Graph()
 {
 }
 
-Graph::Graph(Builder builder, const std::string& name)
+Graph::Graph(Builder & builder, const std::string& name)
     : impl_(new Impl(builder, name))
 {
 }
@@ -52,7 +50,6 @@ Graph operator+(const Graph& lhs, const Graph& rhs)
 Node Graph::add(const std::string& name)
 {
     auto n = impl_->builder.add(name,impl_->id);
-
     impl_->nodes.push_back(n);
     return n;
 }
