@@ -1017,18 +1017,7 @@ private:
                     log::info("\tDevice/USB {}::{} : {}", i, "Width", wi);
                     log::info("\tDevice/USB {}::{} : {}", i, "Height", hi);
 
-                    int32_t px =
-                        pixel_format_ == "RGB8" ? PFNC_RGB8 :
-                        pixel_format_ == "GBR8" ? PFNC_BGR8 :
-                        pixel_format_ == "Mono8" ? PFNC_Mono8 :
-                        pixel_format_ == "Mono10" ? PFNC_Mono10 :
-                        pixel_format_ == "Mono12" ? PFNC_Mono12 :
-                        pixel_format_ == "BayerBG8" ? PFNC_BayerBG8 :
-                        pixel_format_ == "BayerBG10" ? PFNC_BayerBG10 :
-                        pixel_format_ == "BayerBG12" ? PFNC_BayerBG12 :
-                        pixel_format_ == "BayerGR8" ? PFNC_BayerGR8 :
-                        pixel_format_ == "BayerGR12" ? PFNC_BayerGR12 :
-                        pixel_format_ == "YCbCr422_8" ? PFNC_YCbCr422_8 : 0;
+                    int32_t px = arv_device_get_integer_feature_value (devices_[i].device_, "PixelFormat", &err_);
                     if (px == 0){
                         log::info("The pixel format is not supported for header info");
                     }
@@ -1500,22 +1489,10 @@ private:
                     log::info("\tDevice/USB {}::{} : {}", i, "Width", wi);
                     log::info("\tDevice/USB {}::{} : {}", i, "Height", hi);
 
-                    int32_t px =
-                        pixel_format_ == "RGB8" ? PFNC_RGB8 :
-                        pixel_format_ == "GBR8" ? PFNC_BGR8 :
-                        pixel_format_ == "Mono8" ? PFNC_Mono8 :
-                        pixel_format_ == "Mono10" ? PFNC_Mono10 :
-                        pixel_format_ == "Mono12" ? PFNC_Mono12 :
-                        pixel_format_ == "BayerBG8" ? PFNC_BayerBG8 :
-                        pixel_format_ == "BayerBG10" ? PFNC_BayerBG10 :
-                        pixel_format_ == "BayerBG12" ? PFNC_BayerBG12 :
-                        pixel_format_ == "BayerGR8" ? PFNC_BayerGR8 :
-                        pixel_format_ == "BayerGR12" ? PFNC_BayerGR12 :
-                        pixel_format_ == "YCbCr422_8" ? PFNC_YCbCr422_8 : 0;
+                    int32_t px = arv_device_get_integer_feature_value (devices_[i].device_, "PixelFormat", &err_);
                     if (px == 0){
                         log::info("The pixel format is not supported for header info");
                     }
-
 
                     devices_[i].header_info_ = { 1, wi, hi,
                         1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
