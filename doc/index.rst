@@ -29,9 +29,6 @@ ion-core API Reference
 .. doxygenclass:: ion::Node
     :members:
 
-.. doxygenclass:: ion::PortMap
-    :members:
-
 .. doxygenclass:: ion::Builder
     :members:
 

@@ -9,8 +9,8 @@ public:
     GeneratorParam<std::string> gc_tags{"gc_tags", "image,camera"};
     GeneratorParam<std::string> gc_inference{"gc_inference", R"((function(v){ return { output: [3, parseInt(v.width), parseInt(v.height)] }}))"};
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
-    GeneratorInput<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 2};
-    GeneratorOutput<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 2};
+    Input<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 2};
+    Output<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 2};
 
     void generate() {
         using namespace Halide;
@@ -47,11 +47,10 @@ int main() {
         Port input{"input", Halide::type_of<uint8_t>(), 2};
         auto n = b.add("transpose")(input);
 
-        PortMap pm;
-        pm.set(input, ibuf);
-        pm.set(n["output"], obuf);
+        input.bind(ibuf);
+        n["output"].bind(obuf);
 
-        b.run(pm);
+        b.run();
 
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
