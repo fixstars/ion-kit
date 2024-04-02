@@ -152,6 +152,9 @@ if(UNIX)
     # On unix-like system, create include unversioned symlink
     # NOTE: RELEASE/DEBUG doesn't matter for the naming
     get_target_property(HALIDE_SONAME Halide::Halide IMPORTED_SONAME_RELEASE)
+    if(APPLE)
+        string(REPLACE "@rpath/" "" HALIDE_SONAME ${HALIDE_SONAME})
+    endif()
     set(HALIDE_SYMFILE ${CMAKE_BINARY_DIR}/libHalide${CMAKE_SHARED_LIBRARY_SUFFIX})
     file(CREATE_LINK ${HALIDE_SONAME} ${HALIDE_SYMFILE} SYMBOLIC)
     install(FILES ${HALIDE_SYMFILE} DESTINATION lib)
