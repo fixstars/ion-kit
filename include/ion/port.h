@@ -61,7 +61,7 @@ private:
         Halide::Type type;
         int32_t dimensions;
 
-        std::unordered_map<uint32_t, Halide::Internal::Parameter> params;
+        std::unordered_map<uint32_t, Halide::Parameter> params;
         std::unordered_map<uint32_t, const void *> instances;
 
         Impl();
@@ -181,9 +181,9 @@ public:
      void bind(T *v) {
          auto i = index_ == -1 ? 0 : index_;
          if (has_pred()) {
-             impl_->params[i] = Halide::Internal::Parameter{Halide::type_of<T>(), false, 0, argument_name(pred_id(), pred_name(), i, graph_id())};
+             impl_->params[i] = Halide::Parameter{Halide::type_of<T>(), false, 0, argument_name(pred_id(), pred_name(), i, graph_id())};
          } else {
-             impl_->params[i] = Halide::Internal::Parameter{type(), false, dimensions(), argument_name(pred_id(), pred_name(), i, graph_id())};
+             impl_->params[i] = Halide::Parameter{type(), false, dimensions(), argument_name(pred_id(), pred_name(), i, graph_id())};
          }
 
          impl_->instances[i] = v;
@@ -193,9 +193,9 @@ public:
      void bind(const Halide::Buffer<T>& buf) {
          auto i = index_ == -1 ? 0 : index_;
          if (has_pred()) {
-             impl_->params[i] = Halide::Internal::Parameter{buf.type(), true, buf.dimensions(), argument_name(pred_id(), pred_name(), i,graph_id())};
+             impl_->params[i] = Halide::Parameter{buf.type(), true, buf.dimensions(), argument_name(pred_id(), pred_name(), i,graph_id())};
          } else {
-             impl_->params[i] = Halide::Internal::Parameter{type(), true, dimensions(), argument_name(pred_id(), pred_name(), i,graph_id())};
+             impl_->params[i] = Halide::Parameter{type(), true, dimensions(), argument_name(pred_id(), pred_name(), i,graph_id())};
          }
 
          impl_->instances[i] = buf.raw_buffer();
@@ -205,9 +205,9 @@ public:
      void bind(const std::vector<Halide::Buffer<T>>& bufs) {
          for (int i=0; i<static_cast<int>(bufs.size()); ++i) {
              if (has_pred()) {
-                 impl_->params[i] = Halide::Internal::Parameter{bufs[i].type(), true, bufs[i].dimensions(), argument_name(pred_id(), pred_name(), i, graph_id())};
+                 impl_->params[i] = Halide::Parameter{bufs[i].type(), true, bufs[i].dimensions(), argument_name(pred_id(), pred_name(), i, graph_id())};
              } else {
-                 impl_->params[i] = Halide::Internal::Parameter{type(), true, dimensions(), argument_name(pred_id(), pred_name(), i, graph_id())};
+                 impl_->params[i] = Halide::Parameter{type(), true, dimensions(), argument_name(pred_id(), pred_name(), i, graph_id())};
              }
 
              impl_->instances[i] = bufs[i].raw_buffer();
