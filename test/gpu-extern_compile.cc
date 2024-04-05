@@ -25,36 +25,6 @@ int main()
 
         b.compile("gpu_extern");
 
-        // PortMap pm;
-
-        // Halide::Buffer<int32_t> ibuf(std::vector<int32_t>{size, size});
-        // for (int y=0; y<size; ++y) {
-        //     for (int x=0; x<size; ++x) {
-        //         ibuf(x, y) = 42;
-        //     }
-        // }
-        // pm.set(ip, ibuf);
-
-        // Halide::Buffer<int32_t> obuf(std::vector<int32_t>{size, size});
-        // for (int y=0; y<size; ++y) {
-        //     for (int x=0; x<size; ++x) {
-        //         obuf(x, y) = 0;
-        //     }
-        // }
-        // pm.set(n["output"], obuf);
-
-        // b.run(pm);
-
-        // for (int y=0; y<size; ++y) {
-        //     for (int x=0; x<size; ++x) {
-        //         if (obuf(x, y) != 44) {
-        //             throw std::runtime_error("Invalid value");
-        //         }
-        //     }
-        // }
-
-        // std::cout << "OK" << std::endl;
-
     } catch (const Halide::Error& e) {
         std::cerr << e.what() << std::endl;
         return 1;

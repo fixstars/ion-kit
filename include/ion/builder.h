@@ -12,7 +12,6 @@
 #include "graph.h"
 #include "node.h"
 #include "target.h"
-#include "port_map.h"
 
 namespace ion {
 
@@ -96,7 +95,7 @@ public:
      * @arg pm: This remains just for backward compatibility. Port::bind can be used instead of PortMap.
      * This argument will be removed in coming major release.
      */
-    void run(const PortMap& pm = PortMap());
+    void run();
 
     /**
      * Retrieve names of BBs

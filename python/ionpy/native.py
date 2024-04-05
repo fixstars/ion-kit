@@ -224,12 +224,6 @@ ion_builder_run = ion_core.ion_builder_run
 ion_builder_run.restype = ctypes.c_int
 ion_builder_run.argtypes = [ c_ion_builder_t ]
 
-# int ion_builder_run(ion_builder_t, ion_port_map_t);
-ion_builder_run_with_port_map = ion_core.ion_builder_run_with_port_map
-ion_builder_run_with_port_map.restype = ctypes.c_int
-ion_builder_run_with_port_map.argtypes = [ c_ion_builder_t, c_ion_port_map_t ]
-
-
 # int ion_buffer_create(ion_buffer_t *, ion_type_t, int *, int);
 ion_buffer_create = ion_core.ion_buffer_create
 ion_buffer_create.restype = ctypes.c_int
@@ -281,86 +275,3 @@ ion_graph_run.argtypes =[ c_ion_graph_t]
 ion_graph_destroy=ion_core.ion_graph_destroy
 ion_graph_destroy.restype = ctypes.c_int
 ion_graph_destroy.argtypes =[ c_ion_graph_t]
-
-
-# int ion_port_map_create(ion_port_map_t *);
-ion_port_map_create = ion_core.ion_port_map_create
-ion_port_map_create.restype = ctypes.c_int
-ion_port_map_create.argtypes = [ ctypes.POINTER(c_ion_port_map_t) ]
-
-# int ion_port_map_destroy(ion_port_map_t);
-ion_port_map_destroy = ion_core.ion_port_map_destroy
-ion_port_map_destroy.restype = ctypes.c_int
-ion_port_map_destroy.argtypes = [ c_ion_port_map_t ]
-
-
-# int ion_port_map_set_i8(ion_port_map_t, ion_port_t, int8_t);
-ion_port_map_set_i8 = ion_core.ion_port_map_set_i8
-ion_port_map_set_i8.restype = ctypes.c_int
-ion_port_map_set_i8.argtypes = [ c_ion_port_map_t, c_ion_port_t, ctypes.c_int8 ]
-
-# int ion_port_map_set_i16(ion_port_map_t, ion_port_t, int16_t);
-ion_port_map_set_i16 = ion_core.ion_port_map_set_i16
-ion_port_map_set_i16.restype = ctypes.c_int
-ion_port_map_set_i16.argtypes = [ c_ion_port_map_t, c_ion_port_t, ctypes.c_int16 ]
-
-# int ion_port_map_set_i32(ion_port_map_t, ion_port_t, int32_t);
-ion_port_map_set_i32 = ion_core.ion_port_map_set_i32
-ion_port_map_set_i32.restype = ctypes.c_int
-ion_port_map_set_i32.argtypes = [ c_ion_port_map_t, c_ion_port_t, ctypes.c_int32 ]
-
-# int ion_port_map_set_i64(ion_port_map_t, ion_port_t, int64_t);
-ion_port_map_set_i64 = ion_core.ion_port_map_set_i64
-ion_port_map_set_i64.restype = ctypes.c_int
-ion_port_map_set_i64.argtypes = [ c_ion_port_map_t, c_ion_port_t, ctypes.c_int64 ]
-
-
-# int ion_port_map_set_u1(ion_port_map_t, ion_port_t, bool);
-ion_port_map_set_u1 = ion_core.ion_port_map_set_u1
-ion_port_map_set_u1.restype = ctypes.c_int
-ion_port_map_set_u1.argtypes = [ c_ion_port_map_t, c_ion_port_t, ctypes.c_bool ]
-
-# int ion_port_map_set_u8(ion_port_map_t, ion_port_t, uint8_t);
-ion_port_map_set_u8 = ion_core.ion_port_map_set_u8
-ion_port_map_set_u8.restype = ctypes.c_int
-ion_port_map_set_u8.argtypes = [ c_ion_port_map_t, c_ion_port_t, ctypes.c_uint8 ]
-
-# int ion_port_map_set_u16(ion_port_map_t, ion_port_t, uint16_t);
-ion_port_map_set_u16 = ion_core.ion_port_map_set_u16
-ion_port_map_set_u16.restype = ctypes.c_int
-ion_port_map_set_u16.argtypes = [ c_ion_port_map_t, c_ion_port_t, ctypes.c_uint16 ]
-
-# int ion_port_map_set_u32(ion_port_map_t, ion_port_t, uint32_t);
-ion_port_map_set_u32 = ion_core.ion_port_map_set_u32
-ion_port_map_set_u32.restype = ctypes.c_int
-ion_port_map_set_u32.argtypes = [ c_ion_port_map_t, c_ion_port_t, ctypes.c_uint32 ]
-
-# int ion_port_map_set_u64(ion_port_map_t, ion_port_t, uint64_t);
-ion_port_map_set_u64 = ion_core.ion_port_map_set_u64
-ion_port_map_set_u64.restype = ctypes.c_int
-ion_port_map_set_u64.argtypes = [ c_ion_port_map_t, c_ion_port_t, ctypes.c_uint64 ]
-
-
-# int ion_port_map_set_f32(ion_port_map_t, ion_port_t, float);
-ion_port_map_set_f32 = ion_core.ion_port_map_set_f32
-ion_port_map_set_f32.restype = ctypes.c_int
-ion_port_map_set_f32.argtypes = [ c_ion_port_map_t, c_ion_port_t, ctypes.c_float ]
-
-
-# int ion_port_map_set_f64(ion_port_map_t, ion_port_t, double);
-ion_port_map_set_f64 = ion_core.ion_port_map_set_f64
-ion_port_map_set_f64.restype = ctypes.c_int
-ion_port_map_set_f64.argtypes = [ c_ion_port_map_t, c_ion_port_t, ctypes.c_double ]
-
-
-
-# int ion_port_map_set_buffer(ion_port_map_t, ion_port_t, ion_buffer_t);
-ion_port_map_set_buffer = ion_core.ion_port_map_set_buffer
-ion_port_map_set_buffer.restype = ctypes.c_int
-ion_port_map_set_buffer.argtypes = [ c_ion_port_map_t, c_ion_port_t, c_ion_buffer_t ]
-
-
-# int ion_port_map_set_buffer_array(ion_port_map_t, ion_port_t, ion_buffer_t *, int);
-ion_port_map_set_buffer_array = ion_core.ion_port_map_set_buffer_array
-ion_port_map_set_buffer_array.restype = ctypes.c_int
-ion_port_map_set_buffer_array.argtypes = [ c_ion_port_map_t, c_ion_port_t, ctypes.POINTER(c_ion_buffer_t), ctypes.c_int ]

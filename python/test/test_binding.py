@@ -1,6 +1,6 @@
 import ctypes
 
-from ionpy import Node, Builder, Buffer, PortMap, Port, Param, Type, TypeCode
+from ionpy import Node, Builder, Buffer, Port, Param, Type, TypeCode
 import numpy as np
 
 
