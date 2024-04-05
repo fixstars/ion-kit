@@ -46,7 +46,6 @@ int ion_port_create_with_index(ion_port_t *ptr, ion_port_t obj, int index)
         auto p = new Port(*reinterpret_cast<Port*>(obj));
         p->set_index(index);
         *ptr = reinterpret_cast<ion_port_t>(p);
-        reinterpret_cast<ion::Port*>(obj)->set_index(index);
     } catch (const Halide::Error& e) {
         log::error(e.what());
         return 1;
