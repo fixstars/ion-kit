@@ -1113,12 +1113,9 @@ public:
     BuildingBlockParam<std::string> output_directory_ptr{ "output_directory", "." };
     BuildingBlockParam<int32_t> num_devices{"num_devices", 2};
 
-    Input<Halide::Func[]> input_images{ "input_images", Halide::type_of<T>(), D };
-
-    Input<Halide::Func[]> input_deviceinfo{ "input_deviceinfo", Halide::type_of<uint8_t>(), 1 };
+    Input<Halide::Func> input_images{"input", Halide::type_of<T>(), D};
+    Input<Halide::Func> input_deviceinfo{ "input_deviceinfo", Halide::type_of<uint8_t>(), 1 };
     Input<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
-
-
     Input<int32_t> width{ "width" };
     Input<int32_t> height{ "height" };
 
@@ -1141,42 +1138,21 @@ public:
         int32_t dim = D;
         int32_t byte_depth = sizeof(T);
 
-         Buffer<uint8_t> id_buf = this->get_id();
-        if (num_devices==1){
-            Func image;
-            image(_) = input_images(_);
-            image.compute_root();
+        Buffer<uint8_t> id_buf = this->get_id();
 
-            Func deviceinfo;
-            deviceinfo(_) = input_deviceinfo(_);
-            deviceinfo.compute_root();
+        Func image;
+        image(_) = input_images(_);
+        image.compute_root();
 
-            std::vector<ExternFuncArgument> params = {id_buf, image, deviceinfo, fc, width, height, dim, byte_depth, output_directory_buf };
-            Func ion_bb_image_io_binary_image_saver;
-            ion_bb_image_io_binary_image_saver.define_extern("ion_bb_image_io_binary_1image_saver", params, Int(32), 0);
-            ion_bb_image_io_binary_image_saver.compute_root();
-            output() = ion_bb_image_io_binary_image_saver();
-        }else if (num_devices==2){
-            Func image0, image1;
-            image0(_) = input_images[0](_);
-            image1(_) = input_images[1](_);
-            image0.compute_root();
-            image1.compute_root();
+        Func deviceinfo;
+        deviceinfo(_) = input_deviceinfo(_);
+        deviceinfo.compute_root();
 
-            Func deviceinfo0, deviceinfo1;
-            deviceinfo0(_) = input_deviceinfo[0](_);
-            deviceinfo1(_) = input_deviceinfo[1](_);
-            deviceinfo0.compute_root();
-            deviceinfo1.compute_root();
-
-            std::vector<ExternFuncArgument> params = {id_buf, image0, image1, deviceinfo0, deviceinfo1, fc, width, height, dim, byte_depth, output_directory_buf };
-            Func ion_bb_image_io_binary_image_saver;
-            ion_bb_image_io_binary_image_saver.define_extern("ion_bb_image_io_binary_2image_saver", params, Int(32), 0);
-            ion_bb_image_io_binary_image_saver.compute_root();
-            output() = ion_bb_image_io_binary_image_saver();
-        }else{
-            std::runtime_error("device number > 2 is not supported");
-        }
+        std::vector<ExternFuncArgument> params = {id_buf, image, deviceinfo, fc, width, height, dim, byte_depth, output_directory_buf };
+        Func ion_bb_image_io_binary_image_saver;
+        ion_bb_image_io_binary_image_saver.define_extern("ion_bb_image_io_binary_image_saver", params, Int(32), 0);
+        ion_bb_image_io_binary_image_saver.compute_root();
+        output(_) = ion_bb_image_io_binary_image_saver(_);
 
         this->register_disposer("writer_dispose");
     }
