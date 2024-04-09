@@ -1112,6 +1112,7 @@ class BinarySaver : public ion::BuildingBlock<BinarySaver<T, D>> {
 public:
     BuildingBlockParam<std::string> output_directory_ptr{ "output_directory", "." };
     BuildingBlockParam<int32_t> num_devices{"num_devices", 2};
+    BuildingBlockParam<std::string> prefix_ptr{"prefix", "raw-"};
 
     Input<Halide::Func> input_images{"input", Halide::type_of<T>(), D};
     Input<Halide::Func> input_deviceinfo{ "input_deviceinfo", Halide::type_of<uint8_t>(), 1 };
@@ -1131,6 +1132,11 @@ public:
         output_directory_buf.fill(0);
         std::memcpy(output_directory_buf.data(), output_directory.c_str(), output_directory.size());
 
+        const std::string prefix(prefix_ptr);
+        Halide::Buffer<uint8_t> prefix_buf(static_cast<int>(prefix.size() + 1));
+        prefix_buf.fill(0);
+        std::memcpy(prefix_buf.data(), prefix.c_str(), prefix.size());
+
         Func fc;
         fc(_) = frame_count(_);
         fc.compute_root();
@@ -1148,7 +1154,7 @@ public:
         deviceinfo(_) = input_deviceinfo(_);
         deviceinfo.compute_root();
 
-        std::vector<ExternFuncArgument> params = {id_buf, image, deviceinfo, fc, width, height, dim, byte_depth, output_directory_buf };
+        std::vector<ExternFuncArgument> params = {id_buf, image, deviceinfo, fc, width, height, dim, byte_depth, output_directory_buf, prefix_buf };
         Func ion_bb_image_io_binary_image_saver;
         ion_bb_image_io_binary_image_saver.define_extern("ion_bb_image_io_binary_image_saver", params, Int(32), 0);
         ion_bb_image_io_binary_image_saver.compute_root();

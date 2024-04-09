@@ -120,11 +120,11 @@ namespace {
 
 class Writer {
 public:
-    static Writer& get_instance(const std::string& id, std::vector<int32_t>& payload_size, const ::std::string& output_directory, bool write_framecount)
+    static Writer& get_instance(const std::string& id, std::vector<int32_t>& payload_size, const ::std::string& output_directory, bool write_framecount, const std::string& prefix = "raw-")
     {
 
         if (instances.count(id) == 0) {
-            instances[id] = std::unique_ptr<Writer>(new Writer(payload_size, output_directory, write_framecount));
+            instances[id] = std::unique_ptr<Writer>(new Writer(payload_size, output_directory, write_framecount, prefix ));
         }
         return *instances[id];
     }
@@ -229,8 +229,8 @@ public:
     }
 
 private:
-    Writer(std::vector<int32_t>& payload_size, const ::std::string& output_directory, bool write_framecount)
-        : keep_running_(true), output_directory_(output_directory), with_header_(true), disposed_(false)
+    Writer(std::vector<int32_t>& payload_size, const std::string& output_directory, bool write_framecount, const std::string& prefix)
+        : keep_running_(true), output_directory_(output_directory), with_header_(true), disposed_(false), prefix_(prefix)
     {
         int total_payload_size = 0;
         for (auto s : payload_size){
@@ -246,7 +246,8 @@ private:
             buf_queue_.push(buffers_[i].data());
         }
         thread_ = ::std::make_shared<::std::thread>(entry_point, this);
-        ofs_ = ::std::ofstream(output_directory_ / "raw-0.bin", ::std::ios::binary);
+        auto filename = prefix_ + std::to_string(0) + ".bin";
+        ofs_ = ::std::ofstream(output_directory_ / filename, ::std::ios::binary);
     }
 
     int get_buffer_num(int width, int height, int num_sensor = 2, int data_in_byte = 2) {
@@ -294,7 +295,7 @@ private:
 
             if (i == rotate_limit) {
                 i = 0;
-                ofs_ = ::std::ofstream(output_directory_ / ("raw-" + ::std::to_string(file_idx++) + ".bin"), ::std::ios::binary);
+                ofs_ = ::std::ofstream(output_directory_ / (prefix_ + ::std::to_string(file_idx++) + ".bin"), ::std::ios::binary);
             }
 
             ofs_.write(reinterpret_cast<const char*>(buffer), size);
@@ -321,7 +322,7 @@ private:
 
             if (i == rotate_limit) {
                 i = 0;
-                ofs_ = ::std::ofstream(output_directory_ / ("raw-" + ::std::to_string(file_idx++) + ".bin"), ::std::ios::binary);
+                ofs_ = ::std::ofstream(output_directory_ / (prefix_ + ::std::to_string(file_idx++) + ".bin"), ::std::ios::binary);
             }
 
 
@@ -353,6 +354,7 @@ private:
     uint32_t width_;
     uint32_t height_;
     std::filesystem::path output_directory_;
+    std::string prefix_;
     bool disposed_;
 
     bool with_header_;
@@ -478,6 +480,7 @@ int ion_bb_image_io_binary_image_saver(
     halide_buffer_t * id_buf,
     halide_buffer_t * image, halide_buffer_t * deviceinfo, halide_buffer_t * frame_count,
     int width, int height, int dim, int byte_depth, halide_buffer_t*  output_directory_buf,
+    halide_buffer_t*  prefix_buf,
     halide_buffer_t * out)
     {
     try {
@@ -486,7 +489,8 @@ int ion_bb_image_io_binary_image_saver(
         int32_t frame_size = dim == 2 ? width * height * byte_depth : width * height * 3 * byte_depth;
         std::vector<int32_t>frame_size_list{frame_size};
         const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
-        auto& w(Writer::get_instance(id, frame_size_list, output_directory, true));
+        const ::std::string prefix(reinterpret_cast<const char*>(prefix_buf->host));
+        auto& w(Writer::get_instance(id, frame_size_list, output_directory, true, prefix));
 
         if (image->is_bounds_query() || deviceinfo->is_bounds_query() || frame_count->is_bounds_query()) {
             if (image->is_bounds_query()) {
