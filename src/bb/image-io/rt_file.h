@@ -372,72 +372,16 @@ int ION_EXPORT writer_dispose(const char *id) {
 
 
 extern "C" ION_EXPORT
-int ion_bb_image_io_binary_2gendc_saver( halide_buffer_t * id_buf, halide_buffer_t * in0, halide_buffer_t * in1, halide_buffer_t * in2, halide_buffer_t * in3,
-    int payloadsize, halide_buffer_t*  output_directory_buf,
-    halide_buffer_t * out)
-    {
-    try {
-        const std::string id(reinterpret_cast<const char *>(id_buf->host));
-        const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
-        std::vector<int32_t>payloadsize_list{payloadsize, payloadsize};
-        auto& w(Writer::get_instance(id, payloadsize_list,  output_directory, false));
-        if (in0->is_bounds_query() || in1->is_bounds_query() || in2->is_bounds_query() || in3->is_bounds_query()) {
-            int i = 1;
-            if (in0->is_bounds_query()) {
-                in0->dim[0].min = 0;
-                in0->dim[0].extent = payloadsize;
-            }
-            if (in1->is_bounds_query()) {
-                in1->dim[0].min = 0;
-                in1->dim[0].extent = payloadsize;
-            }
-            if (in2->is_bounds_query()) {
-                in2->dim[0].min = 0;
-                in2->dim[0].extent = sizeof(ion::bb::image_io::rawHeader);
-            }
-            if (in3->is_bounds_query()) {
-                in3->dim[0].min = 0;
-                in3->dim[0].extent = sizeof(ion::bb::image_io::rawHeader);
-            }
-            return 0;
-        }
-        else {
-            ion::bb::image_io::rawHeader header_info0, header_info1;
-            ::memcpy(&header_info0, in2->host, sizeof(ion::bb::image_io::rawHeader));
-            ::memcpy(&header_info1, in3->host, sizeof(ion::bb::image_io::rawHeader));
-            std::vector<ion::bb::image_io::rawHeader> header_infos{header_info0, header_info1};
-
-            std::vector<void *> obufs{in0->host, in1->host};
-            std::vector<size_t> size_in_bytes{in0->size_in_bytes(), in1->size_in_bytes()};
-            w.post_gendc(obufs, size_in_bytes, header_infos);
-
-
-        }
-
-        return 0;
-    }
-    catch (const ::std::exception& e) {
-        ::std::cerr << e.what() << ::std::endl;
-        return -1;
-    }
-    catch (...) {
-        ::std::cerr << "Unknown error" << ::std::endl;
-        return -1;
-    }
-}
-
-ION_REGISTER_EXTERN(ion_bb_image_io_binary_2gendc_saver);
-
-extern "C" ION_EXPORT
-int ion_bb_image_io_binary_1gendc_saver( halide_buffer_t * id_buf, halide_buffer_t * gendc, halide_buffer_t * deviceinfo,
-    int payloadsize, halide_buffer_t*  output_directory_buf,
+int ion_bb_image_io_binary_gendc_saver( halide_buffer_t * id_buf, halide_buffer_t * gendc, halide_buffer_t * deviceinfo,
+    int payloadsize, halide_buffer_t*  output_directory_buf, halide_buffer_t*  prefix_buf,
     halide_buffer_t * out)
     {
     try {
         const std::string id(reinterpret_cast<const char *>(id_buf->host));
         const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
         std::vector<int32_t>payloadsize_list{payloadsize};
-        auto& w(Writer::get_instance(id,payloadsize_list, output_directory, false));
+        const ::std::string prefix(reinterpret_cast<const char*>(prefix_buf->host));
+        auto& w(Writer::get_instance(id,payloadsize_list, output_directory, false, prefix));
         if (gendc->is_bounds_query() || deviceinfo->is_bounds_query()) {
             if (gendc->is_bounds_query()) {
                 gendc->dim[0].min = 0;
@@ -473,7 +417,7 @@ int ion_bb_image_io_binary_1gendc_saver( halide_buffer_t * id_buf, halide_buffer
     }
 }
 
-ION_REGISTER_EXTERN(ion_bb_image_io_binary_1gendc_saver);
+ION_REGISTER_EXTERN(ion_bb_image_io_binary_gendc_saver);
 
 extern "C" ION_EXPORT
 int ion_bb_image_io_binary_image_saver(

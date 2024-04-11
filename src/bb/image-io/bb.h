@@ -1111,7 +1111,6 @@ template<typename T, int D>
 class BinarySaver : public ion::BuildingBlock<BinarySaver<T, D>> {
 public:
     BuildingBlockParam<std::string> output_directory_ptr{ "output_directory", "." };
-    BuildingBlockParam<int32_t> num_devices{"num_devices", 2};
     BuildingBlockParam<std::string> prefix_ptr{"prefix", "raw-"};
 
     Input<Halide::Func> input_images{"input", Halide::type_of<T>(), D};
@@ -1124,8 +1123,6 @@ public:
 
     void generate() {
         using namespace Halide;
-
-        int32_t num_gendc = static_cast<int32_t>(num_devices);
 
         const std::string output_directory(output_directory_ptr);
         Halide::Buffer<uint8_t> output_directory_buf(static_cast<int>(output_directory.size() + 1));
@@ -1173,10 +1170,10 @@ class BinaryGenDCSaver : public ion::BuildingBlock<BinaryGenDCSaver> {
 public:
     BuildingBlockParam<std::string> output_directory_ptr{ "output_directory", "." };
 
-    BuildingBlockParam<int32_t> num_devices{"num_devices", 2};
+    BuildingBlockParam<std::string> prefix_ptr{"prefix", "raw-"};
 
-    Input<Halide::Func[]> input_gendc{ "input_gendc", Halide::type_of<uint8_t>(), 1 };
-    Input<Halide::Func[]> input_deviceinfo{ "input_deviceinfo", Halide::type_of<uint8_t>(), 1 };
+    Input<Halide::Func> input_gendc{ "input_gendc", Halide::type_of<uint8_t>(), 1 };
+    Input<Halide::Func> input_deviceinfo{ "input_deviceinfo", Halide::type_of<uint8_t>(), 1 };
 
 
     Input<int32_t> payloadsize{ "payloadsize" };
@@ -1185,49 +1182,32 @@ public:
 
     void generate() {
         using namespace Halide;
-        int32_t num_gendc = static_cast<int32_t>(num_devices);
 
+        const std::string prefix(prefix_ptr);
+        Halide::Buffer<uint8_t> prefix_buf(static_cast<int>(prefix.size() + 1));
+        prefix_buf.fill(0);
+
+        std::memcpy(prefix_buf.data(), prefix.c_str(), prefix.size());
         const std::string output_directory(output_directory_ptr);
         Halide::Buffer<uint8_t> output_directory_buf(static_cast<int>(output_directory.size() + 1));
         output_directory_buf.fill(0);
         std::memcpy(output_directory_buf.data(), output_directory.c_str(), output_directory.size());
         Buffer<uint8_t> id_buf = this->get_id();
-        if (num_gendc==1){
-            Func gendc;
-            gendc(_) = input_gendc(_);
-            gendc.compute_root();
 
-            Func deviceinfo;
-            deviceinfo(_) = input_deviceinfo(_);
-            deviceinfo.compute_root();
+        Func gendc;
+        gendc(_) = input_gendc(_);
+        gendc.compute_root();
 
-            std::vector<ExternFuncArgument> params = { id_buf, gendc, deviceinfo, payloadsize, output_directory_buf };
-            Func image_io_binary_gendc_saver;
-            image_io_binary_gendc_saver.define_extern("ion_bb_image_io_binary_1gendc_saver", params, Int(32), 0);
-            image_io_binary_gendc_saver.compute_root();
-            output() = image_io_binary_gendc_saver();
-        }else if (num_gendc ==2){
-            Func gendc0, gendc1;
-            Var x, y;
-            gendc0(_) = input_gendc[0](_);
-            gendc1(_) = input_gendc[1](_);
-            gendc0.compute_root();
-            gendc1.compute_root();
+        Func deviceinfo;
+        deviceinfo(_) = input_deviceinfo(_);
+        deviceinfo.compute_root();
 
-            Func deviceinfo0, deviceinfo1;
-            deviceinfo0(_) = input_deviceinfo[0](_);
-            deviceinfo1(_) = input_deviceinfo[1](_);
-            deviceinfo0.compute_root();
-            deviceinfo1.compute_root();
+        std::vector<ExternFuncArgument> params = { id_buf, gendc, deviceinfo, payloadsize, output_directory_buf, prefix_buf };
+        Func image_io_binary_gendc_saver;
+        image_io_binary_gendc_saver.define_extern("ion_bb_image_io_binary_gendc_saver", params, Int(32), 0);
+        image_io_binary_gendc_saver.compute_root();
+        output() = image_io_binary_gendc_saver();
 
-            std::vector<ExternFuncArgument> params = { id_buf, gendc0, gendc1, deviceinfo0, deviceinfo1,  payloadsize, output_directory_buf };
-            Func image_io_binary_gendc_saver;
-            image_io_binary_gendc_saver.define_extern("ion_bb_image_io_binary_2gendc_saver", params, Int(32), 0);
-            image_io_binary_gendc_saver.compute_root();
-            output() = image_io_binary_gendc_saver();
-        }else{
-            std::runtime_error("device number > 2 is not supported");
-        }
         this->register_disposer("writer_dispose");
     }
 };

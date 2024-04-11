@@ -1182,8 +1182,20 @@ public:
 
         int32_t num_device = devices_.size();
         std::vector<ArvBuffer *> bufs(num_device);
-
-        if (operation_mode_ == OperationMode::Came2USB2 || operation_mode_ == OperationMode::Came1USB1){
+        if (sim_mode_){
+            std::vector<ArvBuffer *> bufs(num_sensor_);
+            for (int i = 0;i< num_sensor_;i++){
+                    auto size = devices_[i].u3v_payload_size_;
+                    arv_stream_push_buffer (devices_[i].stream_,  arv_buffer_new_allocate (size));
+                    bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, timeout_us);
+                    if (bufs[i] == nullptr){
+                        log::error("pop_buffer(L1) failed due to timeout ({}s)", timeout_us*1e-6f);
+                        throw ::std::runtime_error("Buffer is null");
+                    }
+                    devices_[i].frame_count_ += 1;
+                    memcpy(outs[i], arv_buffer_get_part_data(bufs[i], 0, nullptr), size);}
+        }
+        else if (operation_mode_ == OperationMode::Came2USB2 || operation_mode_ == OperationMode::Came1USB1){
 
             if (realtime_display_mode_){
                 consume_old_buffer(bufs,timeout_us);
