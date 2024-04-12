@@ -1,0 +1,7 @@
+find_package(Llama QUIET)
+if (${Llama_FOUND})
+    set(ION_BB_BUILD_llm TRUE)
+    set(LIBRARIES llama)
+else()
+    set(ION_BB_BUILD_llm FALSE)
+endif()

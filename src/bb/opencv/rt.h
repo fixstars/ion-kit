@@ -95,7 +95,6 @@ int ion_bb_opencv_display(halide_buffer_t *in, int width, int height, int idx, h
 }
 ION_REGISTER_EXTERN(ion_bb_opencv_display);
 
-#undef ION_EXPORT
 #undef ION_REGISTER_EXTERN
 
 #endif // ION_BB_OPENCV_RT_H
