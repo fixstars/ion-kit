@@ -69,6 +69,10 @@ if(${ION_BB_BUILD_fpga})
     ion_aot_executable(fpga_dnn SRCS_COMPILE fpga_dnn_compile.cc SRCS_RUN fpga_dnn_run.cc TARGET_STRING "arm-64-linux-vivado_hls-dpu")
 endif()
 
+if(${ION_BB_BUILD_llm} AND OpenCV_FOUND)
+    ion_jit_executable(llm_llava SRCS llm_llava.cc LIBS opencv_highgui)
+endif()
+
 if(MSVC)
     add_definitions(/bigobj)
     message(STATUS "Allow big object for example/")
