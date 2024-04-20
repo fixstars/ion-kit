@@ -9,21 +9,27 @@ namespace llm {
 
 class Llava : public BuildingBlock<Llava> {
 public:
-    Input<Halide::Func> input{"input", Halide::type_of<float>(), 3};
-    Input<Halide::Func> prompt{"prompt", Halide::type_of<uint8_t>(), 1};
-    Output<Halide::Func> output{"output", Halide::type_of<uint8_t>(), 1};
+    Input<Halide::Func> input{"input", Halide::type_of<uint8_t>(), 3};
+    Input<Halide::Func> prompt{"prompt", Halide::type_of<int8_t>(), 1};
+    Output<Halide::Func> output{"output", Halide::type_of<int8_t>(), 1};
 
     void generate() {
-        std::vector<ExternFuncArgument> params = {prompt};
+        using namespace Halide; 
+
+        // NOTE: These tricks is required for the input parameter which is passed as an external function argument
+        Func input_;
+        input_(_) = input(_);
+        
+        Func prompt_;
+        prompt_(_) = prompt(_);
+
+        std::vector<ExternFuncArgument> params = {input_, prompt_};
         Func llava("llava");
-        llava.define_extern("ion_llm_llava", params, Halide::type_of<uint8_t>(), 1);
+        llava.define_extern("ion_bb_llm_llava", params, type_of<int8_t>(), 1);
         llava.compute_root();
 
-        output = llava;
+        output(_) = llava(_);
     }
-
-private:
-    Halide::Var c, x, y;
 };
 
 }  // namespace llm
