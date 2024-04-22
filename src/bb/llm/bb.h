@@ -19,16 +19,18 @@ public:
         // NOTE: These tricks is required for the input parameter which is passed as an external function argument
         Func input_;
         input_(_) = input(_);
+        input_.compute_root();
         
         Func prompt_;
         prompt_(_) = prompt(_);
-
+        prompt_.compute_root();
+        
         std::vector<ExternFuncArgument> params = {input_, prompt_};
         Func llava("llava");
         llava.define_extern("ion_bb_llm_llava", params, type_of<int8_t>(), 1);
         llava.compute_root();
 
-        output(_) = llava(_);
+        output = llava;
     }
 };
 

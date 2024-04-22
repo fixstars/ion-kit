@@ -657,7 +657,7 @@ public:
         color_data_loader.define_extern("ion_bb_image_io_color_data_loader", params, Halide::type_of<uint8_t>(), 3);
         color_data_loader.compute_root();
 
-        output(_) = color_data_loader(_);
+        output = color_data_loader;
     }
 };
 
