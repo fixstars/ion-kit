@@ -25,26 +25,19 @@ extern "C" int ION_EXPORT ion_bb_image_io_color_data_loader(halide_buffer_t *ses
     using namespace ion::bb::image_io;
 
     try {
-
         if (out->is_bounds_query()) {
-            out->dim[0].min = 0;
-            out->dim[0].extent = width,
-            out->dim[1].min = 0;
-            out->dim[1].extent = height;
-            out->dim[2].min = 0;
-            out->dim[2].extent = 3;
-        } else {
-            const std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
-            const std::string url = reinterpret_cast<const char *>(url_buf->host);
-            static std::unordered_map<std::string, std::unique_ptr<ImageSequence<uint8_t>>> seqs;
-            if (seqs.count(session_id) == 0) {
-                seqs[session_id] = std::unique_ptr<ImageSequence<uint8_t>>(new ImageSequence<uint8_t>(session_id, url));
-            }
-
-            Halide::Runtime::Buffer<uint8_t> obuf(*out);
-            seqs[session_id]->get(width, height, IMREAD_COLOR,  obuf);
-
+            return 0;
         }
+
+        const std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
+        const std::string url = reinterpret_cast<const char *>(url_buf->host);
+        static std::unordered_map<std::string, std::unique_ptr<ImageSequence<uint8_t>>> seqs;
+        if (seqs.count(session_id) == 0) {
+            seqs[session_id] = std::unique_ptr<ImageSequence<uint8_t>>(new ImageSequence<uint8_t>(session_id, url));
+        }
+
+        Halide::Runtime::Buffer<uint8_t> obuf(*out);
+        seqs[session_id]->get(width, height, IMREAD_COLOR, obuf);
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
         return -1;

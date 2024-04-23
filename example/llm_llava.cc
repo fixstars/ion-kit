@@ -13,11 +13,12 @@ int main(int argc, char *argv[]) {
         Buffer<int8_t> prompt{1024};
 
         Builder b;
-        b.set_target(Halide::get_target_from_environment().with_feature(Halide::Target::TracePipeline));
+        b.set_target(Halide::get_target_from_environment().with_feature(Halide::Target::Debug).with_feature(Halide::Target::TracePipeline));
         b.with_bb_module("ion-bb");
 
-        auto n_img = b.add("image_io_color_data_loader").set_param(Param("url", "http://www.onthejob.education/images/4th_level/Road_Worker/Road_Worker_Darwin.jpg"), Param("width", width), Param("height", height));
-        auto n_txt = b.add("llm_llava")(n_img["output"], prompt);
+        auto n_img = b.add("image_io_color_data_loader").set_param(Param{"url", "http://www.onthejob.education/images/4th_level/Road_Worker/Road_Worker_Darwin.jpg"}, Param{"width", width}, Param{"height", height});
+        n_img = b.add("base_reorder_buffer_3d_uint8")(n_img["output"]).set_param(Param{"dim0", 2}, Param{"dim1", 0}, Param{"dim2", 1});
+        auto n_txt = b.add("llm_llava")(n_img["output"], prompt).set_param(Param{"width", width}, Param{"height", height});
 
         Buffer<int8_t> txt_output{1024};
         n_txt["output"].bind(txt_output);
