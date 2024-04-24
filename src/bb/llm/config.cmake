@@ -6,6 +6,12 @@ if (${Llama_FOUND})
     set(INCLUDE_DIRS ${LLAMA_INCLUDE_DIR})
     set(LINK_DIRS ${LLAMA_LIB_DIR})
     set(LIBRARIES llama llava_shared)
+    set(EXTRA_SRCS
+        bb.cc
+        common.cpp
+        sampling.cpp
+        json-schema-to-grammar.cpp
+        grammar-parser.cpp)
 else()
     set(ION_BB_BUILD_llm FALSE)
 endif()

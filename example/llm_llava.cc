@@ -11,6 +11,11 @@ int main(int argc, char *argv[]) {
         const int height = 337;
 
         Buffer<int8_t> prompt{1024};
+        prompt.fill(0);
+        std::string prompt_s("<image>Explain the image shortly");
+        for (auto i = 0; i < prompt_s.size(); ++i) {
+            prompt(i) = prompt_s[i];
+        }
 
         Builder b;
         b.set_target(Halide::get_target_from_environment().with_feature(Halide::Target::Debug).with_feature(Halide::Target::TracePipeline));
