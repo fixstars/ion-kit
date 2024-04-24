@@ -12,7 +12,7 @@ int main(int argc, char *argv[]) {
 
         Buffer<int8_t> prompt{1024};
         prompt.fill(0);
-        std::string prompt_s("<image>Explain the image shortly");
+        std::string prompt_s("<image>Explain the image in one sentense");
         for (auto i = 0; i < prompt_s.size(); ++i) {
             prompt(i) = prompt_s[i];
         }
