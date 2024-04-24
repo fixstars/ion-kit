@@ -316,6 +316,7 @@ private:
         params_.mmproj = "/home/iitaku/Develop/llava-1.6-gguf/mmproj-mistral7b-f16-q6_k.gguf";
         params_.n_gpu_layers = 999;
         params_.n_ctx = 4096;
+        // params_.n_batch = 3072;
         
         ctx_llava_ = llava_init(&params_);
         if (ctx_llava_ == NULL) {
@@ -351,43 +352,10 @@ ION_EXPORT int ion_bb_llm_llava(halide_buffer_t *in, halide_buffer_t *prompt, in
         Halide::Runtime::Buffer<uint8_t> ibuf(*in);
         Halide::Runtime::Buffer<int8_t> pbuf(*prompt);
         Halide::Runtime::Buffer<int8_t> obuf(*out);
-
-        // std::ofstream ofs("test.bin");
-        // ofs.write(reinterpret_cast<const char*>(ibuf.data()), in->size_in_bytes());
-#if 1
+        
         auto llava = Llava::getInstance();
         llava.process(ibuf, pbuf, obuf);
-#else
-        gpt_params params;
 
-        params.model = "/home/iitaku/Develop/llava-1.6-gguf/ggml-mistral-q_4_k.gguf";
-        params.mmproj = "/home/iitaku/Develop/llava-1.6-gguf/mmproj-mistral7b-f16-q6_k.gguf";
-        params.prompt = std::string(reinterpret_cast<const char*>(pbuf.data()));
-        params.n_gpu_layers = 999;
-        params.n_ctx = 4096;
-        
-        auto ctx_llava = llava_init(&params);
-        if (ctx_llava == NULL) {
-            ion::log::error("Failed to init llava");
-            return 1;
-        }
-
-        auto image_embed = load_image(ctx_llava, &params, ibuf);
-        if (!image_embed) {
-            return 1;
-        }
-
-        // process the prompt
-        auto response = process_prompt(ctx_llava, image_embed, &params, params.prompt);
-
-        // llama_print_timings(ctx_llava->ctx_llama);
-
-        llava_image_embed_free(image_embed);
-        llava_free(ctx_llava);
-
-        obuf.fill(0);
-        std::memcpy(obuf.data(), response.c_str(), std::min(obuf.size_in_bytes(), response.size()));
-#endif
         return 0;
 
     } catch (const std::exception &e) {
