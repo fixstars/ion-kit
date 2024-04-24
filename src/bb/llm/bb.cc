@@ -427,21 +427,76 @@ ION_EXPORT int ion_bb_llm_llava(halide_buffer_t *in, halide_buffer_t *prompt, in
         params.mmproj = "/home/iitaku/Develop/llava-1.6-gguf/mmproj-mistral7b-f16-q6_k.gguf";
         params.prompt = "<image>Explain the image in one sentence";
         // params.image = "/home/iitaku/sample1.jpg";
-        params.n_gpu_layers = 32;
+        params.n_gpu_layers = 999;
         params.n_ctx = 4096;
-
+#if 0
         auto ctx_llava = llava_init(&params);
         if (ctx_llava == NULL) {
             fprintf(stderr, "%s: error: failed to init llava\n", __func__);
             return 1;
         }
+#else
+        auto ctx_llava = (struct llava_context *)malloc(sizeof(llava_context));
+        {
+            //
+            // Initialization
+            //
+            llama_backend_init();
+            // llama_numa_init(params->numa);
 
+            // Load CLIP model
+            auto verbosity = 0;
+            auto ctx_clip = clip_model_load("/home/iitaku/Develop/llava-1.6-gguf/mmproj-mistral7b-f16-q6_k.gguf", verbosity);
+
+            // Load LLM model
+            llama_model_params model_params = llama_model_default_params();
+            model_params.n_gpu_layers = 999;  // TODO
+
+            llama_model *model = llama_load_model_from_file("/home/iitaku/Develop/llava-1.6-gguf/ggml-mistral-q_4_k.gguf", model_params);
+            if (model == NULL) {
+                ion::log::error("Failed to load model");
+                return 1;
+            }
+
+            llama_context_params ctx_params = llama_context_default_params();
+            ctx_params.n_ctx = 4096;  // TODO
+
+            llama_context *ctx_llama = llama_new_context_with_model(model, ctx_params);
+            if (ctx_llama == NULL) {
+                ion::log::error("Failed to create the llama_context");
+                return 1;
+            }
+            ctx_llava->ctx_clip = ctx_clip;
+            ctx_llava->ctx_llama = ctx_llama;
+            ctx_llava->model = model;
+        }
+#endif
+
+#if 0
         auto image_embed = load_image_(ctx_llava, &params, ibuf);
         //auto image_embed = load_image(ctx_llava, &params);
         if (!image_embed) {
             return 1;
         }
+#else
 
+        // Run CLIP model
+        auto img = clip_image_u8_init();
+        img->nx = width;
+        img->ny = height;
+        img->buf.resize(3 * img->nx * img->ny);
+        memcpy(img->buf.data(), ibuf.data(), img->buf.size());
+
+        auto n_threads = 1;
+        llava_image_embed *image_embed = new llava_image_embed;
+        auto embed = llava_image_embed_make_with_clip_img(ctx_llava->ctx_clip, n_threads, img, &image_embed->embed, &image_embed->n_image_pos);
+        if (!embed) {
+            ion::log::error("Failed to load image");
+            return 1;
+        }
+
+#endif
+#if 0
         // process the prompt
         process_prompt(ctx_llava, image_embed, &params, params.prompt);
 
@@ -449,6 +504,37 @@ ION_EXPORT int ion_bb_llm_llava(halide_buffer_t *in, halide_buffer_t *prompt, in
 
         llava_image_embed_free(image_embed);
         llava_free(ctx_llava);
+#else
+
+        // Run LLM model
+        int n_past = 0;
+        auto n_batch = 2048;  // TODO
+        std::string system_prompt = "";
+        std::string user_prompt(reinterpret_cast<const char *>(pbuf.data()));
+        eval_string(ctx_llava->ctx_llama, system_prompt.c_str(), n_batch, &n_past, true);
+        llava_eval_image_embed(ctx_llava->ctx_llama, image_embed, n_batch, &n_past);
+        eval_string(ctx_llava->ctx_llama, user_prompt.c_str(), n_batch, &n_past, false);
+
+        llama_sampling_params sparams;
+        struct llama_sampling_context *ctx_sampling = llama_sampling_init(sparams);
+        std::string response = "";
+        auto max_tgt_len = 256;
+        for (int i = 0; i < max_tgt_len; i++) {
+            const char *tmp = sample(ctx_sampling, ctx_llava->ctx_llama, &n_past);
+            response += tmp;
+            if (strcmp(tmp, "</s>") == 0) break;
+            if (strstr(tmp, "###")) break;  // Yi-VL behavior
+            printf("%s", tmp);
+            if (strstr(response.c_str(), "<|im_end|>")) break;    // Yi-34B llava-1.6 - for some reason those decode not as the correct token (tokenizer works)
+            if (strstr(response.c_str(), "<|im_start|>")) break;  // Yi-34B llava-1.6
+            if (strstr(response.c_str(), "USER:")) break;         // mistral llava-1.6
+
+            fflush(stdout);
+        }
+
+        llama_sampling_free(ctx_sampling);
+
+        #endif
 
 #endif
         obuf.fill(0);
