@@ -12,13 +12,13 @@ int main(int argc, char *argv[]) {
 
         Buffer<int8_t> prompt{1024};
         prompt.fill(0);
-        std::string prompt_s("<image>Explain the image in one sentense");
+        std::string prompt_s("<image>Explain the image in one sentence");
         for (auto i = 0; i < prompt_s.size(); ++i) {
             prompt(i) = prompt_s[i];
         }
 
         Builder b;
-        b.set_target(Halide::get_target_from_environment().with_feature(Halide::Target::Debug).with_feature(Halide::Target::TracePipeline));
+        b.set_target(Halide::get_target_from_environment());
         b.with_bb_module("ion-bb");
 
         auto n_img = b.add("image_io_color_data_loader").set_param(Param{"url", "http://www.onthejob.education/images/4th_level/Road_Worker/Road_Worker_Darwin.jpg"}, Param{"width", width}, Param{"height", height});
@@ -28,9 +28,11 @@ int main(int argc, char *argv[]) {
         Buffer<int8_t> txt_output{1024};
         n_txt["output"].bind(txt_output);
 
-        b.run();
+        for (int i=0; i<2; ++i) {
+            b.run();
+            std::cout << reinterpret_cast<const char *>(txt_output.data()) << std::endl;
+        }
 
-        std::cout << reinterpret_cast<const char*>(txt_output.data()) << std::endl;
     } catch (const Halide::Error &e) {
         std::cerr << e.what() << std::endl;
         return 1;

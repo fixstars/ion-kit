@@ -106,8 +106,7 @@ struct llava_image_embed * llava_image_embed_make_with_rawbytes(struct clip_ctx 
     bool image_embed_result = llava_image_embed_make_with_clip_img(ctx_clip, n_threads, img, &image_embed, &n_image_pos);
     if (!image_embed_result) {
         clip_image_u8_free(img);
-        fprintf(stderr, "%s: coulnd't embed the image\n", __func__);
-        return NULL;
+        throw std::runtime_error("Failed to embed the image");
     }
 
     clip_image_u8_free(img);
@@ -123,8 +122,7 @@ static struct llava_image_embed * load_image(llava_context * ctx_llava, gpt_para
     llava_image_embed * embed = NULL;
     embed = llava_image_embed_make_with_rawbytes(ctx_llava->ctx_clip, params->n_threads, ibuf);
     if (!embed) {
-        ion::log::error("Failed to embed image from rawbytes");
-        return NULL;
+        throw std::runtime_error("Failed to embed image from rawbytes");
     }
 
     return embed;
@@ -191,6 +189,8 @@ static std::string process_prompt(struct llava_context * ctx_llava, struct llava
 
 
 static struct llava_context * llava_init(gpt_params * params) {
+    llama_log_set(nullptr, nullptr);
+
     const char * clip_path = params->mmproj.c_str();
 
     auto prompt = params->prompt;
@@ -207,7 +207,7 @@ static struct llava_context * llava_init(gpt_params * params) {
 
     llama_model * model = llama_load_model_from_file(params->model.c_str(), model_params);
     if (model == NULL) {
-        fprintf(stderr , "%s: error: unable to load model\n" , __func__);
+        ion::log::error("Unable to load model");
         return NULL;
     }
 
@@ -217,7 +217,7 @@ static struct llava_context * llava_init(gpt_params * params) {
     llama_context * ctx_llama = llama_new_context_with_model(model, ctx_params);
 
     if (ctx_llama == NULL) {
-        fprintf(stderr , "%s: error: failed to create the llama_context\n" , __func__);
+        ion::log::error("Failed to create the llama_context");
         return NULL;
     }
 
@@ -226,6 +226,52 @@ static struct llava_context * llava_init(gpt_params * params) {
     ctx_llava->ctx_llama = ctx_llama;
     ctx_llava->ctx_clip = ctx_clip;
     ctx_llava->model = model;
+    return ctx_llava;
+}
+
+static void llava_new_context_llama(llava_context *ctx_llava, gpt_params *params) {
+    llama_context_params ctx_params = llama_context_params_from_gpt_params(*params);
+    ctx_params.n_ctx = params->n_ctx < 2048 ? 2048 : params->n_ctx;  // we need a longer context size to process image embeddings
+
+    llama_context *ctx_llama = llama_new_context_with_model(ctx_llava->model, ctx_params);
+
+    if (ctx_llama == NULL) {
+        throw std::runtime_error("Failed to create the llama_context");
+    }
+    
+    if (ctx_llava->ctx_llama != NULL) {
+        llama_free(ctx_llava->ctx_llama);
+    }   
+    ctx_llava->ctx_llama = ctx_llama;
+}
+
+static llava_context * llava_init_without_ctx_llama(gpt_params *params) {
+    const char *clip_path = params->mmproj.c_str();
+
+    auto prompt = params->prompt;
+    if (prompt.empty()) {
+        prompt = "describe the image in detail.";
+    }
+
+    auto ctx_clip = clip_model_load(clip_path, /*verbosity=*/1);
+
+    llama_backend_init();
+    llama_numa_init(params->numa);
+
+    llama_model_params model_params = llama_model_params_from_gpt_params(*params);
+
+    llama_model *model = llama_load_model_from_file(params->model.c_str(), model_params);
+    if (model == NULL) {
+        ion::log::error("Unable to load model");
+        return NULL;
+    }
+    
+    auto ctx_llava = (struct llava_context *)malloc(sizeof(llava_context));
+
+    ctx_llava->ctx_llama = nullptr;
+    ctx_llava->ctx_clip = ctx_clip;
+    ctx_llava->model = model;
+
     return ctx_llava;
 }
 
@@ -239,6 +285,47 @@ static void llava_free(struct llava_context * ctx_llava) {
     llama_free_model(ctx_llava->model);
     llama_backend_free();
 }
+
+class Llava {
+public:
+    static Llava &getInstance() {
+        static Llava llava;
+        return llava; 
+    }
+
+    ~Llava() {
+        // llava_free(ctx_llava_);
+    }
+ 
+    void process(const Halide::Runtime::Buffer<uint8_t>& ibuf, const Halide::Runtime::Buffer<int8_t>& pbuf, Halide::Runtime::Buffer<int8_t>& obuf) {
+        auto image_embed = load_image(ctx_llava_, &params_, ibuf);
+
+        // process the prompt
+        auto response = process_prompt(ctx_llava_, image_embed, &params_, std::string(reinterpret_cast<const char*>(pbuf.data())));
+        llava_image_embed_free(image_embed);
+
+        obuf.fill(0);
+        std::memcpy(obuf.data(), response.c_str(), std::min(obuf.size_in_bytes(), response.size()));
+ 
+        llama_kv_cache_clear(ctx_llava_->ctx_llama);
+    }
+
+private:
+    Llava() {
+        params_.model = "/home/iitaku/Develop/llava-1.6-gguf/ggml-mistral-q_4_k.gguf";
+        params_.mmproj = "/home/iitaku/Develop/llava-1.6-gguf/mmproj-mistral7b-f16-q6_k.gguf";
+        params_.n_gpu_layers = 999;
+        params_.n_ctx = 4096;
+        
+        ctx_llava_ = llava_init(&params_);
+        if (ctx_llava_ == NULL) {
+            throw std::runtime_error("Failed to init llava");
+        }
+    }
+   
+    gpt_params params_;
+    llava_context *ctx_llava_;
+};
 
 extern "C"
 ION_EXPORT int ion_bb_llm_llava(halide_buffer_t *in, halide_buffer_t *prompt, int32_t width, int32_t height, halide_buffer_t *out) {
@@ -267,7 +354,10 @@ ION_EXPORT int ion_bb_llm_llava(halide_buffer_t *in, halide_buffer_t *prompt, in
 
         // std::ofstream ofs("test.bin");
         // ofs.write(reinterpret_cast<const char*>(ibuf.data()), in->size_in_bytes());
-
+#if 1
+        auto llava = Llava::getInstance();
+        llava.process(ibuf, pbuf, obuf);
+#else
         gpt_params params;
 
         params.model = "/home/iitaku/Develop/llava-1.6-gguf/ggml-mistral-q_4_k.gguf";
@@ -297,7 +387,7 @@ ION_EXPORT int ion_bb_llm_llava(halide_buffer_t *in, halide_buffer_t *prompt, in
 
         obuf.fill(0);
         std::memcpy(obuf.data(), response.c_str(), std::min(obuf.size_in_bytes(), response.size()));
-
+#endif
         return 0;
 
     } catch (const std::exception &e) {
