@@ -1,4 +1,8 @@
 #include <fstream>
+#include <queue>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 #include <Halide.h>
 
@@ -139,14 +143,14 @@ static std::string process_prompt(struct llava_context * ctx_llava, struct llava
         // new templating mode: Provide the full prompt including system message and use <image> as a placeholder for the image
         system_prompt = prompt.substr(0, image_pos);
         user_prompt = prompt.substr(image_pos + std::string("<image>").length());
-        ion::log::info("system_prompt: {}", system_prompt);
+        ion::log::debug("system_prompt: {}", system_prompt);
         if (params->verbose_prompt) {
             auto tmp = ::llama_tokenize(ctx_llava->ctx_llama, system_prompt, true, true);
             for (int i = 0; i < (int) tmp.size(); i++) {
                 ion::log::info("{:6d} -> '{}'", tmp[i], llama_token_to_piece(ctx_llava->ctx_llama, tmp[i]));
             }
         }
-        ion::log::info("user_prompt: {}", user_prompt);
+        ion::log::debug("user_prompt: {}", user_prompt);
         if (params->verbose_prompt) {
             auto tmp = ::llama_tokenize(ctx_llava->ctx_llama, user_prompt, true, true);
             for (int i = 0; i < (int) tmp.size(); i++) {
@@ -293,25 +297,47 @@ public:
         return llava; 
     }
 
+    Llava(const Llava &) = delete;  
+
     ~Llava() {
         // llava_free(ctx_llava_);
     }
  
-    void process(const Halide::Runtime::Buffer<uint8_t>& ibuf, const Halide::Runtime::Buffer<int8_t>& pbuf, Halide::Runtime::Buffer<int8_t>& obuf) {
+    std::string process(const Halide::Runtime::Buffer<uint8_t>& ibuf, const std::string& prompt) {
+
         auto image_embed = load_image(ctx_llava_, &params_, ibuf);
 
         // process the prompt
-        auto response = process_prompt(ctx_llava_, image_embed, &params_, std::string(reinterpret_cast<const char*>(pbuf.data())));
+        auto response = process_prompt(ctx_llava_, image_embed, &params_, prompt);
         llava_image_embed_free(image_embed);
 
-        obuf.fill(0);
-        std::memcpy(obuf.data(), response.c_str(), std::min(obuf.size_in_bytes(), response.size()));
+        response = response.substr(response.find_last_of('\n')+1);
+        response = response.substr(0, response.find_last_of("</s>"));
  
         llama_kv_cache_clear(ctx_llava_->ctx_llama);
+
+        return response;
+    }
+
+    void post(const Halide::Runtime::Buffer<uint8_t>& ibuf, const std::string& prompt) {
+        std::unique_lock<std::mutex> lock(mutex_);
+        
+        // clear old 
+        while (task_queue_.size()) {
+            task_queue_.pop();
+        }
+
+        task_queue_.emplace(ibuf, prompt);
+        cv_.notify_one();   
+    }
+
+    std::string retrieve(){
+        std::unique_lock<std::mutex> lock(mutex_);  
+        return response_;
     }
 
 private:
-    Llava() {
+    Llava() : thread_(entry_point, this) {
         params_.model = "/home/iitaku/Develop/llava-1.6-gguf/ggml-mistral-q_4_k.gguf";
         params_.mmproj = "/home/iitaku/Develop/llava-1.6-gguf/mmproj-mistral7b-f16-q6_k.gguf";
         params_.n_gpu_layers = 999;
@@ -323,9 +349,48 @@ private:
             throw std::runtime_error("Failed to init llava");
         }
     }
-   
+
+    void thread_main() {
+        while (true) {
+            Halide::Runtime::Buffer<uint8_t> buf;
+            std::string prompt;
+            {
+                std::unique_lock<std::mutex> lock(mutex_);
+                cv_.wait(lock, [this] { return task_queue_.size(); });
+                
+                std::tie(buf, prompt) = task_queue_.front();
+                task_queue_.pop();
+            }
+
+            auto response = process(buf, prompt);
+
+            {
+                std::unique_lock<std::mutex> lock(mutex_);
+                response_ = response;
+            }
+        }
+    }
+
+    static void entry_point(Llava* obj) {
+        try {
+            obj->thread_main();
+        }
+        catch (...) {
+            ::std::unique_lock<::std::mutex> lock(obj->mutex_);
+            obj->ep_ = ::std::current_exception();
+        }
+    }
+
     gpt_params params_;
     llava_context *ctx_llava_;
+
+    std::thread thread_;
+    std::mutex mutex_;
+    std::condition_variable cv_;
+    std::exception_ptr ep_;
+    std::queue<std::tuple<Halide::Runtime::Buffer<uint8_t>, std::string>> task_queue_;
+
+    std::string response_;
 };
 
 extern "C"
@@ -352,9 +417,16 @@ ION_EXPORT int ion_bb_llm_llava(halide_buffer_t *in, halide_buffer_t *prompt, in
         Halide::Runtime::Buffer<uint8_t> ibuf(*in);
         Halide::Runtime::Buffer<int8_t> pbuf(*prompt);
         Halide::Runtime::Buffer<int8_t> obuf(*out);
-        
-        auto llava = Llava::getInstance();
-        llava.process(ibuf, pbuf, obuf);
+
+        auto& llava = Llava::getInstance();
+        //auto response = llava.process(ibuf, std::string(reinterpret_cast<const char*>(pbuf.data())));
+        llava.post(ibuf, std::string(reinterpret_cast<const char*>(pbuf.data())));
+        auto response = llava.retrieve();
+
+        obuf.fill(0);
+        std::memcpy(obuf.data(), response.c_str(), std::min(obuf.size_in_bytes(), response.size()));
+
+        ion::log::info("Generated response: {}", response);
 
         return 0;
 
