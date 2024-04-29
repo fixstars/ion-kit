@@ -98,12 +98,12 @@ static const char * sample(struct llama_sampling_context * ctx_sampling,
     return ret.c_str();
 }
 
-struct llava_image_embed * llava_image_embed_make_with_rawbytes(struct clip_ctx * ctx_clip, int n_threads, Halide::Runtime::Buffer<uint8_t> buf) {
+struct llava_image_embed * llava_image_embed_make_with_rawbytes(struct clip_ctx * ctx_clip, int n_threads, const std::vector<uint8_t>& buf, int32_t width, int32_t height) {
     clip_image_u8 * img = clip_image_u8_init();
-    img->nx = buf.dim(1).extent();
-    img->ny = buf.dim(2).extent();
+    img->nx = width;
+    img->ny = height;
     img->buf.resize(3 * img->nx * img->ny);
-    memcpy(img->buf.data(), reinterpret_cast<const char*>(buf.data()), buf.size_in_bytes());
+    memcpy(img->buf.data(), reinterpret_cast<const char*>(buf.data()), buf.size());
 
     float* image_embed = NULL;
     int n_image_pos = 0;
@@ -120,11 +120,11 @@ struct llava_image_embed * llava_image_embed_make_with_rawbytes(struct clip_ctx 
     return result;
 }
 
-static struct llava_image_embed * load_image(llava_context * ctx_llava, gpt_params *params, const Halide::Runtime::Buffer<uint8_t>& ibuf) {
+static struct llava_image_embed * load_image(llava_context * ctx_llava, gpt_params *params, const std::vector<uint8_t>& buf, int32_t width, int32_t height) {
 
     // load and preprocess the image
     llava_image_embed * embed = NULL;
-    embed = llava_image_embed_make_with_rawbytes(ctx_llava->ctx_clip, params->n_threads, ibuf);
+    embed = llava_image_embed_make_with_rawbytes(ctx_llava->ctx_clip, params->n_threads, buf, width, height);
     if (!embed) {
         throw std::runtime_error("Failed to embed image from rawbytes");
     }
@@ -292,8 +292,8 @@ static void llava_free(struct llava_context * ctx_llava) {
 
 class Llava {
 public:
-    static Llava &getInstance() {
-        static Llava llava;
+    static Llava &getInstance(int32_t width, int32_t height) {
+        static Llava llava(width, height);
         return llava; 
     }
 
@@ -303,16 +303,19 @@ public:
         // llava_free(ctx_llava_);
     }
  
-    std::string process(const Halide::Runtime::Buffer<uint8_t>& ibuf, const std::string& prompt) {
+    std::string process(const std::vector<uint8_t>& buf, const std::string& prompt) {
 
-        auto image_embed = load_image(ctx_llava_, &params_, ibuf);
+        static std::ofstream ofs("test.bin");
+        ofs.write(reinterpret_cast<const char*>(buf.data()), buf.size());
+
+        auto image_embed = load_image(ctx_llava_, &params_, buf, width_, height_);
 
         // process the prompt
-        auto response = process_prompt(ctx_llava_, image_embed, &params_, prompt);
+        auto response = process_prompt(ctx_llava_, image_embed, &params_, "<image>" + prompt);
         llava_image_embed_free(image_embed);
 
         response = response.substr(response.find_last_of('\n')+1);
-        response = response.substr(0, response.find_last_of("</s>"));
+        response = response.substr(0, response.find_last_of("</s>")-4);
  
         llama_kv_cache_clear(ctx_llava_->ctx_llama);
 
@@ -327,7 +330,7 @@ public:
             task_queue_.pop();
         }
 
-        task_queue_.emplace(ibuf, prompt);
+        task_queue_.emplace(std::make_shared<std::vector<uint8_t>>(ibuf.data(), ibuf.data()+ibuf.size_in_bytes()), prompt);
         cv_.notify_one();   
     }
 
@@ -337,9 +340,11 @@ public:
     }
 
 private:
-    Llava() : thread_(entry_point, this) {
+    Llava(int32_t width, int32_t height) : width_(width), height_(height), thread_(entry_point, this) {
         params_.model = "/home/iitaku/Develop/llava-1.6-gguf/ggml-mistral-q_4_k.gguf";
         params_.mmproj = "/home/iitaku/Develop/llava-1.6-gguf/mmproj-mistral7b-f16-q6_k.gguf";
+        // params_.model = "/home/iitaku/Develop/llava-phi-3-mini-gguf/ggml-model-int4.gguf";
+        // params_.mmproj = "/home/iitaku/Develop/llava-phi-3-mini-gguf/mmproj-model-f16.gguf";
         params_.n_gpu_layers = 999;
         params_.n_ctx = 4096;
         // params_.n_batch = 3072;
@@ -352,17 +357,17 @@ private:
 
     void thread_main() {
         while (true) {
-            Halide::Runtime::Buffer<uint8_t> buf;
+            std::shared_ptr<std::vector<uint8_t>> bufp;
             std::string prompt;
             {
                 std::unique_lock<std::mutex> lock(mutex_);
                 cv_.wait(lock, [this] { return task_queue_.size(); });
                 
-                std::tie(buf, prompt) = task_queue_.front();
+                std::tie(bufp, prompt) = task_queue_.front();
                 task_queue_.pop();
             }
 
-            auto response = process(buf, prompt);
+            auto response = process(*bufp, prompt);
 
             {
                 std::unique_lock<std::mutex> lock(mutex_);
@@ -375,8 +380,9 @@ private:
         try {
             obj->thread_main();
         }
-        catch (...) {
+        catch (const std::exception& e) {
             ::std::unique_lock<::std::mutex> lock(obj->mutex_);
+            ion::log::error(e.what());
             obj->ep_ = ::std::current_exception();
         }
     }
@@ -388,7 +394,10 @@ private:
     std::mutex mutex_;
     std::condition_variable cv_;
     std::exception_ptr ep_;
-    std::queue<std::tuple<Halide::Runtime::Buffer<uint8_t>, std::string>> task_queue_;
+    std::queue<std::tuple<std::shared_ptr<std::vector<uint8_t>>, std::string>> task_queue_;
+
+    int32_t width_;
+    int32_t height_;
 
     std::string response_;
 };
@@ -418,7 +427,7 @@ ION_EXPORT int ion_bb_llm_llava(halide_buffer_t *in, halide_buffer_t *prompt, in
         Halide::Runtime::Buffer<int8_t> pbuf(*prompt);
         Halide::Runtime::Buffer<int8_t> obuf(*out);
 
-        auto& llava = Llava::getInstance();
+        auto& llava = Llava::getInstance(width, height);
         //auto response = llava.process(ibuf, std::string(reinterpret_cast<const char*>(pbuf.data())));
         llava.post(ibuf, std::string(reinterpret_cast<const char*>(pbuf.data())));
         auto response = llava.retrieve();
