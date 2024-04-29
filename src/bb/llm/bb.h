@@ -35,6 +35,8 @@ public:
         llava.compute_root();
 
         output = llava;
+
+        this->register_disposer("ion_bb_llm_llava_dispose");
     }
 };
 

@@ -290,17 +290,47 @@ static void llava_free(struct llava_context * ctx_llava) {
     llama_backend_free();
 }
 
+namespace ion {
+namespace bb {  
+namespace llm { 
+namespace rt { 
+
 class Llava {
 public:
-    static Llava &getInstance(int32_t width, int32_t height) {
-        static Llava llava(width, height);
+    static Llava &get_instance() {
+        static Llava llava;
         return llava; 
+    }
+
+    static void release_instance(const std::string& id) {
+        auto& llava = get_instance();
+        llava.keep_running_ = false;
+        llava.thread_.join();
+        llava_free(llava.ctx_llava_);
     }
 
     Llava(const Llava &) = delete;  
 
     ~Llava() {
-        // llava_free(ctx_llava_);
+    }
+
+    bool is_initialized()
+    {
+        return initialized_;
+    }
+
+    void init(int32_t width, int32_t height) {
+        width_ = width;
+        height_ = height; 
+
+        thread_ = std::thread(entry_point, this);
+ 
+        ctx_llava_ = llava_init(&params_);
+        if (ctx_llava_ == NULL) {
+            throw std::runtime_error("Failed to init llava");
+        }
+
+        initialized_ = true;
     }
  
     std::string process(const std::vector<uint8_t>& buf, const std::string& prompt) {
@@ -340,7 +370,7 @@ public:
     }
 
 private:
-    Llava(int32_t width, int32_t height) : width_(width), height_(height), thread_(entry_point, this) {
+    Llava() : keep_running_(true), initialized_(false) {
         params_.model = "/home/iitaku/Develop/llava-1.6-gguf/ggml-mistral-q_4_k.gguf";
         params_.mmproj = "/home/iitaku/Develop/llava-1.6-gguf/mmproj-mistral7b-f16-q6_k.gguf";
         // params_.model = "/home/iitaku/Develop/llava-phi-3-mini-gguf/ggml-model-int4.gguf";
@@ -348,15 +378,10 @@ private:
         params_.n_gpu_layers = 999;
         params_.n_ctx = 4096;
         // params_.n_batch = 3072;
-        
-        ctx_llava_ = llava_init(&params_);
-        if (ctx_llava_ == NULL) {
-            throw std::runtime_error("Failed to init llava");
-        }
     }
 
     void thread_main() {
-        while (true) {
+        while (keep_running_) {
             std::shared_ptr<std::vector<uint8_t>> bufp;
             std::string prompt;
             {
@@ -390,17 +415,31 @@ private:
     gpt_params params_;
     llava_context *ctx_llava_;
 
+
     std::thread thread_;
     std::mutex mutex_;
     std::condition_variable cv_;
     std::exception_ptr ep_;
     std::queue<std::tuple<std::shared_ptr<std::vector<uint8_t>>, std::string>> task_queue_;
+    std::atomic<bool> keep_running_;
 
+    bool initialized_;
     int32_t width_;
     int32_t height_;
 
     std::string response_;
 };
+
+} // rt
+} // llm
+} // bb
+} // ion    
+
+extern "C"
+int ION_EXPORT ion_bb_llm_llava_dispose(const char *id) {
+    ion::bb::llm::rt::Llava::release_instance(id);
+    return 0;
+}
 
 extern "C"
 ION_EXPORT int ion_bb_llm_llava(halide_buffer_t *in, halide_buffer_t *prompt, int32_t width, int32_t height, halide_buffer_t *out) {
@@ -427,7 +466,10 @@ ION_EXPORT int ion_bb_llm_llava(halide_buffer_t *in, halide_buffer_t *prompt, in
         Halide::Runtime::Buffer<int8_t> pbuf(*prompt);
         Halide::Runtime::Buffer<int8_t> obuf(*out);
 
-        auto& llava = Llava::getInstance(width, height);
+        auto& llava = ion::bb::llm::rt::Llava::get_instance();
+        if (!llava.is_initialized()) {
+            llava.init(width, height);
+        }
         //auto response = llava.process(ibuf, std::string(reinterpret_cast<const char*>(pbuf.data())));
         llava.post(ibuf, std::string(reinterpret_cast<const char*>(pbuf.data())));
         auto response = llava.retrieve();
@@ -435,7 +477,7 @@ ION_EXPORT int ion_bb_llm_llava(halide_buffer_t *in, halide_buffer_t *prompt, in
         obuf.fill(0);
         std::memcpy(obuf.data(), response.c_str(), std::min(obuf.size_in_bytes(), response.size()));
 
-        ion::log::info("Generated response: {}", response);
+        ion::log::debug("Generated response: {}", response);
 
         return 0;
 
