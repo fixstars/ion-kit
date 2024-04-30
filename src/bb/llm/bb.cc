@@ -38,6 +38,33 @@ class RegisterExtern {
 
 #define ION_REGISTER_EXTERN(NAME) static auto ion_register_extern_##NAME = ion::bb::llm::RegisterExtern(#NAME, NAME);
 
+std::string escape_escape_sequences(const std::string &str_) {
+    auto str = str_;;
+    std::pair<char, char> const sequences[]{
+        {'\a', 'a'},
+        {'\b', 'b'},
+        {'\f', 'f'},
+        {'\n', 'n'},
+        {'\r', 'r'},
+        {'\t', 't'},
+        {'\v', 'v'},
+    };
+
+    for (size_t i = 0; i < str.length(); ++i) {
+        char *const c = str.data() + i;
+
+        for (auto const seq : sequences) {
+            if (*c == seq.first) {
+                *c = seq.second;
+                str.insert(i, "\\");
+                ++i;  // to account for inserted "\\"
+                break;
+            }
+        }
+    }
+
+    return str;
+}
 // 
 // NOTE: Originally defined in llama.cpp
 // 
@@ -143,14 +170,12 @@ static std::string process_prompt(struct llava_context * ctx_llava, struct llava
         // new templating mode: Provide the full prompt including system message and use <image> as a placeholder for the image
         system_prompt = prompt.substr(0, image_pos);
         user_prompt = prompt.substr(image_pos + std::string("<image>").length());
-        ion::log::debug("system_prompt: {}", system_prompt);
         if (params->verbose_prompt) {
             auto tmp = ::llama_tokenize(ctx_llava->ctx_llama, system_prompt, true, true);
             for (int i = 0; i < (int) tmp.size(); i++) {
                 ion::log::info("{:6d} -> '{}'", tmp[i], llama_token_to_piece(ctx_llava->ctx_llama, tmp[i]));
             }
         }
-        ion::log::debug("user_prompt: {}", user_prompt);
         if (params->verbose_prompt) {
             auto tmp = ::llama_tokenize(ctx_llava->ctx_llama, user_prompt, true, true);
             for (int i = 0; i < (int) tmp.size(); i++) {
@@ -185,6 +210,8 @@ static std::string process_prompt(struct llava_context * ctx_llava, struct llava
         if (strstr(response.c_str(), "<|im_start|>")) break; // Yi-34B llava-1.6
         if (strstr(response.c_str(), "USER:")) break; // mistral llava-1.6
     }
+    
+    ion::log::debug("system_prompt:{} user_prompt:{} response:{}", system_prompt, user_prompt, escape_escape_sequences(response));
 
     llama_sampling_free(ctx_sampling);
     
@@ -341,7 +368,8 @@ public:
         auto image_embed = load_image(ctx_llava_, &params_, buf, width_, height_);
 
         // process the prompt
-        auto response = process_prompt(ctx_llava_, image_embed, &params_, "<image>" + prompt);
+        auto response = process_prompt(ctx_llava_, image_embed, &params_, prompt);
+
         llava_image_embed_free(image_embed);
 
         response = response.substr(response.find_last_of('\n')+1);
@@ -476,8 +504,6 @@ ION_EXPORT int ion_bb_llm_llava(halide_buffer_t *in, halide_buffer_t *prompt, in
 
         obuf.fill(0);
         std::memcpy(obuf.data(), response.c_str(), std::min(obuf.size_in_bytes(), response.size()));
-
-        ion::log::debug("Generated response: {}", response);
 
         return 0;
 
