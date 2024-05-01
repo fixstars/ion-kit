@@ -30,7 +30,7 @@ class App(Frame):
         self.prompt_string = StringVar()
         self.prompt_string.set('Explain the image in a single sentence.')
 
-        # Support variables 
+        # Support variables
         self.live_mode = False
         self.advanced_mode = False
         self.analyze_in_progress = False
@@ -42,7 +42,7 @@ class App(Frame):
         self.window.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def init_pipeline(self):
-        
+
         self.b = Builder()
         self.b.set_target("host-cuda")
         self.b.with_bb_module("ion-bb")
@@ -66,11 +66,12 @@ class App(Frame):
 
         self.response_buf = Buffer(array=self.response)
         n_txt.get_port("output").bind(self.response_buf)
-    
+
     def init_layout(self):
         img_frame = Frame(self, style='Card.TFrame', padding=15)
         img_frame.grid(row=0, column=0, sticky='nsew')
-        self.img_canvas = Canvas(img_frame, width = self.width, height = self.height)
+        #self.img_canvas = Canvas(img_frame, width = self.width, height = self.height)
+        self.img_canvas = Canvas(img_frame, width = self.width * 0.85, height = self.height * 0.85)
         self.img_canvas.pack()
 
         control_frame = Frame(self, padding=15)
@@ -81,10 +82,10 @@ class App(Frame):
 
         self.live_checkbutton = Checkbutton(control_frame, text='Live', style='Switch.TCheckbutton', command=self.toggle_live)
         self.live_checkbutton.grid(row=0, column=11, padx=5)
-        
+
         self.analysis_button = Button(control_frame, text='Analyze', command = self.analyze, width=10, style='Accent.TButton')
         self.analysis_button.grid(row=0, column=12, padx=5)
- 
+
         response_frame = Frame(self, padding=15)
         response_frame.grid(row=2, columnspan=2, sticky='nsew')
         self.response_label = Label(response_frame, font=('Helvetica', 18), wraplength=1200, justify='left')
@@ -93,11 +94,11 @@ class App(Frame):
         self.update_prompt()
         self.update_response()
         self.update_periodic()
-  
+
     def update_periodic(self):
         # Running pipeline
         self.b.run()
-        
+
         self.photo = ImageTk.PhotoImage(image = Image.fromarray(self.img))
         self.img_canvas.create_image(0, 0, image = self.photo, anchor = NW)
 
@@ -105,7 +106,7 @@ class App(Frame):
             self.update_response()
 
         self.window.after(30, self.update_periodic)
- 
+
     def update_prompt(self):
         self.prompt.fill(0)
         i = 0
@@ -117,7 +118,7 @@ class App(Frame):
         offset = i
         for i, c in enumerate(self.prompt_string.get()):
             self.prompt[offset+i] = ord(c)
-        
+
         # Clearing response make look & feel better
         self.response.fill(0)
         self.response_label.configure(text='')
