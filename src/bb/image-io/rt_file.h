@@ -120,11 +120,11 @@ namespace {
 
 class Writer {
 public:
-    static Writer& get_instance(const std::string& id, std::vector<int32_t>& payload_size, const ::std::string& output_directory, bool write_framecount)
+    static Writer& get_instance(int32_t num_device, const std::string& id, std::vector<int32_t>& payload_size, const ::std::string& output_directory, bool write_framecount)
     {
 
         if (instances.count(id) == 0) {
-            instances[id] = std::unique_ptr<Writer>(new Writer(payload_size, output_directory, write_framecount));
+            instances[id] = std::unique_ptr<Writer>(new Writer(num_device, payload_size, output_directory, write_framecount));
         }
         return *instances[id];
     }
@@ -148,16 +148,17 @@ public:
         if (ep_) {
             ::std::rethrow_exception(ep_);
         }
-        uint8_t* buffer = buf_queue_.front();
-        buf_queue_.pop();
-        size_t offset = 0;
+        // uint8_t* buffer = buf_queue_.front();
+        // buf_queue_.pop();
+        // size_t offset = 0;
         for (int i = 0; i < outs.size(); ++i){
-            ::std::memcpy(buffer + offset, reinterpret_cast<int32_t*>(framecounts) + i, sizeof(int32_t));
-            offset += sizeof(int32_t);
-            ::std::memcpy(buffer + offset, outs[i], size[i]);
-            offset += size[i];
+
+            uint8_t* buffer = buf_queue_.front();
+            buf_queue_.pop();
+            ::std::memcpy(buffer, reinterpret_cast<int32_t*>(framecounts) + i, sizeof(int32_t));
+            ::std::memcpy(buffer + sizeof(int32_t), outs[i], size[i]);
+            task_queue_.push(::std::make_tuple(i, buffer, size[i]));
         }
-        task_queue_.push(::std::make_tuple(0, buffer, offset));
         task_cv_.notify_one();
     }
 
@@ -171,14 +172,13 @@ public:
         if (ep_) {
             ::std::rethrow_exception(ep_);
         }
-        uint8_t* buffer = buf_queue_.front();
-        buf_queue_.pop();
-        size_t offset = 0;
+        
         for (int i = 0; i < outs.size(); ++i){
-            ::std::memcpy(buffer + offset, outs[i], size[i]);
-            offset += size[i];
+            uint8_t* buffer = buf_queue_.front();
+            buf_queue_.pop();
+            ::std::memcpy(buffer, outs[i], size[i]);
+            task_queue_.push(::std::make_tuple(i, buffer, size[i]));
         }
-        task_queue_.push(::std::make_tuple(0, buffer, offset));
         task_cv_.notify_one();
     }
 
@@ -229,8 +229,8 @@ public:
     }
 
 private:
-    Writer(std::vector<int32_t>& payload_size, const ::std::string& output_directory, bool write_framecount)
-        : keep_running_(true), output_directory_(output_directory), with_header_(true), disposed_(false)
+    Writer(int32_t num_device, std::vector<int32_t>& payload_size, const ::std::string& output_directory, bool write_framecount)
+        : num_device_(num_device), keep_running_(true), output_directory_(output_directory), with_header_(true), disposed_(false)
     {
         int total_payload_size = 0;
         for (auto s : payload_size){
@@ -246,7 +246,10 @@ private:
             buf_queue_.push(buffers_[i].data());
         }
         thread_ = ::std::make_shared<::std::thread>(entry_point, this);
-        ofs_ = ::std::ofstream(output_directory_ / "raw-0.bin", ::std::ios::binary);
+        for (int i = 0; i < num_device_; ++i){
+            ofs_.push_back(::std::ofstream(output_directory_ / std::filesystem::u8path("device" + std::to_string(i)) / "raw-0.bin", ::std::ios::binary));
+        }
+        
     }
 
     int get_buffer_num(int width, int height, int num_sensor = 2, int data_in_byte = 2) {
@@ -272,7 +275,7 @@ private:
     }
 
     void thread_main() {
-        uint32_t frame_count;
+        uint32_t device_index;
         uint8_t* buffer;
         size_t size;
 
@@ -288,16 +291,16 @@ private:
                 if (!keep_running_) {
                     break;
                 }
-                ::std::tie(frame_count, buffer, size) = task_queue_.front();
+                ::std::tie(device_index, buffer, size) = task_queue_.front();
                 task_queue_.pop();
             }
 
             if (i == rotate_limit) {
                 i = 0;
-                ofs_ = ::std::ofstream(output_directory_ / ("raw-" + ::std::to_string(file_idx++) + ".bin"), ::std::ios::binary);
+                ofs_[device_index] = ::std::ofstream(output_directory_ / std::filesystem::u8path("device" + std::to_string(device_index)) / ("raw-" + ::std::to_string(file_idx++) + ".bin"), ::std::ios::binary);
             }
 
-            ofs_.write(reinterpret_cast<const char*>(buffer), size);
+            ofs_[device_index].write(reinterpret_cast<const char*>(buffer), size);
 
             {
                 ::std::unique_lock<::std::mutex> lock(mutex_);
@@ -315,17 +318,16 @@ private:
                 if (task_queue_.empty()) {
                     break;
                 }
-                ::std::tie(frame_count, buffer, size) = task_queue_.front();
+                ::std::tie(device_index, buffer, size) = task_queue_.front();
                 task_queue_.pop();
             }
 
             if (i == rotate_limit) {
                 i = 0;
-                ofs_ = ::std::ofstream(output_directory_ / ("raw-" + ::std::to_string(file_idx++) + ".bin"), ::std::ios::binary);
+                ofs_[device_index] = ::std::ofstream(output_directory_ / std::filesystem::u8path("device" + std::to_string(device_index)) / ("raw-" + ::std::to_string(file_idx++) + ".bin"), ::std::ios::binary);
             }
 
-
-            ofs_.write(reinterpret_cast<const char*>(buffer), size);
+            ofs_[device_index].write(reinterpret_cast<const char*>(buffer), size);
 
             {
                 ::std::unique_lock<::std::mutex> lock(mutex_);
@@ -336,7 +338,9 @@ private:
             ++i;
         }
 
-        ofs_.close();
+        for ( int n = 0; n < num_device_; ++n){
+            ofs_[n].close();
+        }
     }
 
     static ::std::unordered_map < ::std::string, std::unique_ptr<Writer>> instances; // declares Writer::instance
@@ -349,11 +353,13 @@ private:
     ::std::queue<::std::tuple<uint32_t, uint8_t*, size_t>> task_queue_;
     bool keep_running_;
     ::std::exception_ptr ep_;
-    ::std::ofstream ofs_;
+    ::std::vector<::std::ofstream> ofs_;
     uint32_t width_;
     uint32_t height_;
     std::filesystem::path output_directory_;
     bool disposed_;
+
+    int32_t num_device_;
 
     bool with_header_;
 };
@@ -378,7 +384,7 @@ int ion_bb_image_io_binary_2gendc_saver( halide_buffer_t * id_buf, halide_buffer
         const std::string id(reinterpret_cast<const char *>(id_buf->host));
         const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
         std::vector<int32_t>payloadsize_list{payloadsize, payloadsize};
-        auto& w(Writer::get_instance(id, payloadsize_list,  output_directory, false));
+        auto& w(Writer::get_instance(2, id, payloadsize_list,  output_directory, false));
         if (in0->is_bounds_query() || in1->is_bounds_query() || in2->is_bounds_query() || in3->is_bounds_query()) {
             int i = 1;
             if (in0->is_bounds_query()) {
@@ -435,7 +441,7 @@ int ion_bb_image_io_binary_1gendc_saver( halide_buffer_t * id_buf, halide_buffer
         const std::string id(reinterpret_cast<const char *>(id_buf->host));
         const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
         std::vector<int32_t>payloadsize_list{payloadsize};
-        auto& w(Writer::get_instance(id,payloadsize_list, output_directory, false));
+        auto& w(Writer::get_instance(1, id,payloadsize_list, output_directory, false));
         if (gendc->is_bounds_query() || deviceinfo->is_bounds_query()) {
             if (gendc->is_bounds_query()) {
                 gendc->dim[0].min = 0;
@@ -486,7 +492,7 @@ int ion_bb_image_io_binary_1image_saver(
         int32_t frame_size = dim == 2 ? width * height * byte_depth : width * height * 3 * byte_depth;
         std::vector<int32_t>frame_size_list{frame_size};
         const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
-        auto& w(Writer::get_instance(id, frame_size_list, output_directory, true));
+        auto& w(Writer::get_instance(1, id, frame_size_list, output_directory, true));
 
         if (image->is_bounds_query() || deviceinfo->is_bounds_query() || frame_count->is_bounds_query()) {
             if (image->is_bounds_query()) {
@@ -549,7 +555,7 @@ int ion_bb_image_io_binary_2image_saver(
         int32_t frame_size = dim == 2 ? width * height * byte_depth : width * height * 3 * byte_depth;
         std::vector<int32_t>frame_size_list{frame_size, frame_size};
         const ::std::string output_directory(reinterpret_cast<const char*>(output_directory_buf->host));
-        auto& w(Writer::get_instance(id, frame_size_list, output_directory, true));
+        auto& w(Writer::get_instance(2, id, frame_size_list, output_directory, true));
 
         if (image0->is_bounds_query() || deviceinfo0->is_bounds_query() || 
             image1->is_bounds_query() || deviceinfo1->is_bounds_query() || frame_count->is_bounds_query()) {
