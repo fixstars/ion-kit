@@ -296,12 +296,12 @@ protected:
     virtual void get(std::vector<Halide::Buffer<>>& outs){};
     virtual void get(std::vector<void *>& outs){};
 
-    void get_frame_count(uint32_t * out){
+    void get_frame_count(std::vector<void *>& outs){
         if (num_sensor_ != devices_.size()){
-            ::memcpy(out, &frame_cnt_, sizeof(uint32_t));
+            ::memcpy(outs[0], &frame_cnt_, sizeof(uint32_t));
         }else{
             for (int nd = 0; nd < num_sensor_; nd++){
-                ::memcpy(out + nd, &devices_[nd].frame_count_, sizeof(uint32_t));
+                ::memcpy(outs[nd], &devices_[nd].frame_count_, sizeof(uint32_t));
             }
         }
     }
@@ -1652,13 +1652,14 @@ int u3v_camera_frame_count(
 {
     try {
         auto &u3v(ion::bb::image_io::U3VRealCam::get_instance(id, num_sensor, frame_sync, realtime_display_mode));
+        std::vector<void *> obufs{out->host};
         if (out->is_bounds_query()) {
             out->dim[0].min = 0;
             out->dim[0].extent = num_sensor;
             return 0;
         }
         else {
-            u3v.get_frame_count(reinterpret_cast<uint32_t*>(out->host));
+            u3v.get_frame_count(obufs);
         }
 
         return 0;
@@ -1967,6 +1968,7 @@ int ION_EXPORT ion_bb_image_io_u3v_multiple_camera_frame_count1(
     try {
         const std::string id(reinterpret_cast<const char *>(id_buf->host));
         const std::string pixel_format(reinterpret_cast<const char *>(pixel_format_buf->host));
+        std::vector<void *> obufs{out->host};
         if (out->is_bounds_query()) {
             out->dim[0].min = 0;
             out->dim[0].extent = num_sensor;
@@ -1974,10 +1976,10 @@ int ION_EXPORT ion_bb_image_io_u3v_multiple_camera_frame_count1(
         }
         if(force_sim_mode){
               auto &u3v(ion::bb::image_io::U3VFakeCam::get_instance(id, 1, width, height, fps, pixel_format));
-              u3v.get_frame_count(reinterpret_cast<uint32_t*>(out->host));
+              u3v.get_frame_count(obufs);
         }else{
              auto &u3v(ion::bb::image_io::U3VRealCam::get_instance(id, 1, frame_sync, realtime_display_mode, force_sim_mode, width, height, fps, pixel_format));
-             u3v.get_frame_count(reinterpret_cast<uint32_t*>(out->host));
+             u3v.get_frame_count(obufs);
         }
 
         return 0;
@@ -2000,22 +2002,21 @@ int ION_EXPORT ion_bb_image_io_u3v_multiple_camera_frame_count2(
     int32_t width, int32_t height, float_t fps,
     bool frame_sync, bool realtime_display_mode,
     halide_buffer_t * pixel_format_buf,
-    halide_buffer_t* out)
+    halide_buffer_t * out0, halide_buffer_t * out1)
 {
     try {
         const std::string id(reinterpret_cast<const char *>(id_buf->host));
         const std::string pixel_format(reinterpret_cast<const char *>(pixel_format_buf->host));
-        if (out->is_bounds_query()) {
-            out->dim[0].min = 0;
-            out->dim[0].extent = num_sensor;
+        std::vector<void *> obufs{out0->host, out1->host};
+        if (out0->is_bounds_query() || out1->is_bounds_query()) {
             return 0;
         }
         if(force_sim_mode){
             auto &u3v(ion::bb::image_io::U3VFakeCam::get_instance(id, 2, width, height, fps, pixel_format));
-            u3v.get_frame_count(reinterpret_cast<uint32_t*>(out->host));
+            u3v.get_frame_count(obufs);
         }else{
             auto &u3v(ion::bb::image_io::U3VRealCam::get_instance(id, 2, frame_sync, realtime_display_mode, force_sim_mode, width, height, fps, pixel_format));
-            u3v.get_frame_count(reinterpret_cast<uint32_t*>(out->host));
+            u3v.get_frame_count(obufs);
         }
         return 0;
     } catch (const std::exception &e) {
