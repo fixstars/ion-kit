@@ -31,7 +31,7 @@ class App(Frame):
         self.prompt_string.set('Explain the image in a single sentence.')
 
         # Support variables
-        self.live_mode = False
+        self.live_mode = True
         self.advanced_mode = False
         self.analyze_in_progress = False
         self.last_response = np.copy(self.response)
@@ -68,27 +68,33 @@ class App(Frame):
         n_txt.get_port("output").bind(self.response_buf)
 
     def init_layout(self):
-        img_frame = Frame(self, style='Card.TFrame', padding=15)
-        img_frame.grid(row=0, column=0, sticky='nsew')
+        xframe = Frame(self)
+        xframe.place(relx=0.5, rely=0.5, anchor="c")
+
+        img_frame = Frame(xframe, padding=15)
+        #img_frame.grid(row=2, column=0, columnspan=12, sticky='nsew')
+        img_frame.grid(row=2, sticky='nsew')
         #self.img_canvas = Canvas(img_frame, width = self.width, height = self.height)
-        self.img_canvas = Canvas(img_frame, width = self.width * 0.85, height = self.height * 0.85)
+        self.img_canvas = Canvas(img_frame, width = self.width * 0.95, height = self.height * 0.95)
         self.img_canvas.pack()
 
-        control_frame = Frame(self, padding=15)
-        control_frame.grid(row=1, column=0, sticky='nsew')
+        control_frame = Frame(xframe, padding=15)
+        #control_frame.grid(row=0, column=0, sticky='nsew')
+        control_frame.grid(row=0, sticky='nsew')
         self.prompt_textbox = Entry(control_frame, textvariable=self.prompt_string, width=100, font=('Helvetica', 18))
         self.prompt_textbox.bind("<FocusOut>", lambda event: self.update_prompt())
         self.prompt_textbox.grid(row=0, column=0, columnspan=10, padx=5)
 
-        self.live_checkbutton = Checkbutton(control_frame, text='Live', style='Switch.TCheckbutton', command=self.toggle_live)
-        self.live_checkbutton.grid(row=0, column=11, padx=5)
+        # self.live_checkbutton = Checkbutton(control_frame, text='Live', style='Switch.TCheckbutton', command=self.toggle_live)
+        # self.live_checkbutton.grid(row=0, column=10, padx=5)
 
-        self.analysis_button = Button(control_frame, text='Analyze', command = self.analyze, width=10, style='Accent.TButton')
-        self.analysis_button.grid(row=0, column=12, padx=5)
+        # self.analysis_button = Button(control_frame, text='Analyze', command = self.analyze, width=10, style='Accent.TButton')
+        # self.analysis_button.grid(row=0, column=11, padx=5)
 
-        response_frame = Frame(self, padding=15)
-        response_frame.grid(row=2, columnspan=2, sticky='nsew')
-        self.response_label = Label(response_frame, font=('Helvetica', 18), wraplength=1200, justify='left')
+        response_frame = Frame(xframe, padding=15, height=50)
+        #response_frame.grid(row=1, columnspan=2, sticky='nsew')
+        response_frame.grid(row=1, sticky='nsew')
+        self.response_label = Label(response_frame, font=('Helvetica', 28), wraplength=1900, justify='left')
         self.response_label.pack()
 
         self.update_prompt()
@@ -150,7 +156,12 @@ class App(Frame):
 
 # GUIウィンドウの作成
 root = Tk()  # create CTk window like you do with the Tk window
-root.title("Interactive LLAVA Demo")
+#root.title("Interactive LLAVA Demo")
+root.geometry("1920x1280")
+root.wm_attributes('-type', 'splash')
+root.wm_attributes('-fullscreen', True)
+root.grid_rowconfigure(0, weight=1)
+root.grid_columnconfigure(0, weight=1)
 sv_ttk.set_theme("dark")
 App(root).pack(expand=True, fill='both')
 root.mainloop()
