@@ -13,8 +13,10 @@ For Halide, please find latest binary release [here](https://github.com/halide/H
 
 We recommend to setup libjpeg-turbo, libpng and zlib by [vcpkg](https://vcpkg.io/).
 
+In root folder of `ion-kit` run:
+
 ```sh
-vcpkg install libjpeg-turbo:x64-windows-static libpng:x64-windows-static zlib:x64-windows-static
+vcpkg install
 ```
 
 ## 2. Build
