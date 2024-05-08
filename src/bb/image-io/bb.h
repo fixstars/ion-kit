@@ -839,7 +839,7 @@ public:
 
     Output<Halide::Func[]> output{ "output", Halide::type_of<T>(), D};
     Output<Halide::Func[]> device_info{ "device_info", Halide::type_of<uint8_t>(), 1};
-    Output<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
+    Output<Halide::Func[]> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
 
     std::vector<Input<double> *> gain;
     std::vector<Input<double> *> exposure;
@@ -964,9 +964,20 @@ public:
                 pixel_format_buf
             };
 
-            cameraN_fc.define_extern("ion_bb_image_io_u3v_multiple_camera_frame_count" + std::to_string(output.size()), params, type_of<uint32_t>(), 1);
+            frame_count.resize(num_devices);
+            std::vector<Halide::Type> output_type;
+            for (int i = 0; i < frame_count.size(); i++) {
+                output_type.push_back(Halide::type_of<uint32_t>());
+            }
+            cameraN_fc.define_extern("ion_bb_image_io_u3v_multiple_camera_frame_count" + std::to_string(output.size()), params, output_type, 1);
             cameraN_fc.compute_root();
-            frame_count(_) = cameraN_fc(_);
+            if (frame_count.size() == 1){
+                frame_count[0](_) = cameraN_fc(_);
+            }else{
+                for (int i = 0; i < device_info.size(); i++) {
+                    frame_count[i](_) = cameraN_fc(_)[i];
+                }
+            }
         }
         this->register_disposer("u3v_dispose");
     }
