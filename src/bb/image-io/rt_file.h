@@ -212,6 +212,7 @@ public:
     void write_config_file(ion::bb::image_io::rawHeader& header_info){
         nlohmann::json j;
         nlohmann::json j_sensor;
+        j_sensor["prefix"] = prefix_;
         j_sensor["framerate"] = header_info.fps_;
         j_sensor["width"] = header_info.width_;
         j_sensor["height"] = header_info.height_;
