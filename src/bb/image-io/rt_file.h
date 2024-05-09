@@ -210,18 +210,16 @@ public:
        }
 
     void write_config_file(ion::bb::image_io::rawHeader& header_info){
-        nlohmann::json j;
         nlohmann::json j_sensor;
         j_sensor["prefix"] = prefix_;
         j_sensor["framerate"] = header_info.fps_;
         j_sensor["width"] = header_info.width_;
         j_sensor["height"] = header_info.height_;
         j_sensor["pfnc_pixelformat"] = header_info.pfnc_pixelformat;
-        j["sensor"] = j_sensor;
 
         auto filename = prefix_ + "config.json";
         std::ofstream config(output_directory_ / filename);
-        config << std::setw(4) << j << std::endl;
+        config << std::setw(4) << j_sensor << std::endl;
         config.close();
         with_header_ = false;
     }
