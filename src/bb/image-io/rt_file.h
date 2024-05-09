@@ -138,10 +138,10 @@ public:
     }
 
     void post_image(std::vector<void *>& outs, std::vector<size_t>& size,
-                    std::vector<ion::bb::image_io::rawHeader>& header_infos, void* framecounts)
+                    ion::bb::image_io::rawHeader& header_info, void* framecounts)
     {
         if (with_header_){
-            write_config_file(header_infos);
+            write_config_file(header_info);
         }
         ::std::unique_lock<::std::mutex> lock(mutex_);
         buf_cv_.wait(lock, [&] { return !buf_queue_.empty() || ep_; });
@@ -161,10 +161,10 @@ public:
         task_cv_.notify_one();
     }
 
-    void post_gendc(std::vector<void *>& outs, std::vector<size_t>& size, std::vector<ion::bb::image_io::rawHeader>& header_infos)
+    void post_gendc(std::vector<void *>& outs, std::vector<size_t>& size, ion::bb::image_io::rawHeader& header_info)
     {
         if (with_header_){
-            write_config_file(header_infos);
+            write_config_file(header_info);
         }
         ::std::unique_lock<::std::mutex> lock(mutex_);
         buf_cv_.wait(lock, [&] { return !buf_queue_.empty() || ep_; });
@@ -209,22 +209,18 @@ public:
 
        }
 
-    void write_config_file(std::vector<ion::bb::image_io::rawHeader>& header_infos){
-        nlohmann::json j;
-        j["num_device"] = header_infos.size();
-        for (int i = 0; i < header_infos.size(); ++i){
-            nlohmann::json j_ith_sensor;
-            j_ith_sensor["framerate"] = header_infos[i].fps_;
-            j_ith_sensor["width"] = header_infos[i].width_;
-            j_ith_sensor["height"] = header_infos[i].height_;
-            j_ith_sensor["pfnc_pixelformat"] = header_infos[i].pfnc_pixelformat;
-            j["sensor" + std::to_string(i+1)] = j_ith_sensor;
-        }
+    void write_config_file(ion::bb::image_io::rawHeader& header_info){
+        nlohmann::json j_sensor;
+        j_sensor["prefix"] = prefix_;
+        j_sensor["framerate"] = header_info.fps_;
+        j_sensor["width"] = header_info.width_;
+        j_sensor["height"] = header_info.height_;
+        j_sensor["pfnc_pixelformat"] = header_info.pfnc_pixelformat;
 
-        ::std::ofstream config(output_directory_ / "config.json");
-        config << std::setw(4) << j << std::endl;
+        auto filename = prefix_ + "config.json";
+        std::ofstream config(output_directory_ / filename);
+        config << std::setw(4) << j_sensor << std::endl;
         config.close();
-
         with_header_ = false;
     }
 
@@ -394,13 +390,12 @@ int ion_bb_image_io_binary_gendc_saver( halide_buffer_t * id_buf, halide_buffer_
             return 0;
         }
         else {
-            ion::bb::image_io::rawHeader header_info0;
-            ::memcpy(&header_info0, deviceinfo->host, sizeof(ion::bb::image_io::rawHeader));
-            std::vector<ion::bb::image_io::rawHeader> header_infos{header_info0};
+            ion::bb::image_io::rawHeader header_info;
+            ::memcpy(&header_info, deviceinfo->host, sizeof(ion::bb::image_io::rawHeader));
 
             std::vector<void *> obufs{gendc->host};
             std::vector<size_t> size_in_bytes{gendc->size_in_bytes()};
-            w.post_gendc(obufs, size_in_bytes, header_infos);
+            w.post_gendc(obufs, size_in_bytes, header_info);
 
 
         }
@@ -460,13 +455,13 @@ int ion_bb_image_io_binary_image_saver(
         else {
 
 
-            ion::bb::image_io::rawHeader header_info0;
-            ::memcpy(&header_info0, deviceinfo->host, sizeof(ion::bb::image_io::rawHeader));
-            std::vector<ion::bb::image_io::rawHeader> header_infos{header_info0};
+            ion::bb::image_io::rawHeader header_info;
+            memcpy(&header_info, deviceinfo->host, sizeof(ion::bb::image_io::rawHeader));
+            std::vector<ion::bb::image_io::rawHeader> header_infos{header_info};
 
             std::vector<void *> obufs{image->host};
             std::vector<size_t> size_in_bytes{image->size_in_bytes()};
-            w.post_image(obufs, size_in_bytes, header_infos, frame_count->host);
+            w.post_image(obufs, size_in_bytes, header_info, frame_count->host);
         }
 
         return 0;
