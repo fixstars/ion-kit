@@ -220,8 +220,8 @@ public:
             j_ith_sensor["pfnc_pixelformat"] = header_infos[i].pfnc_pixelformat;
             j["sensor" + std::to_string(i+1)] = j_ith_sensor;
         }
-
-        ::std::ofstream config(output_directory_ / "config.json");
+        auto filename = prefix_ + "config.json";
+        std::ofstream config(output_directory_ / filename);
         config << std::setw(4) << j << std::endl;
         config.close();
 
