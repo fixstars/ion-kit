@@ -6,6 +6,7 @@ if (UNIX)
 endif()
 
 function(ion_aot_executable NAME_PREFIX)
+    message(STATUS "name_pref ${NAME_PREFIX}")
     set(options)
     set(oneValueArgs TARGET_STRING)
     set(multiValueArgs SRCS_COMPILE SRCS_RUN INCS LIBS RUNTIME_ARGS COMPILER_ARGS)
@@ -32,6 +33,7 @@ function(ion_aot_executable NAME_PREFIX)
     # Run compile
     set(OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/compile/${COMPILE_NAME}_out)
     set(HEADER ${OUTPUT_PATH}/${NAME_PREFIX}.h)
+    message(STATUS "header ${HEADER}")
     set(STATIC_LIB ${OUTPUT_PATH}/${NAME_PREFIX}${CMAKE_STATIC_LIBRARY_SUFFIX})
     add_custom_command(OUTPUT ${OUTPUT_PATH}
         COMMAND ${CMAKE_COMMAND} -E make_directory ${OUTPUT_PATH}

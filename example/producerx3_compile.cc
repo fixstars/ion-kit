@@ -16,7 +16,10 @@ int main() {
         n = b.add("base_extend_dimension_1d_uint8")(n["output"]);
         n = b.add("base_extend_dimension_2d_uint8")(n["output"]);
 
+        // std::printf("cuda found: %d\n",CUDA_FOUND);
+
         b.compile("producerx3");
+        // b.compile("producerx3_gpu");
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
         return -1;
