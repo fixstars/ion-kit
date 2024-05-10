@@ -6,7 +6,7 @@
 
 #include <HalideBuffer.h>
 
-#include <dnn.h>
+#include "dnn.h"
 
 int main(int argc, char *argv[]) {
     try {
