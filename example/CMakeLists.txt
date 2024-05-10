@@ -7,7 +7,6 @@ find_package(OpenCV 4 QUIET)
 
 if(${ION_BB_BUILD_base})
     if(${CUDA_FOUND})
-        message(STATUS "!!CUDA WAS FOUND OUTPUTING PRODUCERx3_GPU!!!!")
         ion_aot_executable(producerx3 SRCS_COMPILE producerx3_compile.cc SRCS_RUN producerx3_run.cc TARGET_STRING "host-cuda-cuda_capability_50-profile")
     elseif()
         ion_aot_executable( SRCS_COMPILE producerx3_compile.cc SRCS_RUN producerx3_run.cc TARGET_STRING "host-profile")
