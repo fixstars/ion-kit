@@ -65,9 +65,9 @@ std::string escape_escape_sequences(const std::string &str_) {
 
     return str;
 }
-// 
+//
 // NOTE: Originally defined in llama.cpp
-// 
+//
 struct llava_context {
     struct clip_ctx * ctx_clip = NULL;
     struct llama_context * ctx_llama = NULL;
@@ -210,11 +210,11 @@ static std::string process_prompt(struct llava_context * ctx_llava, struct llava
         if (strstr(response.c_str(), "<|im_start|>")) break; // Yi-34B llava-1.6
         if (strstr(response.c_str(), "USER:")) break; // mistral llava-1.6
     }
-    
+
     ion::log::debug("system_prompt:{} user_prompt:{} response:{}", system_prompt, user_prompt, escape_escape_sequences(response));
 
     llama_sampling_free(ctx_sampling);
-    
+
     return response;
 }
 
@@ -269,10 +269,10 @@ static void llava_new_context_llama(llava_context *ctx_llava, gpt_params *params
     if (ctx_llama == NULL) {
         throw std::runtime_error("Failed to create the llama_context");
     }
-    
+
     if (ctx_llava->ctx_llama != NULL) {
         llama_free(ctx_llava->ctx_llama);
-    }   
+    }
     ctx_llava->ctx_llama = ctx_llama;
 }
 
@@ -296,7 +296,7 @@ static llava_context * llava_init_without_ctx_llama(gpt_params *params) {
         ion::log::error("Unable to load model");
         return NULL;
     }
-    
+
     auto ctx_llava = (struct llava_context *)malloc(sizeof(llava_context));
 
     ctx_llava->ctx_llama = nullptr;
@@ -318,15 +318,15 @@ static void llava_free(struct llava_context * ctx_llava) {
 }
 
 namespace ion {
-namespace bb {  
-namespace llm { 
-namespace rt { 
+namespace bb {
+namespace llm {
+namespace rt {
 
 class Llava {
 public:
     static Llava &get_instance() {
         static Llava llava;
-        return llava; 
+        return llava;
     }
 
     static void release_instance(const std::string& id) {
@@ -336,7 +336,7 @@ public:
         llava_free(llava.ctx_llava_);
     }
 
-    Llava(const Llava &) = delete;  
+    Llava(const Llava &) = delete;
 
     ~Llava() {
     }
@@ -348,10 +348,10 @@ public:
 
     void init(int32_t width, int32_t height) {
         width_ = width;
-        height_ = height; 
+        height_ = height;
 
         thread_ = std::thread(entry_point, this);
- 
+
         ctx_llava_ = llava_init(&params_);
         if (ctx_llava_ == NULL) {
             throw std::runtime_error("Failed to init llava");
@@ -359,11 +359,8 @@ public:
 
         initialized_ = true;
     }
- 
-    std::string process(const std::vector<uint8_t>& buf, const std::string& prompt) {
 
-        static std::ofstream ofs("test.bin");
-        ofs.write(reinterpret_cast<const char*>(buf.data()), buf.size());
+    std::string process(const std::vector<uint8_t>& buf, const std::string& prompt) {
 
         auto image_embed = load_image(ctx_llava_, &params_, buf, width_, height_);
 
@@ -374,7 +371,7 @@ public:
 
         response = response.substr(response.find_last_of('\n')+1);
         response = response.substr(0, response.find_last_of("</s>")-4);
- 
+
         llama_kv_cache_clear(ctx_llava_->ctx_llama);
 
         return response;
@@ -382,18 +379,18 @@ public:
 
     void post(const Halide::Runtime::Buffer<uint8_t>& ibuf, const std::string& prompt) {
         std::unique_lock<std::mutex> lock(mutex_);
-        
-        // clear old 
+
+        // clear old
         while (task_queue_.size()) {
             task_queue_.pop();
         }
 
         task_queue_.emplace(std::make_shared<std::vector<uint8_t>>(ibuf.data(), ibuf.data()+ibuf.size_in_bytes()), prompt);
-        cv_.notify_one();   
+        cv_.notify_one();
     }
 
     std::string retrieve(){
-        std::unique_lock<std::mutex> lock(mutex_);  
+        std::unique_lock<std::mutex> lock(mutex_);
         return response_;
     }
 
@@ -415,7 +412,7 @@ private:
             {
                 std::unique_lock<std::mutex> lock(mutex_);
                 cv_.wait(lock, [this] { return task_queue_.size(); });
-                
+
                 std::tie(bufp, prompt) = task_queue_.front();
                 task_queue_.pop();
             }
@@ -461,7 +458,7 @@ private:
 } // rt
 } // llm
 } // bb
-} // ion    
+} // ion
 
 extern "C"
 int ION_EXPORT ion_bb_llm_llava_dispose(const char *id) {
@@ -481,7 +478,7 @@ ION_EXPORT int ion_bb_llm_llava(halide_buffer_t *in, halide_buffer_t *prompt, in
                 in->dim[2].min = 0;
                 in->dim[2].extent = height;
             }
-            
+
             if (prompt->is_bounds_query()) {
                 prompt->dim[0].min = 0;
                 prompt->dim[0].extent = 1024; // TBD

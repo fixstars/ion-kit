@@ -72,18 +72,21 @@ class App(Frame):
         xframe.place(relx=0.5, rely=0.5, anchor="c")
 
         img_frame = Frame(xframe, padding=15)
-        #img_frame.grid(row=2, column=0, columnspan=12, sticky='nsew')
-        img_frame.grid(row=2, sticky='nsew')
+        # #img_frame.grid(row=2, column=0, columnspan=12, sticky='nsew')
+        # img_frame.grid(row=2, sticky='nsew')
         #self.img_canvas = Canvas(img_frame, width = self.width, height = self.height)
-        self.img_canvas = Canvas(img_frame, width = self.width * 0.95, height = self.height * 0.95)
+        self.img_canvas = Canvas(xframe, width = 1920, height = 1080)
         self.img_canvas.pack()
 
         control_frame = Frame(xframe, padding=15)
         #control_frame.grid(row=0, column=0, sticky='nsew')
-        control_frame.grid(row=0, sticky='nsew')
+        # control_frame.grid(row=0, sticky='nsew')
         self.prompt_textbox = Entry(control_frame, textvariable=self.prompt_string, width=100, font=('Helvetica', 18))
         self.prompt_textbox.bind("<FocusOut>", lambda event: self.update_prompt())
-        self.prompt_textbox.grid(row=0, column=0, columnspan=10, padx=5)
+        # self.prompt_textbox.grid(row=0, column=0, columnspan=10, padx=5)
+        # self.prompt_label = Label(xframe, font=('Helvetica', 40), wraplength=1900, justify='left')
+        # self.prompt_label.configure(text=self.prompt_string)
+        # self.img_canvas.create_window(80, 40, window = self.prompt_label, anchor = NW)
 
         # self.live_checkbutton = Checkbutton(control_frame, text='Live', style='Switch.TCheckbutton', command=self.toggle_live)
         # self.live_checkbutton.grid(row=0, column=10, padx=5)
@@ -93,9 +96,14 @@ class App(Frame):
 
         response_frame = Frame(xframe, padding=15, height=50)
         #response_frame.grid(row=1, columnspan=2, sticky='nsew')
-        response_frame.grid(row=1, sticky='nsew')
-        self.response_label = Label(response_frame, font=('Helvetica', 28), wraplength=1900, justify='left')
+        # response_frame.grid(row=1, sticky='nsew')
+        # self.question_label = Label(response_frame, font=('Helvetica', 48), wraplength=1850, padding=15, anchor= 'nw', justify='left')
+        # self.question_label.configure(text="Hey, what's on your eyes?")
+        # self.question_label.pack()
+        self.response_label = Label(response_frame, font=('Helvetica', 48), wraplength=1850, padding=15, anchor = 'nw', justify='left')
         self.response_label.pack()
+        #eself.response_label.pack()
+        self.img_canvas.create_window(40, 40, window = response_frame, anchor = 'nw')
 
         self.update_prompt()
         self.update_response()
@@ -105,8 +113,11 @@ class App(Frame):
         # Running pipeline
         self.b.run()
 
-        self.photo = ImageTk.PhotoImage(image = Image.fromarray(self.img))
-        self.img_canvas.create_image(0, 0, image = self.photo, anchor = NW)
+        img = Image.fromarray(self.img)
+        img = img.crop((0, 120, 1280, 120+720))
+        img = img.resize((1920, 1080))
+        self.photo = ImageTk.PhotoImage(image = img)
+        self.img_canvas.create_image(0, 0, image = self.photo, anchor = 'nw')
 
         if (self.live_mode):
             self.update_response()
@@ -130,7 +141,10 @@ class App(Frame):
         self.response_label.configure(text='')
 
     def update_response(self):
-        self.response_label.configure(text=''.join([chr(v) for v in self.response]))
+        # question = "Hey buddy, what's on your eyes?\n"
+        response = ''.join([chr(v) for v in self.response])
+        response = response.split('.')[0]
+        self.response_label.configure(text=response)
 
     def toggle_live(self):
         self.live_mode = not self.live_mode
