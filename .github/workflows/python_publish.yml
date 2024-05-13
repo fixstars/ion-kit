@@ -129,7 +129,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v3
         with:
-          python-version: '3.11'
+          python-version: '3.9'
       - name: test
         run: |
           sleep 60 # wait package to upload
