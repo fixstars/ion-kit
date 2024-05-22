@@ -269,7 +269,10 @@ Halide::Pipeline lower(Builder builder, std::vector<Node>& nodes, bool implicit_
                         }
                         bb->bind_input(arginfo.name, {fs[index]});
                     }
-                } else {
+                } else if (arginfo.kind == Halide::Internal::ArgInfoKind::Buffer){
+                    bb->bind_input(arginfo.name, fs);
+                }
+                else {
                     throw std::runtime_error("fixme");
                 }
             } else {
@@ -282,6 +285,8 @@ Halide::Pipeline lower(Builder builder, std::vector<Node>& nodes, bool implicit_
                     bb->bind_input(arginfo.name, port.as_expr());
                 } else if (arginfo.kind == Halide::Internal::ArgInfoKind::Function) {
                     bb->bind_input(arginfo.name, port.as_func());
+                } else if (arginfo.kind == Halide::Internal::ArgInfoKind::Buffer) {
+                    bb->bind_input(arginfo.name, port.as_parameters());
                 } else {
                     throw std::runtime_error("fixme");
                 }
