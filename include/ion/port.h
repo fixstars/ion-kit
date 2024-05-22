@@ -254,6 +254,26 @@ public:
          return fs;
      }
 
+
+     std::vector<Halide::Internal::Parameter> as_parameters() const {
+         std::vector<Halide::Internal::Parameter> ps;
+         for (const auto& [i, param] : impl_->params ) {
+
+             if (ps.size() <= i) {
+                 ps.resize(i+1, Halide::Internal::Parameter());
+             }
+             std::vector<Halide::Var> args;
+             std::vector<Halide::Expr> args_expr;
+             for (int j = 0; j < dimensions(); ++j) {
+                 args.push_back(Halide::Var::implicit(j));
+                 args_expr.push_back(Halide::Var::implicit(j));
+             }
+             ps[i] =param;
+         }
+
+         return ps;
+     }
+
      std::vector<Halide::Argument> as_argument() const {
          std::vector<Halide::Argument> args;
          for (const auto& [i, param] : impl_->params) {
