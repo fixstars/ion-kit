@@ -13,7 +13,7 @@
 #include "log.h"
 #include "json/json.hpp"
 
-#include "base64.hpp"
+// #include "base64.hpp"
 #include "clip.h"
 #include "common.h"
 #include "sampling.h"

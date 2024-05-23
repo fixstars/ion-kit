@@ -1,0 +1,5 @@
+ion-python >= 1.9.0
+numpy
+tkinter
+sv_ttk
+pillow

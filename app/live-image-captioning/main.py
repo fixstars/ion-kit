@@ -1,4 +1,6 @@
 import sys
+import argparse
+
 from ionpy import Node, Builder, Buffer, Port, Param, Type, TypeCode
 import numpy as np
 
@@ -8,14 +10,14 @@ import sv_ttk
 from PIL import ImageTk, Image
 
 class App(Frame):
-    def __init__(self, window):
+    def __init__(self, window, args):
         super().__init__(window, padding=15)
 
         self.window = window
 
         # Model
-        self.camera_width = 1280
-        self.camera_height = 960
+        self.camera_width = int(args.resolution.split('x')[0])
+        self.camera_height = int(args.resolution.split('x')[1])
         self.screen_width = self.winfo_screenwidth()
         self.screen_height = self.winfo_screenheight()
         self.img = np.zeros((self.camera_height, self.camera_width, 3), dtype=np.uint8)
@@ -145,11 +147,15 @@ class App(Frame):
         self.window.destroy()
 
 if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--resolution', default='640x480', help='Camera resolution in "<width>x<height>" format. e.g. 640x480')
+
+    args = parser.parse_args()
+
     root = Tk()
     root.wm_attributes('-type', 'splash')
     root.wm_attributes('-fullscreen', True)
-    root.grid_rowconfigure(0, weight=1)
-    root.grid_columnconfigure(0, weight=1)
     sv_ttk.set_theme("dark")
-    App(root).pack(expand=True, fill='both')
+    App(root, args).pack(expand=True, fill='both')
     root.mainloop()

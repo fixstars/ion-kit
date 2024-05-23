@@ -1,5 +1,6 @@
 #ifndef CLIP_H
 #define CLIP_H
+#define LOG_TEE(...)
 
 #include <stddef.h>
 #include <stdint.h>
