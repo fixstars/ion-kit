@@ -1,5 +1,4 @@
-ion-python >= 1.9.0
+ion-python >= 1.8.2
 numpy
-tkinter
 sv_ttk
 pillow
