@@ -12,6 +12,8 @@ You can also run the pipeline immediately on your host machine.
 
 You can download the official binary package from [release](https://github.com/fixstars/ion-kit/releases).
 
+If you wish to build using our repository, please use branch `release/v1` which utilizes Halide16.  We are currently working on migrating to Halide17 on the `main` branch.
+
 ```c++
 #include <ion/ion.h>
 

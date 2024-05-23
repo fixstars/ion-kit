@@ -17,8 +17,10 @@ curl -sL https://github.com/halide/Halide/releases/download/v16.0.0/Halide-16.0.
 
 We recommend to setup libjpeg-turbo, libpng and zlib by [vcpkg](https://vcpkg.io/).
 
+In root folder of `ion-kit` run:
+
 ```sh
-vcpkg install libjpeg-turbo libpng zlib
+vcpkg install
 ```
 
 ## 2. Build
