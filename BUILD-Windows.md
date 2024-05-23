@@ -16,7 +16,7 @@ We recommend to setup libjpeg-turbo, libpng and zlib by [vcpkg](https://vcpkg.io
 In root folder of `ion-kit` run:
 
 ```sh
-vcpkg install
+vcpkg install --triplet x64-windows-static
 ```
 
 ## 2. Build
