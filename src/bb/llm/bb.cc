@@ -396,13 +396,12 @@ public:
 
 private:
     Llava() : keep_running_(true), initialized_(false) {
-        params_.model = "/home/iitaku/Develop/llava-1.6-gguf/ggml-mistral-q_4_k.gguf";
-        params_.mmproj = "/home/iitaku/Develop/llava-1.6-gguf/mmproj-mistral7b-f16-q6_k.gguf";
-        // params_.model = "/home/iitaku/Develop/llava-phi-3-mini-gguf/ggml-model-int4.gguf";
-        // params_.mmproj = "/home/iitaku/Develop/llava-phi-3-mini-gguf/mmproj-model-f16.gguf";
+        params_.model = "ggml-mistral-q_4_k.gguf";
+        params_.mmproj = "mmproj-mistral7b-f16-q6_k.gguf";
+        // params_.model = "llava-phi-3-mini-gguf/ggml-model-int4.gguf";
+        // params_.mmproj = "llava-phi-3-mini-gguf/mmproj-model-f16.gguf";
         params_.n_gpu_layers = 999;
         params_.n_ctx = 4096;
-        // params_.n_batch = 3072;
     }
 
     void thread_main() {
