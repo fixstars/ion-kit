@@ -187,7 +187,7 @@ void Builder::compile(const std::string& function_name, const CompileOption& opt
     return;
 }
 
-void Builder::run(const ion::PortMap&) {
+void Builder::run() {
      if (!impl_->pipeline.defined()) {
         impl_->pipeline = lower(*this, impl_->nodes, false);
         if (!impl_->pipeline.defined()) {

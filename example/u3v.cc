@@ -17,6 +17,37 @@
 
 using namespace ion;
 
+struct rawHeader {
+
+    // ---------- 0
+    int version_;
+    // ---------- 4
+    int width_;
+    int height_;
+    // ---------- 12
+    float r_gain0_;
+    float g_gain0_;
+    float b_gain0_;
+    // ---------- 24
+    float r_gain1_;
+    float g_gain1_;
+    float b_gain1_;
+    // ---------- 36
+    int offset0_x_;
+    int offset0_y_;
+    int offset1_x_;
+    int offset1_y_;
+    // ---------- 52
+    int outputsize0_x_;
+    int outputsize0_y_;
+    int outputsize1_x_;
+    int outputsize1_y_;
+    // ---------- 68
+    float fps_;
+    // ---------- 72
+    int pfnc_pixelformat;
+};
+
 void display_and_save(int32_t width, int32_t height, std::string directory_path, rawHeader header_info, bool last_run){
 
     Builder b;
@@ -115,28 +146,27 @@ void display_and_save(int32_t width, int32_t height, std::string directory_path,
       Param{"height", std::to_string(height)});
     Port display_output1_p = n["output"];
 
-    PortMap pm;
+
     /* input */
-    pm.set(wp, width);
-    pm.set(hp, height);
+    wp.bind(&width);
+    hp.bind(&height);
 
-    pm.set(r_gain0_p, header_info.r_gain0_);
-    pm.set(g_gain0_p, header_info.g_gain0_);
-    pm.set(b_gain0_p, header_info.b_gain0_);
+    r_gain0_p.bind(&header_info.r_gain0_);
+    g_gain0_p.bind(&header_info.g_gain0_);
+    b_gain0_p.bind(&header_info.b_gain0_);
 
-    pm.set(r_gain1_p, header_info.r_gain1_);
-    pm.set(g_gain1_p, header_info.g_gain1_);
-    pm.set(b_gain1_p, header_info.b_gain1_);
-
+    r_gain1_p.bind(&header_info.r_gain1_);
+    g_gain1_p.bind(&header_info.g_gain1_);
+    b_gain1_p.bind(&header_info.b_gain1_);
 
     /* output */
     Halide::Buffer<int> out0 = Halide::Buffer<int>::make_scalar();
     Halide::Buffer<int> out1 = Halide::Buffer<int>::make_scalar();
-    pm.set(display_output0_p, out0);
-    pm.set(display_output1_p, out1);
+    display_output0_p.bind(out0);
+    display_output1_p.bind(out1);
 
     Halide::Buffer<int32_t> out = Halide::Buffer<int32_t>::make_scalar();
-    pm.set(terminator, out);
+    terminator.bind(out);
 
     int32_t gain0 = 0;
     int32_t gain1 = 480;
@@ -146,19 +176,13 @@ void display_and_save(int32_t width, int32_t height, std::string directory_path,
     int loop_num = 400;
 
     for (int i=0; i< loop_num; ++i) {
-        pm.set(dispose_camera, last_run && i == loop_num - 1);
-        pm.set(dispose_writer, i == loop_num - 1);
-        pm.set(gain0_p, gain0++);
-        pm.set(gain1_p, gain1--);
-        pm.set(exposure0_p, exposure0);
-        pm.set(exposure1_p, exposure1);
-        b.run(pm);
+        b.run();
     }
 
     cv::destroyAllWindows();
 }
 
-void open_and_check(int32_t& width, int32_t& height, const filesystem::path output_directory, uint32_t& file_idx, std::ifstream& ifs, bool *finished) {
+void open_and_check(int32_t& width, int32_t& height, const std::filesystem::path output_directory, uint32_t& file_idx, std::ifstream& ifs, bool *finished) {
     auto file_path = output_directory / ("raw-" + ::std::to_string(file_idx++) + ".bin");
 
     ifs = ::std::ifstream(file_path, ::std::ios::binary);

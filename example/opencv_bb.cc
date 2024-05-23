@@ -28,12 +28,12 @@ int main(int argc, char *argv[]) {
 
         Halide::Buffer<int32_t> r = Halide::Buffer<int32_t>::make_scalar();
 
-        PortMap pm;
-        pm.set(in, in_buf);
-        pm.set(n["output"], r);
+
+        in.bind(in_buf);
+        n["output"].bind(r);
 
         for (int i=0; i<1000; ++i) {
-            b.run(pm);
+            b.run();
         }
 
     } catch (const std::exception &e) {

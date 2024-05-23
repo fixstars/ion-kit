@@ -453,8 +453,6 @@ int ion_bb_image_io_binary_image_saver(
             return 0;
         }
         else {
-
-
             ion::bb::image_io::rawHeader header_info;
             memcpy(&header_info, deviceinfo->host, sizeof(ion::bb::image_io::rawHeader));
             std::vector<ion::bb::image_io::rawHeader> header_infos{header_info};
