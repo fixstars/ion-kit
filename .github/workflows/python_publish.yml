@@ -42,7 +42,7 @@ jobs:
           export ION_KIT_VERSION=${{ github.event.release.tag_name }}
           mkdir $GITHUB_WORKSPACE/macos
           tar xzf  ion-kit-*macos.tar.gz  -C $GITHUB_WORKSPACE/macos --strip-components 1
-          cp  $GITHUB_WORKSPACE/macos/lib/libHalide.16.0.0.dylib python/ionpy/module/macos/libHalide.16.dylib
+          cp  $GITHUB_WORKSPACE/macos/lib/libHalide.17.0.0.dylib python/ionpy/module/macos/libHalide.17.dylib
           cp  $GITHUB_WORKSPACE/macos/lib/libion-core.dylib python/ionpy/module/macos/libion-core.dylib
           cp  $GITHUB_WORKSPACE/macos/lib/libion-bb.dylib python/ionpy/module/macos/libion-bb.dylib
           ls python/ionpy/module/macos
@@ -55,7 +55,7 @@ jobs:
           tar xzf  ion-kit-*linux.tar.gz  -C $GITHUB_WORKSPACE/linux --strip-components 1
           cp  $GITHUB_WORKSPACE/linux/lib/libion-bb.so python/ionpy/module/linux/libion-bb.so
           cp  $GITHUB_WORKSPACE/linux/lib/libion-core.so python/ionpy/module/linux/libion-core.so
-          cp  $GITHUB_WORKSPACE/linux/lib/libHalide.so.16.0.0 python/ionpy/module/linux/libHalide.so.16
+          cp  $GITHUB_WORKSPACE/linux/lib/libHalide.so.17.0.0 python/ionpy/module/linux/libHalide.so.17
           ls python/ionpy/module/linux
 
       - name: Copy windows file
@@ -135,7 +135,7 @@ jobs:
           sleep 60 # wait package to upload
           pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple ion-python==${{ github.event.release.tag_name }}
           python -c "import ionpy"
-      
+
 
   upload_PYPI:
     needs: [ test_TEST_PYPI ]
