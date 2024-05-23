@@ -34,6 +34,11 @@
 #include "sgm/rt.h"
 #endif
 
+#if defined(ION_ENABLE_BB_LLM)
+#include "llm/bb.h"
+#include "llm/rt.h"
+#endif
+
 extern "C" void register_externs(std::map<std::string, Halide::JITExtern>& externs) {
 #if defined(ION_ENABLE_BB_BASE)
   for (auto kv : ion::bb::base::extern_functions) {
@@ -62,6 +67,11 @@ extern "C" void register_externs(std::map<std::string, Halide::JITExtern>& exter
 #endif
 #if defined(ION_ENABLE_BB_SGM)
   for (auto kv : ion::bb::sgm::extern_functions) {
+    externs.insert({kv.first, Halide::JITExtern(kv.second)});
+  }
+#endif
+#if defined(ION_ENABLE_BB_LLM)
+  for (auto kv : ion::bb::llm::extern_functions) {
     externs.insert({kv.first, Halide::JITExtern(kv.second)});
   }
 #endif

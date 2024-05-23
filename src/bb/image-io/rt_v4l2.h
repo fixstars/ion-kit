@@ -285,7 +285,7 @@ public:
             return;
         }
         if (width != fmt.fmt.pix.width || height != fmt.fmt.pix.height) {
-            log::warn("Fallback to simulation mode: {} does not support desired resolution", dev_name);
+            log::warn("Fallback to simulation mode: {} does not support desired resolution, expected({}x{}), actual({}x{})", dev_name, fmt.fmt.pix.width, fmt.fmt.pix.height, width, height);
             sim_mode_ = true;;
             return;
         }
