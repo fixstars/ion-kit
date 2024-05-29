@@ -390,8 +390,8 @@ int ion_bb_image_io_binary_gendc_saver( halide_buffer_t * id_buf, halide_buffer_
             if (out->is_bounds_query()) {
                 out->dim[0].min = 0;
                 out->dim[0].extent = 1;
-            return 0;
-        }
+            }
+
             return 0;
         }
         else {
@@ -404,8 +404,6 @@ int ion_bb_image_io_binary_gendc_saver( halide_buffer_t * id_buf, halide_buffer_
 
             int32_t terminator = 1;
             memcpy(reinterpret_cast<int32_t*>(out->host), &terminator, sizeof(int32_t));
-        }
-
 
         }
 
@@ -440,7 +438,7 @@ int ion_bb_image_io_binary_image_saver(
         const ::std::string prefix(reinterpret_cast<const char*>(prefix_buf->host));
         auto& w(Writer::get_instance(id, frame_size_list, output_directory, true, prefix));
 
-        if (image->is_bounds_query() || deviceinfo->is_bounds_query() || frame_count->is_bounds_query()) {
+        if (image->is_bounds_query() || deviceinfo->is_bounds_query() || frame_count->is_bounds_query() || out->is_bounds_query()) {
             if (image->is_bounds_query()) {
                 image->dim[0].min = 0;
                 image->dim[0].extent = width;
