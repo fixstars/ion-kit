@@ -378,7 +378,7 @@ int ion_bb_image_io_binary_gendc_saver( halide_buffer_t * id_buf, halide_buffer_
         std::vector<int32_t>payloadsize_list{payloadsize};
         const ::std::string prefix(reinterpret_cast<const char*>(prefix_buf->host));
         auto& w(Writer::get_instance(id,payloadsize_list, output_directory, false, prefix));
-        if (gendc->is_bounds_query() || deviceinfo->is_bounds_query()) {
+        if (gendc->is_bounds_query() || deviceinfo->is_bounds_query() || out->is_bounds_query()) {
             if (gendc->is_bounds_query()) {
                 gendc->dim[0].min = 0;
                 gendc->dim[0].extent = payloadsize;
@@ -387,6 +387,11 @@ int ion_bb_image_io_binary_gendc_saver( halide_buffer_t * id_buf, halide_buffer_
                 deviceinfo->dim[0].min = 0;
                 deviceinfo->dim[0].extent = sizeof(ion::bb::image_io::rawHeader);
             }
+            if (out->is_bounds_query()) {
+                out->dim[0].min = 0;
+                out->dim[0].extent = 1;
+            return 0;
+        }
             return 0;
         }
         else {
@@ -396,6 +401,10 @@ int ion_bb_image_io_binary_gendc_saver( halide_buffer_t * id_buf, halide_buffer_
             std::vector<void *> obufs{gendc->host};
             std::vector<size_t> size_in_bytes{gendc->size_in_bytes()};
             w.post_gendc(obufs, size_in_bytes, header_info);
+
+            int32_t terminator = 1;
+            memcpy(reinterpret_cast<int32_t*>(out->host), &terminator, sizeof(int32_t));
+        }
 
 
         }
@@ -450,11 +459,13 @@ int ion_bb_image_io_binary_image_saver(
                 frame_count->dim[0].min = 0;
                 frame_count->dim[0].extent = num_output;
             }
+            if (out->is_bounds_query()) {
+                out->dim[0].min = 0;
+                out->dim[0].extent = 1;
+            }
             return 0;
         }
         else {
-
-
             ion::bb::image_io::rawHeader header_info;
             memcpy(&header_info, deviceinfo->host, sizeof(ion::bb::image_io::rawHeader));
             std::vector<ion::bb::image_io::rawHeader> header_infos{header_info};
@@ -462,6 +473,8 @@ int ion_bb_image_io_binary_image_saver(
             std::vector<void *> obufs{image->host};
             std::vector<size_t> size_in_bytes{image->size_in_bytes()};
             w.post_image(obufs, size_in_bytes, header_info, frame_count->host);
+            int32_t terminator = 1;
+            memcpy(reinterpret_cast<int32_t*>(out->host), &terminator, sizeof(int32_t));
         }
 
         return 0;

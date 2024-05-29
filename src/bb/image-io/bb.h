@@ -1130,7 +1130,8 @@ public:
     Input<int32_t> width{ "width" };
     Input<int32_t> height{ "height" };
 
-    Output<int32_t> output{"output"};
+    Output<Halide::Func> output{"output", Halide::type_of<uint32_t>(), 1 }; //terminator
+//    Output<int32_t> output{"output"};
 
     void generate() {
         using namespace Halide;
@@ -1189,7 +1190,8 @@ public:
 
     Input<int32_t> payloadsize{ "payloadsize" };
 
-    Output<int> output{ "output" };
+//    Output<int> output{ "output" };
+    Output<Halide::Func> output{"output", Halide::type_of<uint32_t>(), 1 }; //terminator
 
     void generate() {
         using namespace Halide;
