@@ -75,6 +75,7 @@ def main():
             "Programming Language :: Python :: 3.10",
             "Programming Language :: Python :: 3.11",
             "Programming Language :: Python :: 3.12",
+            "License :: OSI Approved :: MIT License",
         ],
         description="Python Binding for ion-kit",
         package_data={"ionpy": package_data},
