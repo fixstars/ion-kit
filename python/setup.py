@@ -8,6 +8,19 @@ import sysconfig
 import os
 
 from setuptools._distutils.util import convert_path
+from setuptools.command.egg_info import egg_info
+
+
+class egg_info_ex(egg_info):
+    """Includes license file into `.egg-info` folder."""
+
+    def run(self):
+        # don't duplicate license into `.egg-info` when building a distribution
+        if not self.distribution.have_run.get('install', True):
+            # `install` command is in progress, copy license
+            self.mkpath(self.egg_info)
+            self.copy_file('LICENSE', self.egg_info)
+        egg_info.run(self)
 
 
 def get_plat():
@@ -51,6 +64,8 @@ def main():
         url="https://github.com/fixstars/ion-kit",
         version=get_version(),
         python_requires=">=3.8.0",
+        license="MIT License",
+        license_files=('LICENSE',),
         classifiers=[
             "Development Status :: 3 - Alpha",
             "Programming Language :: Python :: 3",
@@ -60,6 +75,7 @@ def main():
             "Programming Language :: Python :: 3.10",
             "Programming Language :: Python :: 3.11",
             "Programming Language :: Python :: 3.12",
+            "License :: OSI Approved :: MIT License",
         ],
         description="Python Binding for ion-kit",
         package_data={"ionpy": package_data},
