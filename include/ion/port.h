@@ -192,19 +192,6 @@ public:
          impl_->instances[i] = v;
      }
 
-
-
-     void bind_arbitray(void *v) {
-         auto i = index_ == -1 ? 0 : index_;
-         if (has_pred()) {
-             impl_->params[i] = Halide::Parameter{type(), false, 0, argument_name(pred_id(), pred_name(), i, graph_id())};
-         } else {
-             impl_->params[i] = Halide::Parameter{type(), false, dimensions(), argument_name(pred_id(), pred_name(), i, graph_id())};
-         }
-
-         impl_->instances[i] = v;
-     }
-
      template<typename T>
      void bind(const Halide::Buffer<T>& buf) {
          auto i = index_ == -1 ? 0 : index_;

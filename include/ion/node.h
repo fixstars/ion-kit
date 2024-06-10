@@ -27,7 +27,6 @@ public:
         std::vector<Param> params;
         std::vector<Port> ports;
         std::vector<Halide::Internal::AbstractGenerator::ArgInfo> arginfos;
-        std::vector<Port> dynamical_ports;
 
 
         Impl(): id(), name(), target(), params(), ports() {}
