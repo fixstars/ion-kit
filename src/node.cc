@@ -111,6 +111,75 @@ std::vector<std::tuple<std::string, Port>> Node::iports() const {
     return iports;
 }
 
+
+std::vector<std::tuple<std::string, Port>> Node::dynamic_iports() const {
+   std::vector<std::tuple<std::string, Port>> dynamic_iports;
+
+   int iports_size = 0;
+
+   impl_->ports.erase(std::remove_if(impl_->ports.begin(), impl_->ports.end(),[&](const Port &p) {
+                  auto it = std::find_if(p.impl_->succ_chans.begin(), p.impl_->succ_chans.end(),
+                                         [&](const Port::Channel& c) { return std::get<0>(c) == impl_->id; });
+                  return p.is_dnamic_port() &&  it != p.impl_->succ_chans.end() ;
+              }), impl_->ports.end());
+
+    for (const auto& p: impl_->ports) {
+        auto it = std::find_if(p.impl_->succ_chans.begin(), p.impl_->succ_chans.end(),
+                               [&](const Port::Channel& c) { return std::get<0>(c) == impl_->id; });
+        if (it != p.impl_->succ_chans.end()) {
+            iports_size+=1;
+        }
+    }
+
+   int iports_idx = 0;
+   for (auto & arginfo: impl_->arginfos){
+      if (arginfo.dir == Halide::Internal::ArgInfoDirection::Input) {
+          if(iports_idx>=iports_size){
+
+              Port port( arginfo.name, arginfo.types[0]);
+              port.impl_ ->graph_id = impl_->graph_id;
+              port.impl_->is_dynamic_port = true;
+              port.impl_->succ_chans.insert({id(), arginfo.name});
+              dynamic_iports.push_back(std::make_tuple(arginfo.name, port));
+              impl_->ports.push_back(port);
+          }
+          iports_idx ++;
+      }
+   }
+   return dynamic_iports;
+}
+
+
+
+std::vector<std::tuple<std::string, Port>> Node::dynamic_oports() const {
+   std::vector<std::tuple<std::string, Port>> dynamic_oports;
+   int oports_size = 0;
+   impl_->ports.erase(std::remove_if(impl_->ports.begin(), impl_->ports.end(),[&](const Port &p) {
+                  return   p.is_dnamic_port() && id() == p.pred_id();}), impl_->ports.end());
+
+   for (const auto& p: impl_->ports) {
+         if (id() == p.pred_id()) {
+              oports_size +=1;
+         }
+
+   }
+   int oports_idx = 0;
+   for (auto & arginfo: impl_->arginfos){
+      if (arginfo.dir == Halide::Internal::ArgInfoDirection::Output) {
+          if(oports_idx>=oports_size){
+              Port port(id(), arginfo.name);
+              port.impl_ ->type = arginfo.types[0];
+              port.impl_ ->graph_id = impl_->graph_id;
+              port.impl_->is_dynamic_port = true;
+              dynamic_oports.push_back(std::make_tuple(arginfo.name, port));
+              impl_->ports.push_back(port);
+          }
+          oports_idx ++;
+      }
+   }
+   return dynamic_oports;
+}
+
 Port Node::oport(const std::string& pn) {
     return this->operator[](pn);
 

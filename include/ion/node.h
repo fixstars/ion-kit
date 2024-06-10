@@ -27,6 +27,8 @@ public:
         std::vector<Param> params;
         std::vector<Port> ports;
         std::vector<Halide::Internal::AbstractGenerator::ArgInfo> arginfos;
+        std::vector<Port> dynamical_ports;
+
 
         Impl(): id(), name(), target(), params(), ports() {}
         Impl(const NodeID& id_, const std::string& name_, const Halide::Target& target_);
@@ -120,6 +122,13 @@ public:
 
     Port oport(const std::string& pn);
     std::vector<std::tuple<std::string, Port>> oports() const;
+
+    Port dynamic_iport(const std::string& pn);
+
+    std::vector<std::tuple<std::string, Port>> dynamic_iports() const;
+    std::vector<std::tuple<std::string, Port>> dynamic_oports() const;
+
+    void add_dynamic_ports() const ;
 
 private:
     Node(const NodeID& id, const std::string& name, const Halide::Target& target)

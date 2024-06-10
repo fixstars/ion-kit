@@ -29,6 +29,13 @@ template<typename T>
 using Output = Halide::GeneratorOutput<T>;
 
 template<typename T>
+using DynamicInput = Halide::GeneratorInput<T>;
+
+template<typename T>
+using DynamicOutput = Halide::GeneratorOutput<T>;
+
+
+template<typename T>
 class BuildingBlock : public Halide::Generator<T> {
 
     BuildingBlockParam<uint64_t> builder_impl_ptr{"builder_impl_ptr", 0};

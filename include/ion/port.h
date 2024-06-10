@@ -64,6 +64,8 @@ private:
         std::unordered_map<uint32_t, Halide::Parameter> params;
         std::unordered_map<uint32_t, const void *> instances;
 
+        bool is_dynamic_port;
+
         Impl();
         Impl(const NodeID& nid, const std::string& pn, const Halide::Type& t, int32_t d, const GraphID &gid );
     };
@@ -167,6 +169,7 @@ public:
     }
 
     void determine_succ(const NodeID& nid, const std::string& old_pn, const std::string& new_pn);
+    bool is_dnamic_port() const { return impl_->is_dynamic_port; }
 
     /**
      * Overloaded operator to set the port index and return a reference to the current port. eg. port[0]
@@ -182,6 +185,19 @@ public:
          auto i = index_ == -1 ? 0 : index_;
          if (has_pred()) {
              impl_->params[i] = Halide::Parameter{Halide::type_of<T>(), false, 0, argument_name(pred_id(), pred_name(), i, graph_id())};
+         } else {
+             impl_->params[i] = Halide::Parameter{type(), false, dimensions(), argument_name(pred_id(), pred_name(), i, graph_id())};
+         }
+
+         impl_->instances[i] = v;
+     }
+
+
+
+     void bind_arbitray(void *v) {
+         auto i = index_ == -1 ? 0 : index_;
+         if (has_pred()) {
+             impl_->params[i] = Halide::Parameter{type(), false, 0, argument_name(pred_id(), pred_name(), i, graph_id())};
          } else {
              impl_->params[i] = Halide::Parameter{type(), false, dimensions(), argument_name(pred_id(), pred_name(), i, graph_id())};
          }
