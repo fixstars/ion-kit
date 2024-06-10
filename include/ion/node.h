@@ -28,7 +28,6 @@ public:
         std::vector<Port> ports;
         std::vector<Halide::Internal::AbstractGenerator::ArgInfo> arginfos;
 
-
         Impl(): id(), name(), target(), params(), ports() {}
         Impl(const NodeID& id_, const std::string& name_, const Halide::Target& target_);
         Impl(const NodeID& id_, const std::string& name_, const Halide::Target& target_, const GraphID &graph_id_);
