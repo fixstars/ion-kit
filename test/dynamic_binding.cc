@@ -21,61 +21,54 @@ int main() {
             out.fill(0);
 
             Builder b;
+            Target target = Halide::get_host_target();
+            target.set_feature(Target::Debug);
+            b.set_target(target);
 
-            b.set_target(Halide::get_host_target());
-            Graph g = b.add_graph("graph0");
-            auto n = g.add("test_inc_by_offset")(in);
-            n["output"].bind(out);
 
-            Halide::Buffer<int32_t> out_buf = Halide::Buffer<int32_t>::make_scalar();
-            out_buf.fill(0);
-            for (auto& [pn, port] : n.dynamic_iports()) {
-                port.bind(out_buf.data());
-            }
-
-           for (auto& [pn, port] : n.dynamic_oports()) {
-                port.bind(out_buf);
-            }
-
-           for(int i = 0;i < 9;i++){
-               g.run();
-               if (out(0,0) !=  in(0,0)+ i) {
-                   throw runtime_error("Unexpected out value");
-               }
-           }
-        }
-        {
-            constexpr size_t h = 4, w = 4;
-
-            Halide::Buffer<int32_t> in(w, h);
-            in.fill(42);
-
-            Halide::Buffer<int32_t> out(w, h);
-            out.fill(0);
-
-            Builder b;
-            b.set_target(Halide::get_host_target());
             auto n = b.add("test_inc_by_offset")(in);
+
+            n = b.add("test_inc_by_offset")(n["output"]);
+
             n["output"].bind(out);
 
-            Halide::Buffer<int32_t> out_buf = Halide::Buffer<int32_t>::make_scalar();
-            out_buf.fill(0);
-            for (auto& [pn, port] : n.dynamic_iports()) {
-                port.bind(out_buf.data());
+
+
+
+            Halide::Buffer<int32_t> param_buf = Halide::Buffer<int32_t>::make_scalar();
+            param_buf.fill(1);
+
+//            std::vector< int > sizes;
+//            Halide::Buffer<int32_t> param_buf1(param_buf.data(),sizes);
+
+
+
+            for(auto &n:b.nodes()){
+                for (auto& [pn, port] : n.dynamic_iports()) {
+                      port.bind(param_buf);
+                      n.set_dynamic_port(port);
+                }
+
+                for (auto& [pn, port] : n.dynamic_oports()) {
+                    port.bind(param_buf);
+                    n.set_dynamic_port(port);
+                }
+
             }
 
-           for (auto& [pn, port] : n.dynamic_oports()) {
-                port.bind(out_buf);
+           b.run();
+           for (int y = 0; y < h; ++y) {
+               for (int x = 0; x < w; ++x) {
+                   if (out(0,0) !=  45  ) {
+                        throw runtime_error("Unexpected out value");
+                   }
+                }
             }
 
-           for(int i = 0;i < 9;i++){
-               b.run();
-               if (out(0,0) !=  in(0,0)+ i) {
-                   throw runtime_error("Unexpected out value");
-               }
+           if (param_buf(0) !=  3  ) {
+               throw runtime_error("Unexpected value");
            }
         }
-
 
     } catch (const Halide::Error& e) {
         std::cerr << e.what() << std::endl;

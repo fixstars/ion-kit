@@ -117,11 +117,11 @@ std::vector<std::tuple<std::string, Port>> Node::dynamic_iports() const {
 
    int iports_size = 0;
 
-   impl_->ports.erase(std::remove_if(impl_->ports.begin(), impl_->ports.end(),[&](const Port &p) {
-                  auto it = std::find_if(p.impl_->succ_chans.begin(), p.impl_->succ_chans.end(),
-                                         [&](const Port::Channel& c) { return std::get<0>(c) == impl_->id; });
-                  return p.is_dnamic_port() &&  it != p.impl_->succ_chans.end() ;
-              }), impl_->ports.end());
+//   impl_->ports.erase(std::remove_if(impl_->ports.begin(), impl_->ports.end(),[&](const Port &p) {
+//                  auto it = std::find_if(p.impl_->succ_chans.begin(), p.impl_->succ_chans.end(),
+//                                         [&](const Port::Channel& c) { return std::get<0>(c) == impl_->id; });
+//                  return p.is_dnamic_port() &&  it != p.impl_->succ_chans.end() ;
+//              }), impl_->ports.end());
 
     for (const auto& p: impl_->ports) {
         auto it = std::find_if(p.impl_->succ_chans.begin(), p.impl_->succ_chans.end(),
@@ -139,9 +139,9 @@ std::vector<std::tuple<std::string, Port>> Node::dynamic_iports() const {
               Port port( arginfo.name, arginfo.types[0]);
               port.impl_ ->graph_id = impl_->graph_id;
               port.impl_->is_dynamic_port = true;
+              port.impl_->dimensions = arginfo.dimensions;
               port.impl_->succ_chans.insert({id(), arginfo.name});
               dynamic_iports.push_back(std::make_tuple(arginfo.name, port));
-              impl_->ports.push_back(port);
           }
           iports_idx ++;
       }
@@ -154,8 +154,8 @@ std::vector<std::tuple<std::string, Port>> Node::dynamic_iports() const {
 std::vector<std::tuple<std::string, Port>> Node::dynamic_oports() const {
    std::vector<std::tuple<std::string, Port>> dynamic_oports;
    int oports_size = 0;
-   impl_->ports.erase(std::remove_if(impl_->ports.begin(), impl_->ports.end(),[&](const Port &p) {
-                  return   p.is_dnamic_port() && id() == p.pred_id();}), impl_->ports.end());
+//   impl_->ports.erase(std::remove_if(impl_->ports.begin(), impl_->ports.end(),[&](const Port &p) {
+//                  return   p.is_dnamic_port() && id() == p.pred_id();}), impl_->ports.end());
 
    for (const auto& p: impl_->ports) {
          if (id() == p.pred_id()) {
@@ -171,8 +171,8 @@ std::vector<std::tuple<std::string, Port>> Node::dynamic_oports() const {
               port.impl_ ->type = arginfo.types[0];
               port.impl_ ->graph_id = impl_->graph_id;
               port.impl_->is_dynamic_port = true;
+              port.impl_->dimensions = arginfo.dimensions;
               dynamic_oports.push_back(std::make_tuple(arginfo.name, port));
-              impl_->ports.push_back(port);
           }
           oports_idx ++;
       }
@@ -206,5 +206,32 @@ std::vector<std::tuple<std::string, Port>> Node::oports() const {
     }
     return oports;
 }
+
+void Node::set_dynamic_port(Port port) {
+      impl_->ports.push_back(port);
+}
+
+
+void  Node::validate_port_address_alignment ()const {
+    std::vector<std::tuple<std::string, Port>> dynamic_oports;
+    std::vector<std::tuple<std::string, Port>> oports =  Node::oports() ;
+    std::vector<std::tuple<std::string, Port>> iports =  Node::iports() ;
+    std::tuple<const void *, bool>  output_tuple;
+    std::set<std::tuple<const void *, bool>> setOfTuples;
+
+    for (auto& [pn, port] :oports) {
+        for(auto& [i, t] : port.impl_->bound_address){
+            setOfTuples.insert(t);
+        }
+    }
+
+    for (auto& [pn, port] :iports) {
+        for(auto& [i, t] : port.impl_->bound_address){
+            if (setOfTuples.find(t) != setOfTuples.end()) {
+               std::get<1>(t) = true;
+            }
+        }
+    }
+};
 
 } // namespace ion

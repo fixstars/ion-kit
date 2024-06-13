@@ -87,6 +87,8 @@ public:
 
     void set_iport(const std::string& name, Port port);
 
+    void set_dynamic_port(Port port) ;
+
     /**
      * Retrieve relevant port of the node.
      * @arg name: The name of port name which is matched with first argument of Input/Output declared in user-defined class deriving BuildingBlock.
@@ -121,12 +123,10 @@ public:
     Port oport(const std::string& pn);
     std::vector<std::tuple<std::string, Port>> oports() const;
 
-    Port dynamic_iport(const std::string& pn);
-
     std::vector<std::tuple<std::string, Port>> dynamic_iports() const;
     std::vector<std::tuple<std::string, Port>> dynamic_oports() const;
 
-    void add_dynamic_ports() const ;
+    void  validate_port_address_alignment ()const ;
 
 private:
     Node(const NodeID& id, const std::string& name, const Halide::Target& target)
