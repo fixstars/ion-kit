@@ -25,23 +25,17 @@ int main() {
             target.set_feature(Target::Debug);
             b.set_target(target);
 
-
             auto n = b.add("test_inc_by_offset")(in);
 
             n = b.add("test_inc_by_offset")(n["output"]);
 
             n["output"].bind(out);
 
-
-
-
             Halide::Buffer<int32_t> param_buf = Halide::Buffer<int32_t>::make_scalar();
             param_buf.fill(1);
 
 //            std::vector< int > sizes;
 //            Halide::Buffer<int32_t> param_buf1(param_buf.data(),sizes);
-
-
 
             for(auto &n:b.nodes()){
                 for (auto& [pn, port] : n.dynamic_iports()) {

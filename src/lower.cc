@@ -211,7 +211,6 @@ Halide::Pipeline lower(Builder builder, std::vector<Node>& nodes, bool implicit_
 
     log::info("Start building pipeline");
 
-
     determine_and_validate(nodes);
 
     // Sort nodes prior to build.
