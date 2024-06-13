@@ -201,7 +201,7 @@ public:
          if (has_pred()) {
              impl_->params[i] = Halide::Parameter{buf.type(), true, buf.dimensions(), argument_name(id(), pred_id(), pred_name(), i,graph_id())};
          } else {
-             impl_->params[i] = Halide::Parameter{type(), true, buf.dimensions(), argument_name(id(), pred_id(), pred_name(), i,graph_id())};
+             impl_->params[i] = Halide::Parameter{type(), true, dimensions(), argument_name(id(), pred_id(), pred_name(), i,graph_id())};
          }
 
          impl_->instances[i] = buf.raw_buffer();
