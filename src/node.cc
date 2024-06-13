@@ -120,7 +120,7 @@ std::vector<std::tuple<std::string, Port>> Node::dynamic_iports() const {
 //   impl_->ports.erase(std::remove_if(impl_->ports.begin(), impl_->ports.end(),[&](const Port &p) {
 //                  auto it = std::find_if(p.impl_->succ_chans.begin(), p.impl_->succ_chans.end(),
 //                                         [&](const Port::Channel& c) { return std::get<0>(c) == impl_->id; });
-//                  return p.is_dnamic_port() &&  it != p.impl_->succ_chans.end() ;
+//                  return p.is_dynamic() &&  it != p.impl_->succ_chans.end() ;
 //              }), impl_->ports.end());
 
     for (const auto& p: impl_->ports) {
@@ -138,7 +138,7 @@ std::vector<std::tuple<std::string, Port>> Node::dynamic_iports() const {
 
               Port port( arginfo.name, arginfo.types[0]);
               port.impl_ ->graph_id = impl_->graph_id;
-              port.impl_->is_dynamic_port = true;
+              port.impl_->is_dynamic = true;
               port.impl_->dimensions = arginfo.dimensions;
               port.impl_->succ_chans.insert({id(), arginfo.name});
               dynamic_iports.push_back(std::make_tuple(arginfo.name, port));
@@ -155,7 +155,7 @@ std::vector<std::tuple<std::string, Port>> Node::dynamic_oports() const {
    std::vector<std::tuple<std::string, Port>> dynamic_oports;
    int oports_size = 0;
 //   impl_->ports.erase(std::remove_if(impl_->ports.begin(), impl_->ports.end(),[&](const Port &p) {
-//                  return   p.is_dnamic_port() && id() == p.pred_id();}), impl_->ports.end());
+//                  return   p.is_dynamic() && id() == p.pred_id();}), impl_->ports.end());
 
    for (const auto& p: impl_->ports) {
          if (id() == p.pred_id()) {
@@ -170,7 +170,7 @@ std::vector<std::tuple<std::string, Port>> Node::dynamic_oports() const {
               Port port(id(), arginfo.name);
               port.impl_ ->type = arginfo.types[0];
               port.impl_ ->graph_id = impl_->graph_id;
-              port.impl_->is_dynamic_port = true;
+              port.impl_->is_dynamic = true;
               port.impl_->dimensions = arginfo.dimensions;
               dynamic_oports.push_back(std::make_tuple(arginfo.name, port));
           }

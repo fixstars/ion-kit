@@ -64,7 +64,7 @@ private:
         std::unordered_map<uint32_t, Halide::Parameter> params;
         std::unordered_map<uint32_t, const void *> instances;
 
-        bool is_dynamic_port;
+        bool is_dynamic;
         std::unordered_map<uint32_t, std::tuple<const void *, bool> > bound_address;
 
         Impl();
@@ -170,7 +170,7 @@ public:
     }
 
     void determine_succ(const NodeID& nid, const std::string& old_pn, const std::string& new_pn);
-    bool is_dnamic_port() const { return impl_->is_dynamic_port; }
+    bool is_dynamic() const { return impl_->is_dynamic; }
 
     /**
      * Overloaded operator to set the port index and return a reference to the current port. eg. port[0]
