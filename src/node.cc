@@ -212,8 +212,7 @@ void Node::set_dynamic_port(Port port) {
 }
 
 
-void  Node::validate_port_address_alignment ()const {
-    std::vector<std::tuple<std::string, Port>> dynamic_oports;
+void  Node::detect_data_hazard ()const {
     std::vector<std::tuple<std::string, Port>> oports =  Node::oports() ;
     std::vector<std::tuple<std::string, Port>> iports =  Node::iports() ;
     std::tuple<const void *, bool>  output_tuple;

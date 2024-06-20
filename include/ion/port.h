@@ -170,7 +170,6 @@ public:
     }
 
     void determine_succ(const NodeID& nid, const std::string& old_pn, const std::string& new_pn);
-    bool is_dynamic() const { return impl_->is_dynamic; }
 
     /**
      * Overloaded operator to set the port index and return a reference to the current port. eg. port[0]
@@ -186,9 +185,9 @@ public:
          auto i = index_ == -1 ? 0 : index_;
 
          if (has_pred()) {
-             impl_->params[i] = Halide::Parameter{Halide::type_of<T>(), false, 0, argument_name(id(), pred_id(), pred_name(), i, graph_id())};
+             impl_->params[i] = Halide::Parameter{Halide::type_of<T>(), false, 0, argument_name(pred_id(), id(), pred_name(), i, graph_id())};
          } else {
-             impl_->params[i] = Halide::Parameter{type(), false, dimensions(), argument_name(id(), pred_id(), pred_name(), i, graph_id())};
+             impl_->params[i] = Halide::Parameter{type(), false, dimensions(), argument_name(pred_id(), id(), pred_name(), i, graph_id())};
          }
 
          impl_->instances[i] = v;
@@ -199,9 +198,9 @@ public:
      void bind(const Halide::Buffer<T>& buf) {
          auto i = index_ == -1 ? 0 : index_;
          if (has_pred()) {
-             impl_->params[i] = Halide::Parameter{buf.type(), true, buf.dimensions(), argument_name(id(), pred_id(), pred_name(), i,graph_id())};
+             impl_->params[i] = Halide::Parameter{buf.type(), true, buf.dimensions(), argument_name(pred_id(), id(), pred_name(), i,graph_id())};
          } else {
-             impl_->params[i] = Halide::Parameter{type(), true, dimensions(), argument_name(id(), pred_id(), pred_name(), i,graph_id())};
+             impl_->params[i] = Halide::Parameter{type(), true, dimensions(), argument_name(pred_id(), id(), pred_name(), i,graph_id())};
          }
 
          impl_->instances[i] = buf.raw_buffer();
@@ -212,9 +211,9 @@ public:
      void bind(const std::vector<Halide::Buffer<T>>& bufs) {
          for (int i=0; i<static_cast<int>(bufs.size()); ++i) {
              if (has_pred()) {
-                 impl_->params[i] = Halide::Parameter{bufs[i].type(), true, bufs[i].dimensions(), argument_name(id(),pred_id(), pred_name(), i, graph_id())};
+                 impl_->params[i] = Halide::Parameter{bufs[i].type(), true, bufs[i].dimensions(), argument_name(pred_id(), id(),pred_name(), i, graph_id())};
              } else {
-                 impl_->params[i] = Halide::Parameter{type(), true, dimensions(), argument_name(id(),pred_id(), pred_name(), i, graph_id())};
+                 impl_->params[i] = Halide::Parameter{type(), true, dimensions(), argument_name(pred_id(), id(), pred_name(), i, graph_id())};
              }
 
              impl_->instances[i] = bufs[i].raw_buffer();
@@ -235,7 +234,7 @@ public:
              if (es.size() <= i) {
                  es.resize(i+1, Halide::Expr());
              }
-             es[i] = Halide::Internal::Variable::make(type(), argument_name(id(), pred_id(), pred_name(), i, graph_id()), param);
+             es[i] = Halide::Internal::Variable::make(type(), argument_name(pred_id(), id(), pred_name(), i, graph_id()), param);
          }
          return es;
      }
@@ -256,7 +255,7 @@ public:
                  args.push_back(Halide::Var::implicit(i));
                  args_expr.push_back(Halide::Var::implicit(i));
              }
-             Halide::Func f(param.type(), param.dimensions(), argument_name(id(), pred_id(), pred_name(), i, graph_id()) + "_im");
+             Halide::Func f(param.type(), param.dimensions(), argument_name(pred_id(), id(), pred_name(), i, graph_id()) + "_im");
              f(args) = Halide::Internal::Call::make(param, args_expr);
              fs[i] = f;
              if(std::get<1>(impl_->bound_address[i])){
@@ -273,7 +272,7 @@ public:
                  args.resize(i+1, Halide::Argument());
              }
              auto kind = dimensions() == 0 ? Halide::Argument::InputScalar : Halide::Argument::InputBuffer;
-             args[i] = Halide::Argument(argument_name(id(),pred_id(), pred_name(), i, graph_id()),  kind, type(), dimensions(), Halide::ArgumentEstimates());
+             args[i] = Halide::Argument(argument_name(pred_id(), id(), pred_name(), i, graph_id()),  kind, type(), dimensions(), Halide::ArgumentEstimates());
          }
          return args;
      }

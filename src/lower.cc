@@ -217,10 +217,13 @@ Halide::Pipeline lower(Builder builder, std::vector<Node>& nodes, bool implicit_
     // This operation is required especially for the graph which is loaded from JSON definition.
     topological_sort(nodes);
 
+    for (auto n : nodes) {
+        n.detect_data_hazard();
+    }
+
     // Constructing Generator object and setting static parameters
     std::unordered_map<NodeID, Halide::Internal::AbstractGeneratorPtr, NodeID::StringIDHash> bbs;
     for (auto n : nodes) {
-        n.validate_port_address_alignment();
         auto bb(Halide::Internal::GeneratorRegistry::create(n.name(), Halide::GeneratorContext(n.target())));
 
         // Default parameter

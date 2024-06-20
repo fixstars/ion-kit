@@ -126,7 +126,7 @@ public:
     std::vector<std::tuple<std::string, Port>> dynamic_iports() const;
     std::vector<std::tuple<std::string, Port>> dynamic_oports() const;
 
-    void  validate_port_address_alignment ()const ;
+    void  detect_data_hazard ()const ;
 
 private:
     Node(const NodeID& id, const std::string& name, const Halide::Target& target)

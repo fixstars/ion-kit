@@ -297,10 +297,10 @@ public:
 class IncByOffset : public BuildingBlock<IncByOffset> {
 public:
     Input<Halide::Func> input{"input", Int(32), 2};
-    DynamicInput<Halide::Func> input_offset{"input_offset", Int(32), 0}; // to imitate scalar input
+    Input<Halide::Func> input_offset{"input_offset", Int(32), 0}; // to imitate scalar input
     BuildingBlockParam<int32_t> v{"v", 1};
     Output<Halide::Func> output{"output", Int(32), 2};
-    DynamicOutput<int32_t> output_offset{"output_offset"};
+    Output<int32_t> output_offset{"output_offset"};
 
     void generate() {
 
