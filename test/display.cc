@@ -22,7 +22,7 @@ int main()
         b.with_bb_module("ion-bb");
         b.set_target(ion::get_host_target());
 
-        b.add("image_io_gui_display")(in).set_param(Param("width", width), Param("height", height))["output"].bind(r);
+        b.add("image_io_gui_display")(in).set_params(Param("width", width), Param("height", height))["output"].bind(r);
 
         for (int i=0; i<300; ++i) {
             b.run();

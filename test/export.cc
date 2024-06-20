@@ -15,7 +15,7 @@ int main()
                 b.with_bb_module("ion-bb-test");
                 b.set_target(get_host_target());
                 Node n;
-                n = b.add("test_producer").set_param(v41);
+                n = b.add("test_producer").set_params(v41);
                 n = b.add("test_consumer")(n["output"], min0, extent0, min1, extent1, v);
                 b.save("simple_graph.json");
             }
@@ -50,10 +50,10 @@ int main()
             b.with_bb_module("ion-bb-test");
             b.set_target(ion::get_host_target());
             Node n;
-            n = b.add("test_inc_i32x2")(input).set_param(v1);
+            n = b.add("test_inc_i32x2")(input).set_params(v1);
             n = b.add("test_branch")(n["output"], width, height);
             auto ln = b.add("test_inc_i32x2")(n["output0"]);
-            auto rn = b.add("test_inc_i32x2")(n["output1"]).set_param(v1);
+            auto rn = b.add("test_inc_i32x2")(n["output1"]).set_params(v1);
             n = b.add("test_merge")(ln["output"], rn["output"], height);
             b.save("complex_graph.json");
         }
@@ -119,8 +119,8 @@ int main()
                 Builder b;
                 b.with_bb_module("ion-bb-test");
                 b.set_target(ion::get_host_target());
-                auto n = b.add("test_array_output")(input).set_param(Param("len", len));
-                n = b.add("test_array_input")(n["array_output"]).set_param(Param("array_input.size", len));
+                auto n = b.add("test_array_output")(input).set_params(Param("len", len));
+                n = b.add("test_array_input")(n["array_output"]).set_params(Param("array_input.size", len));
                 b.save("array_inout.json");
             }
             {

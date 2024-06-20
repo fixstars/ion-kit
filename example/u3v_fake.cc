@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
         int height = 480;
         int num_device = 2;
         // if you don't set width and height, default width is 640 and default height is 480
-        Node n = b.add("image_io_u3v_cameraN_u8x2")().set_param(
+        Node n = b.add("image_io_u3v_cameraN_u8x2")().set_params(
                 Param("num_devices", num_device),
                 Param("pixel_format", "Mono8"));
 
@@ -35,19 +35,19 @@ int main(int argc, char *argv[])
 //        int width = 960;
 //        int height = 640;
 //        int num_device = 2;
-//        Node n = b.add("image_io_u3v_cameraN_u8x2")().set_param(
+//        Node n = b.add("image_io_u3v_cameraN_u8x2")().set_params(
 //        Param("num_devices", num_device),
 //        Param("force_sim_mode", true),
 //        Param("width", width),
 //        Param("height", height));
 
 /********************RGB 8*************************/
-//        Node n = b.add("image_io_u3v_cameraN_u8x3")().set_param(
+//        Node n = b.add("image_io_u3v_cameraN_u8x3")().set_params(
 //                Param("num_devices", num_device),
 //                Param("pixel_format", "RGB8"));
 
 /********************Mono16*************************/
-//        Node n = b.add("image_io_u3v_cameraN_u16x2")().set_param(
+//        Node n = b.add("image_io_u3v_cameraN_u16x2")().set_params(
 //                Param("num_devices", num_device),
 //                Param("pixel_format", "Mono16"));
 

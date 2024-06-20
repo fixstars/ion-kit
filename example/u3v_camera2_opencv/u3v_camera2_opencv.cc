@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
 
         //  Connect the input port to the Node instance created by b.add().
         Node n = b.add("image_io_u3v_cameraN_u16x2")(&gain, &exposure, &gain, &exposure)
-            .set_param(
+            .set_params(
                 Param("frame_sync", false),
                 Param("gain_key", FEATURE_GAIN_KEY),
                 Param("exposure_key", FEATURE_EXPOSURE_KEY),

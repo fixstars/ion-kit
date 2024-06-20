@@ -56,8 +56,8 @@ int ion_param_destroy(ion_param_t);
 int ion_node_create(ion_node_t *);
 int ion_node_destroy(ion_node_t);
 int ion_node_get_port(ion_node_t, const char *, ion_port_t *);
-int ion_node_set_iport(ion_node_t, ion_port_t *, int);
-int ion_node_set_param(ion_node_t, ion_param_t *, int);
+int ion_node_set_iports(ion_node_t, ion_port_t *, int);
+int ion_node_set_params(ion_node_t, ion_param_t *, int);
 
 int ion_builder_create(ion_builder_t *);
 int ion_builder_destroy(ion_builder_t);

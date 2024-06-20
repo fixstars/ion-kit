@@ -18,13 +18,13 @@ int main(int argc, char *argv[]) {
         // b.set_target(Halide::Target("arm-64-linux"));
 
         Node n;
-        n = b.add("image_io_color_data_loader").set_param(Param{"url", "http://ion-kit.s3.us-west-2.amazonaws.com/images/pedestrian.jpg"});
+        n = b.add("image_io_color_data_loader").set_params(Param{"url", "http://ion-kit.s3.us-west-2.amazonaws.com/images/pedestrian.jpg"});
         n = b.add("fpga_normalize_3d_chw_uint8")
-            .set_param(
+            .set_params(
                 Param{"width", "512"},
                 Param{"height", "512"}
             )(n["output"]);
-        n = b.add("base_reorder_buffer_3d_float")(n["output"]).set_param(Param{"dim0", "2"}, Param{"dim1", "0"}, Param{"dim2", "1"});  // CHW -> HWC
+        n = b.add("base_reorder_buffer_3d_float")(n["output"]).set_params(Param{"dim0", "2"}, Param{"dim1", "0"}, Param{"dim2", "1"});  // CHW -> HWC
         n = b.add("dnn_object_detection")(n["output"]);
         n = b.add("base_denormalize_3d_uint8")(n["output"]);
 

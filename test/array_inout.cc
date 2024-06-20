@@ -24,8 +24,8 @@ int main() {
 
         Builder b;
         b.set_target(Halide::get_host_target());
-        auto n = b.add("test_array_output")(in).set_param(Param("len", len));
-        n = b.add("test_array_input")(n["array_output"]).set_param(Param("array_input.size", len));
+        auto n = b.add("test_array_output")(in).set_params(Param("len", len));
+        n = b.add("test_array_input")(n["array_output"]).set_params(Param("array_input.size", len));
         n["output"].bind(out);
 
         b.run();

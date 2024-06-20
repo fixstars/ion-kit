@@ -49,14 +49,14 @@ int main(int argc, char *argv[]) {
         b.with_bb_module("ion-bb");
 
         Node n;
-        n = b.add("image_io_cameraN").set_param(
+        n = b.add("image_io_cameraN").set_params(
                 wparam,
                 hparam,
                 Param("num_devices", 2),
                 Param("urls", "http://optipng.sourceforge.net/pngtech/img/lena.png;http://upload.wikimedia.org/wikipedia/commons/0/05/Cat.png")
         );
         n = b.add("base_normalize_3d_uint8")(n["output"][1]);  // access only port[1]
-        n = b.add("image_processing_resize_nearest_3d")(n["output"]).set_param(
+        n = b.add("image_processing_resize_nearest_3d")(n["output"]).set_params(
                 Param("width", width),
                 Param("height", height),
                 Param("scale", 2));

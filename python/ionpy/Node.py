@@ -8,8 +8,8 @@ from .native import (
     ion_node_create,
     ion_node_destroy,
     ion_node_get_port,
-    ion_node_set_iport,
-    ion_node_set_param,
+    ion_node_set_iports,
+    ion_node_set_params,
 )
 from .Type import Type
 from .Port import Port
@@ -35,7 +35,7 @@ class Node:
 
     # TODO: Make it work well
     # def __call__(self, *args):
-    #     self.set_iport(list(*args))
+    #     self.set_iports(list(*args))
 
     def get_port(self, name: str) -> Port:
         c_port = c_ion_port_t()
@@ -46,7 +46,7 @@ class Node:
 
         return Port(obj_=c_port)
 
-    def set_iport(self, ports: List[Port]) -> 'Node':
+    def set_iports(self, ports: List[Port]) -> 'Node':
         num_ports = len(ports)
         c_ion_port_sized_array_t = c_ion_port_t * num_ports # arraysize == num_ports
         c_ports = c_ion_port_sized_array_t() # instance
@@ -54,13 +54,13 @@ class Node:
         for i in range(num_ports):
             c_ports[i] = ports[i].obj
 
-        ret = ion_node_set_iport(self.obj, c_ports, num_ports)
+        ret = ion_node_set_iports(self.obj, c_ports, num_ports)
         if ret != 0:
             raise Exception('Invalid operation')
 
         return self
 
-    def set_param(self, params: List[Param]) -> 'Node':
+    def set_params(self, params: List[Param]) -> 'Node':
         num_params = len(params)
         c_ion_param_sized_array_t = c_ion_param_t * num_params # arraysize == num_params
         c_params = c_ion_param_sized_array_t() # instance
@@ -68,7 +68,7 @@ class Node:
         for i in range(num_params):
             c_params[i] = params[i].obj
 
-        ret = ion_node_set_param(self.obj, c_params, num_params)
+        ret = ion_node_set_params(self.obj, c_params, num_params)
         if ret != 0:
             raise Exception('Invalid operation')
 

@@ -53,7 +53,7 @@ int main() {
             Builder b;
             b.set_target(get_host_target());
             Buffer<int32_t> output{size};
-            b.add("test")(input, &v, &v).set_param(Param("num", 2))["output"].bind(output);
+            b.add("test")(input, &v, &v).set_params(Param("num", 2))["output"].bind(output);
             b.compile("x");
             b.run();
             for (int i=0; i<size; ++i) {

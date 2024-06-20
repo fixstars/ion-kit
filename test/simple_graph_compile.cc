@@ -13,7 +13,7 @@ int main()
         Builder b;
         b.set_target(Halide::get_target_from_environment());
         Node n;
-        n = b.add("test_producer").set_param(v41);
+        n = b.add("test_producer").set_params(v41);
         n = b.add("test_consumer")(n["output"], min0, extent0, min1, extent1, v);
         b.compile("simple_graph");
     } catch (const Halide::Error& e) {

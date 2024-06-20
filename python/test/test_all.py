@@ -13,7 +13,7 @@ def test_all():
     builder.set_target(target='host')
     builder.with_bb_module(path='ion-bb-test')
 
-    node = builder.add('test_inc_i32x2').set_iport([input_port]).set_param(params=[ value41, ])
+    node = builder.add('test_inc_i32x2').set_iports([input_port]).set_params(params=[ value41, ])
 
     idata = np.full((4, 4), fill_value=1, dtype=np.int32)
     ibuf = Buffer(array=idata)

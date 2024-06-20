@@ -57,11 +57,11 @@ int main() {
     // Input is set by calling Node::operator().
     n1(input);
 
-    // Parameter can be set by Node::set_param();
-    n1.set_param(ion::Param("v", 40));
+    // Parameter can be set by Node::set_params();
+    n1.set_params(ion::Param("v", 40));
 
     // Method chain can be used to make it simple.
-    auto n2 = b.add("my_filter")(n1["output"]).set_param(ion::Param("v", 2));
+    auto n2 = b.add("my_filter")(n1["output"]).set_params(ion::Param("v", 2));
 
     // Bind output buffer.
     ion::Buffer<int32_t> output{size};

@@ -57,12 +57,12 @@ public:
      * @return Node object whose parameter is set.
      */
     template<typename... Args>
-    Node set_param(Args ...args) {
+    Node set_params(Args ...args) {
         impl_->params = std::vector<Param>{args...};
         return *this;
     }
 
-    void set_param(const std::vector<Param>& params) {
+    void set_params(const std::vector<Param>& params) {
         impl_->params = params;
     }
 
@@ -77,11 +77,11 @@ public:
      */
     template<typename... Args>
     Node operator()(Args ...args) {
-        set_iport(std::vector<Port>{make_iport(args)...});
+        set_iports(std::vector<Port>{make_iport(args)...});
         return *this;
     }
 
-    void set_iport(const std::vector<Port>& ports);
+    void set_iports(const std::vector<Port>& ports);
 
     void set_iport(Port port);
 
