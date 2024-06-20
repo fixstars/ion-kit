@@ -48,20 +48,20 @@ class App(Frame):
 
         # U3V camera
         # params = [Param("num_devices", 1), Param("realtime_diaplay_mode", True)]
-        # n_img_cwh = self.b.add("image_io_u3v_cameraN_u8x3").set_param(params)
+        # n_img_cwh = self.b.add("image_io_u3v_cameraN_u8x3").set_params(params)
 
         # UVC camera
         params = [Param("width", self.camera_width), Param("height", self.camera_height)]
-        n_img_whc = self.b.add("image_io_camera").set_param(params)
+        n_img_whc = self.b.add("image_io_camera").set_params(params)
         params = [Param("dim0", 2), Param("dim1", 0), Param("dim2", 1)]
-        n_img_cwh = self.b.add("base_reorder_buffer_3d_uint8").set_iport([n_img_whc.get_port("output")]).set_param(params);
+        n_img_cwh = self.b.add("base_reorder_buffer_3d_uint8").set_iport([n_img_whc.get_port("output")]).set_params(params);
 
         self.prompt_buf = Buffer(array=self.prompt)
         prompt_port = Port(name="prompt", type=Type(TypeCode.Int, 8, 1), dim=1)
         prompt_port.bind(self.prompt_buf)
 
         params = [Param("width", self.camera_width), Param("height", self.camera_height)]
-        n_txt = self.b.add("llm_llava").set_iport([n_img_cwh.get_port("output")[0], prompt_port]).set_param(params)
+        n_txt = self.b.add("llm_llava").set_iport([n_img_cwh.get_port("output")[0], prompt_port]).set_params(params)
 
         for i in range(self.camera_height):
             for j in range(self.camera_width):

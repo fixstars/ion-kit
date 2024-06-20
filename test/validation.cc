@@ -19,7 +19,7 @@ int main()
             b.with_bb_module("ion-bb-test");
             b.set_target(Halide::get_host_target());
             Node n;
-            n = b.add("test_inc_i32x2")(input).set_param(Param("unknown-parameter", 1));
+            n = b.add("test_inc_i32x2")(input).set_params(Param("unknown-parameter", 1));
             n = b.add("test_inc_i32x2")(n["output"]);
             n["output"].bind(output);
 
@@ -37,7 +37,7 @@ int main()
             b.with_bb_module("ion-bb-test");
             b.set_target(Halide::get_host_target());
             Node n;
-            n = b.add("test_inc_i32x2")(input).set_param(Param("v", 41));
+            n = b.add("test_inc_i32x2")(input).set_params(Param("v", 41));
             n = b.add("test_inc_i32x2")(n["unknown-port"]);
             n["output"].bind(output);
 
@@ -55,7 +55,7 @@ int main()
             b.with_bb_module("ion-bb-test");
             b.set_target(Halide::get_host_target());
             Node n;
-            n = b.add("test_inc_i32x2")(input).set_param(Param("v", 41));
+            n = b.add("test_inc_i32x2")(input).set_params(Param("v", 41));
             n = b.add("test_inc_i32x2")(n["output"]);
             n["unknown-port"].bind(output);
 
@@ -76,7 +76,7 @@ int main()
             Buffer<int32_t> unknown(2, 2);
 
             Node n;
-            n = b.add("test_inc_i32x2")(input, unknown).set_param(Param("v", 41));
+            n = b.add("test_inc_i32x2")(input, unknown).set_params(Param("v", 41));
             n = b.add("test_inc_i32x2")(n["output"]);
             n["output"].bind(output);
 

@@ -12,7 +12,7 @@ def test_binding():
     builder.set_target(target='host')
     builder.with_bb_module(path='ion-bb-test')
 
-    node = builder.add('test_incx_i32x2').set_iport([input_port, value_port])
+    node = builder.add('test_incx_i32x2').set_iports([input_port, value_port])
 
     idata = np.array([[42, 42]], dtype=np.int32)
     ibuf = Buffer(array=idata)

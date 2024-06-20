@@ -25,7 +25,7 @@ int main()
             out1.fill(0);
 
             Graph g0 = b.add_graph("graph0");
-            Node n0 = g0.add("test_inc_i32x2")(in0).set_param(Param("v", 40));
+            Node n0 = g0.add("test_inc_i32x2")(in0).set_params(Param("v", 40));
             n0["output"].bind(out0);
             g0.run();
 
@@ -41,7 +41,7 @@ int main()
             }
 
             Graph g1 = b.add_graph("graph1");
-            Node n1 = g1.add("test_inc_i32x2")(in1).set_param(Param("v", 41));
+            Node n1 = g1.add("test_inc_i32x2")(in1).set_params(Param("v", 41));
             n1["output"].bind(out1);
             g1.run();
 

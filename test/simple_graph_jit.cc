@@ -12,7 +12,7 @@ int main()
         b.with_bb_module("ion-bb-test");
         b.set_target(Halide::get_host_target());
         Node n;
-        n = b.add("test_producer").set_param(Param("v", 41));
+        n = b.add("test_producer").set_params(Param("v", 41));
         n = b.add("test_consumer")(n["output"], &min0, &extent0, &min1, &extent1, &v);
 
         ion::Buffer<int32_t> r = ion::Buffer<int32_t>::make_scalar();

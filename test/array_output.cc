@@ -35,8 +35,8 @@ int main() {
         b.set_target(ion::get_host_target());
 
         Node n;
-        n = b.add("test_array_output")(in).set_param(Param("len", len));
-        n = b.add("test_array_copy")(n["array_output"]).set_param(Param("array_input.size", len));
+        n = b.add("test_array_output")(in).set_params(Param("len", len));
+        n = b.add("test_array_copy")(n["array_output"]).set_params(Param("array_input.size", len));
 
         for (int i=0; i<len; ++i) {
             n["array_output"][i].bind(outs[i]);

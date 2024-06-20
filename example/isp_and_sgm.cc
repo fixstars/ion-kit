@@ -94,19 +94,19 @@ int main(int argc, char *argv[]) {
         Node color_matrix_r, color_conversion_r, gamma_correction_r, distortion_lut_r, distortion_correction_r, resize_r, final_luminance_r;
 
         loader = b.add("image_io_grayscale_data_loader")
-            .set_param(
+            .set_params(
                 Param("width", raw_width),
                 Param("height", raw_height),
                 Param("url", "http://ion-kit.s3.us-west-2.amazonaws.com/images/OV5647x2-5184x1944-GB10.raw"));
 
         normalize = b.add("image_processing_normalize_raw_image")
-            .set_param(
+            .set_params(
                 Param("bit_width", "10"),
                 Param("bit_shift", "6"))(
                     loader["output"]);
 
         crop_l = b.add("image_processing_crop_image_2d_float")
-                     .set_param(
+                     .set_params(
                          Param("x_dim", "0"),
                          Param("y_dim", "1"),
                          Param("input_width", "0"),
@@ -117,14 +117,14 @@ int main(int argc, char *argv[]) {
                          Param("output_height", buffer_height))(
                          normalize["output"]);
         offset_l = b.add("image_processing_bayer_offset")
-                       .set_param(
+                       .set_params(
                            bayer_pattern_l)(
                            &offset_r_l,
                            &offset_g_l,
                            &offset_b_l,
                            normalize["output"]);
         shading_correction_l = b.add("image_processing_lens_shading_correction_linear")
-                                   .set_param(
+                                   .set_params(
                                        bayer_pattern_l,
                                        Param("width", buffer_width),
                                        Param("height", buffer_height))(
@@ -136,29 +136,29 @@ int main(int argc, char *argv[]) {
                                        &shading_correction_offset_b_l,
                                        offset_l["output"]);
         white_balance_l = b.add("image_processing_bayer_white_balance")
-                              .set_param(
+                              .set_params(
                                   bayer_pattern_l)(
                                   &gain_r_l,
                                   &gain_g_l,
                                   &gain_b_l,
                                   shading_correction_l["output"]);
         demosaic_l = b.add("image_processing_bayer_demosaic_filter")
-                         .set_param(
+                         .set_params(
                              bayer_pattern_l,
                              Param("width", buffer_width),
                              Param("height", buffer_height))(
                              white_balance_l["output"]);
         luminance_l = b.add("image_processing_calc_luminance")
-                          .set_param(
+                          .set_params(
                               Param("luminance_method", "Average"))(
                               demosaic_l["output"]);
         luminance_filter_l = b.add("base_constant_buffer_2d_float")
-                                 .set_param(
+                                 .set_params(
                                      Param("values", "0.04"),
                                      Param("extent0", "5"),
                                      Param("extent1", "5"));
         filtered_luminance_l = b.add("image_processing_convolution_2d")
-                                   .set_param(
+                                   .set_params(
                                        Param("boundary_conditions_method", "MirrorInterior"),
                                        Param("window_size", "2"),
                                        Param("width", buffer_width),
@@ -166,7 +166,7 @@ int main(int argc, char *argv[]) {
                                        luminance_filter_l["output"],
                                        luminance_l["output"]);
         noise_reduction_l = b.add("image_processing_bilateral_filter_3d")
-                                .set_param(
+                                .set_params(
                                     Param("color_difference_method", "Average"),
                                     Param("window_size", "2"),
                                     Param("width", buffer_width),
@@ -176,7 +176,7 @@ int main(int argc, char *argv[]) {
                                     filtered_luminance_l["output"],
                                     demosaic_l["output"]);
         color_matrix_l = b.add("base_constant_buffer_2d_float")
-                             .set_param(
+                             .set_params(
                                  Param{"values", "1.5 -0.25 -0.25 "
                                                  "-0.25 1.5 -0.25 "
                                                  "-0.25 -0.25 1.5"},
@@ -186,7 +186,7 @@ int main(int argc, char *argv[]) {
             color_matrix_l["output"],
             noise_reduction_l["output"]);
         distortion_correction_l = b.add("image_processing_lens_distortion_correction_model_3d")
-                                      .set_param(
+                                      .set_params(
                                           Param("width", buffer_width),
                                           Param("height", buffer_height))(
                                           &k1_l,
@@ -201,13 +201,13 @@ int main(int argc, char *argv[]) {
                                           &output_scale_l,
                                           color_conversion_l["output"]);
         resize_l = b.add("image_processing_resize_area_average_3d")
-                       .set_param(
+                       .set_params(
                            Param("width", buffer_width),
                            Param("height", buffer_height),
                            Param("scale", resize_scale_l))(
                            distortion_correction_l["output"]);
         final_luminance_l = b.add("image_processing_calc_luminance")
-                                .set_param(
+                                .set_params(
                                     Param("luminance_method", "Y"))(
                                     resize_l["output"]);
         gamma_correction_l = b.add("image_processing_gamma_correction_2d")(
@@ -215,7 +215,7 @@ int main(int argc, char *argv[]) {
             final_luminance_l["output"]);
 
         crop_r = b.add("image_processing_crop_image_2d_float")
-                     .set_param(
+                     .set_params(
                          Param("x_dim", "0"),
                          Param("y_dim", "1"),
                          Param("input_width", "0"),
@@ -226,14 +226,14 @@ int main(int argc, char *argv[]) {
                          Param("output_height", buffer_height))(
                          normalize["output"]);
         offset_r = b.add("image_processing_bayer_offset")
-                       .set_param(
+                       .set_params(
                            bayer_pattern_r)(
                            &offset_r_r,
                            &offset_g_r,
                            &offset_b_r,
                            normalize["output"]);
         shading_correction_r = b.add("image_processing_lens_shading_correction_linear")
-                                   .set_param(
+                                   .set_params(
                                        bayer_pattern_r,
                                        Param("width", buffer_width),
                                        Param("height", buffer_height))(
@@ -245,29 +245,29 @@ int main(int argc, char *argv[]) {
                                        &shading_correction_offset_b_r,
                                        offset_r["output"]);
         white_balance_r = b.add("image_processing_bayer_white_balance")
-                              .set_param(
+                              .set_params(
                                   bayer_pattern_r)(
                                   &gain_r_r,
                                   &gain_g_r,
                                   &gain_b_r,
                                   shading_correction_r["output"]);
         demosaic_r = b.add("image_processing_bayer_demosaic_filter")
-                         .set_param(
+                         .set_params(
                              bayer_pattern_r,
                              Param("width", buffer_width),
                              Param("height", buffer_height))(
                              white_balance_r["output"]);
         luminance_r = b.add("image_processing_calc_luminance")
-                          .set_param(
+                          .set_params(
                               Param("luminance_method", "Average"))(
                               demosaic_r["output"]);
         luminance_filter_r = b.add("base_constant_buffer_2d_float")
-                                 .set_param(
+                                 .set_params(
                                      Param("values", "0.04"),
                                      Param("extent0", "5"),
                                      Param("extent1", "5"));
         filtered_luminance_r = b.add("image_processing_convolution_2d")
-                                   .set_param(
+                                   .set_params(
                                        Param("boundary_conditions_method", "MirrorInterior"),
                                        Param("window_size", "2"),
                                        Param("width", buffer_width),
@@ -275,7 +275,7 @@ int main(int argc, char *argv[]) {
                                        luminance_filter_r["output"],
                                        luminance_r["output"]);
         noise_reduction_r = b.add("image_processing_bilateral_filter_3d")
-                                .set_param(
+                                .set_params(
                                     Param("color_difference_method", "Average"),
                                     Param("window_size", "2"),
                                     Param("width", buffer_width),
@@ -285,7 +285,7 @@ int main(int argc, char *argv[]) {
                                     filtered_luminance_r["output"],
                                     demosaic_r["output"]);
         color_matrix_r = b.add("base_constant_buffer_2d_float")
-                             .set_param(
+                             .set_params(
                                  Param{"values", "1.5 -0.25 -0.25 "
                                                  "-0.25 1.5 -0.25 "
                                                  "-0.25 -0.25 1.5"},
@@ -295,7 +295,7 @@ int main(int argc, char *argv[]) {
             color_matrix_r["output"],
             noise_reduction_r["output"]);
         distortion_correction_r = b.add("image_processing_lens_distortion_correction_model_3d")
-                                      .set_param(
+                                      .set_params(
                                           Param("width", buffer_width),
                                           Param("height", buffer_height))(
                                           &k1_r,
@@ -310,13 +310,13 @@ int main(int argc, char *argv[]) {
                                           &output_scale_r,
                                           color_conversion_r["output"]);
         resize_r = b.add("image_processing_resize_area_average_3d")
-                       .set_param(
+                       .set_params(
                            Param("width", buffer_width),
                            Param("height", buffer_height),
                            Param("scale", resize_scale_r))(
                            distortion_correction_r["output"]);
         final_luminance_r = b.add("image_processing_calc_luminance")
-                                .set_param(
+                                .set_params(
                                     Param("luminance_method", "Y"))(
                                     resize_r["output"]);
         gamma_correction_r = b.add("image_processing_gamma_correction_2d")(
@@ -324,20 +324,20 @@ int main(int argc, char *argv[]) {
             final_luminance_r["output"]);
 
         Node ln = b.add("base_denormalize_2d_uint8")(gamma_correction_l["output"]);
-        ln = b.add("sgm_census")(ln["output"]).set_param(Param("width", output_width), Param("height", output_height));
+        ln = b.add("sgm_census")(ln["output"]).set_params(Param("width", output_width), Param("height", output_height));
 
         Node rn = b.add("base_denormalize_2d_uint8")(gamma_correction_r["output"]);
-        rn = b.add("sgm_census")(rn["output"]).set_param(Param("width", output_width), Param("height", output_height));
+        rn = b.add("sgm_census")(rn["output"]).set_params(Param("width", output_width), Param("height", output_height));
 
-        Node n = b.add("sgm_matching_cost")(ln["output"], rn["output"]).set_param(Param("width", output_width), Param("height", output_height));
+        Node n = b.add("sgm_matching_cost")(ln["output"], rn["output"]).set_params(Param("width", output_width), Param("height", output_height));
 
-        Node up = b.add("sgm_scan_cost")(n["output"]).set_param(Param("width", output_width), Param("height", output_height), Param("disp", disp), Param("dx", 0), Param("dy", 1));
-        Node lp = b.add("sgm_scan_cost")(n["output"]).set_param(Param("width", output_width), Param("height", output_height), Param("disp", disp), Param("dx", 1), Param("dy", 0));
-        Node rp = b.add("sgm_scan_cost")(n["output"]).set_param(Param("width", output_width), Param("height", output_height), Param("disp", disp), Param("dx", -1), Param("dy", 0));
-        Node dp = b.add("sgm_scan_cost")(n["output"]).set_param(Param("width", output_width), Param("height", output_height), Param("disp", disp), Param("dx", 0), Param("dy", -1));
+        Node up = b.add("sgm_scan_cost")(n["output"]).set_params(Param("width", output_width), Param("height", output_height), Param("disp", disp), Param("dx", 0), Param("dy", 1));
+        Node lp = b.add("sgm_scan_cost")(n["output"]).set_params(Param("width", output_width), Param("height", output_height), Param("disp", disp), Param("dx", 1), Param("dy", 0));
+        Node rp = b.add("sgm_scan_cost")(n["output"]).set_params(Param("width", output_width), Param("height", output_height), Param("disp", disp), Param("dx", -1), Param("dy", 0));
+        Node dp = b.add("sgm_scan_cost")(n["output"]).set_params(Param("width", output_width), Param("height", output_height), Param("disp", disp), Param("dx", 0), Param("dy", -1));
 
-        n = b.add("sgm_add_cost4")(up["output"], lp["output"], rp["output"], dp["output"]).set_param(Param("width", output_width), Param("height", output_height), Param("disp", disp), Param("num", 4));
-        n = b.add("sgm_disparity")(n["output"]).set_param(Param("width", output_width), Param("height", output_height), Param("disp", disp));
+        n = b.add("sgm_add_cost4")(up["output"], lp["output"], rp["output"], dp["output"]).set_params(Param("width", output_width), Param("height", output_height), Param("disp", disp), Param("num", 4));
+        n = b.add("sgm_disparity")(n["output"]).set_params(Param("width", output_width), Param("height", output_height), Param("disp", disp));
 
         Halide::Buffer<uint8_t> obuf(std::vector<int>{output_width, output_height});
         // Halide::Buffer<uint8_t> obuf1(std::vector<int>{output_width, output_height});

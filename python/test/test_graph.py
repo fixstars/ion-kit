@@ -11,7 +11,7 @@ def test_graph():
 
     graph0 = builder.add_graph("graph0")
 
-    node0 = graph0.add('test_incx_i32x2').set_iport([input_port0, value_port0])
+    node0 = graph0.add('test_incx_i32x2').set_iports([input_port0, value_port0])
 
     idata0 = np.array([[42, 42]], dtype=np.int32)
     ibuf0 = Buffer(array=idata0)
@@ -29,7 +29,7 @@ def test_graph():
 
     graph1 = builder.add_graph("graph1")
     # graph1 = Graph(builder =builder, name="graph1") # alternative
-    node1 = graph1.add('test_incx_i32x2').set_iport([input_port1, value_port1])
+    node1 = graph1.add('test_incx_i32x2').set_iports([input_port1, value_port1])
 
     idata1 = np.array([[42, 42]], dtype=np.int32)
     ibuf1 = Buffer(array=idata1)

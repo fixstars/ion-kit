@@ -23,13 +23,13 @@ int main(int argc, char *argv[]) {
         b.set_target(Halide::get_target_from_environment());
         b.with_bb_module("ion-bb");
 
-        auto n_img_cwh = b.add("image_io_color_data_loader").set_param(Param{"url", "http://www.onthejob.education/images/4th_level/Road_Worker/Road_Worker_Darwin.jpg"}, Param{"width", width}, Param{"height", height});
-        auto n_img_whc = b.add("base_reorder_buffer_3d_uint8")(n_img_cwh["output"]).set_param(Param{"dim0", 2}, Param{"dim1", 0}, Param{"dim2", 1});
-        // auto n_img_cwh = b.add("image_io_u3v_cameraN_u8x3").set_param(Param{"num_devices", "1"}, Param{"realtime_diaplay_mode", true});
-        // auto n_img_whc = b.add("base_reorder_buffer_3d_uint8")(n_img_cwh["output"]).set_param(Param{"dim0", 1}, Param{"dim1", 2}, Param{"dim2", 0});
+        auto n_img_cwh = b.add("image_io_color_data_loader").set_params(Param{"url", "http://www.onthejob.education/images/4th_level/Road_Worker/Road_Worker_Darwin.jpg"}, Param{"width", width}, Param{"height", height});
+        auto n_img_whc = b.add("base_reorder_buffer_3d_uint8")(n_img_cwh["output"]).set_params(Param{"dim0", 2}, Param{"dim1", 0}, Param{"dim2", 1});
+        // auto n_img_cwh = b.add("image_io_u3v_cameraN_u8x3").set_params(Param{"num_devices", "1"}, Param{"realtime_diaplay_mode", true});
+        // auto n_img_whc = b.add("base_reorder_buffer_3d_uint8")(n_img_cwh["output"]).set_params(Param{"dim0", 1}, Param{"dim1", 2}, Param{"dim2", 0});
 
-        auto n_disp = b.add("image_io_gui_display")(n_img_whc["output"][0]).set_param(Param{"width", width}, Param{"height", height});
-        auto n_txt = b.add("llm_llava")(n_img_cwh["output"][0], prompt).set_param(Param{"width", width}, Param{"height", height});
+        auto n_disp = b.add("image_io_gui_display")(n_img_whc["output"][0]).set_params(Param{"width", width}, Param{"height", height});
+        auto n_txt = b.add("llm_llava")(n_img_cwh["output"][0], prompt).set_params(Param{"width", width}, Param{"height", height});
 
         Buffer<int8_t> txt_output{1024};
         n_txt["output"].bind(txt_output);

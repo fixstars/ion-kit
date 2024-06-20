@@ -18,8 +18,8 @@ int main() {
             Builder b;
             b.set_target(Halide::get_host_target());
             Node n;
-            n = b.add("test_array_copy")(input).set_param(Param("array_input.size", len));
-            n = b.add("test_array_input")(n["array_output"]).set_param(Param("array_input.size", len));
+            n = b.add("test_array_copy")(input).set_params(Param("array_input.size", len));
+            n = b.add("test_array_input")(n["array_output"]).set_params(Param("array_input.size", len));
 
             std::vector<Halide::Buffer<int32_t>> ins{
                 Halide::Buffer<int32_t>{w, h},
@@ -70,8 +70,8 @@ int main() {
             Builder b;
             b.set_target(Halide::get_host_target());
             Node n;
-            n = b.add("test_array_copy")(input).set_param(Param("array_input.size", len));
-            n = b.add("test_array_input")(n["array_output"]).set_param(Param("array_input.size", len));
+            n = b.add("test_array_copy")(input).set_params(Param("array_input.size", len));
+            n = b.add("test_array_input")(n["array_output"]).set_params(Param("array_input.size", len));
 
             Halide::Buffer<int32_t> in0(w, h), in1(w, h), in2(w, h), in3(w, h), in4(w, h);
 
@@ -130,8 +130,8 @@ int main() {
             Builder b;
             b.set_target(Halide::get_host_target());
             Node n;
-            n = b.add("test_array_copy")(ins).set_param(Param("array_input.size", len));
-            n = b.add("test_array_input")(n["array_output"]).set_param(Param("array_input.size", len));
+            n = b.add("test_array_copy")(ins).set_params(Param("array_input.size", len));
+            n = b.add("test_array_input")(n["array_output"]).set_params(Param("array_input.size", len));
 
             for (int y = 0; y < h; ++y) {
                 for (int x = 0; x < w; ++x) {

@@ -29,7 +29,7 @@ Node::Impl::Impl(const NodeID& id_, const std::string& name_, const Halide::Targ
     arginfos = bb->arginfos();
 }
 
-void Node::set_iport(const std::vector<Port>& ports) {
+void Node::set_iports(const std::vector<Port>& ports) {
 
     impl_->ports.erase(std::remove_if(impl_->ports.begin(), impl_->ports.end(),
                                       [&](const Port &p) { return p.has_succ_by_nid(this->id());}),

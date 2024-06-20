@@ -41,12 +41,12 @@ int main(int argc, char *argv[]) {
     const int32_t width = 640;
     const int32_t height = 480;
 
-    auto n0 = b.add("image_io_camera").set_param(Param("fps", 25), Param("width", width), Param("height", height), Param("index", "0"), Param("url", "http://optipng.sourceforge.net/pngtech/img/lena.png"));
-    auto n1 = b.add("image_io_camera").set_param(Param("fps", 25), Param("width", width), Param("height", height), Param("index", "1"), Param("url", "http://optipng.sourceforge.net/pngtech/img/lena.png"));
-    auto n2 = b.add("image_io_camera_simulation").set_param(Param("fps", 25), Param("width", width), Param("height", height), Param("url", "http://optipng.sourceforge.net/pngtech/img/lena.png"), Param("bit_width", 10), Param("bit_shift", 6), Param("gain_r", 0.4), Param("gain_g", 0.5), Param("gain_b", 0.3125), Param("offset", 0.0625));
-    auto n3 = b.add("image_io_camera_simulation").set_param(Param("fps", 25), Param("width", width), Param("height", height), Param("url", "http://optipng.sourceforge.net/pngtech/img/lena.png"), Param("bit_width", 10), Param("bit_shift", 6), Param("gain_r", 0.4), Param("gain_g", 0.5), Param("gain_b", 0.3125), Param("offset", 0.0625));
-    auto n4 = b.add("image_io_imx219").set_param(Param("fps", 25), Param("width", width), Param("height", height), Param("index", "4"), Param("url", "http://optipng.sourceforge.net/pngtech/img/lena.png"));
-    auto n5 = b.add("image_io_imx219").set_param(Param("fps", 25), Param("width", width), Param("height", height), Param("index", "5"), Param("url", "http://optipng.sourceforge.net/pngtech/img/lena.png"));
+    auto n0 = b.add("image_io_camera").set_params(Param("fps", 25), Param("width", width), Param("height", height), Param("index", "0"), Param("url", "http://optipng.sourceforge.net/pngtech/img/lena.png"));
+    auto n1 = b.add("image_io_camera").set_params(Param("fps", 25), Param("width", width), Param("height", height), Param("index", "1"), Param("url", "http://optipng.sourceforge.net/pngtech/img/lena.png"));
+    auto n2 = b.add("image_io_camera_simulation").set_params(Param("fps", 25), Param("width", width), Param("height", height), Param("url", "http://optipng.sourceforge.net/pngtech/img/lena.png"), Param("bit_width", 10), Param("bit_shift", 6), Param("gain_r", 0.4), Param("gain_g", 0.5), Param("gain_b", 0.3125), Param("offset", 0.0625));
+    auto n3 = b.add("image_io_camera_simulation").set_params(Param("fps", 25), Param("width", width), Param("height", height), Param("url", "http://optipng.sourceforge.net/pngtech/img/lena.png"), Param("bit_width", 10), Param("bit_shift", 6), Param("gain_r", 0.4), Param("gain_g", 0.5), Param("gain_b", 0.3125), Param("offset", 0.0625));
+    auto n4 = b.add("image_io_imx219").set_params(Param("fps", 25), Param("width", width), Param("height", height), Param("index", "4"), Param("url", "http://optipng.sourceforge.net/pngtech/img/lena.png"));
+    auto n5 = b.add("image_io_imx219").set_params(Param("fps", 25), Param("width", width), Param("height", height), Param("index", "5"), Param("url", "http://optipng.sourceforge.net/pngtech/img/lena.png"));
 
     ion::Buffer<uint8_t> obuf0(width, height, 3), obuf1(width, height, 3);
     ion::Buffer<uint16_t> obuf2(width, height), obuf3(width, height);

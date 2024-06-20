@@ -7,4 +7,4 @@ def test_node_param():
     params = [ param_to_set, ]
 
     n = Node()
-    n.set_param(params)
+    n.set_params(params)

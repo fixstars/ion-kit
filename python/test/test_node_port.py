@@ -12,7 +12,7 @@ def test_node_port():
     builder.with_bb_module(path='ion-bb-test')
     # builder.with_bb_module(path='ion-bb-test.dll') # for Windows
 
-    n = builder.add('test_inc_i32x2').set_iport(ports=[ port_to_set, ])
+    n = builder.add('test_inc_i32x2').set_iports(ports=[ port_to_set, ])
 
     port_to_get = n.get_port('input')
     print(f'from node.get_port: {port_to_get}')

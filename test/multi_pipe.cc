@@ -17,13 +17,13 @@ int main()
         Buffer<int32_t> in0(std::vector<int>{size, size});
         in0.fill(0);
         Buffer<int32_t> out0(std::vector<int>{size, size});
-        n = b.add("test_inc_i32x2")(in0).set_param(Param{"v", 1});;
+        n = b.add("test_inc_i32x2")(in0).set_params(Param{"v", 1});;
         n["output"].bind(out0);
 
         Buffer<int32_t> in1(std::vector<int>{size, size});
         in1.fill(0);
         Buffer<int32_t> out1(std::vector<int>{size, size});
-        n = b.add("test_inc_i32x2")(in1).set_param(Param{"v", 2});
+        n = b.add("test_inc_i32x2")(in1).set_params(Param{"v", 2});
         n["output"].bind(out1);
 
         b.run();
