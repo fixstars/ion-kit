@@ -75,7 +75,7 @@ ion_jit_executable(validation SRCS validation.cc)
 ion_jit_executable(multi_pipe SRCS multi_pipe.cc)
 
 # Dynamic Binding
-ion_jit_executable(dynamic_binding SRCS dynamic_binding.cc)
+ion_jit_executable(unbounded_binding SRCS unbounded_binding.cc)
 
 # Graph
 ion_jit_executable(graph SRCS graph.cc)

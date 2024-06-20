@@ -64,7 +64,6 @@ private:
         std::unordered_map<uint32_t, Halide::Parameter> params;
         std::unordered_map<uint32_t, const void *> instances;
 
-        bool is_dynamic;
         std::unordered_map<uint32_t, std::tuple<const void *, bool> > bound_address;
 
         Impl();

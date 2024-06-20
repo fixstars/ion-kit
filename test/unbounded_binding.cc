@@ -38,14 +38,14 @@ int main() {
 //            Halide::Buffer<int32_t> param_buf1(param_buf.data(),sizes);
 
             for(auto &n:b.nodes()){
-                for (auto& [pn, port] : n.dynamic_iports()) {
+                for (auto& [pn, port] : n.unbounded_iports()) {
                       port.bind(param_buf);
-                      n.set_dynamic_port(port);
+                      n.set_iport(port);
                 }
 
-                for (auto& [pn, port] : n.dynamic_oports()) {
+                for (auto& [pn, port] : n.unbounded_oports()) {
                     port.bind(param_buf);
-                    n.set_dynamic_port(port);
+                    n.set_oport(port);
                 }
 
             }

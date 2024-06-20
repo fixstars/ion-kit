@@ -6,12 +6,12 @@
 namespace ion {
 
 Port::Impl::Impl()
-    : id(PortID(sole::uuid4().str())), pred_chan{"", ""}, succ_chans{}, type(), dimensions(-1), is_dynamic(false)
+    : id(PortID(sole::uuid4().str())), pred_chan{"", ""}, succ_chans{}, type(), dimensions(-1)
 {
 }
 
 Port::Impl::Impl(const NodeID & nid, const std::string& pn, const Halide::Type& t, int32_t d, const GraphID & gid)
-    : id(PortID(sole::uuid4().str())), pred_chan{nid, pn}, succ_chans{}, type(t), dimensions(d), graph_id(gid), is_dynamic(false)
+    : id(PortID(sole::uuid4().str())), pred_chan{nid, pn}, succ_chans{}, type(t), dimensions(d), graph_id(gid)
 {
     params[0] = Halide::Parameter(type, dimensions != 0, dimensions, argument_name(nid, id,  pn, 0, gid));
 }

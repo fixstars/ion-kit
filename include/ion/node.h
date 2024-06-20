@@ -87,7 +87,7 @@ public:
 
     void set_iport(const std::string& name, Port port);
 
-    void set_dynamic_port(Port port) ;
+    void set_oport(Port port);
 
     /**
      * Retrieve relevant port of the node.
@@ -123,8 +123,8 @@ public:
     Port oport(const std::string& pn);
     std::vector<std::tuple<std::string, Port>> oports() const;
 
-    std::vector<std::tuple<std::string, Port>> dynamic_iports() const;
-    std::vector<std::tuple<std::string, Port>> dynamic_oports() const;
+    std::vector<std::tuple<std::string, Port>> unbounded_iports() const;
+    std::vector<std::tuple<std::string, Port>> unbounded_oports() const;
 
     void  detect_data_hazard ()const ;
 
