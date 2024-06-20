@@ -303,13 +303,8 @@ public:
     Output<int32_t> output_offset{"output_offset"};
 
     void generate() {
-
         output(x, y) = input(x, y) + input_offset();
         output_offset() = input_offset() + v;
-    }
-
-     void schedule() {
-        output.compute_root();
     }
 
 private:
