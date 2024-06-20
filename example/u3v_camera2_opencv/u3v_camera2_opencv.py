@@ -44,7 +44,7 @@ if __name__ == "__main__":
 
     #    Add node and connect the input port to the node instance
     node = builder.add('image_io_u3v_cameraN_u16x2')\
-        .set_iport([gain0_p, gain1_p, exposure0_p, exposure1_p, ])\
+        .set_iports([gain0_p, gain1_p, exposure0_p, exposure1_p, ])\
         .set_params([num_devices, frame_sync, gain_key, exposure_key, realtime_diaplay_mode, enable_control])
 
 
