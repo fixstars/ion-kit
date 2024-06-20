@@ -111,18 +111,11 @@ std::vector<std::tuple<std::string, Port>> Node::iports() const {
 }
 
 
-std::vector<std::tuple<std::string, Port>> Node::unbounded_iports() const {
-   std::vector<std::tuple<std::string, Port>> unbounded_iports;
-
+std::vector<std::tuple<std::string, Port>> Node::unbound_iports() const {
+   std::vector<std::tuple<std::string, Port>> unbound_iports;
    int iports_size = 0;
 
-//   impl_->ports.erase(std::remove_if(impl_->ports.begin(), impl_->ports.end(),[&](const Port &p) {
-//                  auto it = std::find_if(p.impl_->succ_chans.begin(), p.impl_->succ_chans.end(),
-//                                         [&](const Port::Channel& c) { return std::get<0>(c) == impl_->id; });
-//                  return p.is_unbounded() &&  it != p.impl_->succ_chans.end() ;
-//              }), impl_->ports.end());
-
-    for (const auto& p: impl_->ports) {
+   for (const auto& p: impl_->ports) {
         auto it = std::find_if(p.impl_->succ_chans.begin(), p.impl_->succ_chans.end(),
                                [&](const Port::Channel& c) { return std::get<0>(c) == impl_->id; });
         if (it != p.impl_->succ_chans.end()) {
@@ -136,12 +129,12 @@ std::vector<std::tuple<std::string, Port>> Node::unbounded_iports() const {
           if(iports_idx>=iports_size){
               Port port("_ion_iport_" + std::to_string(iports_idx), arginfo.types.front());
               port.impl_->dimensions = arginfo.dimensions;
-              unbounded_iports.push_back(std::make_tuple(arginfo.name, port));
+              unbound_iports.push_back(std::make_tuple(arginfo.name, port));
           }
           iports_idx ++;
       }
    }
-   return unbounded_iports;
+   return unbound_iports;
 }
 
 void Node::set_oport(Port port) {
@@ -176,30 +169,8 @@ std::vector<std::tuple<std::string, Port>> Node::oports() const {
     return oports;
 }
 
-
-void  Node::detect_data_hazard ()const {
-    std::vector<std::tuple<std::string, Port>> oports =  Node::oports() ;
-    std::vector<std::tuple<std::string, Port>> iports =  Node::iports() ;
-    std::tuple<const void *, bool>  output_tuple;
-    std::set<std::tuple<const void *, bool>> setOfTuples;
-
-    for (auto& [pn, port] :oports) {
-        for(auto& [i, t] : port.impl_->bound_address){
-            setOfTuples.insert(t);
-        }
-    }
-
-    for (auto& [pn, port] :iports) {
-        for(auto& [i, t] : port.impl_->bound_address){
-            if (setOfTuples.find(t) != setOfTuples.end()) {
-               std::get<1>(t) = true;
-            }
-        }
-    }
-};
-
-std::vector<std::tuple<std::string, Port>> Node::unbounded_oports() const {
-   std::vector<std::tuple<std::string, Port>> unbounded_oports;
+std::vector<std::tuple<std::string, Port>> Node::unbound_oports() const {
+   std::vector<std::tuple<std::string, Port>> unbound_oports;
    int oports_size = 0;
 
    for (const auto& p: impl_->ports) {
@@ -214,12 +185,32 @@ std::vector<std::tuple<std::string, Port>> Node::unbounded_oports() const {
               Port port(id(), arginfo.name);
               port.impl_ ->type = arginfo.types.front();
               port.impl_->dimensions = arginfo.dimensions;
-              unbounded_oports.push_back(std::make_tuple(arginfo.name, port));
+              unbound_oports.push_back(std::make_tuple(arginfo.name, port));
           }
           oports_idx ++;
       }
    }
-   return unbounded_oports;
+   return unbound_oports;
 }
+
+void  Node::detect_data_hazard ()const {
+    std::vector<std::tuple<std::string, Port>> oports =  Node::oports() ;
+    std::vector<std::tuple<std::string, Port>> iports =  Node::iports() ;
+    std::set<std::tuple<const void *, bool>> address_set;
+
+    for (auto& [pn, port] :oports) {
+        for(auto& [i, t] : port.impl_->bound_address){
+            address_set.insert(t);
+        }
+    }
+
+    for (auto& [pn, port] :iports) {
+        for(auto& [i, t] : port.impl_->bound_address){
+            if (address_set.find(t) != address_set.end()) {
+               std::get<1>(t) = true;
+            }
+        }
+    }
+};
 
 } // namespace ion

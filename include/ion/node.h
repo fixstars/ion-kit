@@ -123,8 +123,8 @@ public:
     Port oport(const std::string& pn);
     std::vector<std::tuple<std::string, Port>> oports() const;
 
-    std::vector<std::tuple<std::string, Port>> unbounded_iports() const;
-    std::vector<std::tuple<std::string, Port>> unbounded_oports() const;
+    std::vector<std::tuple<std::string, Port>> unbound_iports() const;
+    std::vector<std::tuple<std::string, Port>> unbound_oports() const;
 
     void  detect_data_hazard ()const ;
 
