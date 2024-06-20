@@ -87,6 +87,8 @@ public:
 
     void set_iport(const std::string& name, Port port);
 
+    void set_oport(Port port);
+
     /**
      * Retrieve relevant port of the node.
      * @arg name: The name of port name which is matched with first argument of Input/Output declared in user-defined class deriving BuildingBlock.
@@ -120,6 +122,11 @@ public:
 
     Port oport(const std::string& pn);
     std::vector<std::tuple<std::string, Port>> oports() const;
+
+    std::vector<std::tuple<std::string, Port>> unbound_iports() const;
+    std::vector<std::tuple<std::string, Port>> unbound_oports() const;
+
+    void  detect_data_hazard ()const ;
 
 private:
     Node(const NodeID& id, const std::string& name, const Halide::Target& target)

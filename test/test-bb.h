@@ -294,6 +294,24 @@ public:
     }
 };
 
+class IncByOffset : public BuildingBlock<IncByOffset> {
+public:
+    Input<Halide::Func> input{"input", Int(32), 2};
+    Input<Halide::Func> input_offset{"input_offset", Int(32), 0}; // to imitate scalar input
+    BuildingBlockParam<int32_t> v{"v", 1};
+    Output<Halide::Func> output{"output", Int(32), 2};
+    Output<int32_t> output_offset{"output_offset"};
+
+    void generate() {
+        output(x, y) = input(x, y) + input_offset();
+        output_offset() = input_offset() + v;
+    }
+
+private:
+    Halide::Var x, y;
+};
+
+
 } // test
 } // bb
 } // ion
@@ -313,5 +331,6 @@ ION_REGISTER_BUILDING_BLOCK(ion::bb::test::ArrayCopy, test_array_copy);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::test::ExternIncI32x2, test_extern_inc_i32x2);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::test::AddI32x2, test_add_i32x2);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::test::SubI32x2, test_sub_i32x2);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::test::IncByOffset, test_inc_by_offset);
 
 #endif

@@ -217,6 +217,11 @@ Halide::Pipeline lower(Builder builder, std::vector<Node>& nodes, bool implicit_
     // This operation is required especially for the graph which is loaded from JSON definition.
     topological_sort(nodes);
 
+    // detect data hazard, If the input port is bound to the same address as the output port, call compute_root first
+    for (auto n : nodes) {
+        n.detect_data_hazard();
+    }
+
     // Constructing Generator object and setting static parameters
     std::unordered_map<NodeID, Halide::Internal::AbstractGeneratorPtr, NodeID::StringIDHash> bbs;
     for (auto n : nodes) {

@@ -55,7 +55,7 @@ using NodeID = StringID<node_tag>;
 using GraphID = StringID<graph_tag>;
 using PortID = StringID<port_tag>;
 
-std::string argument_name(const NodeID& node_id, const std::string& name, int32_t index, const GraphID& graph_id);
+std::string argument_name(const NodeID& node_id, const PortID & portId, const std::string& name, int32_t index, const GraphID& graph_id);
 
 } // namespace ion
 

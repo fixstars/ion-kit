@@ -64,6 +64,8 @@ private:
         std::unordered_map<uint32_t, Halide::Parameter> params;
         std::unordered_map<uint32_t, const void *> instances;
 
+        std::unordered_map<uint32_t, std::tuple<const void *, bool> > bound_address;
+
         Impl();
         Impl(const NodeID& nid, const std::string& pn, const Halide::Type& t, int32_t d, const GraphID &gid );
     };
@@ -180,38 +182,43 @@ public:
      template<typename T>
      void bind(T *v) {
          auto i = index_ == -1 ? 0 : index_;
+
          if (has_pred()) {
-             impl_->params[i] = Halide::Parameter{Halide::type_of<T>(), false, 0, argument_name(pred_id(), pred_name(), i, graph_id())};
+             impl_->params[i] = Halide::Parameter{Halide::type_of<T>(), false, 0, argument_name(pred_id(), id(), pred_name(), i, graph_id())};
          } else {
-             impl_->params[i] = Halide::Parameter{type(), false, dimensions(), argument_name(pred_id(), pred_name(), i, graph_id())};
+             impl_->params[i] = Halide::Parameter{type(), false, dimensions(), argument_name(pred_id(), id(), pred_name(), i, graph_id())};
          }
 
          impl_->instances[i] = v;
+         impl_->bound_address[i] = std::make_tuple(v,false);
      }
 
      template<typename T>
      void bind(const Halide::Buffer<T>& buf) {
          auto i = index_ == -1 ? 0 : index_;
          if (has_pred()) {
-             impl_->params[i] = Halide::Parameter{buf.type(), true, buf.dimensions(), argument_name(pred_id(), pred_name(), i,graph_id())};
+             impl_->params[i] = Halide::Parameter{buf.type(), true, buf.dimensions(), argument_name(pred_id(), id(), pred_name(), i,graph_id())};
          } else {
-             impl_->params[i] = Halide::Parameter{type(), true, dimensions(), argument_name(pred_id(), pred_name(), i,graph_id())};
+             impl_->params[i] = Halide::Parameter{type(), true, dimensions(), argument_name(pred_id(), id(), pred_name(), i,graph_id())};
          }
 
          impl_->instances[i] = buf.raw_buffer();
+         impl_->bound_address[i] = std::make_tuple(buf.data(),false);
      }
 
      template<typename T>
      void bind(const std::vector<Halide::Buffer<T>>& bufs) {
          for (int i=0; i<static_cast<int>(bufs.size()); ++i) {
              if (has_pred()) {
-                 impl_->params[i] = Halide::Parameter{bufs[i].type(), true, bufs[i].dimensions(), argument_name(pred_id(), pred_name(), i, graph_id())};
+                 impl_->params[i] = Halide::Parameter{bufs[i].type(), true, bufs[i].dimensions(), argument_name(pred_id(), id(),pred_name(), i, graph_id())};
              } else {
-                 impl_->params[i] = Halide::Parameter{type(), true, dimensions(), argument_name(pred_id(), pred_name(), i, graph_id())};
+                 impl_->params[i] = Halide::Parameter{type(), true, dimensions(), argument_name(pred_id(), id(), pred_name(), i, graph_id())};
              }
 
              impl_->instances[i] = bufs[i].raw_buffer();
+             impl_->bound_address[i] = std::make_tuple(bufs[i].data(),false);
          }
+
      }
 
      static std::tuple<std::shared_ptr<Impl>, bool> find_impl(const std::string& id);
@@ -226,15 +233,15 @@ public:
              if (es.size() <= i) {
                  es.resize(i+1, Halide::Expr());
              }
-             es[i] = Halide::Internal::Variable::make(type(), argument_name(pred_id(), pred_name(), i, graph_id()), param);
+             es[i] = Halide::Internal::Variable::make(type(), argument_name(pred_id(), id(), pred_name(), i, graph_id()), param);
          }
          return es;
      }
 
      std::vector<Halide::Func> as_func() const {
-         if (dimensions() == 0) {
-            throw std::runtime_error("Unreachable");
-         }
+//         if (dimensions() == 0) {
+//            throw std::runtime_error("Unreachable");
+//         }
 
          std::vector<Halide::Func> fs;
          for (const auto& [i, param] : impl_->params ) {
@@ -247,9 +254,12 @@ public:
                  args.push_back(Halide::Var::implicit(i));
                  args_expr.push_back(Halide::Var::implicit(i));
              }
-             Halide::Func f(param.type(), param.dimensions(), argument_name(pred_id(), pred_name(), i, graph_id()) + "_im");
+             Halide::Func f(param.type(), param.dimensions(), argument_name(pred_id(), id(), pred_name(), i, graph_id()) + "_im");
              f(args) = Halide::Internal::Call::make(param, args_expr);
              fs[i] = f;
+             if(std::get<1>(impl_->bound_address[i])){
+                 f.compute_root();
+             }
          }
          return fs;
      }
@@ -261,7 +271,7 @@ public:
                  args.resize(i+1, Halide::Argument());
              }
              auto kind = dimensions() == 0 ? Halide::Argument::InputScalar : Halide::Argument::InputBuffer;
-             args[i] = Halide::Argument(argument_name(pred_id(), pred_name(), i, graph_id()),  kind, type(), dimensions(), Halide::ArgumentEstimates());
+             args[i] = Halide::Argument(argument_name(pred_id(), id(), pred_name(), i, graph_id()),  kind, type(), dimensions(), Halide::ArgumentEstimates());
          }
          return args;
      }
