@@ -59,12 +59,13 @@ int main() {
         // void *src = subsystem->malloc(size);
         void *src;
         CUDA_SAFE_CALL(cudaMalloc(&src, size));
+        CUDA_SAFE_CALL(cudaMemcpy(src, input_vec.data(), size, cudaMemcpyHostToDevice));
 
         // void *dst = subsystem->malloc(size);
         void *dst;
         CUDA_SAFE_CALL(cudaMalloc(&dst, size));
 
-        Target target = get_host_target().with_feature(Target::CUDA);
+        Target target = get_host_target().with_feature(Target::CUDA).with_feature(Target::TracePipeline).with_feature(Target::Debug);
         // CudaState state(subsystem->getContext(), subsystem->getStream());
 
         // subsystem->memcpy(src, input_vec.data(), size, RocaMemcpyKind::kMemcpyHostToDevice);
@@ -73,30 +74,42 @@ int main() {
         assert(device_interface);
 
         Halide::Buffer<> inputBuffer(Halide::Int(32), nullptr, height, width);
-        inputBuffer.device_wrap_native(device_interface, (uintptr_t)src);
+        inputBuffer.device_wrap_native(device_interface, reinterpret_cast<uint64_t>(src));
+        
+        // inputBuffer.device_wrap_native(device_interface, (uintptr_t)src);
         // inputBuffer.set_device_dirty(true);
-        inputBuffer.set_host_dirty(false);
-        Halide::Buffer<> outputBuffer(Halide::Int(32), nullptr, height, width);
-        outputBuffer.device_wrap_native(device_interface, (uintptr_t)dst);
-        outputBuffer.set_device_dirty(true);
+        // inputBuffer.set_host_dirty(false);
+        // Halide::Buffer<int32_t> outputBuffer(Halide::Int(32), height, width);
+        // outputBuffer.device_malloc(device_interface);
+         // Halide::Buffer<> outputBuffer(Halide::Int(32), reinterpret_cast<void*>(1), height, width);
+         Halide::Buffer<> outputBuffer(Halide::Int(32), nullptr, height, width);
+         outputBuffer.device_wrap_native(device_interface, reinterpret_cast<uint64_t>(dst));
+        // outputBuffer.set_device_dirty(true);
 
         ion::Port input{"input0", Int(32), 2};
         ion::Builder b;
         b.set_target(target);
         ion::Graph graph(b);
 
-        ion::Node cn = graph.add("Sqrt_gen")(input);
-        cn(inputBuffer);
+        ion::Node cn = graph.add("Sqrt_gen")(inputBuffer);
+        // input.bind(inputBuffer);
+        // cn(inputBuffer);
         cn["output0"].bind(outputBuffer);
 
         b.run();
         outputBuffer.device_sync();  // Figure out how to replace halide's stream
+        // outputBuffer.copy_to_host();
 
         cudaMemcpy(output_vec.data(), dst, size, cudaMemcpyDeviceToHost);
+        // memcpy(output_vec.data(), outputBuffer.data(), size);
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
-                assert(44 == output_vec[i * width + j]);  // 44 IS sqrt of 2024
+                std::cerr << output_vec[i * width + j] << " ";
+                if (44 != output_vec[i * width +j]) {
+                    return -1;
+                }
             }
+            std::cerr << std::endl;
         }
 
         // subsystem->free(src);
