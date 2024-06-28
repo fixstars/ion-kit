@@ -56,7 +56,7 @@ ion_jit_executable(direct-extern SRCS direct-extern.cc)
 
 if (${CUDAToolkit_FOUND})
     ion_jit_executable(gpu-extern SRCS gpu-extern.cc gpu-extern-lib.cu)
-    ion_jit_executable(cuda-interop SRCS cuda-interop.cc LIBS CUDA::cudart)
+    ion_jit_executable(cuda-interop SRCS cuda-interop.cc LIBS CUDA::cuda_driver CUDA::cudart)
 endif()
 
 # Duplicate name test
