@@ -64,6 +64,12 @@ public:
     Builder& set_target(const Target& target);
 
     /**
+     * Set the user context which will be applied the pipeline built with this builder.
+     * @arg user_context_ptr: The pointer to the user context.
+     */
+    Builder& set_jit_context(Halide::JITUserContext *user_context_ptr);
+
+    /**
      * Load bb module dynamically and enable it to compile your pipeline.
      * @arg module_path: DSO path on your filesystem.
      * @note This API is expected to be used from external process.

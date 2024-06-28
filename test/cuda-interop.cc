@@ -7,26 +7,26 @@
 
 #include "ion/ion.h"
 
-#define CUDA_SAFE_CALL(x)                                                                             \
-    do {                                                                                              \
-        cudaError_t err = x;                                                                          \
-        if (err != cudaSuccess) {                                                                     \
-            std::stringstream ss;                                                                     \
-            ss << "CUDA error: " << cudaGetErrorString(err) << " at " << __FILE__ << ":" << __LINE__; \
-            throw  std::runtime_error(ss.str());                                                      \
-        }                                                                                             \
+#define CUDA_SAFE_CALL(x)                                                                                            \
+    do {                                                                                                             \
+        cudaError_t err = x;                                                                                         \
+        if (err != cudaSuccess) {                                                                                    \
+            std::stringstream ss;                                                                                    \
+            ss << "CUDA error: " << cudaGetErrorString(err) << "(" << err << ") at " << __FILE__ << ":" << __LINE__; \
+            throw  std::runtime_error(ss.str());                                                                     \
+        }                                                                                                            \
     } while (0)
 
-#define CU_SAFE_CALL(x)                                                               \
-    do {                                                                              \
-        CUresult err = x;                                                             \
-        if (err != CUDA_SUCCESS) {                                                    \
-            const char *err_str;                                                      \
-            cuGetErrorString(err, &err_str);                                          \
-            std::stringstream ss;                                                     \
-            ss << "CUDA error: " << err_str << " at " << __FILE__ << ":" << __LINE__; \
-            throw std::runtime_error(ss.str());                                       \
-        }                                                                             \
+#define CU_SAFE_CALL(x)                                                                              \
+    do {                                                                                             \
+        CUresult err = x;                                                                            \
+        if (err != CUDA_SUCCESS) {                                                                   \
+            const char *err_str;                                                                     \
+            cuGetErrorString(err, &err_str);                                                         \
+            std::stringstream ss;                                                                    \
+            ss << "CUDA error: " << err_str << "(" << err << ") at " << __FILE__ << ":" << __LINE__; \
+            throw std::runtime_error(ss.str());                                                      \
+        }                                                                                            \
     } while (0)
 
 
@@ -101,72 +101,74 @@ int main() {
     std::vector<int32_t> input_vec(width * height, 2024);
     std::vector<int32_t> output_vec(width * height, 0);
     try {
-        // Ensure to initialize cuda Context under the hood
-        CUDA_SAFE_CALL(cudaSetDevice(0));
-
+        // CUDA setup
         CudaState state;
-        
-        CUstream stream; // This is interchangeable with cudaStream_t (ref: https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DRIVER.html)
-        CU_SAFE_CALL(cuStreamCreate(&stream, CU_STREAM_DEFAULT));
-        state.cuda_stream = reinterpret_cast<void *>(stream);
 
-        CUcontext ctx;
-        CU_SAFE_CALL(cuStreamGetCtx(stream, &ctx));
-        state.cuda_context = reinterpret_cast<void *>(ctx);
+        // Ensure to initialize cuda Context under the hood
+        CU_SAFE_CALL(cuInit(0));
+
+        CUdevice device;
+        CU_SAFE_CALL(cuDeviceGet(&device, 0));
+        
+        CU_SAFE_CALL(cuCtxCreate(reinterpret_cast<CUcontext *>(&state.cuda_context), 0, device));
+
+        std::cout << "CUcontext is created on application side : " << state.cuda_context << std::endl;
+        
+        CU_SAFE_CALL(cuCtxSetCurrent(reinterpret_cast<CUcontext>(state.cuda_context)));
+        
+        // CUstream is interchangeable with cudaStream_t (ref: https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DRIVER.html)
+        CU_SAFE_CALL(cuStreamCreate(reinterpret_cast<CUstream *>(&state.cuda_stream), CU_STREAM_DEFAULT));
 
         constexpr int size = width * height * sizeof(int32_t);
-        // void *src = subsystem->malloc(size);
         void *src;
         CUDA_SAFE_CALL(cudaMalloc(&src, size));
         CUDA_SAFE_CALL(cudaMemcpy(src, input_vec.data(), size, cudaMemcpyHostToDevice));
 
-        // void *dst = subsystem->malloc(size);
         void *dst;
         CUDA_SAFE_CALL(cudaMalloc(&dst, size));
 
-        Target target = get_host_target().with_feature(Target::CUDA).with_feature(Target::TracePipeline).with_feature(Target::Debug);
-        // CudaState state(subsystem->getContext(), subsystem->getStream());
+        // ION execution
+        {
 
-        // subsystem->memcpy(src, input_vec.data(), size, RocaMemcpyKind::kMemcpyHostToDevice);
-        auto device_interface = get_device_interface_for_device_api(DeviceAPI::CUDA, target);
+            Target target = get_host_target().with_feature(Target::CUDA).with_feature(Target::TracePipeline).with_feature(Target::Debug);
+            auto device_interface = get_device_interface_for_device_api(DeviceAPI::CUDA, target);
 
-        assert(device_interface);
+            Halide::Buffer<> inputBuffer(Halide::Int(32), nullptr, height, width);
+            inputBuffer.device_wrap_native(device_interface, reinterpret_cast<uint64_t>(src), &state);
+            inputBuffer.set_device_dirty(true);
 
-        Halide::Buffer<> inputBuffer(Halide::Int(32), nullptr, height, width);
-        inputBuffer.device_wrap_native(device_interface, reinterpret_cast<uint64_t>(src));
-        inputBuffer.set_device_dirty(true);
+            Halide::Buffer<> outputBuffer(Halide::Int(32), nullptr, height, width);
+            outputBuffer.device_wrap_native(device_interface, reinterpret_cast<uint64_t>(dst), &state);
 
-         Halide::Buffer<> outputBuffer(Halide::Int(32), nullptr, height, width);
-         outputBuffer.device_wrap_native(device_interface, reinterpret_cast<uint64_t>(dst));
+            ion::Builder b;
+            b.set_target(target);
+            b.set_jit_context(&state);
 
-        ion::Builder b;
-        b.set_target(target);
+            ion::Graph graph(b);
 
-        ion::Graph graph(b);
+            ion::Node cn = graph.add("Sqrt_gen")(inputBuffer);
+            cn["output0"].bind(outputBuffer);
 
-        ion::Node cn = graph.add("Sqrt_gen")(inputBuffer);
-        cn["output0"].bind(outputBuffer);
+            b.run();
 
-        b.run();
-        // outputBuffer.device_sync();  // Figure out how to replace halide's stream
-        // outputBuffer.copy_to_host();
-
-        cudaMemcpy(output_vec.data(), dst, size, cudaMemcpyDeviceToHost);
-        for (int i = 0; i < height; i++) {
-            for (int j = 0; j < width; j++) {
-                std::cerr << output_vec[i * width + j] << " ";
-                if (44 != output_vec[i * width +j]) {
-                    return -1;
+            cudaMemcpy(output_vec.data(), dst, size, cudaMemcpyDeviceToHost);
+            for (int i = 0; i < height; i++) {
+                for (int j = 0; j < width; j++) {
+                    std::cerr << output_vec[i * width + j] << " ";
+                    if (44 != output_vec[i * width + j]) {
+                        return -1;
+                    }
                 }
+                std::cerr << std::endl;
             }
-            std::cerr << std::endl;
         }
 
-        // subsystem->free(src);
+        // CUDA cleanup
         CUDA_SAFE_CALL(cudaFree(src));
-
-        // subsystem->free(dst);
         CUDA_SAFE_CALL(cudaFree(dst));
+        
+        CU_SAFE_CALL(cuStreamDestroy(reinterpret_cast<CUstream>(state.cuda_stream)));
+        CU_SAFE_CALL(cuCtxDestroy(reinterpret_cast<CUcontext>(state.cuda_context)));
 
     } catch (const Halide::Error &e) {
         std::cerr << e.what() << std::endl;
