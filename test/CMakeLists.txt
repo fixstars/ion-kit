@@ -54,9 +54,9 @@ ion_jit_executable(port-assign SRCS port-assign.cc)
 # zero copy i/o for extern functions
 ion_jit_executable(direct-extern SRCS direct-extern.cc)
 
-if (${CUDA_FOUND})
-    ion_jit_executable(gpu-extern SRCS gpu-extern.cc)
-    cuda_add_library(gpu-extern-lib SHARED gpu-extern-lib.cu)
+if (${CUDAToolkit_FOUND})
+    ion_jit_executable(gpu-extern SRCS gpu-extern.cc gpu-extern-lib.cu)
+    ion_jit_executable(cuda-interop SRCS cuda-interop.cc LIBS CUDA::cuda_driver CUDA::cudart)
 endif()
 
 # Duplicate name test

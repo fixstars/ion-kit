@@ -30,7 +30,7 @@ endif()
 #
 find_package(Threads REQUIRED)
 find_package(Halide REQUIRED COMPONENTS shared)
-find_package(CUDA)
+find_package(CUDAToolkit)
 
 #
 # Version

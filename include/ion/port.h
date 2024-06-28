@@ -190,7 +190,7 @@ public:
          }
 
          impl_->instances[i] = v;
-         impl_->bound_address[i] = std::make_tuple(v,false);
+         impl_->bound_address[i] = std::make_tuple(v, false);
      }
 
      template<typename T>
@@ -202,8 +202,9 @@ public:
              impl_->params[i] = Halide::Parameter{type(), true, dimensions(), argument_name(pred_id(), id(), pred_name(), i,graph_id())};
          }
 
-         impl_->instances[i] = buf.raw_buffer();
-         impl_->bound_address[i] = std::make_tuple(buf.data(),false);
+         auto raw_buf = buf.raw_buffer();
+         impl_->instances[i] = raw_buf;
+         impl_->bound_address[i] = std::make_tuple(raw_buf->host ? reinterpret_cast<const char*>(raw_buf->host) : reinterpret_cast<const char*>(raw_buf->device), false);
      }
 
      template<typename T>
@@ -215,8 +216,9 @@ public:
                  impl_->params[i] = Halide::Parameter{type(), true, dimensions(), argument_name(pred_id(), id(), pred_name(), i, graph_id())};
              }
 
-             impl_->instances[i] = bufs[i].raw_buffer();
-             impl_->bound_address[i] = std::make_tuple(bufs[i].data(),false);
+             auto raw_buf = bufs[i].raw_buffer();
+             impl_->instances[i] = raw_buf;
+             impl_->bound_address[i] = std::make_tuple(raw_buf->host ? reinterpret_cast<const char*>(raw_buf->host) : reinterpret_cast<const char*>(raw_buf->device), false);
          }
 
      }
@@ -239,10 +241,6 @@ public:
      }
 
      std::vector<Halide::Func> as_func() const {
-//         if (dimensions() == 0) {
-//            throw std::runtime_error("Unreachable");
-//         }
-
          std::vector<Halide::Func> fs;
          for (const auto& [i, param] : impl_->params ) {
              if (fs.size() <= i) {
@@ -250,14 +248,14 @@ public:
              }
              std::vector<Halide::Var> args;
              std::vector<Halide::Expr> args_expr;
-             for (int i = 0; i < dimensions(); ++i) {
-                 args.push_back(Halide::Var::implicit(i));
-                 args_expr.push_back(Halide::Var::implicit(i));
+             for (int j = 0; j < dimensions(); ++j) {
+                 args.push_back(Halide::Var::implicit(j));
+                 args_expr.push_back(Halide::Var::implicit(j));
              }
              Halide::Func f(param.type(), param.dimensions(), argument_name(pred_id(), id(), pred_name(), i, graph_id()) + "_im");
              f(args) = Halide::Internal::Call::make(param, args_expr);
              fs[i] = f;
-             if(std::get<1>(impl_->bound_address[i])){
+             if (std::get<1>(impl_->bound_address[i])) {
                  f.compute_root();
              }
          }

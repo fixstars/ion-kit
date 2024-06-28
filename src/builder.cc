@@ -106,6 +106,11 @@ Builder& Builder::set_target(const Halide::Target& target) {
     return *this;
 }
 
+Builder& Builder::set_jit_context(Halide::JITUserContext *user_context_ptr) {
+    impl_->jit_ctx_ptr = user_context_ptr;
+    return *this;
+}
+
 Builder& Builder::with_bb_module(const std::string& module_name_or_path) {
     auto bb_module = std::make_shared<DynamicModule>(module_name_or_path);
     auto register_extern = bb_module->get_symbol<void (*)(std::map<std::string, Halide::JITExtern>&)>("register_externs");
