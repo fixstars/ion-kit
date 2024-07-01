@@ -27,7 +27,7 @@ jobs:
         run: |
           # Halide
           mkdir ${HOME}/Halide
-          curl -L https://github.com/halide/Halide/releases/download/v17.0.1/Halide-17.0.1-x86-64-linux-52541176253e74467dabc42eeee63d9a62c199f6.tar.gz | tar zx -C ${HOME}/Halide --strip-components 1
+          curl -L https://github.com/halide/Halide/releases/download/v16.0.0/Halide-16.0.0-x86-64-linux-1e963ff817ef0968cc25d811a25a7350c8953ee6.tar.gz | tar zx -C ${HOME}/Halide --strip-components 1
           find ${HOME}/Halide -type d | xargs chmod 755
 
           # zlib, libjpeg, libpng
@@ -64,7 +64,7 @@ jobs:
         run: |
           # Halide
           mkdir ${HOME}/Halide
-          curl -L https://github.com/halide/Halide/releases/download/v17.0.1/Halide-17.0.1-x86-64-windows-52541176253e74467dabc42eeee63d9a62c199f6.zip -o Halide.zip
+          curl -L https://github.com/halide/Halide/releases/download/v16.0.0/Halide-16.0.0-x86-64-windows-1e963ff817ef0968cc25d811a25a7350c8953ee6.zip -o Halide.zip
           unzip Halide.zip
           rm Halide.zip
           mv Halide*/* ${HOME}/Halide
@@ -101,7 +101,7 @@ jobs:
         shell: bash
         run: |
             mkdir ${HOME}/Halide
-            curl -L https://github.com/halide/Halide/releases/download/v17.0.1/Halide-17.0.1-arm-64-osx-52541176253e74467dabc42eeee63d9a62c199f6.tar.gz | tar zx -C ${HOME}/Halide --strip-components 1
+            curl -L https://github.com/halide/Halide/releases/download/v16.0.0/Halide-16.0.0-arm-64-osx-1e963ff817ef0968cc25d811a25a7350c8953ee6.tar.gz | tar zx -C ${HOME}/Halide --strip-components 1
             find ${HOME}/Halide -type d | xargs chmod 755
 
       - name: Configure

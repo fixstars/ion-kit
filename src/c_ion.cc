@@ -568,6 +568,24 @@ int ion_builder_run(ion_builder_t obj)
     return 0;
 }
 
+int ion_builder_run_with_port_map(ion_builder_t obj, ion_port_map_t pm)
+{
+    try {
+        reinterpret_cast<Builder*>(obj)->run(*reinterpret_cast<PortMap*>(pm));
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
+    } catch (const std::exception& e) {
+        log::error(e.what());
+        return 1;
+    } catch (...) {
+        log::error("Unknown exception was happened");
+        return 1;
+    }
+
+    return 0;
+}
+
 template<typename T>
 Halide::Buffer<T> *make_buffer(const std::vector<int>& sizes) {
     if (sizes.empty()) {
@@ -836,6 +854,190 @@ int ion_buffer_read(ion_buffer_t obj, void *ptr, int size)
         log::error("Unknown exception was happened");
         return 1;
     }
+
+    return 0;
+}
+
+int ion_port_map_create(ion_port_map_t *ptr)
+{
+    try {
+        *ptr = reinterpret_cast<ion_port_map_t>(new PortMap);
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
+    } catch (const std::exception& e) {
+        log::error(e.what());
+        return 1;
+    } catch (...) {
+        log::error("Unknown exception was happened");
+        return 1;
+    }
+
+    return 0;
+}
+
+int ion_port_map_destroy(ion_port_map_t obj)
+{
+    try {
+        delete reinterpret_cast<PortMap*>(obj);
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
+    } catch (const std::exception& e) {
+        log::error(e.what());
+        return 1;
+    } catch (...) {
+        log::error("Unknown exception was happened");
+        return 1;
+    }
+
+    return 0;
+}
+
+
+#define ION_PORT_MAP_SET_IMPL(T, POSTFIX)                                         \
+    int ion_port_map_set_##POSTFIX(ion_port_map_t obj, ion_port_t p, T v) {       \
+        try {                                                                     \
+            reinterpret_cast<PortMap*>(obj)->set(*reinterpret_cast<Port*>(p), v); \
+        } catch (const Halide::Error& e) {                                        \
+            log::error(e.what());                                                 \
+            return 1;                                                             \
+        } catch (const std::exception& e) {                                       \
+            log::error(e.what());                                                 \
+            return 1;                                                             \
+        } catch (...) {                                                           \
+            log::error("Unknown exception was happened");                         \
+            return 1;                                                             \
+        }                                                                         \
+                                                                                  \
+        return 0;                                                                 \
+    }
+
+ION_PORT_MAP_SET_IMPL(int8_t, i8)
+ION_PORT_MAP_SET_IMPL(int16_t, i16)
+ION_PORT_MAP_SET_IMPL(int32_t, i32)
+ION_PORT_MAP_SET_IMPL(int64_t, i64)
+ION_PORT_MAP_SET_IMPL(bool, u1)
+ION_PORT_MAP_SET_IMPL(uint8_t, u8)
+ION_PORT_MAP_SET_IMPL(uint16_t, u16)
+ION_PORT_MAP_SET_IMPL(uint32_t, u32)
+ION_PORT_MAP_SET_IMPL(uint64_t, u64)
+ION_PORT_MAP_SET_IMPL(float, f32)
+ION_PORT_MAP_SET_IMPL(double, f64)
+
+#undef ION_PORT_MAP_SET_IMPL
+
+int ion_port_map_set_buffer(ion_port_map_t obj, ion_port_t p, ion_buffer_t b)
+{
+    try {
+        // NOTE: Halide::Buffer class layout is safe to call Halide::Buffer<void>::type()
+        auto type = reinterpret_cast<Halide::Buffer<void>*>(b)->type();
+        if (type.is_int()) {
+            if (type.bits() == 8) {
+                reinterpret_cast<PortMap*>(obj)->set(*reinterpret_cast<Port*>(p), *reinterpret_cast<Halide::Buffer<int8_t>*>(b));
+            } else if (type.bits() == 16) {
+                reinterpret_cast<PortMap*>(obj)->set(*reinterpret_cast<Port*>(p), *reinterpret_cast<Halide::Buffer<int16_t>*>(b));
+            } else if (type.bits() == 32) {
+                reinterpret_cast<PortMap*>(obj)->set(*reinterpret_cast<Port*>(p), *reinterpret_cast<Halide::Buffer<int32_t>*>(b));
+            } else if (type.bits() == 64) {
+                reinterpret_cast<PortMap*>(obj)->set(*reinterpret_cast<Port*>(p), *reinterpret_cast<Halide::Buffer<int64_t>*>(b));
+            } else {
+                throw std::runtime_error("Unsupported bits number");
+            }
+        } else if (type.is_uint()) {
+            if (type.bits() == 1) {
+                reinterpret_cast<PortMap*>(obj)->set(*reinterpret_cast<Port*>(p), *reinterpret_cast<Halide::Buffer<bool>*>(b));
+            } else if (type.bits() == 8) {
+                reinterpret_cast<PortMap*>(obj)->set(*reinterpret_cast<Port*>(p), *reinterpret_cast<Halide::Buffer<uint8_t>*>(b));
+            } else if (type.bits() == 16) {
+                reinterpret_cast<PortMap*>(obj)->set(*reinterpret_cast<Port*>(p), *reinterpret_cast<Halide::Buffer<uint16_t>*>(b));
+            } else if (type.bits() == 32) {
+                reinterpret_cast<PortMap*>(obj)->set(*reinterpret_cast<Port*>(p), *reinterpret_cast<Halide::Buffer<uint32_t>*>(b));
+            } else if (type.bits() == 64) {
+                reinterpret_cast<PortMap*>(obj)->set(*reinterpret_cast<Port*>(p), *reinterpret_cast<Halide::Buffer<uint64_t>*>(b));
+            } else {
+                throw std::runtime_error("Unsupported bits number");
+            }
+        } else if (type.is_float()) {
+            if (type.bits() == 32) {
+                reinterpret_cast<PortMap*>(obj)->set(*reinterpret_cast<Port*>(p), *reinterpret_cast<Halide::Buffer<float>*>(b));
+            } else if (type.bits() == 64) {
+                reinterpret_cast<PortMap*>(obj)->set(*reinterpret_cast<Port*>(p), *reinterpret_cast<Halide::Buffer<double>*>(b));
+            } else {
+                throw std::runtime_error("Unsupported bits number");
+            }
+        } else {
+            throw std::runtime_error("Unsupported type code");
+        }
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
+    } catch (const std::exception& e) {
+        log::error(e.what());
+        return 1;
+    } catch (...) {
+        log::error("Unknown exception was happened");
+        return 1;
+    }
+
+
+    return 0;
+}
+
+int ion_port_map_set_buffer_array(ion_port_map_t obj, ion_port_t p, ion_buffer_t *bs, int n)
+{
+    try {
+        // NOTE: Halide::Buffer class layout is safe to call Halide::Buffer<void>::type()
+        auto type = reinterpret_cast<Halide::Buffer<void>*>(*bs)->type();
+        if (type.is_int()) {
+            if (type.bits() == 8) {
+                reinterpret_cast<PortMap*>(obj)->set(*reinterpret_cast<Port*>(p), convert<int8_t>(bs, n));
+                reinterpret_cast<PortMap*>(obj)->set(*reinterpret_cast<Port*>(p), convert<int8_t>(bs, n));
+            } else if (type.bits() == 16) {
+                reinterpret_cast<PortMap*>(obj)->set(*reinterpret_cast<Port*>(p), convert<int16_t>(bs, n));
+            } else if (type.bits() == 32) {
+                reinterpret_cast<PortMap*>(obj)->set(*reinterpret_cast<Port*>(p), convert<int32_t>(bs, n));
+            } else if (type.bits() == 64) {
+                reinterpret_cast<PortMap*>(obj)->set(*reinterpret_cast<Port*>(p), convert<int64_t>(bs, n));
+            } else {
+                throw std::runtime_error("Unsupported bits number");
+            }
+        } else if (type.is_uint()) {
+            if (type.bits() == 1) {
+                reinterpret_cast<PortMap*>(obj)->set(*reinterpret_cast<Port*>(p), convert<bool>(bs, n));
+            } else if (type.bits() == 8) {
+                reinterpret_cast<PortMap*>(obj)->set(*reinterpret_cast<Port*>(p), convert<uint8_t>(bs, n));
+            } else if (type.bits() == 16) {
+                reinterpret_cast<PortMap*>(obj)->set(*reinterpret_cast<Port*>(p), convert<uint16_t>(bs, n));
+            } else if (type.bits() == 32) {
+                reinterpret_cast<PortMap*>(obj)->set(*reinterpret_cast<Port*>(p), convert<uint32_t>(bs, n));
+            } else if (type.bits() == 64) {
+                reinterpret_cast<PortMap*>(obj)->set(*reinterpret_cast<Port*>(p), convert<uint64_t>(bs, n));
+            } else {
+                throw std::runtime_error("Unsupported bits number");
+            }
+        } else if (type.is_float()) {
+            if (type.bits() == 32) {
+                reinterpret_cast<PortMap*>(obj)->set(*reinterpret_cast<Port*>(p), convert<float>(bs, n));
+            } else if (type.bits() == 64) {
+                reinterpret_cast<PortMap*>(obj)->set(*reinterpret_cast<Port*>(p), convert<double>(bs, n));
+            } else {
+                throw std::runtime_error("Unsupported bits number");
+            }
+        } else {
+            throw std::runtime_error("Unsupported type code");
+        }
+    } catch (const Halide::Error& e) {
+        log::error(e.what());
+        return 1;
+    } catch (const std::exception& e) {
+        log::error(e.what());
+        return 1;
+    } catch (...) {
+        log::error("Unknown exception was happened");
+        return 1;
+    }
+
 
     return 0;
 }

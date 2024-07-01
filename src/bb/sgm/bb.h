@@ -30,7 +30,7 @@ Halide::Func disparity(Halide::Func cost, int32_t disp) {
 
     Func g("argmin");
     g(x, y) = Tuple(0, (e.type().max)());
-    g(x, y) = select(e < g(x, y)[1], Tuple(r, e), g(x, y));
+    g(x, y) = tuple_select(e < g(x, y)[1], Tuple(r, e), g(x, y));
 
     g.update().unroll(r[0]);
 

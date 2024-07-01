@@ -68,7 +68,7 @@ struct adl_serializer<ion::Port> {
              impl->type = j["type"].get<halide_type_t>();
              impl->dimensions = j["dimensions"];
              for (auto i=0; i<j["size"]; ++i) {
-                 impl->params[i] = Halide::Parameter(impl->type, impl->dimensions != 0, impl->dimensions,
+                 impl->params[i] = Halide::Internal::Parameter(impl->type, impl->dimensions != 0, impl->dimensions,
                                                                ion::argument_name(std::get<0>(impl->pred_chan), std::get<1>(impl->pred_chan), i, impl->graph_id.value()));
              }
          }

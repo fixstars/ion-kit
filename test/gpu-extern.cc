@@ -23,7 +23,7 @@ int main()
         n = b.add("test_extern_inc_i32x2")(ip).set_param(wp, hp, vp);
         n = b.add("test_extern_inc_i32x2")(n["output"]).set_param(wp, hp, vp);
 
-
+        PortMap pm;
 
         Halide::Buffer<int32_t> ibuf(std::vector<int32_t>{size, size});
         for (int y=0; y<size; ++y) {
@@ -31,7 +31,7 @@ int main()
                 ibuf(x, y) = 42;
             }
         }
-        ip.bind(ibuf);
+        pm.set(ip, ibuf);
 
         Halide::Buffer<int32_t> obuf(std::vector<int32_t>{size, size});
         for (int y=0; y<size; ++y) {
@@ -39,8 +39,9 @@ int main()
                 obuf(x, y) = 0;
             }
         }
-        n["output"].bind(obuf);
-        b.run();
+        pm.set(n["output"], obuf);
+
+        b.run(pm);
 
         for (int y=0; y<size; ++y) {
             for (int x=0; x<size; ++x) {
