@@ -9,6 +9,7 @@
 #include "node.h"
 #include "param.h"
 #include "port.h"
+#include "port_map.h"
 #include "target.h"
 #include "type.h"
 

@@ -29,8 +29,9 @@ int main(int argc, char *argv[]) {
 
         Halide::Buffer<uint8_t> out_buf(channel, width, height);
 
-        n["output"].bind(out_buf);
-        b.run();
+        PortMap pm;
+        pm.set(n["output"], out_buf);
+        b.run(pm);
 
         cv::Mat predicted(height, width, CV_8UC3, out_buf.data());
         cv::cvtColor(predicted, predicted, cv::COLOR_RGB2BGR);

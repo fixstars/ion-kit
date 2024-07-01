@@ -13,7 +13,7 @@ Port::Impl::Impl()
 Port::Impl::Impl(const NodeID & nid, const std::string& pn, const Halide::Type& t, int32_t d, const GraphID & gid)
     : id(PortID(sole::uuid4().str())), pred_chan{nid, pn}, succ_chans{}, type(t), dimensions(d), graph_id(gid)
 {
-    params[0] = Halide::Parameter(type, dimensions != 0, dimensions, argument_name(nid, pn, 0, gid));
+    params[0] = Halide::Internal::Parameter(type, dimensions != 0, dimensions, argument_name(nid, pn, 0, gid));
 }
 
 void Port::determine_succ(const NodeID& nid, const std::string& old_pn, const std::string& new_pn) {

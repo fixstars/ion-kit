@@ -17,12 +17,13 @@ from .native import (
     ion_builder_load,
 
     ion_builder_run,
+    ion_builder_run_with_port_map,
 
 )
 from .Graph import Graph
 from .Node import Node
 from .BuilderCompileOption import BuilderCompileOption
-
+from .PortMap import PortMap
 
 
 class Builder:
@@ -85,7 +86,10 @@ class Builder:
         if ret != 0:
             raise Exception('Invalid operation')
 
-    def run(self):
-        ret = ion_builder_run(self.obj)
+    def run(self, port_map: PortMap = None):
+        if port_map is None:
+            ret = ion_builder_run(self.obj)
+        else:
+            ret = ion_builder_run_with_port_map(self.obj, port_map.obj)
         if ret != 0:
             raise Exception('Invalid operation')
