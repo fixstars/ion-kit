@@ -54,6 +54,12 @@ Node Graph::add(const std::string& name)
     return n;
 }
 
+Graph& Graph::set_jit_context(Halide::JITUserContext *user_context_ptr) {
+    impl_->jit_ctx_ptr = user_context_ptr;
+    return *this;
+}
+
+
 void Graph::run()
 {
      if (!impl_->pipeline.defined()) {
