@@ -1790,7 +1790,7 @@ int ION_EXPORT ion_bb_image_io_u3v_gendc_camera1(
             return 0;
         }
 
-        auto &u3v(ion::bb::image_io::U3VGenDC::get_instance(id, 2, frame_sync, realtime_display_mode, force_sim_mode, width, height, fps, pixel_format));
+        auto &u3v(ion::bb::image_io::U3VGenDC::get_instance(id, 1, frame_sync, realtime_display_mode, force_sim_mode, width, height, fps, pixel_format));
          // set gain & exposure
         if (enable_control){
             ion::log::debug("Setting gain0:{} exposure0:{}", gain0, exposure0);
@@ -2055,10 +2055,10 @@ int ION_EXPORT ion_bb_image_io_u3v_device_info1(
         }
         std::vector<void *> obufs{out_deviceinfo->host};
         if(force_sim_mode){
-            auto &u3v(ion::bb::image_io::U3VFakeCam::get_instance(id, 2, width, height, fps, pixel_format));
+            auto &u3v(ion::bb::image_io::U3VFakeCam::get_instance(id, 1, width, height, fps, pixel_format));
             u3v.get_device_info(obufs);
         }else{
-            auto &u3v(ion::bb::image_io::U3VRealCam::get_instance(id, 2, frame_sync, realtime_display_mode, force_sim_mode, width, height, fps, pixel_format));
+            auto &u3v(ion::bb::image_io::U3VRealCam::get_instance(id, 1, frame_sync, realtime_display_mode, force_sim_mode, width, height, fps, pixel_format));
             u3v.get_device_info(obufs);
         }
 
