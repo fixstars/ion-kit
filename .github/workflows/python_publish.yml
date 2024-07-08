@@ -33,8 +33,10 @@ jobs:
       - uses: robinraju/release-downloader@v1.9
         with:
           repository: "fixstars/ion-kit"
-          latest: true
+          latest: false
           fileName: "ion-kit*"
+          tag: ${{ github.event.release.tag_name }}
+
 
       - name: Copy macos file
         if: runner.os == 'macOS'
