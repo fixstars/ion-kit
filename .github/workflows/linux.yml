@@ -57,4 +57,4 @@ jobs:
       - name: Test
         shell: bash
         run: |
-          ctest --verbose -v -C $BUILD_TYPE
+          ctest --verbose -C $BUILD_TYPE
