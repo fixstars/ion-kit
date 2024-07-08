@@ -32,6 +32,11 @@ public:
      * Run the pipeline immediately.
      */
     void run();
+    /**
+     * Set the user context which will be applied the pipeline built with this graph.
+     * @arg user_context_ptr: The pointer to the user context.
+     */
+    Graph& set_jit_context(Halide::JITUserContext *user_context_ptr);
 
     /**
      * Get the node list.
