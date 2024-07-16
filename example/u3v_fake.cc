@@ -55,16 +55,17 @@ int main(int argc, char *argv[])
 
         std::vector< int > buf_size = std::vector < int >{ width, height};
 
-        std::vector<Halide::Buffer<uint8_t>> output;
+        std::vector<Halide::Buffer<uint8_t>> outputs;
+        std::vector<Halide::Buffer<uint32_t>> frame_counts;
         for (int i = 0; i < num_device; ++i){
-          output.push_back(Halide::Buffer<uint8_t>(buf_size));
+          outputs.push_back(Halide::Buffer<uint8_t>(buf_size));
+          frame_counts.push_back(Halide::Buffer<uint32_t>(1));
         }
-        n["output"].bind(output);
-        Buffer<uint32_t> frame_count(1);
-        n["frame_count"].bind(frame_count);
+        n["output"].bind(outputs);
+        n["frame_count"].bind(frame_counts);
 
         
-        // Obtain image data continuously for 100 frames to facilitate operation check.
+        // Obtain image data
         int user_input = -1;
         while(user_input == -1)
         {
@@ -75,12 +76,11 @@ int main(int argc, char *argv[])
         // Depends on sensor image pixel format, apply bit shift on images
         // Display the image
         for (int i = 0;i<num_device;i++){
-            cv::Mat img(height, width, CV_8UC1, output[i].data());
+            cv::Mat img(height, width, CV_8UC1, outputs[i].data());
             cv::imshow("Fake Camera" + std::to_string(i), img);
         }
 
         user_input = cv::waitKeyEx(1);
-        std::cout<<frame_count(0)<<std::endl;
         }
 
       cv::destroyAllWindows();
