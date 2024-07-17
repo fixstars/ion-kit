@@ -123,7 +123,7 @@ protected:
 
     using arv_device_set_register_feature_value_t =	void(*)(ArvDevice*, const char*, uint64_t, void*, GError**);
 
-    using arv_device_dup_register_feature_value_t = void(*) (ArvDevice*, const char *, uint64_t *, GError **);
+    using arv_device_dup_register_feature_value_t = void*(*) (ArvDevice*, const char *, uint64_t *, GError **);
 
     using arv_device_create_stream_t = ArvStream*(*)(ArvDevice*, ArvStreamCallback*, void*, GError**);
 
@@ -970,15 +970,14 @@ private:
                 if (is_gendc_){
                     log::info("\tDevice/USB {}::{} : {}", i, "GenDC", "Available");
                     uint64_t gendc_desc_size = 0;
-                    arv_device_dup_register_feature_value(devices_[i].device_,"GenDCDescriptor", &gendc_desc_size, &err_ );
+                    char* buffer = reinterpret_cast<char *>(arv_device_dup_register_feature_value(devices_[i].device_,"GenDCDescriptor", &gendc_desc_size, &err_ ));
 
                     if (err_) {
                         throw std::runtime_error(err_->message);
                     }
 
-                    char* buffer;
-                    buffer = (char*) malloc(gendc_desc_size);
-                    arv_device_set_register_feature_value(devices_[i].device_, "GenDCDescriptor", gendc_desc_size, (void*)buffer, &err_);
+//                    buffer = (char*) malloc(gendc_desc_size);
+//                    arv_device_set_register_feature_value(devices_[i].device_, "GenDCDescriptor", gendc_desc_size, (void*)buffer, &err_);
                     if (err_) {
                         throw std::runtime_error(err_->message);
                     }
@@ -1456,13 +1455,13 @@ private:
                 if (is_gendc_){
                     log::info("\tDevice/USB {}::{} : {}", i, "GenDC", "Available");
                     uint64_t gendc_desc_size = 0;
-                    arv_device_dup_register_feature_value(devices_[i].device_,"GenDCDescriptor", &gendc_desc_size, &err_ );
+                    char* buffer = reinterpret_cast<char *>(arv_device_dup_register_feature_value(devices_[i].device_,"GenDCDescriptor", &gendc_desc_size, &err_ ));
                     if (err_) {
                         throw std::runtime_error(err_->message);
                     }
-                    char* buffer;
-                    buffer = (char*) malloc(gendc_desc_size);
-                    arv_device_set_register_feature_value(devices_[i].device_, "GenDCDescriptor", gendc_desc_size, (void*)buffer, &err_);
+
+//                    buffer = (char*) malloc(gendc_desc_size);
+//                    arv_device_set_register_feature_value(devices_[i].device_, "GenDCDescriptor", gendc_desc_size, (void*)buffer, &err_);
                     if (err_) {
                         throw std::runtime_error(err_->message);
                     }
