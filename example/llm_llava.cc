@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
 
         auto n_img_cwh = b.add("image_io_color_data_loader").set_params(Param{"url", "http://www.onthejob.education/images/4th_level/Road_Worker/Road_Worker_Darwin.jpg"}, Param{"width", width}, Param{"height", height});
         auto n_img_whc = b.add("base_reorder_buffer_3d_uint8")(n_img_cwh["output"]).set_params(Param{"dim0", 2}, Param{"dim1", 0}, Param{"dim2", 1});
-        // auto n_img_cwh = b.add("image_io_u3v_cameraN_u8x3").set_params(Param{"num_devices", "1"}, Param{"realtime_diaplay_mode", true});
+        // auto n_img_cwh = b.add("image_io_u3v_cameraN_u8x3").set_params(Param{"num_devices", "1"}, Param{"realtime_display_mode", true});
         // auto n_img_whc = b.add("base_reorder_buffer_3d_uint8")(n_img_cwh["output"]).set_params(Param{"dim0", 1}, Param{"dim1", 2}, Param{"dim2", 0});
 
         auto n_disp = b.add("image_io_gui_display")(n_img_whc["output"][0]).set_params(Param{"width", width}, Param{"height", height});
