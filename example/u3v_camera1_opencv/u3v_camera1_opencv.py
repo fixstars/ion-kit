@@ -36,13 +36,13 @@ if __name__ == "__main__":
     frame_sync = Param('frame_sync', 'false')
     gain_key = Param('gain_key', feature_gain_key)
     exposure_key = Param('exposure_key', feature_exposure_key)
-    realtime_diaplay_mode = Param('realtime_diaplay_mode', 'true')
+    realtime_display_mode = Param('realtime_display_mode', 'true')
     enable_control = Param('enable_control', 'true')
 
     #    Add node and connect the input port to the node instance
     node = builder.add('image_io_u3v_cameraN_u16x2')\
         .set_iport([gain0_p, exposure0_p])\
-        .set_param([num_devices, frame_sync, gain_key, exposure_key, realtime_diaplay_mode, enable_control])
+        .set_param([num_devices, frame_sync, gain_key, exposure_key, realtime_display_mode, enable_control])
 
     # Define Output Port
     out_p = node.get_port('output')
