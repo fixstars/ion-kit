@@ -121,8 +121,6 @@ protected:
 
     using arv_device_is_feature_available_t = bool(*)(ArvDevice*, const char*, GError**);
 
-    using arv_device_set_register_feature_value_t =	void(*)(ArvDevice*, const char*, uint64_t, void*, GError**);
-
     using arv_device_dup_register_feature_value_t = void*(*) (ArvDevice*, const char *, uint64_t *, GError **);
 
     using arv_device_create_stream_t = ArvStream*(*)(ArvDevice*, ArvStreamCallback*, void*, GError**);
@@ -382,7 +380,6 @@ protected:
         GET_SYMBOL(arv_device_get_integer_feature_bounds, "arv_device_get_integer_feature_bounds");
         GET_SYMBOL(arv_device_get_float_feature_bounds, "arv_device_get_float_feature_bounds");
 
-        GET_SYMBOL(arv_device_set_register_feature_value, "arv_device_set_register_feature_value");
         GET_SYMBOL(arv_device_dup_register_feature_value, "arv_device_dup_register_feature_value");
 
         GET_SYMBOL(arv_device_create_stream, "arv_device_create_stream");
@@ -502,7 +499,6 @@ protected:
     arv_device_get_float_feature_bounds_t arv_device_get_float_feature_bounds;
 
     arv_device_is_feature_available_t arv_device_is_feature_available;
-    arv_device_set_register_feature_value_t arv_device_set_register_feature_value;
     arv_device_dup_register_feature_value_t arv_device_dup_register_feature_value;
 
     arv_device_create_stream_t arv_device_create_stream;
@@ -972,12 +968,6 @@ private:
                     uint64_t gendc_desc_size = 0;
                     char* buffer = reinterpret_cast<char *>(arv_device_dup_register_feature_value(devices_[i].device_,"GenDCDescriptor", &gendc_desc_size, &err_ ));
 
-                    if (err_) {
-                        throw std::runtime_error(err_->message);
-                    }
-
-//                    buffer = (char*) malloc(gendc_desc_size);
-//                    arv_device_set_register_feature_value(devices_[i].device_, "GenDCDescriptor", gendc_desc_size, (void*)buffer, &err_);
                     if (err_) {
                         throw std::runtime_error(err_->message);
                     }
@@ -1460,11 +1450,6 @@ private:
                         throw std::runtime_error(err_->message);
                     }
 
-//                    buffer = (char*) malloc(gendc_desc_size);
-//                    arv_device_set_register_feature_value(devices_[i].device_, "GenDCDescriptor", gendc_desc_size, (void*)buffer, &err_);
-                    if (err_) {
-                        throw std::runtime_error(err_->message);
-                    }
                     if(isGenDC(buffer)){
                         gendc_descriptor_= ContainerHeader(buffer);
                         std::tuple<int32_t, int32_t> data_comp_and_part = gendc_descriptor_.getFirstAvailableDataOffset(true);
