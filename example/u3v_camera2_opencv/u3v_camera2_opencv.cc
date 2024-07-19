@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
                 Param("frame_sync", false),
                 Param("gain_key", FEATURE_GAIN_KEY),
                 Param("exposure_key", FEATURE_EXPOSURE_KEY),
-                Param("realtime_diaplay_mode", true),
+                Param("realtime_display_mode", true),
                 Param("enable_control", true)
                 );
 

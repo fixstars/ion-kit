@@ -47,7 +47,7 @@ class App(Frame):
 
 
         # U3V camera
-        # params = [Param("num_devices", 1), Param("realtime_diaplay_mode", True)]
+        # params = [Param("num_devices", 1), Param("realtime_display_mode", True)]
         # n_img_cwh = self.b.add("image_io_u3v_cameraN_u8x3").set_params(params)
 
         # UVC camera
