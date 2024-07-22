@@ -714,7 +714,7 @@ public:
     BuildingBlockParam<bool> frame_sync{"frame_sync", false};
     BuildingBlockParam<std::string> gain_key_ptr{"gain_key", "Gain"};
     BuildingBlockParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
-    BuildingBlockParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
+    BuildingBlockParam<bool> realtime_display_mode{"realtime_display_mode", false};
 
     Input<double> gain0{ "gain0" };
     Input<double> exposure0{ "exposure0" };
@@ -740,7 +740,7 @@ public:
             std::memcpy(exposure_key_buf.data(), exposure_key.c_str(), exposure_key.size());
 
             std::vector<ExternFuncArgument> params{
-            static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
+            static_cast<bool>(frame_sync), static_cast<bool>(realtime_display_mode),
             gain0, exposure0,
             id_buf, gain_key_buf, exposure_key_buf
          };
@@ -752,7 +752,7 @@ public:
         Func camera1_frame_count;
         {
             Buffer<uint8_t> id_buf = this->get_id();
-            camera1_frame_count.define_extern("ion_bb_image_io_u3v_camera1_frame_count",{camera1, 1, static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode), id_buf}, type_of<uint32_t>(), 1);
+            camera1_frame_count.define_extern("ion_bb_image_io_u3v_camera1_frame_count",{camera1, 1, static_cast<bool>(frame_sync), static_cast<bool>(realtime_display_mode), id_buf}, type_of<uint32_t>(), 1);
             camera1_frame_count.compute_root();
             frame_count(_) = camera1_frame_count(_);
         }
@@ -773,7 +773,7 @@ public:
     BuildingBlockParam<bool> frame_sync{"frame_sync", false};
     BuildingBlockParam<std::string> gain_key_ptr{"gain_key", "Gain"};
     BuildingBlockParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
-    BuildingBlockParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
+    BuildingBlockParam<bool> realtime_display_mode{"realtime_display_mode", false};
 
     Input<double> gain0{ "gain0" };
     Input<double> gain1{ "gain1" };
@@ -802,7 +802,7 @@ public:
             std::memcpy(exposure_key_buf.data(), exposure_key.c_str(), exposure_key.size());
 
             std::vector<ExternFuncArgument> params{
-                static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
+                static_cast<bool>(frame_sync), static_cast<bool>(realtime_display_mode),
                 gain0, gain1, exposure0, exposure1,
                 id_buf, gain_key_buf, exposure_key_buf
              };
@@ -814,7 +814,7 @@ public:
 
         Func camera2_frame_count;{
             Buffer<uint8_t> id_buf = this->get_id();
-            camera2_frame_count.define_extern("ion_bb_image_io_u3v_camera2_frame_count", { camera2,  2, static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode), id_buf}, type_of<uint32_t>(), 1);
+            camera2_frame_count.define_extern("ion_bb_image_io_u3v_camera2_frame_count", { camera2,  2, static_cast<bool>(frame_sync), static_cast<bool>(realtime_display_mode), id_buf}, type_of<uint32_t>(), 1);
             camera2_frame_count.compute_root();
             frame_count(_) = camera2_frame_count(_);
         }
@@ -831,7 +831,7 @@ class U3VCameraN : public ion::BuildingBlock<U3VCameraN<T, D>> {
 public:
     BuildingBlockParam<int32_t> num_devices{"num_devices", 2};
     BuildingBlockParam<bool> frame_sync{"frame_sync", false};
-    BuildingBlockParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
+    BuildingBlockParam<bool> realtime_display_mode{"realtime_display_mode", false};
 
     BuildingBlockParam<bool> enable_control{"enable_control", false};
     BuildingBlockParam<std::string> gain_key_ptr{"gain_key", "Gain"};
@@ -885,7 +885,7 @@ public:
                 id_buf,
                 static_cast<bool>(force_sim_mode),
                 static_cast<int32_t>(width), static_cast<int32_t>(height),static_cast<float_t>(fps),
-                static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
+                static_cast<bool>(frame_sync), static_cast<bool>(realtime_display_mode),
                 static_cast<bool>(enable_control),
                 gain_key_buf, exposure_key_buf, pixel_format_buf
             };
@@ -928,7 +928,7 @@ public:
                 cameraN, id_buf, static_cast<int32_t>(num_devices),
                 static_cast<bool>(force_sim_mode),
                 static_cast<int32_t>(width), static_cast<int32_t>(height), static_cast<float_t>(fps),
-                static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
+                static_cast<bool>(frame_sync), static_cast<bool>(realtime_display_mode),
                 pixel_format_buf
             };
 
@@ -960,7 +960,7 @@ public:
                 cameraN, id_buf, static_cast<int32_t>(num_devices),
                 static_cast<bool>(force_sim_mode),
                 static_cast<int32_t>(width), static_cast<int32_t>(height), static_cast<float_t>(fps),
-                static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
+                static_cast<bool>(frame_sync), static_cast<bool>(realtime_display_mode),
                 pixel_format_buf
             };
 
@@ -992,7 +992,7 @@ class U3VCameraGenDC : public ion::BuildingBlock<U3VCameraGenDC> {
 public:
     BuildingBlockParam<int32_t> num_devices{"num_devices", 2};
     BuildingBlockParam<bool> frame_sync{"frame_sync", false};
-    BuildingBlockParam<bool> realtime_diaplay_mode{"realtime_diaplay_mode", false};
+    BuildingBlockParam<bool> realtime_display_mode{"realtime_display_mode", false};
 
     BuildingBlockParam<bool> enable_control{"enable_control", false};
     BuildingBlockParam<std::string> gain_key_ptr{"gain_key", "Gain"};
@@ -1045,7 +1045,7 @@ public:
                 id_buf,
                 static_cast<bool>(force_sim_mode),
                 static_cast<int32_t>(width), static_cast<int32_t>(height),static_cast<float_t>(fps),
-                static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
+                static_cast<bool>(frame_sync), static_cast<bool>(realtime_display_mode),
                 static_cast<bool>(enable_control),
                 gain_key_buf, exposure_key_buf, pixel_format_buf
             };
@@ -1092,7 +1092,7 @@ public:
                 u3v_gendc, id_buf, static_cast<int32_t>(num_devices),
                 static_cast<bool>(force_sim_mode),
                 static_cast<int32_t>(width), static_cast<int32_t>(height), static_cast<float_t>(fps),
-                static_cast<bool>(frame_sync), static_cast<bool>(realtime_diaplay_mode),
+                static_cast<bool>(frame_sync), static_cast<bool>(realtime_display_mode),
                 pixel_format_buf
             };
 
