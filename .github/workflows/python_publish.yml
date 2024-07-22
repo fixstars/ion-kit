@@ -18,7 +18,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-         os: [ubuntu-20.04, macos-11, windows-2019]
+         os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
       - uses: actions/checkout@v4
@@ -33,7 +33,7 @@ jobs:
       - uses: robinraju/release-downloader@v1.9
         with:
           repository: "fixstars/ion-kit"
-          latest: true
+          latest: false
           fileName: "ion-kit*"
 
       - name: Copy macos file
