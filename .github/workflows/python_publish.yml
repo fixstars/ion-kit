@@ -130,7 +130,7 @@ jobs:
           cp  $GITHUB_WORKSPACE/macos/lib/libHalide.17.0.1.dylib python/ionpy/module/macos/libHalide.17.dylib
           cp  $GITHUB_WORKSPACE/macos/lib/libion-core.dylib python/ionpy/module/macos/libion-core.dylib
           cp  $GITHUB_WORKSPACE/macos/lib/libion-bb.dylib python/ionpy/module/macos/libion-bb.dylib
-    #   cp extra .dylib
+          
           mkdir $GITHUB_WORKSPACE/aravis
           curl -L https://github.com/Sensing-Dev/aravis/releases/download/v0.8.31/aravis-0.8.31-arm-64-macos.tar.gz| tar zx -C $GITHUB_WORKSPACE/aravis --strip-components 1
           cp  $GITHUB_WORKSPACE/aravis/lib/libaravis-0.8.0.dylib python/ionpy/module/macos/libaravis-0.8.dylib
@@ -201,7 +201,7 @@ jobs:
 
 
   upload_TEST_PYPI:
-    needs: [build_wheels]
+    needs: [build_ion_python_wheels,build_ion_contrib_python_wheels]
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
