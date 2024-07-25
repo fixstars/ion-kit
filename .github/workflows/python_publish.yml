@@ -239,8 +239,7 @@ jobs:
         run: |
           sleep 60 # wait package to upload
           pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple ion-python==${{ github.event.release.tag_name }}
-          python -c "import ionpy"
-      
+          python -c "import ionpy"  
 
   upload_PYPI:
     needs: [ test_TEST_PYPI ]
