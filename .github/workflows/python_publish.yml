@@ -132,8 +132,8 @@ jobs:
           cp  $GITHUB_WORKSPACE/macos/lib/libion-bb.dylib python/ionpy/module/macos/libion-bb.dylib
     #   cp extra .dylib
           mkdir $GITHUB_WORKSPACE/aravis
-          curl -L https://github.com/Sensing-Dev/aravis/download/v0.8.31/aravis-0.8.31-arm-64-macos.tar.gz| tar zx -C $GITHUB_WORKSPACE/aravis --strip-components 1
-          cp  $GITHUB_WORKSPACE/aravis/lib/libaravis-0.8.dylib python/ionpy/module/macos/libaravis-0.8.dylib
+          curl -L https://github.com/Sensing-Dev/aravis/releases/download/v0.8.31/aravis-0.8.31-arm-64-macos.tar.gz| tar zx -C $GITHUB_WORKSPACE/aravis --strip-components 1
+          cp  $GITHUB_WORKSPACE/aravis/lib/libaravis-0.8.0.dylib python/ionpy/module/macos/libaravis-0.8.dylib
           ls python/ionpy/module/macos
 
       - name: Copy linux file
@@ -147,8 +147,8 @@ jobs:
           cp  $GITHUB_WORKSPACE/linux/lib/libHalide.so.17.0.1 python/ionpy/module/linux/libHalide.so.17
           
           mkdir $GITHUB_WORKSPACE/aravis     
-          curl -L https://github.com/Sensing-Dev/aravis/download/v0.8.31/aravis-0.8.31-x86-64-linux.tar.gz | tar zx -C $GITHUB_WORKSPACE/aravis --strip-components 1
-          cp  $GITHUB_WORKSPACE/aravis/lib/libaravis-0.8.so python/ionpy/module/linux/libaravis-0.8.so     
+          curl -L https://github.com/Sensing-Dev/aravis/releases/download/v0.8.31/aravis-0.8.31-x86-64-linux.tar.gz | tar zx -C $GITHUB_WORKSPACE/aravis --strip-components 1
+          cp  $GITHUB_WORKSPACE/aravis/lib/x86_64-linux-gnu/libaravis-0.8.so.0.8.31 python/ionpy/module/linux/libaravis-0.8.so     
           ls python/ionpy/module/linux
 
       - name: Copy windows file
@@ -162,17 +162,14 @@ jobs:
           cp  windows/bin/ion-bb.dll python/ionpy/module/windows/ion-bb.dll
           
           mkdir aravis
-          curl -L https://github.com/Sensing-Dev/aravis/releases/download/v0.8.31/aravis-0.8.31-x86-64-windows.zip -o aravis.zip
-          unzip aravis.zip
-          ls
-          rm aravis.zip && mv aravis*/* aravis
-          cp  aravis/bin/aravis-0.8-0.dll python/ionpy/module/windows/aravis-0.8-0.dll
-        
-        
-          curl -L https://github.com/Sensing-Dev/aravis/releases/download/v0.8.31/aravis-0.8.31-dependencies.zip -o dependency.zip
-          unzip dependency.zip
-          ls
-          rm dependency.zip && mv aravis*dependencies/* python/ionpy/module/windows/
+          curl -L https://github.com/Sensing-Dev/aravis/releases/download/v0.8.31/aravis-0.8.31-x86-64-windows.zip -o aravis/aravis-bin.zip
+          cd aravis && tar -xf aravis-bin.zip && cd ../
+          cp aravis/bin/aravis-0.8-0.dll python/ionpy/module/windows/aravis-0.8-0.dll
+          
+          mkdir dependency
+          curl -L https://github.com/Sensing-Dev/aravis/releases/download/v0.8.31/aravis-0.8.31-dependencies.zip -o dependency/dependency-bin.zip
+          cd dependency && tar -xf dependency-bin.zip && cd ../
+          mv dependency/*.dll python/ionpy/module/windows/
           
           ls  python/ionpy/module/windows
 
@@ -194,7 +191,7 @@ jobs:
           CIBW_REPAIR_WHEEL_COMMAND_LINUX: ""
           CIBW_SKIP: "*-win32 *i686 *musllinux*"
           CIBW_BUILD: cp39-*
-          CIBW_ENVIRONMENT: ION_KIT_VERSION=${{ github.event.release.tag_name }}
+          CIBW_ENVIRONMENT: ION_KIT_VERSION=${{ github.event.release.tag_name }} USE_CONTRIB=TRUE
 
       - uses: actions/upload-artifact@v4
         with:
@@ -220,10 +217,10 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-          repository-url: https://test.pypi.org/legacy/
+  #     - uses: pypa/gh-action-pypi-publish@release/v1
+  #       with:
+  #         password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+  #         repository-url: https://test.pypi.org/legacy/
 
   test_TEST_PYPI:
     needs: [upload_TEST_PYPI]
