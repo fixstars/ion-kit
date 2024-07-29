@@ -71,6 +71,10 @@ public:
         return *this;
     }
 
+      ComponentHeader getComponentByIndex(int ith_component_index){
+        return component_header_[ith_component_index];
+    }
+
     int32_t getDescriptorSize(){
         return DescriptorSize_;
     }

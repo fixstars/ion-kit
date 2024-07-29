@@ -61,6 +61,10 @@ public:
         return *this;
     }
 
+    int getGroupID(){
+        return GroupId_;
+    }
+
     size_t GenerateDescriptor(char* ptr, size_t offset=0){
         offset = GenerateHeader(ptr, offset);
 
