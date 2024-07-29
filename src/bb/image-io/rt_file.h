@@ -216,6 +216,7 @@ public:
         j_sensor["width"] = header_info.width_;
         j_sensor["height"] = header_info.height_;
         j_sensor["pfnc_pixelformat"] = header_info.pfnc_pixelformat;
+        j_sensor["group_id"] = header_info.group_id;
 
         auto filename = prefix_ + "config.json";
         std::ofstream config(output_directory_ / filename);
