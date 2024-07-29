@@ -641,7 +641,7 @@ private:
             auto fps = arv_device_get_float_feature_value(devices_[i].device_, "AcquisitionFrameRate", &err_);
             struct rawHeader header=  { 1, width, height,
                 1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
-                width, height, width, height, static_cast<float>(fps), px};
+                width, height, width, height, static_cast<float>(fps), px, 0};
             devices_[i].header_info_ = header;
             devices_[i].image_payload_size_ = devices_[i].u3v_payload_size_;
             devices_[i].frame_count_  = 0;
@@ -848,7 +848,7 @@ private:
                 auto fps = arv_device_get_float_feature_value(devices_[i].device_, "AcquisitionFrameRate", &err_);
                 struct rawHeader header=  { 1, width, height,
                     1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
-                    width, height, width, height, static_cast<float>(fps), px};
+                    width, height, width, height, static_cast<float>(fps), px, 0};
                 devices_[i].header_info_ = header;
                 devices_[i].image_payload_size_ = devices_[i].u3v_payload_size_;
                 devices_[i].frame_count_  = 0;
@@ -963,6 +963,7 @@ private:
                 }
 
                 // Check each parameters for GenDC device ==========================
+                int group_id = 0;
                 if (is_gendc_){
                     log::info("\tDevice/USB {}::{} : {}", i, "GenDC", "Available");
                     uint64_t gendc_desc_size = 0;
@@ -971,9 +972,11 @@ private:
                     if (err_) {
                         throw std::runtime_error(err_->message);
                     }
+
                     if(isGenDC(buffer)){
                         gendc_descriptor_= ContainerHeader(buffer);
                         std::cout<<"Group id is"<<gendc_descriptor_.getComponentByIndex(0).getGroupID()<<std::endl;
+                        group_id = gendc_descriptor_.getComponentByIndex(0).getGroupID();
                         std::tuple<int32_t, int32_t> data_comp_and_part = gendc_descriptor_.getFirstAvailableDataOffset(true);
                         if (std::get<0>(data_comp_and_part) == -1){
                             devices_[i].is_data_image_ = false;
@@ -1017,7 +1020,7 @@ private:
 
                     devices_[i].header_info_ = { 1, wi, hi,
                         1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
-                        wi, hi, wi, hi, static_cast<float>(fps), px
+                        wi, hi, wi, hi, static_cast<float>(fps), px, group_id
                     };
                 }
 
@@ -1328,7 +1331,7 @@ private:
                 auto fps = arv_device_get_float_feature_value(devices_[i].device_, "AcquisitionFrameRate", &err_);
                 struct rawHeader header=  { 1, width, height,
                     1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
-                    width, height, width, height, static_cast<float>(fps), px};
+                    width, height, width, height, static_cast<float>(fps), px, 0};
                 devices_[i].header_info_ = header;
                 devices_[i].image_payload_size_ = devices_[i].u3v_payload_size_;
                 devices_[i].frame_count_  = 0;
@@ -1443,6 +1446,7 @@ private:
                     frame_count_method_ == FrameCountMethod::TYPESPECIFIC3 ? "TypeSpecific" : "Unavailabe");
 
                 // Check each parameters for GenDC device ==========================
+                int group_id = 0;
                 if (is_gendc_){
                     log::info("\tDevice/USB {}::{} : {}", i, "GenDC", "Available");
                     uint64_t gendc_desc_size = 0;
@@ -1453,6 +1457,8 @@ private:
 
                     if(isGenDC(buffer)){
                         gendc_descriptor_= ContainerHeader(buffer);
+                        std::cout<<"Group id is"<<gendc_descriptor_.getComponentByIndex(0).getGroupID()<<std::endl;
+                        group_id = gendc_descriptor_.getComponentByIndex(0).getGroupID();
                         std::tuple<int32_t, int32_t> data_comp_and_part = gendc_descriptor_.getFirstAvailableDataOffset(true);
                         if (std::get<0>(data_comp_and_part) == -1){
                             devices_[i].is_data_image_ = false;
@@ -1495,7 +1501,7 @@ private:
 
                     devices_[i].header_info_ = { 1, wi, hi,
                         1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
-                        wi, hi, wi, hi, static_cast<float>(fps), px
+                        wi, hi, wi, hi, static_cast<float>(fps), px, group_id
                     };
                 }
 
