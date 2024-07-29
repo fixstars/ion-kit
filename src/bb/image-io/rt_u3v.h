@@ -13,6 +13,7 @@
 #include "gendc_separator/ContainerHeader.h"
 #include "gendc_separator/tools.h"
 
+#define ComponentIDIntensity 1
 #ifdef _WIN32
     #define GOBJECT_FILE "gobject-2.0-0"
     #define ARAVIS_FILE "aravis-0.8-0"
@@ -984,8 +985,6 @@ private:
 
                     if(isGenDC(buffer)){
                         gendc_descriptor_= ContainerHeader(buffer);
-                        std::cout<<"Group id is"<<gendc_descriptor_.getComponentByIndex(0).getGroupID()<<std::endl;
-                        group_id = gendc_descriptor_.getComponentByIndex(0).getGroupID();
                         std::tuple<int32_t, int32_t> data_comp_and_part = gendc_descriptor_.getFirstAvailableDataOffset(true);
                         if (std::get<0>(data_comp_and_part) == -1){
                             devices_[i].is_data_image_ = false;
@@ -1001,6 +1000,13 @@ private:
                         if (frame_count_method_ == FrameCountMethod::TYPESPECIFIC3){
                             devices_[i].framecount_offset_ = gendc_descriptor_.getOffsetFromTypeSpecific(std::get<0>(data_comp_and_part), std::get<1>(data_comp_and_part), 3, 0);
                         }
+
+                        int32_t image_component_index = gendc_descriptor_.getFirstComponentIndexByTypeID(ComponentIDIntensity);
+                        if (image_component_index == -1){
+                            throw ::std::runtime_error("No available component found");
+                        }
+                        ComponentHeader image_component = gendc_descriptor_.getComponentByIndex(image_component_index);
+                        group_id = gendc_descriptor_.getComponentByIndex(image_component_index).getGroupID();
                     }
                     free(buffer);
                 }else{
@@ -1471,8 +1477,6 @@ private:
                     }
                     if(isGenDC(buffer)){
                         gendc_descriptor_= ContainerHeader(buffer);
-                        std::cout<<"Group id is"<<gendc_descriptor_.getComponentByIndex(0).getGroupID()<<std::endl;
-                        group_id = gendc_descriptor_.getComponentByIndex(0).getGroupID();
                         std::tuple<int32_t, int32_t> data_comp_and_part = gendc_descriptor_.getFirstAvailableDataOffset(true);
                         if (std::get<0>(data_comp_and_part) == -1){
                             devices_[i].is_data_image_ = false;
@@ -1488,6 +1492,12 @@ private:
                         if (frame_count_method_ == FrameCountMethod::TYPESPECIFIC3){
                             devices_[i].framecount_offset_ = gendc_descriptor_.getOffsetFromTypeSpecific(std::get<0>(data_comp_and_part), std::get<1>(data_comp_and_part), 3, 0);
                         }
+                        int32_t image_component_index = gendc_descriptor_.getFirstComponentIndexByTypeID(ComponentIDIntensity);
+                        if (image_component_index == -1){
+                            throw ::std::runtime_error("No available component found");
+                        }
+                        ComponentHeader image_component = gendc_descriptor_.getComponentByIndex(image_component_index);
+                        group_id = gendc_descriptor_.getComponentByIndex(image_component_index).getGroupID();
                     }
                     free(buffer);
                 }else{
