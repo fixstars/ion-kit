@@ -61,9 +61,22 @@ public:
         return *this;
     }
 
-    int getGroupID(){
+    int64_t getGroupID(){
         return GroupId_;
     }
+
+    int64_t getTypeId(){
+        return TypeId_;
+    }
+
+    int16_t getSourceId(){
+        return SourceId_;
+    }
+
+    int16_t getPartCount(){
+        return PartCount_;
+    }
+
 
     size_t GenerateDescriptor(char* ptr, size_t offset=0){
         offset = GenerateHeader(ptr, offset);
