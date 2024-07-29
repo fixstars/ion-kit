@@ -982,6 +982,7 @@ private:
                     }
                     if(isGenDC(buffer)){
                         gendc_descriptor_= ContainerHeader(buffer);
+                        std::cout<<"Group id is"<<gendc_descriptor_.getComponentByIndex(0).getGroupID()<<std::endl;
                         std::tuple<int32_t, int32_t> data_comp_and_part = gendc_descriptor_.getFirstAvailableDataOffset(true);
                         if (std::get<0>(data_comp_and_part) == -1){
                             devices_[i].is_data_image_ = false;
