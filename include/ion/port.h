@@ -193,6 +193,19 @@ public:
          impl_->bound_address[i] = std::make_tuple(v, false);
      }
 
+     void bind(Halide::Type typ,void *v) {
+         auto i = index_ == -1 ? 0 : index_;
+
+         if (has_pred()) {
+             impl_->params[i] = Halide::Parameter{typ, false, 0, argument_name(pred_id(), id(), pred_name(), i, graph_id())};
+         } else {
+             impl_->params[i] = Halide::Parameter{type(), false, dimensions(), argument_name(pred_id(), id(), pred_name(), i, graph_id())};
+         }
+
+         impl_->instances[i] = v;
+         impl_->bound_address[i] = std::make_tuple(v, false);
+     }
+
      template<typename T>
      void bind(const Halide::Buffer<T>& buf) {
          auto i = index_ == -1 ? 0 : index_;
