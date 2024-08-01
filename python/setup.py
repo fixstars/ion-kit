@@ -43,6 +43,18 @@ def get_version():
     return tag
 
 
+def get_name():
+    if os.environ.get("USE_CONTRIB") is not None:
+        return "ion-contrib-python"
+    return "ion-python"
+
+
+def get_liciense():
+    if os.environ.get("USE_CONTRIB") is not None:
+        return ['LICENSE', 'LICENSE-3RD-PARTY']
+    return ['LICENSE']
+
+
 def main():
     long_description = io.open("README.md", encoding="utf-8").read()
     package_data: List[str] = []
@@ -55,7 +67,7 @@ def main():
         package_data = ["module/linux/*"]
 
     setup(
-        name="ion-python",
+        name=get_name(),
         author="Takuro Iizuka",
         author_email="t_iizuka@fixstars.com",
         packages=["ionpy"],
@@ -65,7 +77,7 @@ def main():
         version=get_version(),
         python_requires=">=3.8.0",
         license="MIT License",
-        license_files=('LICENSE',),
+        license_files=get_liciense(),
         classifiers=[
             "Development Status :: 3 - Alpha",
             "Programming Language :: Python :: 3",

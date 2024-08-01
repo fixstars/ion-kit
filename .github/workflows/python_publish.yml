@@ -13,7 +13,7 @@ on:
     types: [published]
 
 jobs:
-  build_wheels:
+  build_ion_python_wheels:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -97,8 +97,111 @@ jobs:
           name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
           path: python/wheelhouse/*.whl
 
+  build_ion_contrib_python_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+
+    steps:
+      - uses: actions/checkout@v4
+
+
+      # - name: GitHub Tag Name
+      #   run: |
+      #    echo "Tag name from GITHUB_REF_NAME: $GITHUB_REF_NAME"
+      #    echo "Tag name from github.ref_name: ${{  github.ref_name }}"
+      #    echo ${{ github.event.release.tag_name }}
+
+      - uses: robinraju/release-downloader@v1.9
+        with:
+          repository: "fixstars/ion-kit"
+          latest: true
+          fileName: "ion-kit*"
+          tag: ${{ github.event.release.tag_name }}
+
+      - name: Copy macos file
+        if: runner.os == 'macOS'
+        run: |
+          export ION_KIT_VERSION=${{ github.event.release.tag_name }}
+          mkdir $GITHUB_WORKSPACE/macos
+          tar xzf  ion-kit-*macos.tar.gz  -C $GITHUB_WORKSPACE/macos --strip-components 1
+          cp  $GITHUB_WORKSPACE/macos/lib/libHalide.17.0.1.dylib python/ionpy/module/macos/libHalide.17.dylib
+          cp  $GITHUB_WORKSPACE/macos/lib/libion-core.dylib python/ionpy/module/macos/libion-core.dylib
+          cp  $GITHUB_WORKSPACE/macos/lib/libion-bb.dylib python/ionpy/module/macos/libion-bb.dylib
+          
+          mkdir $GITHUB_WORKSPACE/aravis
+          curl -L https://github.com/Sensing-Dev/aravis/releases/download/v0.8.31/aravis-0.8.31-arm-64-macos.tar.gz| tar zx -C $GITHUB_WORKSPACE/aravis --strip-components 1
+          cp  $GITHUB_WORKSPACE/aravis/lib/libaravis-0.8.0.dylib python/ionpy/module/macos/libaravis-0.8.dylib
+          ls python/ionpy/module/macos
+
+      - name: Copy linux file
+        if: runner.os == 'Linux'
+        run: |
+          export ION_KIT_VERSION=${{ github.event.release.tag_name }}
+          mkdir $GITHUB_WORKSPACE/linux
+          tar xzf  ion-kit-*linux.tar.gz  -C $GITHUB_WORKSPACE/linux --strip-components 1
+          cp  $GITHUB_WORKSPACE/linux/lib/libion-bb.so python/ionpy/module/linux/libion-bb.so
+          cp  $GITHUB_WORKSPACE/linux/lib/libion-core.so python/ionpy/module/linux/libion-core.so
+          cp  $GITHUB_WORKSPACE/linux/lib/libHalide.so.17.0.1 python/ionpy/module/linux/libHalide.so.17
+          
+          mkdir $GITHUB_WORKSPACE/aravis     
+          curl -L https://github.com/Sensing-Dev/aravis/releases/download/v0.8.31/aravis-0.8.31-x86-64-linux.tar.gz | tar zx -C $GITHUB_WORKSPACE/aravis --strip-components 1
+          cp  $GITHUB_WORKSPACE/aravis/lib/x86_64-linux-gnu/libaravis-0.8.so.0.8.31 python/ionpy/module/linux/libaravis-0.8.so     
+          ls python/ionpy/module/linux
+
+      - name: Copy windows file
+        if: runner.os == 'Windows'
+        run: |
+          mkdir windows
+          set ION_KIT_VERSION=${{ github.event.release.tag_name }}
+          unzip  ion-kit-*windows.zip  && mv ion-kit*/*  windows
+          cp  windows/bin/Halide.dll python/ionpy/module/windows/Halide.dll
+          cp  windows/bin/ion-core.dll python/ionpy/module/windows/ion-core.dll
+          cp  windows/bin/ion-bb.dll python/ionpy/module/windows/ion-bb.dll
+          
+          mkdir aravis
+          curl -L https://github.com/Sensing-Dev/aravis/releases/download/v0.8.31/aravis-0.8.31-x86-64-windows.zip -o aravis/aravis-bin.zip
+          cd aravis && tar -xf aravis-bin.zip && cd ../
+          cp aravis/bin/aravis-0.8-0.dll python/ionpy/module/windows/aravis-0.8-0.dll
+          
+          mkdir dependency
+          curl -L https://github.com/Sensing-Dev/aravis/releases/download/v0.8.31/aravis-0.8.31-dependencies.zip -o dependency/dependency-bin.zip
+          cd dependency && tar -xf dependency-bin.zip && cd ../
+          mv dependency/*.dll python/ionpy/module/windows/
+          
+          ls  python/ionpy/module/windows
+
+      # Used to host cibuildwheel
+      - uses: actions/setup-python@v3
+        with:
+          python-version: '3.9'
+
+      - name: Install cibuildwheel
+        run: python -m pip install cibuildwheel==2.16.4
+
+      - name: Build wheels
+        run: |
+          cd python && python -m cibuildwheel --output-dir wheelhouse
+        env:
+          CIBW_ARCHS_MACOS: universal2
+          CIBW_REPAIR_WHEEL_COMMAND_MACOS: ""
+          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: ""
+          CIBW_REPAIR_WHEEL_COMMAND_LINUX: ""
+          CIBW_SKIP: "*-win32 *i686 *musllinux*"
+          CIBW_BUILD: cp39-*
+          CIBW_ENVIRONMENT: ION_KIT_VERSION=${{ github.event.release.tag_name }} USE_CONTRIB=TRUE
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}-contrib
+          path: python/wheelhouse/*.whl
+
+
+
   upload_TEST_PYPI:
-    needs: [build_wheels]
+    needs: [build_ion_python_wheels,build_ion_contrib_python_wheels]
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
@@ -136,8 +239,7 @@ jobs:
         run: |
           sleep 60 # wait package to upload
           pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple ion-python==${{ github.event.release.tag_name }}
-          python -c "import ionpy"
-
+          python -c "import ionpy"  
 
   upload_PYPI:
     needs: [ test_TEST_PYPI ]
