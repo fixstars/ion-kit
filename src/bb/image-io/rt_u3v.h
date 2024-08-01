@@ -13,6 +13,7 @@
 #include "gendc_separator/ContainerHeader.h"
 #include "gendc_separator/tools.h"
 
+#define ComponentIDIntensity 1
 #ifdef _WIN32
     #define GOBJECT_FILE "gobject-2.0-0"
     #define ARAVIS_FILE "aravis-0.8-0"
@@ -645,7 +646,7 @@ private:
             auto fps = arv_device_get_float_feature_value(devices_[i].device_, "AcquisitionFrameRate", &err_);
             struct rawHeader header=  { 1, width, height,
                 1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
-                width, height, width, height, static_cast<float>(fps), px};
+                width, height, width, height, static_cast<float>(fps), px, 0};
             devices_[i].header_info_ = header;
             devices_[i].image_payload_size_ = devices_[i].u3v_payload_size_;
             devices_[i].frame_count_  = 0;
@@ -852,7 +853,7 @@ private:
                 auto fps = arv_device_get_float_feature_value(devices_[i].device_, "AcquisitionFrameRate", &err_);
                 struct rawHeader header=  { 1, width, height,
                     1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
-                    width, height, width, height, static_cast<float>(fps), px};
+                    width, height, width, height, static_cast<float>(fps), px, 0};
                 devices_[i].header_info_ = header;
                 devices_[i].image_payload_size_ = devices_[i].u3v_payload_size_;
                 devices_[i].frame_count_  = 0;
@@ -967,6 +968,7 @@ private:
                 }
 
                 // Check each parameters for GenDC device ==========================
+                int group_id = 0;
                 if (is_gendc_){
                     log::info("\tDevice/USB {}::{} : {}", i, "GenDC", "Available");
                     uint64_t gendc_desc_size = arv_device_get_register_feature_length(devices_[i].device_, "GenDCDescriptor", &err_);
@@ -980,6 +982,7 @@ private:
                     if (err_) {
                         throw std::runtime_error(err_->message);
                     }
+
                     if(isGenDC(buffer)){
                         gendc_descriptor_= ContainerHeader(buffer);
                         std::tuple<int32_t, int32_t> data_comp_and_part = gendc_descriptor_.getFirstAvailableDataOffset(true);
@@ -997,6 +1000,13 @@ private:
                         if (frame_count_method_ == FrameCountMethod::TYPESPECIFIC3){
                             devices_[i].framecount_offset_ = gendc_descriptor_.getOffsetFromTypeSpecific(std::get<0>(data_comp_and_part), std::get<1>(data_comp_and_part), 3, 0);
                         }
+
+                        int32_t image_component_index = gendc_descriptor_.getFirstComponentIndexByTypeID(ComponentIDIntensity);
+                        if (image_component_index == -1){
+                            throw ::std::runtime_error("No available component found");
+                        }
+                        ComponentHeader image_component = gendc_descriptor_.getComponentByIndex(image_component_index);
+                        group_id = gendc_descriptor_.getComponentByIndex(image_component_index).getGroupID();
                     }
                     free(buffer);
                 }else{
@@ -1025,7 +1035,7 @@ private:
 
                     devices_[i].header_info_ = { 1, wi, hi,
                         1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
-                        wi, hi, wi, hi, static_cast<float>(fps), px
+                        wi, hi, wi, hi, static_cast<float>(fps), px, group_id
                     };
                 }
 
@@ -1336,7 +1346,7 @@ private:
                 auto fps = arv_device_get_float_feature_value(devices_[i].device_, "AcquisitionFrameRate", &err_);
                 struct rawHeader header=  { 1, width, height,
                     1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
-                    width, height, width, height, static_cast<float>(fps), px};
+                    width, height, width, height, static_cast<float>(fps), px, 0};
                 devices_[i].header_info_ = header;
                 devices_[i].image_payload_size_ = devices_[i].u3v_payload_size_;
                 devices_[i].frame_count_  = 0;
@@ -1451,6 +1461,7 @@ private:
                     frame_count_method_ == FrameCountMethod::TYPESPECIFIC3 ? "TypeSpecific" : "Unavailabe");
 
                 // Check each parameters for GenDC device ==========================
+                int group_id = 0;
                 if (is_gendc_){
                     log::info("\tDevice/USB {}::{} : {}", i, "GenDC", "Available");
                     uint64_t gendc_desc_size = arv_device_get_register_feature_length(devices_[i].device_, "GenDCDescriptor", &err_);
@@ -1481,6 +1492,12 @@ private:
                         if (frame_count_method_ == FrameCountMethod::TYPESPECIFIC3){
                             devices_[i].framecount_offset_ = gendc_descriptor_.getOffsetFromTypeSpecific(std::get<0>(data_comp_and_part), std::get<1>(data_comp_and_part), 3, 0);
                         }
+                        int32_t image_component_index = gendc_descriptor_.getFirstComponentIndexByTypeID(ComponentIDIntensity);
+                        if (image_component_index == -1){
+                            throw ::std::runtime_error("No available component found");
+                        }
+                        ComponentHeader image_component = gendc_descriptor_.getComponentByIndex(image_component_index);
+                        group_id = gendc_descriptor_.getComponentByIndex(image_component_index).getGroupID();
                     }
                     free(buffer);
                 }else{
@@ -1508,7 +1525,7 @@ private:
 
                     devices_[i].header_info_ = { 1, wi, hi,
                         1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
-                        wi, hi, wi, hi, static_cast<float>(fps), px
+                        wi, hi, wi, hi, static_cast<float>(fps), px, group_id
                     };
                 }
 
