@@ -313,7 +313,7 @@ protected:
                 log::trace("Obtained Device info USB{}", i);
             }
         } else if (operation_mode_ == OperationMode::Came1USB2) {
-            ::memcpy(outs[0], &(devices_[cameN_idx_].header_info_), sizeof(ion::bb::image_io::rawHeader));
+            ::memcpy(outs[0], &(devices_[device_idx_].header_info_), sizeof(ion::bb::image_io::rawHeader));
             log::trace("Obtained Device info (OperationMode::Came1USB2)");
         }
     }
@@ -323,7 +323,7 @@ protected:
     : gobject_(GOBJECT_FILE, true), aravis_(ARAVIS_FILE, true),
         num_sensor_(num_sensor), frame_count_method_(FrameCountMethod::UNAVAILABLE),
         frame_sync_(frame_sync), realtime_display_mode_(realtime_display_mode), is_gendc_(false), is_param_integer_(false),
-        devices_(num_sensor), buffers_(num_sensor), operation_mode_(OperationMode::Came1USB1), frame_cnt_(0), cameN_idx_(-1), disposed_(false), sim_mode_(sim_mode)
+        devices_(num_sensor), buffers_(num_sensor), operation_mode_(OperationMode::Came1USB1), frame_cnt_(0), device_idx_(-1), disposed_(false), sim_mode_(sim_mode)
     {
         init_symbols();
         log::debug("U3V:: 23-11-18 : updating obtain and write");
@@ -533,7 +533,7 @@ protected:
 
     static std::map<std::string, std::shared_ptr<U3V>> instances_;
 
-    int32_t num_sensor_;
+    int32_t num_sensor_;   //SENSOR NUMBER
 
     DynamicModule gobject_;
     DynamicModule aravis_;
@@ -546,7 +546,7 @@ protected:
     int32_t operation_mode_;
 
     uint32_t frame_cnt_;
-    int32_t cameN_idx_;
+    int32_t device_idx_; //USB DEVICE INDEX
     int frame_count_method_;
 
     // genDC
@@ -554,7 +554,7 @@ protected:
 
     std::string pixel_format_;
 
-    std::vector<DeviceInfo> devices_;
+    std::vector<DeviceInfo> devices_;  //USB DEVICE
 
     std::vector<std::vector<ArvBuffer*> > buffers_;
 
@@ -613,7 +613,7 @@ private:
         arv_set_fake_camera_genicam_filename (path);
 
         arv_enable_interface ("Fake");
-        log::info("Creating U3V instance with {} fake devices...", num_sensor_);
+        log::info("Creating U3V instance with {} fake sensors...", num_sensor_);
 
         auto fake_camera0 = arv_camera_new ("Fake_1", &err_);
         auto fake_device0 = arv_camera_get_device(fake_camera0);
@@ -686,9 +686,10 @@ public:
 
     void get(std::vector<Halide::Buffer<>>& outs) override{
         auto timeout_us = 30 * 1000 * 1000;
+        int32_t num_device = devices_.size();
         if (sim_mode_){
-            std::vector<ArvBuffer *> bufs(num_sensor_);
-            for (int i = 0;i< num_sensor_;i++){
+            std::vector<ArvBuffer *> bufs(num_device);
+            for (int i = 0;i< num_device;i++){
                     auto size = devices_[i].u3v_payload_size_;
                     arv_stream_push_buffer (devices_[i].stream_,  arv_buffer_new_allocate (size));
                     bufs[i] = arv_stream_timeout_pop_buffer (devices_[i].stream_, timeout_us);
@@ -700,7 +701,7 @@ public:
                     memcpy(outs[i].data(), arv_buffer_get_part_data(bufs[i], 0, nullptr), size);
                 }
         }else {
-            int32_t num_device = num_sensor_;
+
             std::vector<ArvBuffer *> bufs(num_device);
 
             // default is OperationMode::Came1USB1
@@ -712,7 +713,7 @@ public:
                 }
 
                 // get the first buffer for each stream
-                for (auto i = 0; i < devices_.size(); ++i) {
+                for (auto i = 0; i <num_device; ++i) {
                     bufs[i] = arv_stream_timeout_pop_buffer(devices_[i].stream_, timeout_us);
                     if (bufs[i] == nullptr) {
                         log::error("pop_buffer(L1) failed due to timeout ({}s)", timeout_us * 1e-6f);
@@ -732,7 +733,7 @@ public:
                     sync_frame_count(bufs,timeout_us);
                 }
 
-                for (int i = 0; i < num_sensor_; ++i) {
+                for (int i = 0; i < num_device; ++i) {
                     auto sz = (std::min)(devices_[i].image_payload_size_, static_cast<int32_t>(outs[i].size_in_bytes()));
                     ::memcpy(outs[i].data(), arv_buffer_get_part_data(bufs[i], 0, nullptr), sz);
                     arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
@@ -750,41 +751,41 @@ public:
                 }
 
                 //first buffer
-                cameN_idx_ = (cameN_idx_ + 1) >= num_device ? 0 : cameN_idx_ + 1;
-                bufs[cameN_idx_] = arv_stream_timeout_pop_buffer(devices_[cameN_idx_].stream_, 30 * 1000 * 1000);
-                if (bufs[cameN_idx_] == nullptr) {
+                device_idx_ = (device_idx_ + 1) >= num_device ? 0 : device_idx_ + 1;
+                bufs[device_idx_] = arv_stream_timeout_pop_buffer(devices_[device_idx_].stream_, 30 * 1000 * 1000);
+                if (bufs[device_idx_] == nullptr) {
                     log::error("pop_buffer(L4) failed due to timeout ({}s)", timeout_us * 1e-6f);
                     throw ::std::runtime_error("buffer is null");
                 }
-                devices_[cameN_idx_].frame_count_ = frame_count_method_ == FrameCountMethod::TYPESPECIFIC3
-                    ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[cameN_idx_], devices_[cameN_idx_]))
+                devices_[device_idx_].frame_count_ = frame_count_method_ == FrameCountMethod::TYPESPECIFIC3
+                    ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[device_idx_], devices_[device_idx_]))
                     : frame_count_method_ == FrameCountMethod::TIMESTAMP
-                    ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[cameN_idx_]) & 0x00000000FFFFFFFF)
+                    ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[device_idx_]) & 0x00000000FFFFFFFF)
                     : -1;
-                latest_cnt = devices_[cameN_idx_].frame_count_;
-                cameN_idx_ == 0 ?
-                log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", devices_[cameN_idx_].frame_count_, "") :
-                log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", "", devices_[cameN_idx_].frame_count_);
+                latest_cnt = devices_[device_idx_].frame_count_;
+                device_idx_ == 0 ?
+                log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", devices_[device_idx_].frame_count_, "") :
+                log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", "", devices_[device_idx_].frame_count_);
 
             int internal_count = 0;
             int max_internal_count = 1000;
 
             while (frame_cnt_ >= latest_cnt) {
-                arv_stream_push_buffer(devices_[cameN_idx_].stream_, bufs[cameN_idx_]);
-                bufs[cameN_idx_] = arv_stream_timeout_pop_buffer (devices_[cameN_idx_].stream_, 30 * 1000 * 1000);
-                if (bufs[cameN_idx_] == nullptr){
+                arv_stream_push_buffer(devices_[device_idx_].stream_, bufs[device_idx_]);
+                bufs[device_idx_] = arv_stream_timeout_pop_buffer (devices_[device_idx_].stream_, 30 * 1000 * 1000);
+                if (bufs[device_idx_] == nullptr){
                     log::error("pop_buffer(L4) failed due to timeout ({}s)", timeout_us*1e-6f);
                     throw ::std::runtime_error("buffer is null");
                 }
-                devices_[cameN_idx_].frame_count_ = frame_count_method_ == FrameCountMethod::TYPESPECIFIC3
-                    ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[cameN_idx_], devices_[cameN_idx_]))
+                devices_[device_idx_].frame_count_ = frame_count_method_ == FrameCountMethod::TYPESPECIFIC3
+                    ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[device_idx_], devices_[device_idx_]))
                     : frame_count_method_ == FrameCountMethod::TIMESTAMP
-                    ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[cameN_idx_]) & 0x00000000FFFFFFFF)
+                    ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[device_idx_]) & 0x00000000FFFFFFFF)
                     : -1;
-                latest_cnt = devices_[cameN_idx_].frame_count_;
-                cameN_idx_ == 0 ?
-                    log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", devices_[cameN_idx_].frame_count_, "") :
-                    log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", "", devices_[cameN_idx_].frame_count_);
+                latest_cnt = devices_[device_idx_].frame_count_;
+                device_idx_ == 0 ?
+                    log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", devices_[device_idx_].frame_count_, "") :
+                    log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", "", devices_[device_idx_].frame_count_);
 
                 if (internal_count++ > max_internal_count){
                     log::error("pop_buffer(L9) The sequential invalid buffer is more than {}; Stop the pipeline.", max_internal_count);
@@ -793,11 +794,11 @@ public:
             }
 
             frame_cnt_ = latest_cnt;
-            auto sz = (std::min)(devices_[cameN_idx_].image_payload_size_, static_cast<int32_t>(outs[0].size_in_bytes()));
-            ::memcpy(outs[0].data(), arv_buffer_get_part_data(bufs[cameN_idx_], 0, nullptr), sz);
-            arv_stream_push_buffer(devices_[cameN_idx_].stream_, bufs[cameN_idx_]);
+            auto sz = (std::min)(devices_[device_idx_].image_payload_size_, static_cast<int32_t>(outs[0].size_in_bytes()));
+            ::memcpy(outs[0].data(), arv_buffer_get_part_data(bufs[device_idx_], 0, nullptr), sz);
+            arv_stream_push_buffer(devices_[device_idx_].stream_, bufs[device_idx_]);
 
-            log::trace("Obtained Frame from USB{}: {}", cameN_idx_, frame_cnt_);
+            log::trace("Obtained Frame from USB{}: {}", device_idx_, frame_cnt_);
             }
         }
     }
@@ -806,8 +807,8 @@ private:
      : U3V(num_sensor,  frame_sync, realtime_display_mode, sim_mode,  width, height , fps, pixel_format,  nullptr){
         // check if the camera is available
         arv_update_device_list();
-        auto n_devices = arv_get_n_devices ();
-        if (n_devices == 0){
+        auto num_device = arv_get_n_devices ();
+        if (num_device == 0){
             log::warn("Fallback to simulation mode: Could not find camera");
             sim_mode_ = true;
         }
@@ -820,7 +821,7 @@ private:
             arv_set_fake_camera_genicam_filename (path);
 
             arv_enable_interface ("Fake");
-            log::info("Creating U3V instance with {} fake devices...", num_sensor_);
+            log::info("Creating U3V instance with {} fake sensors...", num_sensor_);
 
             auto fake_camera0 = arv_camera_new ("Fake_1", &err_);
             auto fake_device0 = arv_camera_get_device(fake_camera0);
@@ -867,9 +868,9 @@ private:
                 log::info("\tFake Device {}::{} : {}", i, "Command", "AcquisitionStart");
             }
         }else{
-            if (num_sensor < num_sensor_){
-                log::info("{} device is found; but the num_device is set to {}", num_sensor, num_sensor_);
-                throw std::runtime_error("Device number is not match, please set num_devices again");
+            if (num_device < num_sensor_){
+                log::info("{} device is found; but the num_sensor is set to {}", num_device, num_sensor_);
+                throw std::runtime_error("Device number is not match, please set num_device again");
             }
             frame_sync_ = num_sensor_ > 1 ? frame_sync_ : false;
             unsigned int target_device_idx;
@@ -878,7 +879,7 @@ private:
                 log::info("Multiple devices are found; The first device is selected");
             }
 
-            log::info("Creating U3V instance with {} devices...", num_sensor_);
+            log::info("Creating U3V instance with {} sensors...", num_sensor_);
             log::info("Acquisition option::{} is {}", "frame_sync_", frame_sync_);
             log::info("Acquisition option::{} is {}", "realtime_display_mode_", realtime_display_mode_);
 
@@ -1041,9 +1042,9 @@ private:
                         operation_mode_ = OperationMode::Came2USB2;
                     }else if (strcmp(operation_mode_in_string, "Came1USB2")==0){
                         operation_mode_ = OperationMode::Came1USB2;
-                        num_sensor = 2;
-                        devices_.resize(num_sensor);
-                        buffers_.resize(num_sensor);
+                        num_device = 2;
+                        devices_.resize(num_device);
+                        buffers_.resize(num_device);
                     }
                     log::info("\tDevice/USB {}::{} : {}", i, "OperationMode", operation_mode_in_string);
                 }
@@ -1240,42 +1241,42 @@ public:
             }
 
             //first buffer
-            cameN_idx_ = (cameN_idx_+1) >= num_device ? 0 : cameN_idx_+1;
-            bufs[cameN_idx_] = arv_stream_timeout_pop_buffer (devices_[cameN_idx_].stream_, 30 * 1000 * 1000);
-            if (bufs[cameN_idx_] == nullptr){
+            device_idx_ = (device_idx_+1) >= num_device ? 0 : device_idx_+1;
+            bufs[device_idx_] = arv_stream_timeout_pop_buffer (devices_[device_idx_].stream_, 30 * 1000 * 1000);
+            if (bufs[device_idx_] == nullptr){
                 log::error("pop_buffer(L4) failed due to timeout ({}s)", timeout_us*1e-6f);
                 throw ::std::runtime_error("buffer is null");
             }
-            devices_[cameN_idx_].frame_count_ = frame_count_method_ == FrameCountMethod::TYPESPECIFIC3
-                ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[cameN_idx_], devices_[cameN_idx_]))
+            devices_[device_idx_].frame_count_ = frame_count_method_ == FrameCountMethod::TYPESPECIFIC3
+                ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[device_idx_], devices_[device_idx_]))
                 : frame_count_method_ == FrameCountMethod::TIMESTAMP
-                ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[cameN_idx_]) & 0x00000000FFFFFFFF)
+                ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[device_idx_]) & 0x00000000FFFFFFFF)
                 : -1;
-            latest_cnt = devices_[cameN_idx_].frame_count_;
-            cameN_idx_ == 0 ?
-                log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", devices_[cameN_idx_].frame_count_, "") :
-                log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", "", devices_[cameN_idx_].frame_count_);
+            latest_cnt = devices_[device_idx_].frame_count_;
+            device_idx_ == 0 ?
+                log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", devices_[device_idx_].frame_count_, "") :
+                log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", "", devices_[device_idx_].frame_count_);
 
             int internal_count = 0;
             int max_internal_count = 1000;
 
                 while (frame_cnt_ >= latest_cnt) {
-                    arv_stream_push_buffer(devices_[cameN_idx_].stream_, bufs[cameN_idx_]);
+                    arv_stream_push_buffer(devices_[device_idx_].stream_, bufs[device_idx_]);
                     auto timeout2_us = 30 * 1000 * 1000;
-                    bufs[cameN_idx_] = arv_stream_timeout_pop_buffer (devices_[cameN_idx_].stream_, timeout2_us);
-                    if (bufs[cameN_idx_] == nullptr){
+                    bufs[device_idx_] = arv_stream_timeout_pop_buffer (devices_[device_idx_].stream_, timeout2_us);
+                    if (bufs[device_idx_] == nullptr){
                         log::error("pop_buffer(L8) failed due to timeout ({}s)", timeout2_us*1e-6f);
                             throw ::std::runtime_error("buffer is null");
                     }
-                    devices_[cameN_idx_].frame_count_ = frame_count_method_ == FrameCountMethod::TYPESPECIFIC3
-                        ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[cameN_idx_], devices_[cameN_idx_]))
+                    devices_[device_idx_].frame_count_ = frame_count_method_ == FrameCountMethod::TYPESPECIFIC3
+                        ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[device_idx_], devices_[device_idx_]))
                         : frame_count_method_ == FrameCountMethod::TIMESTAMP
-                        ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[cameN_idx_]) & 0x00000000FFFFFFFF)
+                        ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[device_idx_]) & 0x00000000FFFFFFFF)
                         : -1;
-                    cameN_idx_ == 0 ?
-                        log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", devices_[cameN_idx_].frame_count_, "") :
-                        log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", "", devices_[cameN_idx_].frame_count_);
-                    latest_cnt = devices_[cameN_idx_].frame_count_;
+                    device_idx_ == 0 ?
+                        log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", devices_[device_idx_].frame_count_, "") :
+                        log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", "", devices_[device_idx_].frame_count_);
+                    latest_cnt = devices_[device_idx_].frame_count_;
                     if (internal_count++ > max_internal_count){
                         log::error("pop_buffer(L10) The sequential invalid buffer is more than {}; Stop the pipeline.", max_internal_count);
                         throw ::std::runtime_error("Invalid framecount");
@@ -1283,10 +1284,10 @@ public:
                 }
 
             frame_cnt_ = latest_cnt;
-            ::memcpy(outs[0], arv_buffer_get_data(bufs[cameN_idx_], nullptr), devices_[cameN_idx_].u3v_payload_size_);
-            // ::memcpy(outs[1], &(devices_[cameN_idx_].header_info_), sizeof(ion::bb::image_io::rawHeader));
-            arv_stream_push_buffer(devices_[cameN_idx_].stream_, bufs[cameN_idx_]);
-            log::trace("Obtained Frame from USB{}: {}", cameN_idx_, frame_cnt_);
+            ::memcpy(outs[0], arv_buffer_get_data(bufs[device_idx_], nullptr), devices_[device_idx_].u3v_payload_size_);
+            // ::memcpy(outs[1], &(devices_[device_idx_].header_info_), sizeof(ion::bb::image_io::rawHeader));
+            arv_stream_push_buffer(devices_[device_idx_].stream_, bufs[device_idx_]);
+            log::trace("Obtained Frame from USB{}: {}", device_idx_, frame_cnt_);
         }
     }
 private:
@@ -1294,8 +1295,8 @@ private:
      : U3V(num_sensor,  frame_sync, realtime_display_mode, sim_mode,  width, height , fps, pixel_format,  nullptr){
         // check if the camera is available
         arv_update_device_list();
-        auto n_devices = arv_get_n_devices ();
-        if (n_devices == 0){
+        auto num_device = arv_get_n_devices ();
+        if (num_device == 0){
             log::warn("Fallback to simulation mode: Could not find camera");
             sim_mode_ = true;
         }
@@ -1308,7 +1309,7 @@ private:
             arv_set_fake_camera_genicam_filename (path);
 
             arv_enable_interface ("Fake");
-            log::info("Creating U3V instance with {} fake devices...", num_sensor_);
+            log::info("Creating U3V instance with {} fake sensors...", num_sensor_);
 
             auto fake_camera0 = arv_camera_new ("Fake_1", &err_);
             auto fake_device0 = arv_camera_get_device(fake_camera0);
@@ -1356,8 +1357,8 @@ private:
             }
         }else{
             if (num_sensor < num_sensor_){
-                log::info("{} device is found; but the num_device is set to {}", num_sensor, num_sensor_);
-                throw std::runtime_error("Device number is not match, please set num_devices again");
+                log::info("{} camera is found; but the number is set to {}", num_sensor, num_sensor_);
+                throw std::runtime_error("Device number is not match, please set num_device again");
             }
             frame_sync_ = num_sensor_ > 1 ? frame_sync_ : false;
             unsigned int target_device_idx;
@@ -1366,7 +1367,7 @@ private:
                 log::info("Multiple devices are found; The first device is selected");
             }
 
-            log::info("Creating U3V instance with {} devices...", num_sensor_);
+            log::info("Creating U3V instance with {} sensors...", num_sensor_);
             log::info("Acquisition option::{} is {}", "frame_sync_", frame_sync_);
             log::info("Acquisition option::{} is {}", "realtime_display_mode_", realtime_display_mode_);
 
@@ -1526,9 +1527,9 @@ private:
                         operation_mode_ = OperationMode::Came2USB2;
                     }else if (strcmp(operation_mode_in_string, "Came1USB2")==0){
                         operation_mode_ = OperationMode::Came1USB2;
-                        num_sensor = 2;
-                        devices_.resize(num_sensor);
-                        buffers_.resize(num_sensor);
+                        num_device = 2;
+                        devices_.resize(num_device);
+                        buffers_.resize(num_device);
                     }
                     log::info("\tDevice/USB {}::{} : {}", i, "OperationMode", operation_mode_in_string);
                 }
