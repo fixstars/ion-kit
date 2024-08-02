@@ -829,7 +829,7 @@ using U3VCamera2_U16x2 = U3VCamera2<uint16_t, 2>;
 template<typename T, int D>
 class U3VCameraN : public ion::BuildingBlock<U3VCameraN<T, D>> {
 public:
-    BuildingBlockParam<int32_t> num_devices{"num_devices", 2};
+    BuildingBlockParam<int32_t> num_devices{"num_devices", 2};  // NOTE: num_devices refers to sensor count not usb device count
     BuildingBlockParam<bool> frame_sync{"frame_sync", false};
     BuildingBlockParam<bool> realtime_display_mode{"realtime_display_mode", false};
 
@@ -990,7 +990,7 @@ using U3VCameraN_U16x2 = U3VCameraN<uint16_t, 2>;
 
 class U3VCameraGenDC : public ion::BuildingBlock<U3VCameraGenDC> {
 public:
-    BuildingBlockParam<int32_t> num_devices{"num_devices", 2};
+    BuildingBlockParam<int32_t> num_devices{"num_devices", 2};     // NOTE: num_devices refers to sensor count not usb device count
     BuildingBlockParam<bool> frame_sync{"frame_sync", false};
     BuildingBlockParam<bool> realtime_display_mode{"realtime_display_mode", false};
 
