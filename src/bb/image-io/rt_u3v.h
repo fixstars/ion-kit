@@ -883,7 +883,7 @@ private:
             log::info("Acquisition option::{} is {}", "frame_sync_", frame_sync_);
             log::info("Acquisition option::{} is {}", "realtime_display_mode_", realtime_display_mode_);
 
-            for (int i = 0; i < num_sensor; ++i){
+            for (int i = 0; i < num_device; ++i){
                 if (dev_id == arv_get_device_id (i) && dev_id != nullptr){
                     /* if device id is specified
                     TODO: dev_id may be more than 1
@@ -1371,7 +1371,7 @@ private:
             log::info("Acquisition option::{} is {}", "frame_sync_", frame_sync_);
             log::info("Acquisition option::{} is {}", "realtime_display_mode_", realtime_display_mode_);
 
-            for (int i = 0; i < num_sensor; ++i){
+            for (int i = 0; i < num_device; ++i){
                 if (dev_id == arv_get_device_id (i) && dev_id != nullptr){
                     /* if device id is specified
                     TODO: dev_id may be more than 1
