@@ -293,6 +293,12 @@ const std::map<std::string, Halide::JITExtern>& Builder::jit_externs() const {
     return impl_->jit_externs;
 }
 
+void Builder::print_loop_nest() {
+    if (impl_->pipeline.defined()) {
+        impl_->pipeline.print_loop_nest();
+    }
+}
+
 void Builder::register_disposer(Impl *impl, const std::string& bb_id, const std::string& disposer_symbol) {
     log::info("Builder::register_disposer");
     for (const auto& kv : impl->bb_modules) {

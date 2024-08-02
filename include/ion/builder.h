@@ -135,6 +135,12 @@ public:
      */
     const std::map<std::string, Halide::JITExtern>& jit_externs() const;
 
+
+    /** Write out the loop nests specified by the schedule for this
+     * Builder's pipeline. Helpful for understanding what a schedule is
+     * doing. */
+    void print_loop_nest();
+
     /**
      * Register disposer hook which will be called from Builder destructor.
      * This is available only for JIT mode.
