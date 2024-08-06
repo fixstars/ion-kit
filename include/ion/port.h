@@ -181,10 +181,14 @@ public:
 
      template<typename T>
      void bind(T *v) {
+         bind(Halide::type_of<T>(), v);
+     }
+
+     void bind(Halide::Type target_type, void *v) {
          auto i = index_ == -1 ? 0 : index_;
 
          if (has_pred()) {
-             impl_->params[i] = Halide::Parameter{Halide::type_of<T>(), false, 0, argument_name(pred_id(), id(), pred_name(), i, graph_id())};
+             impl_->params[i] = Halide::Parameter{target_type, false, 0, argument_name(pred_id(), id(), pred_name(), i, graph_id())};
          } else {
              impl_->params[i] = Halide::Parameter{type(), false, dimensions(), argument_name(pred_id(), id(), pred_name(), i, graph_id())};
          }
