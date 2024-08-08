@@ -71,6 +71,24 @@ public:
         return *this;
     }
 
+    ComponentHeader getComponentByIndex(int ith_component_index){
+        return component_header_[ith_component_index];
+    }
+
+    int32_t getFirstComponentIndexByTypeID(int64_t type_id){
+        int cnt = 0;
+        for (ComponentHeader &ch : component_header_){
+            if (ch.isComponentValid()){
+                if (type_id==ch.getTypeId()){
+                    return cnt;
+                }
+            }
+            ++cnt;
+        }
+        return -1;
+    }
+
+
     int32_t getDescriptorSize(){
         return DescriptorSize_;
     }
