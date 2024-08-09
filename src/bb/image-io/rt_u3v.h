@@ -88,6 +88,12 @@ protected:
         ARV_DEVICE_STATUS_WRITE_ERROR
     }ArvDeviceStatus_t;
 
+    typedef enum ArvUvUsbMode{
+        ARV_UV_USB_MODE_SYNC,
+        ARV_UV_USB_MODE_ASYNC,
+        ARV_UV_USB_MODE_DEFAULT = ARV_UV_USB_MODE_ASYNC
+    } ArvUvUsbMode_t;
+
     using ArvDevice_t = struct ArvDevice*;
     using ArvFakeDevice_t = struct ArvFakeDevice*;
     using ArvStream_t = struct ArvStream*;
@@ -152,6 +158,8 @@ protected:
     using arv_enable_interface_t = void(*)(const char*);
     using arv_camera_create_stream_t = ArvStream*(*)(ArvCamera*, ArvStreamCallback*, void*, GError**);
     using arv_fake_device_get_fake_camera_t = ArvCamera*(*)(ArvFakeDevice*);
+
+    using arv_uv_device_set_usb_mode_t = void(*)(ArvDevice *, ArvUvUsbMode );
 
     struct DeviceInfo {
         const char* dev_id_;
@@ -411,6 +419,8 @@ protected:
         GET_SYMBOL(arv_set_fake_camera_genicam_filename, "arv_set_fake_camera_genicam_filename");
         GET_SYMBOL(arv_enable_interface, "arv_enable_interface");
         GET_SYMBOL(arv_fake_device_get_fake_camera, "arv_fake_device_get_fake_camera");
+        GET_SYMBOL(arv_uv_device_set_usb_mode, " arv_uv_device_set_usb_mode");
+
         #undef GET_SYMBOL
     }
 
@@ -533,6 +543,8 @@ protected:
     arv_enable_interface_t arv_enable_interface;
     arv_set_fake_camera_genicam_filename_t   arv_set_fake_camera_genicam_filename;
     arv_fake_device_get_fake_camera_t arv_fake_device_get_fake_camera;
+
+    arv_uv_device_set_usb_mode_t arv_uv_device_set_usb_mode;
 
     static std::map<std::string, std::shared_ptr<U3V>> instances_;
 
@@ -907,6 +919,8 @@ private:
                 if (devices_[i].device_ == nullptr) {
                     throw std::runtime_error("device is null");
                 }
+
+                arv_uv_device_set_usb_mode(devices_[i].device_, ARV_UV_USB_MODE_SYNC); //hotfix
 
                 pixel_format_ = arv_device_get_string_feature_value(devices_[i].device_, "PixelFormat", &err_);
                 if (err_ ) {
