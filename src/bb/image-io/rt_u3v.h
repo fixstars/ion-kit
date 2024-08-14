@@ -922,6 +922,18 @@ private:
                     throw std::runtime_error(err_->message);
                 }
 
+                arv_device_set_string_feature_value(devices_[i].device_, "AcquisitionMode", arv_acquisition_mode_to_string(ARV_ACQUISITION_MODE_CONTINUOUS), &err_);
+                if (err_) {
+                    throw std::runtime_error(err_->message);
+                }
+                log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionMode");
+                
+                arv_device_execute_command(devices_[i].device_, "AcquisitionStart", &err_);
+                if (err_) {
+                    throw std::runtime_error(err_->message);
+                }
+                log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionStart");
+
                 devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, nullptr, nullptr, &err_);
                 if (err_ ) {
                     throw std::runtime_error(err_->message);
@@ -1072,21 +1084,8 @@ private:
 
             }
 
-            for (auto i=0; i<devices_.size(); ++i) {
-                arv_device_set_string_feature_value(devices_[i].device_, "AcquisitionMode", arv_acquisition_mode_to_string(ARV_ACQUISITION_MODE_CONTINUOUS), &err_);
-                if (err_) {
-                    throw std::runtime_error(err_->message);
-                }
-                log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionMode");
-            }
 
-            for (auto i=0; i<devices_.size(); ++i) {
-                arv_device_execute_command(devices_[i].device_, "AcquisitionStart", &err_);
-                if (err_) {
-                    throw std::runtime_error(err_->message);
-                }
-                log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionStart");
-            }
+
         }
     };
 
