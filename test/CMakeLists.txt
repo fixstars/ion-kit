@@ -1,7 +1,7 @@
 #
 # ion-core Testing
 #
-
+find_package(OpenCV 4 QUIET)
 # Test BB module
 add_library(ion-bb-test SHARED ion-bb-test.cc)
 target_include_directories(ion-bb-test PUBLIC ${PROJECT_SOURCE_DIR}/src)
@@ -44,8 +44,8 @@ ion_jit_executable(dup SRCS dup.cc)
 ion_jit_executable(port-binding SRCS port-binding.cc)
 
 # Port index access
-if(${OpenCV_DIR})
-    ion_jit_executable(port-access SRCS port-access.cc)
+if(OpenCV_FOUND)
+    ion_jit_executable(port-access SRCS port-access.cc INCS ${OpenCV_INCLUDE_DIR} LIBS ${OpenCV_LIBRARIES})
 endif()
 
 # Asigning port in arbitrary order
