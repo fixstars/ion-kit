@@ -922,26 +922,6 @@ private:
                     throw std::runtime_error(err_->message);
                 }
 
-                arv_device_set_string_feature_value(devices_[i].device_, "AcquisitionMode", arv_acquisition_mode_to_string(ARV_ACQUISITION_MODE_CONTINUOUS), &err_);
-                if (err_) {
-                    throw std::runtime_error(err_->message);
-                }
-                log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionMode");
-                
-                arv_device_execute_command(devices_[i].device_, "AcquisitionStart", &err_);
-                if (err_) {
-                    throw std::runtime_error(err_->message);
-                }
-                log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionStart");
-
-                devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, nullptr, nullptr, &err_);
-                if (err_ ) {
-                    throw std::runtime_error(err_->message);
-                }
-                if (devices_[i].stream_ == nullptr) {
-                    throw std::runtime_error("stream is null");
-                }
-
                 // check it the device has gendc mode ==============================
                 is_gendc_ = arv_device_is_feature_available(devices_[i].device_, "GenDCDescriptor", &err_);
                 if (err_) {
@@ -1069,6 +1049,27 @@ private:
                     }
                     log::info("\tDevice/USB {}::{} : {}", i, "OperationMode", operation_mode_in_string);
                 }
+
+                arv_device_set_string_feature_value(devices_[i].device_, "AcquisitionMode", arv_acquisition_mode_to_string(ARV_ACQUISITION_MODE_CONTINUOUS), &err_);
+                if (err_) {
+                    throw std::runtime_error(err_->message);
+                }
+                log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionMode");
+
+                arv_device_execute_command(devices_[i].device_, "AcquisitionStart", &err_);
+                if (err_) {
+                    throw std::runtime_error(err_->message);
+                }
+                log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionStart");
+
+                devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, nullptr, nullptr, &err_);
+                if (err_ ) {
+                    throw std::runtime_error(err_->message);
+                }
+                if (devices_[i].stream_ == nullptr) {
+                    throw std::runtime_error("stream is null");
+                }
+
             }
 
             for (auto i=0; i<devices_.size(); ++i) {
@@ -1414,14 +1415,6 @@ private:
                     throw std::runtime_error(err_->message);
                 }
 
-                devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, nullptr, nullptr, &err_);
-                if (err_ ) {
-                    throw std::runtime_error(err_->message);
-                }
-                if (devices_[i].stream_ == nullptr) {
-                    throw std::runtime_error("stream is null");
-                }
-
                 // check it the device has gendc mode ==============================
                 is_gendc_ = arv_device_is_feature_available(devices_[i].device_, "GenDCDescriptor", &err_);
                 if (err_) {
@@ -1546,6 +1539,27 @@ private:
                     }
                     log::info("\tDevice/USB {}::{} : {}", i, "OperationMode", operation_mode_in_string);
                 }
+
+                arv_device_set_string_feature_value(devices_[i].device_, "AcquisitionMode", arv_acquisition_mode_to_string(ARV_ACQUISITION_MODE_CONTINUOUS), &err_);
+                if (err_) {
+                    throw std::runtime_error(err_->message);
+                }
+                log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionMode");
+
+                arv_device_execute_command(devices_[i].device_, "AcquisitionStart", &err_);
+                if (err_) {
+                    throw std::runtime_error(err_->message);
+                }
+                log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionStart");
+
+                devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, nullptr, nullptr, &err_);
+                if (err_ ) {
+                    throw std::runtime_error(err_->message);
+                }
+                if (devices_[i].stream_ == nullptr) {
+                    throw std::runtime_error("stream is null");
+                }
+
             }
 
             for (auto i=0; i<devices_.size(); ++i) {
@@ -1561,21 +1575,7 @@ private:
 
             }
 
-            for (auto i=0; i<devices_.size(); ++i) {
-                arv_device_set_string_feature_value(devices_[i].device_, "AcquisitionMode", arv_acquisition_mode_to_string(ARV_ACQUISITION_MODE_CONTINUOUS), &err_);
-                if (err_) {
-                    throw std::runtime_error(err_->message);
-                }
-                log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionMode");
-            }
 
-            for (auto i=0; i<devices_.size(); ++i) {
-                arv_device_execute_command(devices_[i].device_, "AcquisitionStart", &err_);
-                if (err_) {
-                    throw std::runtime_error(err_->message);
-                }
-                log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionStart");
-            }
         }
     };
 
