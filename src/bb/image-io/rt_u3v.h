@@ -419,7 +419,7 @@ protected:
         GET_SYMBOL(arv_set_fake_camera_genicam_filename, "arv_set_fake_camera_genicam_filename");
         GET_SYMBOL(arv_enable_interface, "arv_enable_interface");
         GET_SYMBOL(arv_fake_device_get_fake_camera, "arv_fake_device_get_fake_camera");
-        GET_SYMBOL(arv_uv_device_set_usb_mode, " arv_uv_device_set_usb_mode");
+        GET_SYMBOL(arv_uv_device_set_usb_mode, "arv_uv_device_set_usb_mode");
 
         #undef GET_SYMBOL
     }
@@ -665,9 +665,8 @@ private:
         }
 
         // Start streaming and start acquisition
-        devices_[0].stream_ = arv_device_create_stream (devices_[0].device_, NULL, NULL, &err_);
-        if (num_sensor_==2){
-            devices_[1].stream_ = arv_device_create_stream (devices_[1].device_, NULL, NULL, &err_);
+        for (auto i=0; i<devices_.size(); ++i) {
+            devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, NULL, NULL, &err_);
         }
 
         for (auto i=0; i<devices_.size(); ++i) {
@@ -872,10 +871,9 @@ private:
 
             }
 
-            // Start streaming and start acquisition
-            devices_[0].stream_ = arv_device_create_stream (devices_[0].device_, NULL, NULL, &err_);
-            if (num_sensor_==2){
-                devices_[1].stream_ = arv_device_create_stream (devices_[1].device_, NULL, NULL, &err_);
+            // Start streaming and start acquisition for fake camera
+            for (auto i=0; i<devices_.size(); ++i) {
+                devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, NULL, NULL, &err_);
             }
 
             for (auto i=0; i<devices_.size(); ++i) {
@@ -920,7 +918,7 @@ private:
                     throw std::runtime_error("device is null");
                 }
 
-                arv_uv_device_set_usb_mode(devices_[i].device_, ARV_UV_USB_MODE_SYNC); //hotfix
+
 
                 pixel_format_ = arv_device_get_string_feature_value(devices_[i].device_, "PixelFormat", &err_);
                 if (err_ ) {
@@ -954,6 +952,7 @@ private:
                     if (strcmp(device_model_name, "    ")==0){
                         is_param_integer_ = true;
                         frame_count_method_ = FrameCountMethod::TIMESTAMP;
+                        arv_uv_device_set_usb_mode(devices_[i].device_, ARV_UV_USB_MODE_SYNC); //hotfix for v1.0
                     }
                     if (is_gendc_){
                         frame_count_method_ = FrameCountMethod::TYPESPECIFIC3;
@@ -1065,15 +1064,17 @@ private:
                     throw std::runtime_error(err_->message);
                 }
                 log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionStart");
+            }
 
+            //start streaming after AcquisitionStart
+            for (auto i=0; i<devices_.size(); ++i) {
                 devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, nullptr, nullptr, &err_);
-                if (err_ ) {
+                if (err_) {
                     throw std::runtime_error(err_->message);
                 }
                 if (devices_[i].stream_ == nullptr) {
                     throw std::runtime_error("stream is null");
                 }
-
             }
 
             for (auto i=0; i<devices_.size(); ++i) {
@@ -1359,9 +1360,8 @@ private:
             }
 
             // Start streaming and start acquisition
-            devices_[0].stream_ = arv_device_create_stream (devices_[0].device_, NULL, NULL, &err_);
-            if (num_sensor_==2){
-                devices_[1].stream_ = arv_device_create_stream (devices_[1].device_, NULL, NULL, &err_);
+            for (auto i=0; i<devices_.size(); ++i) {
+                devices_[i].stream_ = arv_device_create_stream (devices_[i].device_, NULL, NULL, &err_);
             }
 
             for (auto i=0; i<devices_.size(); ++i) {
@@ -1548,7 +1548,9 @@ private:
                     throw std::runtime_error(err_->message);
                 }
                 log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionStart");
+            }
 
+            for (auto i=0; i<devices_.size(); ++i) {
                 devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, nullptr, nullptr, &err_);
                 if (err_ ) {
                     throw std::runtime_error(err_->message);
@@ -1556,7 +1558,6 @@ private:
                 if (devices_[i].stream_ == nullptr) {
                     throw std::runtime_error("stream is null");
                 }
-
             }
 
             for (auto i=0; i<devices_.size(); ++i) {
