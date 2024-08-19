@@ -1557,6 +1557,7 @@ private:
              * ion-kit starts the acquisition before stream creation This is a tentative fix only in ion-kit due to hardware issue
              * In aravis, the acquisition should be done afterward. Since this maps better with GenAPI, where buffers
              * must be pushed to DataStream objectsbefore DataStream acquisition is started.
+             * refer to https://github.com/AravisProject/aravis/blob/2ebaa8661761ea4bbc4df878aa67b4a9e1a9a3b9/docs/reference/aravis/porting-0.10.md
              */
 
             //start streaming after AcquisitionStart
