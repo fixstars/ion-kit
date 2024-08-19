@@ -1066,6 +1066,13 @@ private:
                 log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionStart");
             }
 
+            /*
+             * ion-kit starts the acquisition before stream creation This is a tentative fix only in ion-kit due to hardware issue
+             * In aravis, the acquisition should be done afterward. Since this maps better with GenAPI, where buffers
+             * must be pushed to DataStream objectsbefore DataStream acquisition is started.
+             * refer to https://github.com/AravisProject/aravis/blob/2ebaa8661761ea4bbc4df878aa67b4a9e1a9a3b9/docs/reference/aravis/porting-0.10.md
+             */
+
             //start streaming after AcquisitionStart
             for (auto i=0; i<devices_.size(); ++i) {
                 devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, nullptr, nullptr, &err_);
@@ -1549,7 +1556,12 @@ private:
                 }
                 log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionStart");
             }
-
+            /*
+             * ion-kit starts the acquisition before stream creation This is a tentative fix only in ion-kit due to hardware issue
+             * In aravis, the acquisition should be done afterward. Since this maps better with GenAPI, where buffers
+             * must be pushed to DataStream objectsbefore DataStream acquisition is started.
+             * refer to https://github.com/AravisProject/aravis/blob/2ebaa8661761ea4bbc4df878aa67b4a9e1a9a3b9/docs/reference/aravis/porting-0.10.md
+             */
             for (auto i=0; i<devices_.size(); ++i) {
                 devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, nullptr, nullptr, &err_);
                 if (err_ ) {
