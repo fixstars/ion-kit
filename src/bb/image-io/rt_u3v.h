@@ -89,6 +89,12 @@ protected:
         ARV_DEVICE_STATUS_WRITE_ERROR
     }ArvDeviceStatus_t;
 
+    typedef enum ArvUvUsbMode{
+        ARV_UV_USB_MODE_SYNC,
+        ARV_UV_USB_MODE_ASYNC,
+        ARV_UV_USB_MODE_DEFAULT = ARV_UV_USB_MODE_ASYNC
+    } ArvUvUsbMode_t;
+
     using ArvDevice_t = struct ArvDevice*;
     using ArvFakeDevice_t = struct ArvFakeDevice*;
     using ArvStream_t = struct ArvStream*;
@@ -153,6 +159,8 @@ protected:
     using arv_enable_interface_t = void(*)(const char*);
     using arv_camera_create_stream_t = ArvStream*(*)(ArvCamera*, ArvStreamCallback*, void*, GError**);
     using arv_fake_device_get_fake_camera_t = ArvCamera*(*)(ArvFakeDevice*);
+
+    using arv_uv_device_set_usb_mode_t = void(*)(ArvDevice *, ArvUvUsbMode );
 
     struct DeviceInfo {
         const char* dev_id_;
@@ -412,6 +420,8 @@ protected:
         GET_SYMBOL(arv_set_fake_camera_genicam_filename, "arv_set_fake_camera_genicam_filename");
         GET_SYMBOL(arv_enable_interface, "arv_enable_interface");
         GET_SYMBOL(arv_fake_device_get_fake_camera, "arv_fake_device_get_fake_camera");
+        GET_SYMBOL(arv_uv_device_set_usb_mode, "arv_uv_device_set_usb_mode");
+
         #undef GET_SYMBOL
     }
 
@@ -535,6 +545,8 @@ protected:
     arv_set_fake_camera_genicam_filename_t   arv_set_fake_camera_genicam_filename;
     arv_fake_device_get_fake_camera_t arv_fake_device_get_fake_camera;
 
+    arv_uv_device_set_usb_mode_t arv_uv_device_set_usb_mode;
+
     static std::map<std::string, std::shared_ptr<U3V>> instances_;
 
     int32_t num_sensor_;   //SENSOR NUMBER
@@ -654,9 +666,8 @@ private:
         }
 
         // Start streaming and start acquisition
-        devices_[0].stream_ = arv_device_create_stream (devices_[0].device_, NULL, NULL, &err_);
-        if (num_sensor_==2){
-            devices_[1].stream_ = arv_device_create_stream (devices_[1].device_, NULL, NULL, &err_);
+        for (auto i=0; i<devices_.size(); ++i) {
+            devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, NULL, NULL, &err_);
         }
 
         for (auto i=0; i<devices_.size(); ++i) {
@@ -861,10 +872,9 @@ private:
 
             }
 
-            // Start streaming and start acquisition
-            devices_[0].stream_ = arv_device_create_stream (devices_[0].device_, NULL, NULL, &err_);
-            if (num_sensor_==2){
-                devices_[1].stream_ = arv_device_create_stream (devices_[1].device_, NULL, NULL, &err_);
+            // Start streaming and start acquisition for fake camera
+            for (auto i=0; i<devices_.size(); ++i) {
+                devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, NULL, NULL, &err_);
             }
 
             for (auto i=0; i<devices_.size(); ++i) {
@@ -909,6 +919,8 @@ private:
                     throw std::runtime_error("device is null");
                 }
 
+
+
                 pixel_format_ = arv_device_get_string_feature_value(devices_[i].device_, "PixelFormat", &err_);
                 if (err_ ) {
                     throw std::runtime_error(err_->message);
@@ -920,14 +932,6 @@ private:
                 log::info("\tDevice/USB {}::{} : {}", i, "PayloadSize", devices_[i].u3v_payload_size_);
                 if (err_ ) {
                     throw std::runtime_error(err_->message);
-                }
-
-                devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, nullptr, nullptr, &err_);
-                if (err_ ) {
-                    throw std::runtime_error(err_->message);
-                }
-                if (devices_[i].stream_ == nullptr) {
-                    throw std::runtime_error("stream is null");
                 }
 
                 // check it the device has gendc mode ==============================
@@ -949,6 +953,7 @@ private:
                     if (strcmp(device_model_name, "    ")==0){
                         is_param_integer_ = true;
                         frame_count_method_ = FrameCountMethod::TIMESTAMP;
+                        arv_uv_device_set_usb_mode(devices_[i].device_, ARV_UV_USB_MODE_SYNC); //hotfix for v1.0
                     }
                     if (is_gendc_){
                         frame_count_method_ = FrameCountMethod::TYPESPECIFIC3;
@@ -1057,6 +1062,36 @@ private:
                     }
                     log::info("\tDevice/USB {}::{} : {}", i, "OperationMode", operation_mode_in_string);
                 }
+
+                arv_device_set_string_feature_value(devices_[i].device_, "AcquisitionMode", arv_acquisition_mode_to_string(ARV_ACQUISITION_MODE_CONTINUOUS), &err_);
+                if (err_) {
+                    throw std::runtime_error(err_->message);
+                }
+                log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionMode");
+
+                arv_device_execute_command(devices_[i].device_, "AcquisitionStart", &err_);
+                if (err_) {
+                    throw std::runtime_error(err_->message);
+                }
+                log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionStart");
+            }
+
+            /*
+             * ion-kit starts the acquisition before stream creation This is a tentative fix only in ion-kit due to hardware issue
+             * In aravis, the acquisition should be done afterward. Since this maps better with GenAPI, where buffers
+             * must be pushed to DataStream objectsbefore DataStream acquisition is started.
+             * refer to https://github.com/AravisProject/aravis/blob/2ebaa8661761ea4bbc4df878aa67b4a9e1a9a3b9/docs/reference/aravis/porting-0.10.md
+             */
+
+            //start streaming after AcquisitionStart
+            for (auto i=0; i<devices_.size(); ++i) {
+                devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, nullptr, nullptr, &err_);
+                if (err_) {
+                    throw std::runtime_error(err_->message);
+                }
+                if (devices_[i].stream_ == nullptr) {
+                    throw std::runtime_error("stream is null");
+                }
             }
 
             for (auto i=0; i<devices_.size(); ++i) {
@@ -1072,21 +1107,8 @@ private:
 
             }
 
-            for (auto i=0; i<devices_.size(); ++i) {
-                arv_device_set_string_feature_value(devices_[i].device_, "AcquisitionMode", arv_acquisition_mode_to_string(ARV_ACQUISITION_MODE_CONTINUOUS), &err_);
-                if (err_) {
-                    throw std::runtime_error(err_->message);
-                }
-                log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionMode");
-            }
 
-            for (auto i=0; i<devices_.size(); ++i) {
-                arv_device_execute_command(devices_[i].device_, "AcquisitionStart", &err_);
-                if (err_) {
-                    throw std::runtime_error(err_->message);
-                }
-                log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionStart");
-            }
+
         }
     };
 
@@ -1355,9 +1377,8 @@ private:
             }
 
             // Start streaming and start acquisition
-            devices_[0].stream_ = arv_device_create_stream (devices_[0].device_, NULL, NULL, &err_);
-            if (num_sensor_==2){
-                devices_[1].stream_ = arv_device_create_stream (devices_[1].device_, NULL, NULL, &err_);
+            for (auto i=0; i<devices_.size(); ++i) {
+                devices_[i].stream_ = arv_device_create_stream (devices_[i].device_, NULL, NULL, &err_);
             }
 
             for (auto i=0; i<devices_.size(); ++i) {
@@ -1413,14 +1434,6 @@ private:
                 log::info("\tDevice/USB {}::{} : {}", i, "PayloadSize", devices_[i].u3v_payload_size_);
                 if (err_ ) {
                     throw std::runtime_error(err_->message);
-                }
-
-                devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, nullptr, nullptr, &err_);
-                if (err_ ) {
-                    throw std::runtime_error(err_->message);
-                }
-                if (devices_[i].stream_ == nullptr) {
-                    throw std::runtime_error("stream is null");
                 }
 
                 // check it the device has gendc mode ==============================
@@ -1547,6 +1560,33 @@ private:
                     }
                     log::info("\tDevice/USB {}::{} : {}", i, "OperationMode", operation_mode_in_string);
                 }
+
+                arv_device_set_string_feature_value(devices_[i].device_, "AcquisitionMode", arv_acquisition_mode_to_string(ARV_ACQUISITION_MODE_CONTINUOUS), &err_);
+                if (err_) {
+                    throw std::runtime_error(err_->message);
+                }
+                log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionMode");
+
+                arv_device_execute_command(devices_[i].device_, "AcquisitionStart", &err_);
+                if (err_) {
+                    throw std::runtime_error(err_->message);
+                }
+                log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionStart");
+            }
+            /*
+             * ion-kit starts the acquisition before stream creation This is a tentative fix only in ion-kit due to hardware issue
+             * In aravis, the acquisition should be done afterward. Since this maps better with GenAPI, where buffers
+             * must be pushed to DataStream objectsbefore DataStream acquisition is started.
+             * refer to https://github.com/AravisProject/aravis/blob/2ebaa8661761ea4bbc4df878aa67b4a9e1a9a3b9/docs/reference/aravis/porting-0.10.md
+             */
+            for (auto i=0; i<devices_.size(); ++i) {
+                devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, nullptr, nullptr, &err_);
+                if (err_ ) {
+                    throw std::runtime_error(err_->message);
+                }
+                if (devices_[i].stream_ == nullptr) {
+                    throw std::runtime_error("stream is null");
+                }
             }
 
             for (auto i=0; i<devices_.size(); ++i) {
@@ -1562,21 +1602,7 @@ private:
 
             }
 
-            for (auto i=0; i<devices_.size(); ++i) {
-                arv_device_set_string_feature_value(devices_[i].device_, "AcquisitionMode", arv_acquisition_mode_to_string(ARV_ACQUISITION_MODE_CONTINUOUS), &err_);
-                if (err_) {
-                    throw std::runtime_error(err_->message);
-                }
-                log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionMode");
-            }
 
-            for (auto i=0; i<devices_.size(); ++i) {
-                arv_device_execute_command(devices_[i].device_, "AcquisitionStart", &err_);
-                if (err_) {
-                    throw std::runtime_error(err_->message);
-                }
-                log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionStart");
-            }
         }
     };
 
