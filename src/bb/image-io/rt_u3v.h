@@ -1063,6 +1063,11 @@ private:
                 }
                 log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionStart");
             }
+            /*
+             * ion-kit starts the acquisition before stream creation This is a tentative fix only in ion-kit due to hardware issue
+             * In aravis, the acquisition should be done afterward. Since this maps better with GenAPI, where buffers
+             * must be pushed to DataStream objectsbefore DataStream acquisition is started.
+             */
 
             //start streaming after AcquisitionStart
             for (auto i=0; i<devices_.size(); ++i) {
@@ -1547,6 +1552,12 @@ private:
                 }
                 log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionStart");
             }
+
+            /*
+             * ion-kit starts the acquisition before stream creation This is a tentative fix only in ion-kit due to hardware issue
+             * In aravis, the acquisition should be done afterward. Since this maps better with GenAPI, where buffers
+             * must be pushed to DataStream objectsbefore DataStream acquisition is started.
+             */
 
             //start streaming after AcquisitionStart
             for (auto i=0; i<devices_.size(); ++i) {
