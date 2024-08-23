@@ -1376,8 +1376,9 @@ private:
 
             int index_on_detected_device = 0;
             int index_on_opened_device = 0;
+            int num_usb_to_open = num_sensor_;
 
-            while (index_on_detected_device < num_device && index_on_detected_device < num_sensor_){
+            while (index_on_detected_device < num_device && index_on_detected_device < num_usb_to_open){
                 if (dev_id == arv_get_device_id (index_on_detected_device) && dev_id != nullptr){
                     /* if device id is specified
                     TODO: dev_id may be more than 1
@@ -1537,9 +1538,9 @@ private:
                             operation_mode_ = OperationMode::Came2USB2;
                         }else if (strcmp(operation_mode_in_string, "Came1USB2")==0){
                             operation_mode_ = OperationMode::Came1USB2;
-                            num_device = 2;
-                            devices_.resize(num_device);
-                            buffers_.resize(num_device);
+                            num_usb_to_open = 2;
+                            devices_.resize(num_usb_to_open);
+                            buffers_.resize(num_usb_to_open);
                         }
                         log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "OperationMode", operation_mode_in_string);
                     }
@@ -1564,7 +1565,6 @@ private:
                 log::info("\tDevice/USB {}::{} : {}", i, "Number of Buffers", n);
 
             }
-
             for (auto i=0; i<devices_.size(); ++i) {
                 arv_device_set_string_feature_value(devices_[i].device_, "AcquisitionMode", arv_acquisition_mode_to_string(ARV_ACQUISITION_MODE_CONTINUOUS), &err_);
                 if (err_) {
