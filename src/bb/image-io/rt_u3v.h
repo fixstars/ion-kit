@@ -1411,7 +1411,6 @@ private:
                         /* if device id is not specified */
                         devices_[index_on_opened_device].dev_id_ = arv_get_device_id (index_on_detected_device);
                     }
-                    index_on_detected_device += 1;
 
                     log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "DeviceID", devices_[index_on_opened_device].dev_id_);
 
