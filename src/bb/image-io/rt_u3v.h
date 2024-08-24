@@ -103,6 +103,8 @@ protected:
     using arv_update_device_list_t = void(*)();
     using arv_get_n_devices_t = unsigned int(*)();
 
+    using arv_get_device_protocol_t = const char*(*)(unsigned int);
+
     using arv_get_device_id_t = const char*(*)(unsigned int);
     using arv_get_device_model_t = const char*(*)(unsigned int);
     using arv_get_device_serial_nbr_t = const char*(*)(unsigned int);
@@ -364,6 +366,8 @@ protected:
         GET_SYMBOL(arv_get_minor_version, "arv_get_minor_version");
         GET_SYMBOL(arv_get_micro_version, "arv_get_micro_version");
 
+        GET_SYMBOL(arv_get_device_protocol, "arv_get_device_protocol");
+
         GET_SYMBOL(arv_update_device_list, "arv_update_device_list");
         GET_SYMBOL(arv_get_n_devices, "arv_get_n_devices");
 
@@ -480,6 +484,8 @@ protected:
     arv_get_major_version_t arv_get_major_version;
     arv_get_minor_version_t arv_get_minor_version;
     arv_get_micro_version_t arv_get_micro_version;
+
+    arv_get_device_protocol_t arv_get_device_protocol;
 
     arv_update_device_list_t arv_update_device_list;
     arv_get_n_devices_t arv_get_n_devices;
@@ -891,32 +897,28 @@ private:
             int num_usb_to_open = num_sensor_;
 
             while (index_on_detected_device < num_device && index_on_opened_device < num_usb_to_open){
-                if (dev_id == arv_get_device_id (index_on_detected_device) && dev_id != nullptr){
-                    /* if device id is specified
-                    TODO: dev_id may be more than 1
-                    */
-                    devices_[index_on_opened_device].dev_id_ = dev_id;
-                }
-                else{
-                    /* if device id is not specified */
-                    devices_[index_on_opened_device].dev_id_ = arv_get_device_id (index_on_detected_device);
-                }
-                index_on_detected_device += 1;
 
-                log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "DeviceID", devices_[index_on_opened_device].dev_id_);
+                const char* device_protocol = arv_get_device_protocol(index_on_detected_device);
+                if (strcmp(device_protocol, "USB3Vision") == 0){
 
-                devices_[index_on_opened_device].device_ = arv_open_device(devices_[index_on_opened_device].dev_id_, &err_);
-                if (err_ ) {
-                    throw std::runtime_error(err_->message);
-                }
+                    if (dev_id == arv_get_device_id (index_on_detected_device) && dev_id != nullptr){
+                        /* if device id is specified
+                        TODO: dev_id may be more than 1
+                        */
+                        devices_[index_on_opened_device].dev_id_ = dev_id;
+                    }
+                    else{
+                        /* if device id is not specified */
+                        devices_[index_on_opened_device].dev_id_ = arv_get_device_id (index_on_detected_device);
+                    }
 
-                const char * deviceTLtype_ = arv_device_get_string_feature_value(devices_[index_on_opened_device].device_, "DeviceTLType", &err_);  
-                if (err_ ) {
-                    throw std::runtime_error(err_->message);
-                }
+                    log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "DeviceID", devices_[index_on_opened_device].dev_id_);
 
-                if (strcmp(deviceTLtype_, "USB3Vision") == 0 || strcmp(deviceTLtype_, "USB3") == 0){
-                    log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "DeviceTLType", deviceTLtype_);
+                    devices_[index_on_opened_device].device_ = arv_open_device(devices_[index_on_opened_device].dev_id_, &err_);
+                    if (err_ ) {
+                        throw std::runtime_error(err_->message);
+                    }
+
                     if (devices_[index_on_opened_device].device_ == nullptr) {
                         throw std::runtime_error("device is null");
                     }
@@ -1063,8 +1065,10 @@ private:
                 
                     index_on_opened_device += 1;
                 }else{
-                    log::info("\tDevice/USB {}::{} : {} ... skipped", index_on_opened_device, "DeviceTLType", deviceTLtype_);
+                    log::info("\tDevice/USB {}::{} : {} ... skipped", index_on_opened_device, "device protocol", device_protocol);
+                    
                 }
+                index_on_detected_device += 1;
             }
 
             for (auto i=0; i<devices_.size(); ++i) {
@@ -1393,32 +1397,29 @@ private:
             int num_usb_to_open = num_sensor_;
 
             while (index_on_detected_device < num_device && index_on_opened_device < num_usb_to_open){
-                if (dev_id == arv_get_device_id (index_on_detected_device) && dev_id != nullptr){
-                    /* if device id is specified
-                    TODO: dev_id may be more than 1
-                    */
-                    devices_[index_on_opened_device].dev_id_ = dev_id;
-                }
-                else{
-                    /* if device id is not specified */
-                    devices_[index_on_opened_device].dev_id_ = arv_get_device_id (index_on_detected_device);
-                }
-                index_on_detected_device += 1;
 
-                log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "DeviceID", devices_[index_on_opened_device].dev_id_);
+                const char* device_protocol = arv_get_device_protocol(index_on_detected_device);
+                if (strcmp(device_protocol, "USB3Vision") == 0){
 
-                devices_[index_on_opened_device].device_ = arv_open_device(devices_[index_on_opened_device].dev_id_, &err_);
-                if (err_ ) {
-                    throw std::runtime_error(err_->message);
-                }
+                    if (dev_id == arv_get_device_id (index_on_detected_device) && dev_id != nullptr){
+                        /* if device id is specified
+                        TODO: dev_id may be more than 1
+                        */
+                        devices_[index_on_opened_device].dev_id_ = dev_id;
+                    }
+                    else{
+                        /* if device id is not specified */
+                        devices_[index_on_opened_device].dev_id_ = arv_get_device_id (index_on_detected_device);
+                    }
+                    index_on_detected_device += 1;
 
-                const char * deviceTLtype_ = arv_device_get_string_feature_value(devices_[index_on_opened_device].device_, "DeviceTLType", &err_);
-                if (err_ ) {
-                    throw std::runtime_error(err_->message);
-                }
+                    log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "DeviceID", devices_[index_on_opened_device].dev_id_);
 
-                if (strcmp(deviceTLtype_, "USB3Vision") == 0 || strcmp(deviceTLtype_, "USB3") == 0){
-                    log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "DeviceTLType", deviceTLtype_);
+                    devices_[index_on_opened_device].device_ = arv_open_device(devices_[index_on_opened_device].dev_id_, &err_);
+                    if (err_ ) {
+                        throw std::runtime_error(err_->message);
+                    }
+
                     if (devices_[index_on_opened_device].device_ == nullptr) {
                         throw std::runtime_error("device is null");
                     }
@@ -1564,9 +1565,9 @@ private:
 
                     index_on_opened_device += 1;
                 }else{
-                    log::info("\tDevice/USB {}::{} : {} ... skipped", index_on_opened_device, "DeviceTLType", deviceTLtype_);
+                    log::info("\tDevice/USB {}::{} : {} ... skipped", index_on_opened_device, "device protocol", device_protocol);
                 }
-
+                index_on_detected_device += 1;
                 
             }
 
