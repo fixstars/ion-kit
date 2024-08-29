@@ -71,7 +71,7 @@ class DynamicModule {
 #endif
             if (handle_ == nullptr) {
                  if (essential) {
-                     throw std::runtime_error("Library " + target_ + " is unavailable on your system: " + getErrorString());
+                     throw std::runtime_error(getErrorString());
                  } else {
                      log::warn("Not found inessential library {} : {}", target, getErrorString());
                  }
@@ -115,7 +115,7 @@ class DynamicModule {
             }
          }
          if(essential_){
-             throw std::runtime_error("Library " + target_ + " is unavailable on your system: " + getErrorString());
+             throw std::runtime_error(getErrorString());
          }
          return reinterpret_cast<T>(GetProcAddress(handle_, symbol_name.c_str()));
 #else
@@ -129,7 +129,7 @@ class DynamicModule {
                    log::info("Lazy loading library {}", target_, getErrorString());
                }else{
                    if(essential_){
-                       throw std::runtime_error("Library " + target_ + " is unavailable on your system: " + getErrorString());
+                       throw std::runtime_error(getErrorString());
                    }
                }
                return reinterpret_cast<T>(dlsym(handle_, symbol_name.c_str()));
