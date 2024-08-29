@@ -6,6 +6,7 @@
 #if _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <psapi.h>
 #define ION_DYNAMIC_MODULE_PREFIX ""
 #define ION_DYNAMIC_MODULE_EXT ".dll"
 #elif __APPLE__
@@ -37,12 +38,13 @@ class DynamicModule {
   using Handle = void*;
 #endif
 
-     DynamicModule(const std::string& module_name_or_path, bool essential = true) {
+     DynamicModule(const std::string& module_name_or_path, bool essential = true, bool lazy_load = false) {
          if (module_name_or_path == "") {
-             handle_ = nullptr;
-             return;
+                 handle_ = nullptr;
+                 return;
          }
 
+        // set target
          std::string target;
          if (std::filesystem::exists(module_name_or_path) || has_prefix_and_ext(module_name_or_path)) {
              // This is absolute path or file name
@@ -50,18 +52,29 @@ class DynamicModule {
          } else {
              target = std::string(ION_DYNAMIC_MODULE_PREFIX) + module_name_or_path + std::string(ION_DYNAMIC_MODULE_EXT);
          }
+         target_ = target;
+         essential_ = essential;
+
+         if (lazy_load){
+#ifdef _WIN32
+             handle_ = nullptr;
+#else
+             handle_ = RTLD_DEFAULT;
+#endif
+         }else{
 
          // TODO: WIP: test moduel_name_or_path using std::filesystem
 #ifdef _WIN32
-         handle_ = LoadLibraryA(target.c_str());
+            handle_ = LoadLibraryA(target.c_str());
 #else
-         handle_ = dlopen(target.c_str(), RTLD_NOW);
+            handle_ = dlopen(target.c_str(), RTLD_NOW);
 #endif
-         if (handle_ == nullptr) {
-             if (essential) {
-                 throw std::runtime_error(getErrorString());
-             } else {
-                 log::warn("Not found inessential library {} : {}", target, getErrorString());
+            if (handle_ == nullptr) {
+                 if (essential) {
+                     throw std::runtime_error(getErrorString());
+                 } else {
+                     log::warn("Not found inessential library {} : {}", target, getErrorString());
+                 }
              }
          }
      }
@@ -74,15 +87,53 @@ class DynamicModule {
      }
 
     bool is_available(void) const {
-        return handle_ != NULL;
+        return handle_ != nullptr;
     }
 
     template<typename T>
-    T get_symbol(const std::string &symbol_name) const {
-#if defined(_WIN32)
-        return reinterpret_cast<T>(GetProcAddress(handle_, symbol_name.c_str()));
+    T get_symbol(const std::string &symbol_name) {
+#ifdef _WIN32
+         if (handle_ != nullptr){
+             return reinterpret_cast<T>(GetProcAddress(handle_, symbol_name.c_str()));
+         }else{
+            Handle hmods[1024];
+            DWORD cb_needed;
+            if (EnumProcessModules(GetCurrentProcess(), hmods, sizeof(hmods), &cb_needed)) {
+                for (unsigned int i = 0; i < (cb_needed / sizeof(HMODULE)); i++) {
+                    char path[MAX_PATH];
+                    // Get the module name
+                    if (GetModuleFileNameA(hmods[i], path, sizeof(path) / sizeof(char))) {
+                        // Try to get the address of the symbol in this module
+                        FARPROC func_ptr = GetProcAddress(hmods[i], symbol_name.c_str());
+                        if (func_ptr != nullptr) {
+                            handle_ = hmods[i];
+                            return reinterpret_cast<T>(func_ptr);
+                        }
+                    }
+                }
+            }
+         }
+         return reinterpret_cast<T>(GetProcAddress(handle_, symbol_name.c_str()));
 #else
-        return reinterpret_cast<T>(dlsym(handle_, symbol_name.c_str()));
+         if(handle_ == RTLD_DEFAULT){
+             void * func_ptr = dlsym(handle_, symbol_name.c_str());
+             if(func_ptr != nullptr){
+                 return reinterpret_cast<T>(func_ptr);
+             }else{
+               handle_ = dlopen(target_.c_str(), RTLD_NOW);
+               if (handle_ != nullptr) {
+                   log::info("Lazy loading library {}", target_, getErrorString());
+               }else{
+                   if(essential_){
+                        throw std::runtime_error("library " + target_ + " is unavailable on your system.");
+                   }
+               }
+               return reinterpret_cast<T>(dlsym(handle_, symbol_name.c_str()));
+            }
+         }else{
+             return reinterpret_cast<T>(dlsym(handle_, symbol_name.c_str()));
+         }
+
 #endif
     }
 
@@ -121,6 +172,8 @@ class DynamicModule {
 
 
      Handle handle_;
+     std::string target_;
+     bool essential_;
 };
 
 } // namespace ion

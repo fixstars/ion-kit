@@ -4,7 +4,7 @@
 #include <chrono>
 #include <cstring>
 #include <iostream>
-
+#include <dlfcn.h>
 #include <HalideBuffer.h>
 
 #include "log.h"
@@ -328,7 +328,7 @@ protected:
 
 protected:
     U3V(int32_t num_sensor, bool frame_sync, bool realtime_display_mode, bool sim_mode, int32_t width, int32_t height , float_t fps, const std::string & pixel_format,  char* dev_id = nullptr)
-    : gobject_(GOBJECT_FILE, true), aravis_(ARAVIS_FILE, true),
+    : gobject_(GOBJECT_FILE, true), aravis_(ARAVIS_FILE, true, true),
         num_sensor_(num_sensor), frame_count_method_(FrameCountMethod::UNAVAILABLE),
         frame_sync_(frame_sync), realtime_display_mode_(realtime_display_mode), is_gendc_(false), is_param_integer_(false),
         devices_(num_sensor), buffers_(num_sensor), operation_mode_(OperationMode::Came1USB1), frame_cnt_(0), device_idx_(-1), disposed_(false), sim_mode_(sim_mode)
@@ -357,9 +357,6 @@ protected:
     }
 
     void init_symbols_aravis() {
-	if (!aravis_.is_available()) {
-            throw ::std::runtime_error("libaravis-0.8 is unavailable on your system.");
-        }
 
         #define GET_SYMBOL(LOCAL_VAR, TARGET_SYMBOL)                    \
             LOCAL_VAR = aravis_.get_symbol<LOCAL_VAR##_t>(TARGET_SYMBOL);   \
