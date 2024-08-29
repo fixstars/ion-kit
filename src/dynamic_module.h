@@ -5,8 +5,8 @@
 
 #if _WIN32
 #define WIN32_LEAN_AND_MEAN
-#include <psapi.h>
 #include <windows.h>
+#include <psapi.h>
 #define ION_DYNAMIC_MODULE_PREFIX ""
 #define ION_DYNAMIC_MODULE_EXT ".dll"
 #elif __APPLE__
