@@ -40,8 +40,8 @@ class DynamicModule {
 
      DynamicModule(const std::string& module_name_or_path, bool essential = true, bool lazy_load = false) {
          if (module_name_or_path == "") {
-                 handle_ = nullptr;
-                 return;
+             handle_ = nullptr;
+             return;
          }
 
         // set target
