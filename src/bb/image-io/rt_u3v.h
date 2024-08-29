@@ -4,7 +4,6 @@
 #include <chrono>
 #include <cstring>
 #include <iostream>
-#include <dlfcn.h>
 #include <HalideBuffer.h>
 
 #include "log.h"
