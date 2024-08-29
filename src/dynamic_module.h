@@ -71,7 +71,7 @@ class DynamicModule {
 #endif
             if (handle_ == nullptr) {
                  if (essential) {
-                     throw std::runtime_error(getErrorString());
+                     throw std::runtime_error("Library " + target_ + " is unavailable on your system: " + getErrorString());
                  } else {
                      log::warn("Not found inessential library {} : {}", target, getErrorString());
                  }
@@ -96,22 +96,26 @@ class DynamicModule {
          if (handle_ != nullptr){
              return reinterpret_cast<T>(GetProcAddress(handle_, symbol_name.c_str()));
          }else{
-            Handle hmods[1024];
+            Handle hmods[1024];  // the array size should be big enough
             DWORD cb_needed;
             if (EnumProcessModules(GetCurrentProcess(), hmods, sizeof(hmods), &cb_needed)) {
                 for (unsigned int i = 0; i < (cb_needed / sizeof(HMODULE)); i++) {
                     char path[MAX_PATH];
                     // Get the module name
                     if (GetModuleFileNameA(hmods[i], path, sizeof(path) / sizeof(char))) {
-                        // Try to get the address of the symbol in this module
-                        FARPROC func_ptr = GetProcAddress(hmods[i], symbol_name.c_str());
-                        if (func_ptr != nullptr) {
+                        // Try to get the address of the symbol if module path includes target_
+                        std::string module_path(path);
+                        if (module_path.find(target_) != std::string::npos) {
                             handle_ = hmods[i];
-                            return reinterpret_cast<T>(func_ptr);
+                            log::info("Lazy loading library {}", target_, getErrorString());
+                            return reinterpret_cast<T>(GetProcAddress(hmods[i], symbol_name.c_str()));
                         }
                     }
                 }
             }
+         }
+         if(essential_){
+             throw std::runtime_error("Library " + target_ + " is unavailable on your system: " + getErrorString());
          }
          return reinterpret_cast<T>(GetProcAddress(handle_, symbol_name.c_str()));
 #else
@@ -125,7 +129,7 @@ class DynamicModule {
                    log::info("Lazy loading library {}", target_, getErrorString());
                }else{
                    if(essential_){
-                        throw std::runtime_error("library " + target_ + " is unavailable on your system.");
+                       throw std::runtime_error("Library " + target_ + " is unavailable on your system: " + getErrorString());
                    }
                }
                return reinterpret_cast<T>(dlsym(handle_, symbol_name.c_str()));
