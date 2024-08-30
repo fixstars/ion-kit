@@ -95,7 +95,8 @@ public:
         if (handle_ != nullptr) {
             return reinterpret_cast<T>(GetProcAddress(handle_, symbol_name.c_str()));
         } else {
-            Handle hmods[1024];  // the array size should be big enough
+            //  search symbol globally first
+            Handle hmods[1024];  // the array size should be large enough
             DWORD cb_needed;
             if (EnumProcessModules(GetCurrentProcess(), hmods, sizeof(hmods), &cb_needed)) {
                 for (unsigned int i = 0; i < (cb_needed / sizeof(HMODULE)); i++) {
@@ -106,17 +107,22 @@ public:
                         std::string module_path(path);
                         if (module_path.find(target_) != std::string::npos) {
                             handle_ = hmods[i];
-                            log::info("Lazy loading library {}", target_, getErrorString());
                             return reinterpret_cast<T>(GetProcAddress(hmods[i], symbol_name.c_str()));
                         }
                     }
                 }
             }
+            // failed to load symbol gloablly, load it explicitly
+            handle_ = LoadLibraryA(target_.c_str());
+            if (handle_ != nullptr) {
+                log::info("Lazy loading library {}", target_, getErrorString());
+            } else {
+                if (essential_) {
+                    throw std::runtime_error(getErrorString());
+                }
+            }
+            return reinterpret_cast<T>(GetProcAddress(handle_, symbol_name.c_str()));
         }
-        if (essential_) {
-            throw std::runtime_error(getErrorString());
-        }
-        return reinterpret_cast<T>(GetProcAddress(handle_, symbol_name.c_str()));
 #else
         if (handle_ == RTLD_DEFAULT) {
             void *func_ptr = dlsym(handle_, symbol_name.c_str());
@@ -136,7 +142,6 @@ public:
         } else {
             return reinterpret_cast<T>(dlsym(handle_, symbol_name.c_str()));
         }
-
 #endif
     }
 
