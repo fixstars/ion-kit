@@ -331,10 +331,10 @@ protected:
     : gobject_(GOBJECT_FILE, true), aravis_(ARAVIS_FILE, true, true),
         num_sensor_(num_sensor), frame_count_method_(FrameCountMethod::UNAVAILABLE),
         frame_sync_(frame_sync), realtime_display_mode_(realtime_display_mode), is_gendc_(false), is_param_integer_(false),
-        devices_(num_sensor), buffers_(num_sensor), operation_mode_(OperationMode::Came1USB1), frame_cnt_(0), device_idx_(-1), disposed_(false), sim_mode_(sim_mode)
+        devices_(num_sensor), buffers_(num_sensor), operation_mode_(OperationMode::Came1USB1), frame_cnt_(0), device_idx_(-1), disposed_(false), sim_mode_(sim_mode), order_filp_(false)
     {
         init_symbols();
-        log::debug("U3V:: 23-11-18 : updating obtain and write");
+        log::debug("U3V:: 24-08-29 : revert the order of AcquisitionStart and create stream as a default");
         log::info("Using aravis-{}.{}.{}", arv_get_major_version(), arv_get_minor_version(), arv_get_micro_version());
     }
 
@@ -480,6 +480,23 @@ protected:
         return err_;
     }
 
+    GError* CommandAcquisitionModeContdStart(){
+        for (auto i=0; i<devices_.size(); ++i) {
+            arv_device_set_string_feature_value(devices_[i].device_, "AcquisitionMode", arv_acquisition_mode_to_string(ARV_ACQUISITION_MODE_CONTINUOUS), &err_);
+            if (err_) {
+                throw std::runtime_error(err_->message);
+            }
+            log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionMode");
+
+            arv_device_execute_command(devices_[i].device_, "AcquisitionStart", &err_);
+            if (err_) {
+                throw std::runtime_error(err_->message);
+            }
+            log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionStart");
+        }
+        return err_;
+    }
+
     g_object_unref_t g_object_unref;
 
     arv_get_major_version_t arv_get_major_version;
@@ -569,7 +586,7 @@ protected:
     bool disposed_;
     bool sim_mode_;
 
-
+    bool order_filp_;
 
 }; // class U3V
 
@@ -947,6 +964,7 @@ private:
                     }
                     if (is_gendc_){
                         frame_count_method_ = FrameCountMethod::TYPESPECIFIC3;
+                        order_filp_ = true;
                     }
                 }
                 log::info("\tDevice/USB {}::{} : {}", i, "frame_count method is ",
@@ -1047,25 +1065,16 @@ private:
                     }
                     log::info("\tDevice/USB {}::{} : {}", i, "OperationMode", operation_mode_in_string);
                 }
-
-                arv_device_set_string_feature_value(devices_[i].device_, "AcquisitionMode", arv_acquisition_mode_to_string(ARV_ACQUISITION_MODE_CONTINUOUS), &err_);
-                if (err_) {
-                    throw std::runtime_error(err_->message);
-                }
-                log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionMode");
-
-                arv_device_execute_command(devices_[i].device_, "AcquisitionStart", &err_);
-                if (err_) {
-                    throw std::runtime_error(err_->message);
-                }
-                log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionStart");
             }
             /*
              * ion-kit starts the acquisition before stream creation This is a tentative fix only in ion-kit due to hardware issue
              * In aravis, the acquisition should be done afterward. Since this maps better with GenAPI, where buffers
              * must be pushed to DataStream objectsbefore DataStream acquisition is started.
+             * refer to https://github.com/AravisProject/aravis/blob/2ebaa8661761ea4bbc4df878aa67b4a9e1a9a3b9/docs/reference/aravis/porting-0.10.md
              */
-
+            if (order_filp_){
+                err_ = CommandAcquisitionModeContdStart();
+            }
             //start streaming after AcquisitionStart
             for (auto i=0; i<devices_.size(); ++i) {
                 devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, nullptr, nullptr, &err_);
@@ -1075,6 +1084,10 @@ private:
                 if (devices_[i].stream_ == nullptr) {
                     throw std::runtime_error("stream is null");
                 }
+            }
+
+            if (! order_filp_){
+                err_ = CommandAcquisitionModeContdStart();
             }
 
             for (auto i=0; i<devices_.size(); ++i) {
@@ -1446,9 +1459,11 @@ private:
                     if (strcmp(device_model_name, "    ")==0){
                         is_param_integer_ = true;
                         frame_count_method_ = FrameCountMethod::TIMESTAMP;
+                        arv_uv_device_set_usb_mode(devices_[i].device_, ARV_UV_USB_MODE_SYNC); //hotfix for v1.0
                     }
                     if (is_gendc_){
                         frame_count_method_ = FrameCountMethod::TYPESPECIFIC3;
+                        order_filp_ = true;
                     }
                 }
                 log::info("\tDevice/USB {}::{} : {}", i, "frame_count method is ",
@@ -1536,18 +1551,6 @@ private:
                     }
                     log::info("\tDevice/USB {}::{} : {}", i, "OperationMode", operation_mode_in_string);
                 }
-
-                arv_device_set_string_feature_value(devices_[i].device_, "AcquisitionMode", arv_acquisition_mode_to_string(ARV_ACQUISITION_MODE_CONTINUOUS), &err_);
-                if (err_) {
-                    throw std::runtime_error(err_->message);
-                }
-                log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionMode");
-
-                arv_device_execute_command(devices_[i].device_, "AcquisitionStart", &err_);
-                if (err_) {
-                    throw std::runtime_error(err_->message);
-                }
-                log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionStart");
             }
 
             /*
@@ -1556,7 +1559,9 @@ private:
              * must be pushed to DataStream objectsbefore DataStream acquisition is started.
              * refer to https://github.com/AravisProject/aravis/blob/2ebaa8661761ea4bbc4df878aa67b4a9e1a9a3b9/docs/reference/aravis/porting-0.10.md
              */
-
+            if (order_filp_){
+                err_ = CommandAcquisitionModeContdStart();
+            }
             //start streaming after AcquisitionStart
             for (auto i=0; i<devices_.size(); ++i) {
                 devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, nullptr, nullptr, &err_);
@@ -1566,6 +1571,10 @@ private:
                 if (devices_[i].stream_ == nullptr) {
                     throw std::runtime_error("stream is null");
                 }
+            }
+
+            if (! order_filp_){
+                err_ = CommandAcquisitionModeContdStart();
             }
 
             for (auto i=0; i<devices_.size(); ++i) {
