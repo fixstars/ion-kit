@@ -483,6 +483,23 @@ protected:
         return err_;
     }
 
+    GError* CommandAcquisitionModeContdStart(){
+        for (auto i=0; i<devices_.size(); ++i) {
+            arv_device_set_string_feature_value(devices_[i].device_, "AcquisitionMode", arv_acquisition_mode_to_string(ARV_ACQUISITION_MODE_CONTINUOUS), &err_);
+            if (err_) {
+                throw std::runtime_error(err_->message);
+            }
+            log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionMode");
+
+            arv_device_execute_command(devices_[i].device_, "AcquisitionStart", &err_);
+            if (err_) {
+                throw std::runtime_error(err_->message);
+            }
+            log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionStart");
+        }
+        return err_;
+    }
+
     g_object_unref_t g_object_unref;
 
     arv_get_major_version_t arv_get_major_version;
@@ -1059,19 +1076,7 @@ private:
              * refer to https://github.com/AravisProject/aravis/blob/2ebaa8661761ea4bbc4df878aa67b4a9e1a9a3b9/docs/reference/aravis/porting-0.10.md
              */
             if (order_filp_){
-                for (auto i=0; i<devices_.size(); ++i) {
-                    arv_device_set_string_feature_value(devices_[i].device_, "AcquisitionMode", arv_acquisition_mode_to_string(ARV_ACQUISITION_MODE_CONTINUOUS), &err_);
-                    if (err_) {
-                        throw std::runtime_error(err_->message);
-                    }
-                    log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionMode");
-
-                    arv_device_execute_command(devices_[i].device_, "AcquisitionStart", &err_);
-                    if (err_) {
-                        throw std::runtime_error(err_->message);
-                    }
-                    log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionStart");
-                }
+                err_ = CommandAcquisitionModeContdStart();
             }
             //start streaming after AcquisitionStart
             for (auto i=0; i<devices_.size(); ++i) {
@@ -1085,19 +1090,7 @@ private:
             }
 
             if (! order_filp_){
-                for (auto i=0; i<devices_.size(); ++i) {
-                    arv_device_set_string_feature_value(devices_[i].device_, "AcquisitionMode", arv_acquisition_mode_to_string(ARV_ACQUISITION_MODE_CONTINUOUS), &err_);
-                    if (err_) {
-                        throw std::runtime_error(err_->message);
-                    }
-                    log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionMode");
-
-                    arv_device_execute_command(devices_[i].device_, "AcquisitionStart", &err_);
-                    if (err_) {
-                        throw std::runtime_error(err_->message);
-                    }
-                    log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionStart");
-                }
+                err_ = CommandAcquisitionModeContdStart();
             }
 
             for (auto i=0; i<devices_.size(); ++i) {
@@ -1570,19 +1563,7 @@ private:
              * refer to https://github.com/AravisProject/aravis/blob/2ebaa8661761ea4bbc4df878aa67b4a9e1a9a3b9/docs/reference/aravis/porting-0.10.md
              */
             if (order_filp_){
-                for (auto i=0; i<devices_.size(); ++i) {
-                    arv_device_set_string_feature_value(devices_[i].device_, "AcquisitionMode", arv_acquisition_mode_to_string(ARV_ACQUISITION_MODE_CONTINUOUS), &err_);
-                    if (err_) {
-                        throw std::runtime_error(err_->message);
-                    }
-                    log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionMode");
-
-                    arv_device_execute_command(devices_[i].device_, "AcquisitionStart", &err_);
-                    if (err_) {
-                        throw std::runtime_error(err_->message);
-                    }
-                    log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionStart");
-                }
+                err_ = CommandAcquisitionModeContdStart();
             }
             //start streaming after AcquisitionStart
             for (auto i=0; i<devices_.size(); ++i) {
@@ -1596,19 +1577,7 @@ private:
             }
 
             if (! order_filp_){
-                for (auto i=0; i<devices_.size(); ++i) {
-                    arv_device_set_string_feature_value(devices_[i].device_, "AcquisitionMode", arv_acquisition_mode_to_string(ARV_ACQUISITION_MODE_CONTINUOUS), &err_);
-                    if (err_) {
-                        throw std::runtime_error(err_->message);
-                    }
-                    log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionMode");
-
-                    arv_device_execute_command(devices_[i].device_, "AcquisitionStart", &err_);
-                    if (err_) {
-                        throw std::runtime_error(err_->message);
-                    }
-                    log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionStart");
-                }
+                err_ = CommandAcquisitionModeContdStart();
             }
 
             for (auto i=0; i<devices_.size(); ++i) {
