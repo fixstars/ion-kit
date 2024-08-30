@@ -517,6 +517,53 @@ protected:
         return err_;
     }
 
+    GError* OpenFakeDevices(){
+        auto path = std::getenv("GENICAM_FILENAME");
+        if (path == nullptr){
+            throw std::runtime_error("Please define GENICAM_FILENAME by `set GENICAM_FILENAME=` or `export GENICAM_FILENAME=`");
+        }
+        pixel_format_ = pixel_format;
+        arv_set_fake_camera_genicam_filename (path);
+
+        arv_enable_interface ("Fake");
+        log::info("Creating U3V instance with {} fake sensors...", num_sensor_);
+
+        auto fake_camera0 = arv_camera_new ("Fake_1", &err_);
+        auto fake_device0 = arv_camera_get_device(fake_camera0);
+        devices_[0].device_ = fake_device0;
+        devices_[0].dev_id_=  "fake_0";
+        devices_[0].camera_ = fake_camera0;
+        if (num_sensor_==2){
+            // aravis only provide on ARV_FAKE_DEVICE_ID https://github.com/Sensing-Dev/aravis/blob/main/src/arvfakeinterface.c
+            auto fake_camera1 = arv_camera_new ("Fake_1", &err_);
+            auto fake_device1 = arv_camera_get_device(fake_camera1);
+            devices_[1].device_ = fake_device1;
+            devices_[1].dev_id_=  "fake_1";
+            devices_[1].camera_ = fake_camera1;
+        }
+        // Config fake cameras
+        for (int i = 0;i< num_sensor_;i++){
+            // setting the params if it is not zero
+            log::info("Width {}, Height {} PixelFormat {}...", width, height, pixel_format_);
+            arv_device_set_integer_feature_value (devices_[i].device_, "Width", width, &err_);
+            arv_device_set_integer_feature_value (devices_[i].device_, "Height", height, &err_);
+            arv_device_set_float_feature_value (devices_[i].device_, "AcquisitionFrameRate",fps, &err_);
+            if (pixel_format_ != "Mono8")
+                arv_device_set_string_feature_value(devices_[i].device_, "PixelFormat", pixel_format.c_str(), &err_);
+            devices_[i].u3v_payload_size_ =  arv_device_get_integer_feature_value (devices_[i].device_, "PayloadSize", &err_);
+            auto px =arv_device_get_integer_feature_value(devices_[i].device_, "PixelFormat", &err_);
+            auto fps = arv_device_get_float_feature_value(devices_[i].device_, "AcquisitionFrameRate", &err_);
+            struct rawHeader header=  { 1, width, height,
+                1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+                width, height, width, height, static_cast<float>(fps), px, 0};
+            devices_[i].header_info_ = header;
+            devices_[i].image_payload_size_ = devices_[i].u3v_payload_size_;
+            devices_[i].frame_count_  = 0;
+
+        }
+        return err_;
+    }
+
     GError* OpenRealDevices(int32_t num_detected_device, int32_t num_usb_to_open, char* dev_id){
 
         int index_on_detected_device = 0;
@@ -1076,49 +1123,7 @@ private:
             sim_mode_ = true;
         }
         if (sim_mode_){
-            auto path = std::getenv("GENICAM_FILENAME");
-            if (path == nullptr){
-                throw std::runtime_error("Please define GENICAM_FILENAME by `set GENICAM_FILENAME=` or `export GENICAM_FILENAME=`");
-            }
-            pixel_format_ = pixel_format;
-            arv_set_fake_camera_genicam_filename (path);
-
-            arv_enable_interface ("Fake");
-            log::info("Creating U3V instance with {} fake sensors...", num_sensor_);
-
-            auto fake_camera0 = arv_camera_new ("Fake_1", &err_);
-            auto fake_device0 = arv_camera_get_device(fake_camera0);
-            devices_[0].device_ = fake_device0;
-            devices_[0].dev_id_=  "fake_0";
-            devices_[0].camera_ = fake_camera0;
-            if (num_sensor_==2){
-                // aravis only provide on ARV_FAKE_DEVICE_ID https://github.com/Sensing-Dev/aravis/blob/main/src/arvfakeinterface.c
-                auto fake_camera1 = arv_camera_new ("Fake_1", &err_);
-                auto fake_device1 = arv_camera_get_device(fake_camera1);
-                devices_[1].device_ = fake_device1;
-                devices_[1].dev_id_=  "fake_1";
-                devices_[1].camera_ = fake_camera1;
-            }
-            // Config fake cameras
-            for (int i = 0;i< num_sensor_;i++){
-                // setting the params if it is not zero
-                log::info("Width {}, Height {} PixelFormat {}...", width, height, pixel_format_);
-                arv_device_set_integer_feature_value (devices_[i].device_, "Width", width, &err_);
-                arv_device_set_integer_feature_value (devices_[i].device_, "Height", height, &err_);
-                arv_device_set_float_feature_value (devices_[i].device_, "AcquisitionFrameRate",fps, &err_);
-                if (pixel_format_ != "Mono8")
-                    arv_device_set_string_feature_value(devices_[i].device_, "PixelFormat", pixel_format.c_str(), &err_);
-                devices_[i].u3v_payload_size_ =  arv_device_get_integer_feature_value (devices_[i].device_, "PayloadSize", &err_);
-                auto px =arv_device_get_integer_feature_value(devices_[i].device_, "PixelFormat", &err_);
-                auto fps = arv_device_get_float_feature_value(devices_[i].device_, "AcquisitionFrameRate", &err_);
-                struct rawHeader header=  { 1, width, height,
-                    1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
-                    width, height, width, height, static_cast<float>(fps), px, 0};
-                devices_[i].header_info_ = header;
-                devices_[i].image_payload_size_ = devices_[i].u3v_payload_size_;
-                devices_[i].frame_count_  = 0;
-
-            }
+            err_ = OpenFakeDevices();
 
             // Start streaming and start acquisition
             err_ = CreateStreamAndStartAcquisition(order_filp_);
@@ -1351,49 +1356,7 @@ private:
             sim_mode_ = true;
         }
         if (sim_mode_){
-            auto path = std::getenv("GENICAM_FILENAME");
-            if (path == nullptr){
-                throw std::runtime_error("Please define GENICAM_FILENAME by `set GENICAM_FILENAME=` or `export GENICAM_FILENAME=`");
-            }
-            pixel_format_ = pixel_format;
-            arv_set_fake_camera_genicam_filename (path);
-
-            arv_enable_interface ("Fake");
-            log::info("Creating U3V instance with {} fake sensors...", num_sensor_);
-
-            auto fake_camera0 = arv_camera_new ("Fake_1", &err_);
-            auto fake_device0 = arv_camera_get_device(fake_camera0);
-            devices_[0].device_ = fake_device0;
-            devices_[0].dev_id_=  "fake_0";
-            devices_[0].camera_ = fake_camera0;
-            if (num_sensor_==2){
-                // aravis only provide on ARV_FAKE_DEVICE_ID https://github.com/Sensing-Dev/aravis/blob/main/src/arvfakeinterface.c
-                auto fake_camera1 = arv_camera_new ("Fake_1", &err_);
-                auto fake_device1 = arv_camera_get_device(fake_camera1);
-                devices_[1].device_ = fake_device1;
-                devices_[1].dev_id_=  "fake_1";
-                devices_[1].camera_ = fake_camera1;
-            }
-            // Config fake cameras
-            for (int i = 0;i< num_sensor_;i++){
-                // setting the params if it is not zero
-                log::info("Width {}, Height {} PixelFormat {}...", width, height, pixel_format_);
-                arv_device_set_integer_feature_value (devices_[i].device_, "Width", width, &err_);
-                arv_device_set_integer_feature_value (devices_[i].device_, "Height", height, &err_);
-                arv_device_set_float_feature_value (devices_[i].device_, "AcquisitionFrameRate",fps, &err_);
-                if (pixel_format_ != "Mono8")
-                    arv_device_set_string_feature_value(devices_[i].device_, "PixelFormat", pixel_format.c_str(), &err_);
-                devices_[i].u3v_payload_size_ =  arv_device_get_integer_feature_value (devices_[i].device_, "PayloadSize", &err_);
-                auto px =arv_device_get_integer_feature_value(devices_[i].device_, "PixelFormat", &err_);
-                auto fps = arv_device_get_float_feature_value(devices_[i].device_, "AcquisitionFrameRate", &err_);
-                struct rawHeader header=  { 1, width, height,
-                    1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
-                    width, height, width, height, static_cast<float>(fps), px, 0};
-                devices_[i].header_info_ = header;
-                devices_[i].image_payload_size_ = devices_[i].u3v_payload_size_;
-                devices_[i].frame_count_  = 0;
-
-            }
+            err_ = OpenFakeDevices();
 
             // Start streaming and start acquisition
             err_ = CreateStreamAndStartAcquisition(order_filp_);
