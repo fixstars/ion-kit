@@ -484,6 +484,22 @@ protected:
         return err_;
     }
 
+    void ValidateUserInput(int32_t num_detected_device, char* dev_id){
+        if (num_detected_device < num_sensor_){
+            log::info("{} device is found; but the num_sensor is set to {}", num_detected_device, num_sensor_);
+            throw std::runtime_error("Device number is not match, please set num_device again");
+        }
+        frame_sync_ = num_sensor_ > 1 ? frame_sync_ : false;
+
+        if (num_detected_device > num_sensor_ && dev_id == nullptr) {
+            log::info("{} devices are found; The first {} device is selected", num_detected_device, num_sensor_);
+        }
+
+        log::info("Creating U3V instance with {} sensors...", num_sensor_);
+        log::info("Acquisition option::{} is {}", "frame_sync_", frame_sync_);
+        log::info("Acquisition option::{} is {}", "realtime_display_mode_", realtime_display_mode_);
+    }
+
     GError* CommandAcquisitionModeContdStart(){
         for (auto i=0; i<devices_.size(); ++i) {
             arv_device_set_string_feature_value(devices_[i].device_, "AcquisitionMode", arv_acquisition_mode_to_string(ARV_ACQUISITION_MODE_CONTINUOUS), &err_);
@@ -1114,21 +1130,7 @@ private:
                 log::info("\tFake Device {}::{} : {}", i, "Command", "AcquisitionStart");
             }
         }else{
-            if (num_device < num_sensor_){
-                log::info("{} device is found; but the num_sensor is set to {}", num_device, num_sensor_);
-                throw std::runtime_error("Device number is not match, please set num_device again");
-            }
-            frame_sync_ = num_sensor_ > 1 ? frame_sync_ : false;
-            unsigned int target_device_idx;
-            if (num_sensor != num_sensor_ && dev_id == nullptr) {
-                num_sensor = num_sensor_;
-                log::info("Multiple devices are found; The first device is selected");
-            }
-
-            log::info("Creating U3V instance with {} sensors...", num_sensor_);
-            log::info("Acquisition option::{} is {}", "frame_sync_", frame_sync_);
-            log::info("Acquisition option::{} is {}", "realtime_display_mode_", realtime_display_mode_);
-
+            ValidateUserInput(num_device, dev_id);
             err_ = OpenDevices(num_device, num_sensor_, dev_id);
             err_ = CreateStreamAndStartAcquisition(order_filp_);
             AllocateBuffers();
@@ -1410,21 +1412,7 @@ private:
                 log::info("\tFake Device {}::{} : {}", i, "Command", "AcquisitionStart");
             }
         }else{
-            if (num_sensor < num_sensor_){
-                log::info("{} camera is found; but the number is set to {}", num_sensor, num_sensor_);
-                throw std::runtime_error("Device number is not match, please set num_device again");
-            }
-            frame_sync_ = num_sensor_ > 1 ? frame_sync_ : false;
-            unsigned int target_device_idx;
-            if (num_sensor != num_sensor_ && dev_id == nullptr) {
-                num_sensor = num_sensor_;
-                log::info("Multiple devices are found; The first device is selected");
-            }
-
-            log::info("Creating U3V instance with {} sensors...", num_sensor_);
-            log::info("Acquisition option::{} is {}", "frame_sync_", frame_sync_);
-            log::info("Acquisition option::{} is {}", "realtime_display_mode_", realtime_display_mode_);
-
+            ValidateUserInput(num_device, dev_id);
             err_ = OpenDevices(num_device, num_sensor_, dev_id);
             err_ = CreateStreamAndStartAcquisition(order_filp_);
             AllocateBuffers();
