@@ -336,7 +336,7 @@ protected:
         devices_(num_sensor), buffers_(num_sensor), operation_mode_(OperationMode::Came1USB1), frame_cnt_(0), device_idx_(-1), disposed_(false), sim_mode_(sim_mode), order_filp_(false)
     {
         init_symbols();
-        log::debug("U3V:: 24-08-30 : Add OpenDevices");
+        log::debug("U3V:: 24-08-30 : Add OpenRealDevices");
         log::info("Using aravis-{}.{}.{}", arv_get_major_version(), arv_get_minor_version(), arv_get_micro_version());
     }
 
@@ -517,7 +517,7 @@ protected:
         return err_;
     }
 
-    GError* OpenDevices(int32_t num_detected_device, int32_t num_usb_to_open, char* dev_id){
+    GError* OpenRealDevices(int32_t num_detected_device, int32_t num_usb_to_open, char* dev_id){
 
         int index_on_detected_device = 0;
         int index_on_opened_device = 0;
@@ -1121,20 +1121,13 @@ private:
             }
 
             // Start streaming and start acquisition
-            for (auto i=0; i<devices_.size(); ++i) {
-                devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, NULL, NULL, &err_);
-            }
-
-            for (auto i=0; i<devices_.size(); ++i) {
-                arv_device_execute_command(devices_[i].device_, "AcquisitionStart", &err_);
-                log::info("\tFake Device {}::{} : {}", i, "Command", "AcquisitionStart");
-            }
+            err_ = CreateStreamAndStartAcquisition(order_filp_);
         }else{
+            // Real Camera
             ValidateUserInput(num_device, dev_id);
-            err_ = OpenDevices(num_device, num_sensor_, dev_id);
+            err_ = OpenRealDevices(num_device, num_sensor_, dev_id);
             err_ = CreateStreamAndStartAcquisition(order_filp_);
             AllocateBuffers();
-
         }
     };
 
@@ -1403,20 +1396,13 @@ private:
             }
 
             // Start streaming and start acquisition
-            for (auto i=0; i<devices_.size(); ++i) {
-                devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, NULL, NULL, &err_);
-            }
-
-            for (auto i=0; i<devices_.size(); ++i) {
-                arv_device_execute_command(devices_[i].device_, "AcquisitionStart", &err_);
-                log::info("\tFake Device {}::{} : {}", i, "Command", "AcquisitionStart");
-            }
+            err_ = CreateStreamAndStartAcquisition(order_filp_);
         }else{
+            // Real Camera
             ValidateUserInput(num_device, dev_id);
-            err_ = OpenDevices(num_device, num_sensor_, dev_id);
+            err_ = OpenRealDevices(num_device, num_sensor_, dev_id);
             err_ = CreateStreamAndStartAcquisition(order_filp_);
             AllocateBuffers();
-
         }
     };
 
