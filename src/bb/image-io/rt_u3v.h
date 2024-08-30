@@ -703,6 +703,21 @@ protected:
         return err_;
     }
 
+    void AllocateBuffers(){
+        for (auto i=0; i<devices_.size(); ++i) {
+            const size_t buffer_size = 1 * 1024 * 1024 * 1024; // 1GiB for each
+            auto n = (buffer_size + devices_[i].u3v_payload_size_ - 1) / devices_[i].u3v_payload_size_;
+            for (auto j=0; j<n; ++j) {
+                auto b = arv_buffer_new_allocate(devices_[i].u3v_payload_size_);
+                buffers_[i].push_back(b);
+                arv_stream_push_buffer(devices_[i].stream_, b);
+            }
+            log::info("\tDevice/USB {}::{} : {}", i, "Buffer Size", buffer_size);
+            log::info("\tDevice/USB {}::{} : {}", i, "Number of Buffers", n);
+
+        }
+    }
+
     g_object_unref_t g_object_unref;
 
     arv_get_major_version_t arv_get_major_version;
@@ -1116,19 +1131,7 @@ private:
 
             err_ = OpenDevices(num_device, num_sensor_, dev_id);
             err_ = CreateStreamAndStartAcquisition(order_filp_);
-
-            for (auto i=0; i<devices_.size(); ++i) {
-                const size_t buffer_size = 1 * 1024 * 1024 * 1024; // 1GiB for each
-                auto n = (buffer_size + devices_[i].u3v_payload_size_ - 1) / devices_[i].u3v_payload_size_;
-                for (auto j=0; j<n; ++j) {
-                    auto b = arv_buffer_new_allocate(devices_[i].u3v_payload_size_);
-                    buffers_[i].push_back(b);
-                    arv_stream_push_buffer(devices_[i].stream_, b);
-                }
-                log::info("\tDevice/USB {}::{} : {}", i, "Buffer Size", buffer_size);
-                log::info("\tDevice/USB {}::{} : {}", i, "Number of Buffers", n);
-
-            }
+            AllocateBuffers();
 
         }
     };
@@ -1424,19 +1427,7 @@ private:
 
             err_ = OpenDevices(num_device, num_sensor_, dev_id);
             err_ = CreateStreamAndStartAcquisition(order_filp_);
-
-            for (auto i=0; i<devices_.size(); ++i) {
-                const size_t buffer_size = 1 * 1024 * 1024 * 1024; // 1GiB for each
-                auto n = (buffer_size + devices_[i].u3v_payload_size_ - 1) / devices_[i].u3v_payload_size_;
-                for (auto j=0; j<n; ++j) {
-                    auto b = arv_buffer_new_allocate(devices_[i].u3v_payload_size_);
-                    buffers_[i].push_back(b);
-                    arv_stream_push_buffer(devices_[i].stream_, b);
-                }
-                log::info("\tDevice/USB {}::{} : {}", i, "Buffer Size", buffer_size);
-                log::info("\tDevice/USB {}::{} : {}", i, "Number of Buffers", n);
-
-            }
+            AllocateBuffers();
 
         }
     };
