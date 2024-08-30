@@ -676,6 +676,33 @@ protected:
         return err_;
     }
 
+    GError* CreateStreamAndStartAcquisition(bool specific_device_to_flip_order){
+        /*
+        * ion-kit starts the acquisition before stream creation This is a tentative fix only in ion-kit due to hardware issue
+        * In aravis, the acquisition should be done afterward. Since this maps better with GenAPI, where buffers
+        * must be pushed to DataStream objectsbefore DataStream acquisition is started.
+        * refer to https://github.com/AravisProject/aravis/blob/2ebaa8661761ea4bbc4df878aa67b4a9e1a9a3b9/docs/reference/aravis/porting-0.10.md
+        */
+        if (specific_device_to_flip_order){
+            err_ = CommandAcquisitionModeContdStart();
+        }
+        //start streaming after AcquisitionStart
+        for (auto i=0; i<devices_.size(); ++i) {
+            devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, nullptr, nullptr, &err_);
+            if (err_) {
+                throw std::runtime_error(err_->message);
+            }
+            if (devices_[i].stream_ == nullptr) {
+                throw std::runtime_error("stream is null");
+            }
+        }
+
+        if (! specific_device_to_flip_order){
+            err_ = CommandAcquisitionModeContdStart();
+        }
+        return err_;
+    }
+
     g_object_unref_t g_object_unref;
 
     arv_get_major_version_t arv_get_major_version;
@@ -1088,29 +1115,7 @@ private:
             log::info("Acquisition option::{} is {}", "realtime_display_mode_", realtime_display_mode_);
 
             err_ = OpenDevices(num_device, num_sensor_, dev_id);
-            /*
-             * ion-kit starts the acquisition before stream creation This is a tentative fix only in ion-kit due to hardware issue
-             * In aravis, the acquisition should be done afterward. Since this maps better with GenAPI, where buffers
-             * must be pushed to DataStream objectsbefore DataStream acquisition is started.
-             * refer to https://github.com/AravisProject/aravis/blob/2ebaa8661761ea4bbc4df878aa67b4a9e1a9a3b9/docs/reference/aravis/porting-0.10.md
-             */
-            if (order_filp_){
-                err_ = CommandAcquisitionModeContdStart();
-            }
-            //start streaming after AcquisitionStart
-            for (auto i=0; i<devices_.size(); ++i) {
-                devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, nullptr, nullptr, &err_);
-                if (err_) {
-                    throw std::runtime_error(err_->message);
-                }
-                if (devices_[i].stream_ == nullptr) {
-                    throw std::runtime_error("stream is null");
-                }
-            }
-
-            if (! order_filp_){
-                err_ = CommandAcquisitionModeContdStart();
-            }
+            err_ = CreateStreamAndStartAcquisition(order_filp_);
 
             for (auto i=0; i<devices_.size(); ++i) {
                 const size_t buffer_size = 1 * 1024 * 1024 * 1024; // 1GiB for each
@@ -1417,31 +1422,8 @@ private:
             log::info("Acquisition option::{} is {}", "frame_sync_", frame_sync_);
             log::info("Acquisition option::{} is {}", "realtime_display_mode_", realtime_display_mode_);
 
-           err_ = OpenDevices(num_device, num_sensor_, dev_id);
-
-            /*
-             * ion-kit starts the acquisition before stream creation This is a tentative fix only in ion-kit due to hardware issue
-             * In aravis, the acquisition should be done afterward. Since this maps better with GenAPI, where buffers
-             * must be pushed to DataStream objectsbefore DataStream acquisition is started.
-             * refer to https://github.com/AravisProject/aravis/blob/2ebaa8661761ea4bbc4df878aa67b4a9e1a9a3b9/docs/reference/aravis/porting-0.10.md
-             */
-            if (order_filp_){
-                err_ = CommandAcquisitionModeContdStart();
-            }
-            //start streaming after AcquisitionStart
-            for (auto i=0; i<devices_.size(); ++i) {
-                devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, nullptr, nullptr, &err_);
-                if (err_) {
-                    throw std::runtime_error(err_->message);
-                }
-                if (devices_[i].stream_ == nullptr) {
-                    throw std::runtime_error("stream is null");
-                }
-            }
-
-            if (! order_filp_){
-                err_ = CommandAcquisitionModeContdStart();
-            }
+            err_ = OpenDevices(num_device, num_sensor_, dev_id);
+            err_ = CreateStreamAndStartAcquisition(order_filp_);
 
             for (auto i=0; i<devices_.size(); ++i) {
                 const size_t buffer_size = 1 * 1024 * 1024 * 1024; // 1GiB for each
