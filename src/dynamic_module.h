@@ -115,7 +115,7 @@ public:
             // failed to load symbol gloablly, load it explicitly
             handle_ = LoadLibraryA(target_.c_str());
             if (handle_ != nullptr) {
-                log::info("Lazy loading library {}", target_, getErrorString());
+                log::info("Lazy loading library {}", target_);
             } else {
                 if (essential_) {
                     throw std::runtime_error(getErrorString());
@@ -131,7 +131,7 @@ public:
             } else {
                 handle_ = dlopen(target_.c_str(), RTLD_NOW);
                 if (handle_ != nullptr) {
-                    log::info("Lazy loading library {}", target_, getErrorString());
+                    log::info("Lazy loading library {}", target_);
                 } else {
                     if (essential_) {
                         throw std::runtime_error(getErrorString());
