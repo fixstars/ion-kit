@@ -331,7 +331,7 @@ protected:
     : gobject_(GOBJECT_FILE, true), aravis_(ARAVIS_FILE, true),
         num_sensor_(num_sensor), frame_count_method_(FrameCountMethod::UNAVAILABLE),
         frame_sync_(frame_sync), realtime_display_mode_(realtime_display_mode), is_gendc_(false), is_param_integer_(false),
-        devices_(num_sensor), buffers_(num_sensor), operation_mode_(OperationMode::Came1USB1), frame_cnt_(0), device_idx_(-1), disposed_(false), sim_mode_(sim_mode)
+        devices_(num_sensor), buffers_(num_sensor), operation_mode_(OperationMode::Came1USB1), frame_cnt_(0), device_idx_(-1), disposed_(false), sim_mode_(sim_mode), order_filp_(false)
     {
         init_symbols();
         log::debug("U3V:: 24-08-29 : revert the order of AcquisitionStart and create stream as a default");
@@ -572,7 +572,7 @@ protected:
     bool disposed_;
     bool sim_mode_;
 
-
+    bool order_filp_;
 
 }; // class U3V
 
@@ -877,7 +877,6 @@ private:
                 log::info("\tFake Device {}::{} : {}", i, "Command", "AcquisitionStart");
             }
         }else{
-            bool order_filp = false;
             if (num_device < num_sensor_){
                 log::info("{} device is found; but the num_sensor is set to {}", num_device, num_sensor_);
                 throw std::runtime_error("Device number is not match, please set num_device again");
@@ -951,7 +950,7 @@ private:
                     }
                     if (is_gendc_){
                         frame_count_method_ = FrameCountMethod::TYPESPECIFIC3;
-                        order_filp = true;
+                        order_filp_ = true;
                     }
                 }
                 log::info("\tDevice/USB {}::{} : {}", i, "frame_count method is ",
@@ -1059,7 +1058,7 @@ private:
              * must be pushed to DataStream objectsbefore DataStream acquisition is started.
              * refer to https://github.com/AravisProject/aravis/blob/2ebaa8661761ea4bbc4df878aa67b4a9e1a9a3b9/docs/reference/aravis/porting-0.10.md
              */
-            if (order_filp){
+            if (order_filp_){
                 for (auto i=0; i<devices_.size(); ++i) {
                     arv_device_set_string_feature_value(devices_[i].device_, "AcquisitionMode", arv_acquisition_mode_to_string(ARV_ACQUISITION_MODE_CONTINUOUS), &err_);
                     if (err_) {
@@ -1085,7 +1084,7 @@ private:
                 }
             }
 
-            if (! order_filp){
+            if (! order_filp_){
                 for (auto i=0; i<devices_.size(); ++i) {
                     arv_device_set_string_feature_value(devices_[i].device_, "AcquisitionMode", arv_acquisition_mode_to_string(ARV_ACQUISITION_MODE_CONTINUOUS), &err_);
                     if (err_) {
@@ -1391,7 +1390,6 @@ private:
                 log::info("\tFake Device {}::{} : {}", i, "Command", "AcquisitionStart");
             }
         }else{
-            bool order_filp = false;
             if (num_sensor < num_sensor_){
                 log::info("{} camera is found; but the number is set to {}", num_sensor, num_sensor_);
                 throw std::runtime_error("Device number is not match, please set num_device again");
@@ -1475,7 +1473,7 @@ private:
                     }
                     if (is_gendc_){
                         frame_count_method_ = FrameCountMethod::TYPESPECIFIC3;
-                        order_filp = true;
+                        order_filp_ = true;
                     }
                 }
                 log::info("\tDevice/USB {}::{} : {}", i, "frame_count method is ",
@@ -1571,7 +1569,7 @@ private:
              * must be pushed to DataStream objectsbefore DataStream acquisition is started.
              * refer to https://github.com/AravisProject/aravis/blob/2ebaa8661761ea4bbc4df878aa67b4a9e1a9a3b9/docs/reference/aravis/porting-0.10.md
              */
-            if (order_filp){
+            if (order_filp_){
                 for (auto i=0; i<devices_.size(); ++i) {
                     arv_device_set_string_feature_value(devices_[i].device_, "AcquisitionMode", arv_acquisition_mode_to_string(ARV_ACQUISITION_MODE_CONTINUOUS), &err_);
                     if (err_) {
@@ -1597,7 +1595,7 @@ private:
                 }
             }
 
-            if (! order_filp){
+            if (! order_filp_){
                 for (auto i=0; i<devices_.size(); ++i) {
                     arv_device_set_string_feature_value(devices_[i].device_, "AcquisitionMode", arv_acquisition_mode_to_string(ARV_ACQUISITION_MODE_CONTINUOUS), &err_);
                     if (err_) {
