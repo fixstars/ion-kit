@@ -825,6 +825,34 @@ protected:
         }
     }
 
+    void consume_old_buffer(std::vector<ArvBuffer *> &bufs, int timeout_us = 3 * 1000 * 1000){
+        std::vector<int32_t> N_output_buffers(num_sensor_);
+        for (auto i = 0; i < num_sensor_; ++i) {
+            int32_t num_input_buffer;
+            arv_stream_get_n_buffers(devices_[i].stream_, &num_input_buffer, &(N_output_buffers[i]));
+        }
+        // if all stream has N output buffers, discard N-1 of them
+        for (auto i = 0; i < num_sensor_; ++i) {
+            for (auto j = 0; j < N_output_buffers[i] - 1; ++j) {
+                bufs[i] = arv_stream_timeout_pop_buffer(devices_[i].stream_, timeout_us);
+                if (bufs[i] == nullptr) {
+                    log::error("pop_buffer(L2) failed due to timeout ({}s)", timeout_us * 1e-6f);
+                    throw ::std::runtime_error("buffer is null");
+                }
+                devices_[i].frame_count_ = frame_count_method_ == FrameCountMethod::TYPESPECIFIC3
+                    ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
+                    : frame_count_method_ == FrameCountMethod::TIMESTAMP
+                    ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF)
+                    : -1;
+                i == 0 ?
+                    log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]", devices_[i].frame_count_, "") :
+                    log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]", "", devices_[i].frame_count_);
+                arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
+
+            }
+        }
+    }
+
     g_object_unref_t g_object_unref;
 
     arv_get_major_version_t arv_get_major_version;
@@ -1136,34 +1164,6 @@ private:
             AllocateBuffers();
         }
     };
-
-    void consume_old_buffer(std::vector<ArvBuffer *> &bufs, int timeout_us = 3 * 1000 * 1000){
-        std::vector<int32_t> N_output_buffers(num_sensor_);
-        for (auto i = 0; i < num_sensor_; ++i) {
-            int32_t num_input_buffer;
-            arv_stream_get_n_buffers(devices_[i].stream_, &num_input_buffer, &(N_output_buffers[i]));
-        }
-        // if all stream has N output buffers, discard N-1 of them
-        for (auto i = 0; i < num_sensor_; ++i) {
-            for (auto j = 0; j < N_output_buffers[i] - 1; ++j) {
-                bufs[i] = arv_stream_timeout_pop_buffer(devices_[i].stream_, timeout_us);
-                if (bufs[i] == nullptr) {
-                    log::error("pop_buffer(L2) failed due to timeout ({}s)", timeout_us * 1e-6f);
-                    throw ::std::runtime_error("buffer is null");
-                }
-                devices_[i].frame_count_ = frame_count_method_ == FrameCountMethod::TYPESPECIFIC3
-                    ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
-                    : frame_count_method_ == FrameCountMethod::TIMESTAMP
-                    ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF)
-                    : -1;
-                i == 0 ?
-                    log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]", devices_[i].frame_count_, "") :
-                    log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]", "", devices_[i].frame_count_);
-                arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
-
-            }
-        }
-    }
 };
 
 
@@ -1324,78 +1324,6 @@ private:
             AllocateBuffers();
         }
     };
-
-    void consume_old_buffer(std::vector<ArvBuffer *> &bufs, int timeout_us = 3 * 1000 * 1000){
-        std::vector<int32_t> N_output_buffers(num_sensor_);
-        for (auto i = 0; i < num_sensor_; ++i) {
-            int32_t num_input_buffer;
-            arv_stream_get_n_buffers(devices_[i].stream_, &num_input_buffer, &(N_output_buffers[i]));
-        }
-        // if all stream has N output buffers, discard N-1 of them
-        for (auto i = 0; i < num_sensor_; ++i) {
-            for (auto j = 0; j < N_output_buffers[i] - 1; ++j) {
-                bufs[i] = arv_stream_timeout_pop_buffer(devices_[i].stream_, timeout_us);
-                if (bufs[i] == nullptr) {
-                    log::error("pop_buffer(L2) failed due to timeout ({}s)", timeout_us * 1e-6f);
-                    throw ::std::runtime_error("buffer is null");
-                }
-                devices_[i].frame_count_ = frame_count_method_ == FrameCountMethod::TYPESPECIFIC3
-                    ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
-                    : frame_count_method_ == FrameCountMethod::TIMESTAMP
-                    ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF)
-                    : -1;
-                i == 0 ?
-                    log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]", devices_[i].frame_count_, "") :
-                    log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]", "", devices_[i].frame_count_);
-                arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
-
-            }
-        }
-    }
-
-    void sync_frame_count(std::vector<ArvBuffer *> &bufs, int timeout_us){
-        uint32_t max_cnt = 0;
-        while (true) {
-            // Update max_cnt
-            for (int i = 0; i < num_sensor_; ++i) {
-                if (max_cnt < devices_[i].frame_count_) {
-                    max_cnt = devices_[i].frame_count_;
-                }
-            }
-
-            // Check all count is same as max_cnt;
-            bool synchronized = true;
-            for (int i = 0; i < num_sensor_; ++i) {
-                synchronized &= devices_[i].frame_count_ == max_cnt;
-            }
-
-            // If it is synchronized, break the loop
-            if (synchronized) {
-                break;
-            }
-
-            // Acquire buffer until cnt is at least max_cnt
-            for (int i = 0; i < devices_.size(); ++i) {
-                while (devices_[i].frame_count_ < max_cnt) {
-                    arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
-                    bufs[i] = arv_stream_timeout_pop_buffer(devices_[i].stream_, timeout_us);
-
-                    if (bufs[i] == nullptr) {
-                        log::error("pop_buffer failed  when sync frame due to timeout ({}s)", timeout_us * 1e-6f);
-                        throw ::std::runtime_error("buffer is null");
-                    }
-                    devices_[i].frame_count_ = frame_count_method_ == FrameCountMethod::TYPESPECIFIC3
-                        ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
-                        : frame_count_method_ == FrameCountMethod::TIMESTAMP
-                        ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF)
-                        : -1;
-                    i == 0 ?
-                        log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", devices_[i].frame_count_, "") :
-                        log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", "", devices_[i].frame_count_);
-                }
-            }
-        }
-    }
 
 };
 
