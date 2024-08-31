@@ -336,7 +336,7 @@ protected:
         devices_(num_sensor), buffers_(num_sensor), operation_mode_(OperationMode::Came1USB1), frame_cnt_(0), device_idx_(-1), disposed_(false), sim_mode_(sim_mode), order_filp_(false)
     {
         init_symbols();
-        log::debug("U3V:: 24-08-30 : Add OpenRealDevices");
+        log::debug("U3V:: 24-08-30 : Tested on device 1.2");
         log::info("Using aravis-{}.{}.{}", arv_get_major_version(), arv_get_minor_version(), arv_get_micro_version());
     }
 
@@ -642,6 +642,7 @@ protected:
                     }
                     if (is_gendc_){
                         frame_count_method_ = FrameCountMethod::TYPESPECIFIC3;
+                        order_filp_ = true;
                     }
                 }
                 log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "frame_count method is ",
@@ -747,6 +748,7 @@ protected:
         * refer to https://github.com/AravisProject/aravis/blob/2ebaa8661761ea4bbc4df878aa67b4a9e1a9a3b9/docs/reference/aravis/porting-0.10.md
         */
         if (specific_device_to_flip_order){
+            log::info("Execute AcquisitionStart before create stream on this device.");
             err_ = CommandAcquisitionModeContdStart();
         }
         //start streaming after AcquisitionStart
