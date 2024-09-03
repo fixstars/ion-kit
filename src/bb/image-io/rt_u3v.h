@@ -251,7 +251,7 @@ protected:
 
         if (sensor_idx < num_sensor_ ){
             if(devices_[sensor_idx].gain_ != v){
-                err_ =  Set(devices_[sensor_idx].device_, key.c_str(), v);
+                err_ =  set(devices_[sensor_idx].device_, key.c_str(), v);
                 devices_[sensor_idx].gain_ = v;
             }
             return;
@@ -263,7 +263,7 @@ protected:
     void set_gain(int32_t sensor_idx, const std::string key, int32_t v) {
         if (sensor_idx < num_sensor_ ){
             if(devices_[sensor_idx].int_gain_ != v){
-                err_ =  Set(devices_[sensor_idx].device_, key.c_str(), static_cast<int64_t>(v));
+                err_ =  set(devices_[sensor_idx].device_, key.c_str(), static_cast<int64_t>(v));
                 devices_[sensor_idx].int_gain_ = v;
             }
             return;
@@ -281,7 +281,7 @@ protected:
 
         if (sensor_idx < num_sensor_ ){
             if(devices_[sensor_idx].exposure_ != v){
-                err_ = Set(devices_[sensor_idx].device_, key.c_str(), v);
+                err_ = set(devices_[sensor_idx].device_, key.c_str(), v);
                 devices_[sensor_idx].exposure_ = v;
             }
             return;
@@ -293,7 +293,7 @@ protected:
     void set_exposure(int32_t sensor_idx, const std::string key, int32_t v) {
         if (sensor_idx < num_sensor_ ){
             if(devices_[sensor_idx].int_exposure_ != v){
-                err_ = Set(devices_[sensor_idx].device_, key.c_str(), static_cast<int64_t>(v));
+                err_ = set(devices_[sensor_idx].device_, key.c_str(), static_cast<int64_t>(v));
                 devices_[sensor_idx].int_exposure_ = v;
             }
             return;
@@ -336,7 +336,7 @@ protected:
         devices_(num_sensor), buffers_(num_sensor), operation_mode_(OperationMode::Came1USB1), frame_cnt_(0), device_idx_(-1), disposed_(false), sim_mode_(sim_mode), order_filp_(false)
     {
         init_symbols();
-        log::debug("U3V:: 24-08-30 : Add OpenRealDevices");
+        log::debug("U3V:: 24-08-30 : Add open_real_devices");
         log::info("Using aravis-{}.{}.{}", arv_get_major_version(), arv_get_minor_version(), arv_get_micro_version());
     }
 
@@ -435,24 +435,24 @@ protected:
     }
 
     template<typename T>
-    GError* Set(ArvDevice* dev_handle, const char* key, T v) {
-        return SetFeatureValue(dev_handle, key, v);
+    GError* set(ArvDevice* dev_handle, const char* key, T v) {
+        return set_feature_value(dev_handle, key, v);
     }
 
     template<typename T>
-    GError* Get(ArvDevice* dev_handle, const char* key, T* v) {
+    GError* get(ArvDevice* dev_handle, const char* key, T* v) {
         T vp;
-        err_ = GetFeatureValue(dev_handle, key, vp);
+        err_ = get_feature_value(dev_handle, key, vp);
         *v = vp;
         return err_;
     }
 
-    GError* SetFeatureValue(ArvDevice *device, const char *feature, const char *value){
+    GError* set_feature_value(ArvDevice *device, const char *feature, const char *value){
         arv_device_set_string_feature_value (device, feature, value, &err_);
         return err_;
     }
 
-    GError* SetFeatureValue(ArvDevice *device, const char *feature, double value){
+    GError* set_feature_value(ArvDevice *device, const char *feature, double value){
         double min_v, max_v;
         arv_device_get_float_feature_bounds (device, feature, &min_v, &max_v, &err_);
         if (err_ != nullptr) {
@@ -466,7 +466,7 @@ protected:
         return err_;
     }
 
-    GError* SetFeatureValue(ArvDevice *device, const char *feature, int64_t value){
+    GError* set_feature_value(ArvDevice *device, const char *feature, int64_t value){
         int64_t min_v, max_v;
         arv_device_get_integer_feature_bounds(device, feature, &min_v, &max_v, &err_);
         if (err_ != nullptr) {
@@ -479,12 +479,12 @@ protected:
         return err_;
     }
 
-    GError* GetFeatureValue(ArvDevice *device, const char *feature, int64_t& value){
+    GError* get_feature_value(ArvDevice *device, const char *feature, int64_t& value){
         value = arv_device_get_integer_feature_value(device, feature, &err_);
         return err_;
     }
 
-    void ValidateUserInput(int32_t num_detected_device, char* dev_id){
+    void validate_user_input(int32_t num_detected_device, char* dev_id){
         if (num_detected_device < num_sensor_){
             log::info("{} device is found; but the num_sensor is set to {}", num_detected_device, num_sensor_);
             throw std::runtime_error("Device number is not match, please set num_device again");
@@ -500,7 +500,7 @@ protected:
         log::info("Acquisition option::{} is {}", "realtime_display_mode_", realtime_display_mode_);
     }
 
-    GError* CommandAcquisitionModeContdStart(){
+    GError* command_acquisition_mode_contd_and_start(){
         for (auto i=0; i<devices_.size(); ++i) {
             arv_device_set_string_feature_value(devices_[i].device_, "AcquisitionMode", arv_acquisition_mode_to_string(ARV_ACQUISITION_MODE_CONTINUOUS), &err_);
             if (err_) {
@@ -517,7 +517,7 @@ protected:
         return err_;
     }
 
-    GError* OpenFakeDevices(int32_t width, int32_t height , float_t fps, const std::string & pixel_format){
+    GError* open_fake_devices(int32_t width, int32_t height , float_t fps, const std::string & pixel_format){
         auto path = std::getenv("GENICAM_FILENAME");
         if (path == nullptr){
             throw std::runtime_error("Please define GENICAM_FILENAME by `set GENICAM_FILENAME=` or `export GENICAM_FILENAME=`");
@@ -564,7 +564,7 @@ protected:
         return err_;
     }
 
-    GError* OpenRealDevices(int32_t num_detected_device, int32_t num_usb_to_open, char* dev_id){
+    GError* open_real_devices(int32_t num_detected_device, int32_t num_usb_to_open, char* dev_id){
 
         int index_on_detected_device = 0;
         int index_on_opened_device = 0;
@@ -739,7 +739,7 @@ protected:
         return err_;
     }
 
-    GError* CreateStreamAndStartAcquisition(bool specific_device_to_flip_order){
+    GError* create_stream_and_start_acquisition(bool specific_device_to_flip_order){
         /*
         * ion-kit starts the acquisition before stream creation This is a tentative fix only in ion-kit due to hardware issue
         * In aravis, the acquisition should be done afterward. Since this maps better with GenAPI, where buffers
@@ -747,7 +747,7 @@ protected:
         * refer to https://github.com/AravisProject/aravis/blob/2ebaa8661761ea4bbc4df878aa67b4a9e1a9a3b9/docs/reference/aravis/porting-0.10.md
         */
         if (specific_device_to_flip_order){
-            err_ = CommandAcquisitionModeContdStart();
+            err_ = command_acquisition_mode_contd_and_start();
         }
         //start streaming after AcquisitionStart
         for (auto i=0; i<devices_.size(); ++i) {
@@ -761,12 +761,12 @@ protected:
         }
 
         if (! specific_device_to_flip_order){
-            err_ = CommandAcquisitionModeContdStart();
+            err_ = command_acquisition_mode_contd_and_start();
         }
         return err_;
     }
 
-    void AllocateBuffers(){
+    void allocate_buffers(){
         for (auto i=0; i<devices_.size(); ++i) {
             const size_t buffer_size = 1 * 1024 * 1024 * 1024; // 1GiB for each
             auto n = (buffer_size + devices_[i].u3v_payload_size_ - 1) / devices_[i].u3v_payload_size_;
@@ -987,7 +987,7 @@ public:
 private:
     U3VFakeCam(int32_t num_sensor, int32_t width, int32_t height , float_t fps, const std::string & pixel_format,  char* dev_id = nullptr)
      : U3V(num_sensor,  false, false, true,  width, height , fps, pixel_format,  nullptr){
-        err_ = OpenFakeDevices(width, height, fps, pixel_format);
+        err_ = open_fake_devices(width, height, fps, pixel_format);
 
         // Start streaming and start acquisition
         for (auto i=0; i<devices_.size(); ++i) {
@@ -1152,16 +1152,16 @@ private:
             sim_mode_ = true;
         }
         if (sim_mode_){
-            err_ = OpenFakeDevices(width, height, fps, pixel_format);
+            err_ = open_fake_devices(width, height, fps, pixel_format);
 
             // Start streaming and start acquisition
-            err_ = CreateStreamAndStartAcquisition(order_filp_);
+            err_ = create_stream_and_start_acquisition(order_filp_);
         }else{
             // Real Camera
-            ValidateUserInput(num_device, dev_id);
-            err_ = OpenRealDevices(num_device, num_sensor_, dev_id);
-            err_ = CreateStreamAndStartAcquisition(order_filp_);
-            AllocateBuffers();
+            validate_user_input(num_device, dev_id);
+            err_ = open_real_devices(num_device, num_sensor_, dev_id);
+            err_ = create_stream_and_start_acquisition(order_filp_);
+            allocate_buffers();
         }
     };
 };
@@ -1312,16 +1312,16 @@ private:
             sim_mode_ = true;
         }
         if (sim_mode_){
-            err_ = OpenFakeDevices(width, height, fps, pixel_format);
+            err_ = open_fake_devices(width, height, fps, pixel_format);
 
             // Start streaming and start acquisition
-            err_ = CreateStreamAndStartAcquisition(order_filp_);
+            err_ = create_stream_and_start_acquisition(order_filp_);
         }else{
             // Real Camera
-            ValidateUserInput(num_device, dev_id);
-            err_ = OpenRealDevices(num_device, num_sensor_, dev_id);
-            err_ = CreateStreamAndStartAcquisition(order_filp_);
-            AllocateBuffers();
+            validate_user_input(num_device, dev_id);
+            err_ = open_real_devices(num_device, num_sensor_, dev_id);
+            err_ = create_stream_and_start_acquisition(order_filp_);
+            allocate_buffers();
         }
     };
 
