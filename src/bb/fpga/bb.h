@@ -118,7 +118,7 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    //GeneratorParam<BayerMap::Pattern> bayer_pattern { "bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map };
+    // GeneratorParam<BayerMap::Pattern> bayer_pattern { "bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map };
     GeneratorParam<int32_t> bayer_pattern{"bayer_pattern", 0, 0, 3};
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
@@ -175,7 +175,7 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    //GeneratorParam<BayerMap::Pattern> bayer_pattern { "bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map };
+    // GeneratorParam<BayerMap::Pattern> bayer_pattern { "bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map };
     GeneratorParam<int32_t> bayer_pattern{"bayer_pattern", 0, 0, 3};
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
@@ -257,7 +257,7 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    //GeneratorParam<BayerMap::Pattern> bayer_pattern { "bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map };
+    // GeneratorParam<BayerMap::Pattern> bayer_pattern { "bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map };
     GeneratorParam<int32_t> bayer_pattern{"bayer_pattern", 0, 0, 3};
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
@@ -427,7 +427,7 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    //GeneratorParam<BayerMap::Pattern> bayer_pattern { "bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map };
+    // GeneratorParam<BayerMap::Pattern> bayer_pattern { "bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map };
     GeneratorParam<int32_t> bayer_pattern{"bayer_pattern", 0, 0, 3};
     // Max 16bit
     GeneratorParam<int32_t> width{"width", 0, 0, 65535};
@@ -488,7 +488,7 @@ public:
     GeneratorParam<std::string> gc_mandatory{"gc_mandatory", "width,height"};
     GeneratorParam<std::string> gc_strategy{"gc_strategy", "inlinable"};
 
-    //GeneratorParam<Luminance::Method> luminance_method { "luminance_method", Luminance::Method::SimpleY, Luminance::enum_map };
+    // GeneratorParam<Luminance::Method> luminance_method { "luminance_method", Luminance::Method::SimpleY, Luminance::enum_map };
     GeneratorParam<int32_t> luminance_method{"luminance_method", 2, 0, 2};
     GeneratorParam<int32_t> width{"width", 0};
     GeneratorParam<int32_t> height{"height", 0};
@@ -742,7 +742,7 @@ public:
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
     GeneratorParam<std::string> gc_required_features{"gc_required_features", "vivado_hls"};
 
-    //GeneratorParam<BayerMap::Pattern> bayer_pattern { "bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map };
+    // GeneratorParam<BayerMap::Pattern> bayer_pattern { "bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map };
     GeneratorParam<int32_t> bayer_pattern{"bayer_pattern", 0, 0, 3};
     // Max 16bit
     GeneratorParam<int32_t> width{"width", 0, 0, 65535};
@@ -850,7 +850,7 @@ public:
     GeneratorParam<std::string> gc_prefix{"gc_prefix", ""};
     GeneratorParam<std::string> gc_required_features{"gc_required_features", "vivado_hls"};
 
-    //GeneratorParam<BayerMap::Pattern> bayer_pattern { "bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map };
+    // GeneratorParam<BayerMap::Pattern> bayer_pattern { "bayer_pattern", BayerMap::Pattern::RGGB, BayerMap::enum_map };
     GeneratorParam<int32_t> bayer_pattern{"bayer_pattern", 0, 0, 3};
     // Max 16bit
     GeneratorParam<int32_t> width{"width", 0, 0, 65535};

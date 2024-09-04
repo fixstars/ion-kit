@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
         out_p1.bind(out1);
         Halide::Buffer<int32_t> out2 = Halide::Buffer<int32_t>::make_scalar();
         out_p2.bind(out2);
-        for (int i=0; i<100; ++i) {
+        for (int i = 0; i < 100; ++i) {
             b.run();
         }
     } catch (const std::exception &e) {

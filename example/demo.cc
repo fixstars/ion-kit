@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
             // IMX219
             Node imx = b.add("image_io_imx219")
                            .set_params(Param("index", i),
-                                      Param("url", "http://ion-kit.s3.us-west-2.amazonaws.com/images/pedestrian.png"));
+                                       Param("url", "http://ion-kit.s3.us-west-2.amazonaws.com/images/pedestrian.png"));
 
             // ISP
             Node downscale = b.add("image_processing_bayer_downscale_uint16")
@@ -205,7 +205,6 @@ int main(int argc, char *argv[]) {
         d435["output_d"].bind(depth_buf);
         sgm["output"].bind(sgm_buf);
 
-
         {
             // Execution execution
             b.run();
@@ -220,7 +219,7 @@ int main(int argc, char *argv[]) {
             // cv::imwrite("demo-depth.png", depth_img);
             cv::imwrite("demo-sgm.png", sgm_img);
             cv::imwrite("demo-yolo.png", yolo_img);
-            std::cout<<"Passed"<<std::endl;
+            std::cout << "Passed" << std::endl;
         }
 
     } catch (const std::exception &e) {

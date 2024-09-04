@@ -12,4 +12,4 @@
 #include "target.h"
 #include "type.h"
 
-#endif // ION_ION_H
+#endif  // ION_ION_H

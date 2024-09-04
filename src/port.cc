@@ -6,17 +6,15 @@
 namespace ion {
 
 Port::Impl::Impl()
-    : id(PortID(sole::uuid4().str())), pred_chan{"", ""}, succ_chans{}, type(), dimensions(-1)
-{
+    : id(PortID(sole::uuid4().str())), pred_chan{"", ""}, succ_chans{}, type(), dimensions(-1) {
 }
 
-Port::Impl::Impl(const NodeID & nid, const std::string& pn, const Halide::Type& t, int32_t d, const GraphID & gid)
-    : id(PortID(sole::uuid4().str())), pred_chan{nid, pn}, succ_chans{}, type(t), dimensions(d), graph_id(gid)
-{
-    params[0] = Halide::Parameter(type, dimensions != 0, dimensions, argument_name(nid, id,  pn, 0, gid));
+Port::Impl::Impl(const NodeID &nid, const std::string &pn, const Halide::Type &t, int32_t d, const GraphID &gid)
+    : id(PortID(sole::uuid4().str())), pred_chan{nid, pn}, succ_chans{}, type(t), dimensions(d), graph_id(gid) {
+    params[0] = Halide::Parameter(type, dimensions != 0, dimensions, argument_name(nid, id, pn, 0, gid));
 }
 
-void Port::determine_succ(const NodeID& nid, const std::string& old_pn, const std::string& new_pn) {
+void Port::determine_succ(const NodeID &nid, const std::string &old_pn, const std::string &new_pn) {
     auto it = std::find(impl_->succ_chans.begin(), impl_->succ_chans.end(), Channel{nid, old_pn});
     if (it == impl_->succ_chans.end()) {
         log::error("fixme");
@@ -28,7 +26,7 @@ void Port::determine_succ(const NodeID& nid, const std::string& old_pn, const st
     impl_->succ_chans.insert(Channel{nid, new_pn});
 }
 
-std::tuple<std::shared_ptr<Port::Impl>, bool> Port::find_impl(const std::string& id) {
+std::tuple<std::shared_ptr<Port::Impl>, bool> Port::find_impl(const std::string &id) {
     static std::unordered_map<std::string, std::shared_ptr<Impl>> impls;
     static std::mutex mutex;
     std::scoped_lock lock(mutex);
@@ -41,4 +39,4 @@ std::tuple<std::shared_ptr<Port::Impl>, bool> Port::find_impl(const std::string&
     return std::make_tuple(impls[id], found);
 }
 
-} // namespace ion
+}  // namespace ion

@@ -24,8 +24,7 @@ int main() {
             ion::Buffer<int32_t>{w, h},
             ion::Buffer<int32_t>{w, h},
             ion::Buffer<int32_t>{w, h},
-            ion::Buffer<int32_t>{w, h}
-        };
+            ion::Buffer<int32_t>{w, h}};
 
         for (auto &b : outs) {
             b.fill(0);
@@ -38,7 +37,7 @@ int main() {
         n = b.add("test_array_output")(in).set_params(Param("len", len));
         n = b.add("test_array_copy")(n["array_output"]).set_params(Param("array_input.size", len));
 
-        for (int i=0; i<len; ++i) {
+        for (int i = 0; i < len; ++i) {
             n["array_output"][i].bind(outs[i]);
         }
 
@@ -70,7 +69,6 @@ int main() {
         std::cerr << e.what() << std::endl;
         return 1;
     }
-
 
     std::cout << "Passed" << std::endl;
 

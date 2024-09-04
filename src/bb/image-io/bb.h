@@ -61,8 +61,7 @@ const int BayerMap::bayer_map[4][4]{
 };
 
 #ifdef __linux__
-uint32_t make_pixel_format(BayerMap::Pattern bayer_pattern, int32_t bit_width)
-{
+uint32_t make_pixel_format(BayerMap::Pattern bayer_pattern, int32_t bit_width) {
     uint32_t pix_format;
     switch (bit_width * 10 + static_cast<int32_t>(static_cast<BayerMap::Pattern>(bayer_pattern))) {
     case 80:  // RGGB 8bit
@@ -109,7 +108,6 @@ uint32_t make_pixel_format(BayerMap::Pattern bayer_pattern, int32_t bit_width)
 }
 
 int instance_id = 0;
-
 
 class Camera : public ion::BuildingBlock<Camera> {
 public:
@@ -180,22 +178,17 @@ public:
     BuildingBlockParam<std::string> url0{"url0", ""};
     BuildingBlockParam<std::string> url1{"url1", ""};
 
-
-
     Output<Halide::Func> output0{"output0", Halide::type_of<uint8_t>(), 3};
     Output<Halide::Func> output1{"output1", Halide::type_of<uint8_t>(), 3};
-
 
     void generate() {
         using namespace Halide;
 
-
-        for (int i =0; i < num_devices; i++){
+        for (int i = 0; i < num_devices; i++) {
             std::string url_str;
-            if(i == 0){
+            if (i == 0) {
                 url_str = url0;
-            }
-            else{
+            } else {
                 url_str = url1;
             }
 
@@ -221,22 +214,16 @@ public:
             Expr g = saturating_cast<uint8_t>(yv - cast<float>(0.344f) * (uv - f128) - (cast<float>(0.714f) * (vv - f128)));
             Expr b = saturating_cast<uint8_t>(yv + cast<float>(1.773f) * (uv - f128));
 
-
-
-
             Func f(static_cast<std::string>(gc_prefix) + "output" + std::to_string(i));
             f(x, y, c) = mux(c, {r, g, b});
 
-
-            if (i ==0)
+            if (i == 0)
                 output0 = f;
             else
                 output1 = f;
         }
-
     }
 };
-
 
 class CameraN : public ion::BuildingBlock<CameraN> {
 public:
@@ -257,32 +244,26 @@ public:
 
     Output<Halide::Func[]> output{"output", Halide::type_of<uint8_t>(), 3};
 
-
     void generate() {
 
         std::stringstream urls_stream(urls);
         std::string url;
         std::vector<std::string> url_list;
-        while(std::getline(urls_stream, url, ';'))
-        {
+        while (std::getline(urls_stream, url, ';')) {
             url_list.push_back(url);
         }
-
 
         using namespace Halide;
 
         output.resize(num_devices);
 
-        for (int i =0; i < num_devices; i++){
+        for (int i = 0; i < num_devices; i++) {
             std::string url_str;
-            if (url_list.size()!=0){
+            if (url_list.size() != 0) {
                 url_str = url_list[i];
-            }
-            else{
+            } else {
                 url_str = "";
             }
-
-
 
             Halide::Buffer<uint8_t> url_buf(url_str.size() + 1);
             url_buf.fill(0);
@@ -306,13 +287,11 @@ public:
             Expr g = saturating_cast<uint8_t>(yv - cast<float>(0.344f) * (uv - f128) - (cast<float>(0.714f) * (vv - f128)));
             Expr b = saturating_cast<uint8_t>(yv + cast<float>(1.773f) * (uv - f128));
 
-
             Func f(static_cast<std::string>(gc_prefix) + "output" + std::to_string(i));
             f(x, y, c) = mux(c, {r, g, b});
 
             output[i](_) = f(_);
         }
-
     }
 };
 
@@ -353,8 +332,7 @@ public:
             url_buf,
             0.4f, 0.5f, 0.3125f,
             0.0625f,
-            10, 6
-        };
+            10, 6};
         Func v4l2_imx219(static_cast<std::string>(gc_prefix) + "output");
         v4l2_imx219.define_extern("ion_bb_image_io_v4l2", params, type_of<uint16_t>(), 2);
         v4l2_imx219.compute_root();
@@ -398,7 +376,6 @@ public:
     }
 };
 
-
 class GenericV4L2Bayer : public ion::BuildingBlock<GenericV4L2Bayer> {
 public:
     BuildingBlockParam<std::string> gc_title{"gc_title", "GenericV4L2Bayer"};
@@ -437,8 +414,7 @@ public:
             url_buf,
             1.f, 1.f, 1.f,
             0.f,
-            cast<int32_t>(bit_width), 16 - bit_width
-        };
+            cast<int32_t>(bit_width), 16 - bit_width};
         Func v4l2(static_cast<std::string>(gc_prefix) + "output");
         v4l2.define_extern("ion_bb_image_io_v4l2", params, type_of<uint16_t>(), 2);
         v4l2.compute_root();
@@ -489,8 +465,7 @@ public:
             url_buf,
             cast<float>(gain_r), cast<float>(gain_g), cast<float>(gain_b),
             cast<float>(offset),
-            cast<int32_t>(bit_width), cast<int32_t>(bit_shift)
-        };
+            cast<int32_t>(bit_width), cast<int32_t>(bit_shift)};
         Func camera(static_cast<std::string>(gc_prefix) + "output");
         camera.define_extern("ion_bb_image_io_v4l2", params, type_of<uint16_t>(), 2);
         camera.compute_root();
@@ -499,7 +474,6 @@ public:
     }
 };
 #endif
-
 
 class GUIDisplay : public ion::BuildingBlock<GUIDisplay> {
 public:
@@ -661,7 +635,6 @@ public:
     }
 };
 
-
 class ImageSaver : public ion::BuildingBlock<ImageSaver> {
 public:
     BuildingBlockParam<std::string> gc_title{"gc_title", "Image Saver"};
@@ -710,17 +683,16 @@ public:
 template<typename T, int D>
 class U3VCamera1 : public ion::BuildingBlock<U3VCamera1<T, D>> {
 public:
-
     BuildingBlockParam<bool> frame_sync{"frame_sync", false};
     BuildingBlockParam<std::string> gain_key_ptr{"gain_key", "Gain"};
     BuildingBlockParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
     BuildingBlockParam<bool> realtime_display_mode{"realtime_display_mode", false};
 
-    Input<double> gain0{ "gain0" };
-    Input<double> exposure0{ "exposure0" };
+    Input<double> gain0{"gain0"};
+    Input<double> exposure0{"exposure0"};
 
-    Output<Halide::Func> output0{ "output0", Halide::type_of<T>(), D};
-    Output<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
+    Output<Halide::Func> output0{"output0", Halide::type_of<T>(), D};
+    Output<Halide::Func> frame_count{"frame_count", Halide::type_of<uint32_t>(), 1};
 
     void generate() {
         using namespace Halide;
@@ -740,10 +712,9 @@ public:
             std::memcpy(exposure_key_buf.data(), exposure_key.c_str(), exposure_key.size());
 
             std::vector<ExternFuncArgument> params{
-            static_cast<bool>(frame_sync), static_cast<bool>(realtime_display_mode),
-            gain0, exposure0,
-            id_buf, gain_key_buf, exposure_key_buf
-         };
+                static_cast<bool>(frame_sync), static_cast<bool>(realtime_display_mode),
+                gain0, exposure0,
+                id_buf, gain_key_buf, exposure_key_buf};
             camera1.define_extern("ion_bb_image_io_u3v_camera1", params, Halide::type_of<T>(), D);
             camera1.compute_root();
             output0(_) = camera1(_);
@@ -752,13 +723,12 @@ public:
         Func camera1_frame_count;
         {
             Buffer<uint8_t> id_buf = this->get_id();
-            camera1_frame_count.define_extern("ion_bb_image_io_u3v_camera1_frame_count",{camera1, 1, static_cast<bool>(frame_sync), static_cast<bool>(realtime_display_mode), id_buf}, type_of<uint32_t>(), 1);
+            camera1_frame_count.define_extern("ion_bb_image_io_u3v_camera1_frame_count", {camera1, 1, static_cast<bool>(frame_sync), static_cast<bool>(realtime_display_mode), id_buf}, type_of<uint32_t>(), 1);
             camera1_frame_count.compute_root();
             frame_count(_) = camera1_frame_count(_);
         }
 
         this->register_disposer("u3v_dispose");
-
     }
 };
 
@@ -769,20 +739,19 @@ using U3VCamera1_U16x2 = U3VCamera1<uint16_t, 2>;
 template<typename T, int D>
 class U3VCamera2 : public ion::BuildingBlock<U3VCamera2<T, D>> {
 public:
-
     BuildingBlockParam<bool> frame_sync{"frame_sync", false};
     BuildingBlockParam<std::string> gain_key_ptr{"gain_key", "Gain"};
     BuildingBlockParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
     BuildingBlockParam<bool> realtime_display_mode{"realtime_display_mode", false};
 
-    Input<double> gain0{ "gain0" };
-    Input<double> gain1{ "gain1" };
-    Input<double> exposure0{ "exposure0" };
-    Input<double> exposure1{ "exposure1" };
+    Input<double> gain0{"gain0"};
+    Input<double> gain1{"gain1"};
+    Input<double> exposure0{"exposure0"};
+    Input<double> exposure1{"exposure1"};
 
-    Output<Halide::Func> output0{ "output0", Halide::type_of<T>(), D};
-    Output<Halide::Func> output1{ "output1", Halide::type_of<T>(), D};
-    Output<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
+    Output<Halide::Func> output0{"output0", Halide::type_of<T>(), D};
+    Output<Halide::Func> output1{"output1", Halide::type_of<T>(), D};
+    Output<Halide::Func> frame_count{"frame_count", Halide::type_of<uint32_t>(), 1};
 
     void generate() {
         using namespace Halide;
@@ -804,17 +773,17 @@ public:
             std::vector<ExternFuncArgument> params{
                 static_cast<bool>(frame_sync), static_cast<bool>(realtime_display_mode),
                 gain0, gain1, exposure0, exposure1,
-                id_buf, gain_key_buf, exposure_key_buf
-             };
-            camera2.define_extern("ion_bb_image_io_u3v_camera2", params, { Halide::type_of<T>(), Halide::type_of<T>() }, D);
+                id_buf, gain_key_buf, exposure_key_buf};
+            camera2.define_extern("ion_bb_image_io_u3v_camera2", params, {Halide::type_of<T>(), Halide::type_of<T>()}, D);
             camera2.compute_root();
             output0(_) = camera2(_)[0];
             output1(_) = camera2(_)[1];
         }
 
-        Func camera2_frame_count;{
+        Func camera2_frame_count;
+        {
             Buffer<uint8_t> id_buf = this->get_id();
-            camera2_frame_count.define_extern("ion_bb_image_io_u3v_camera2_frame_count", { camera2,  2, static_cast<bool>(frame_sync), static_cast<bool>(realtime_display_mode), id_buf}, type_of<uint32_t>(), 1);
+            camera2_frame_count.define_extern("ion_bb_image_io_u3v_camera2_frame_count", {camera2, 2, static_cast<bool>(frame_sync), static_cast<bool>(realtime_display_mode), id_buf}, type_of<uint32_t>(), 1);
             camera2_frame_count.compute_root();
             frame_count(_) = camera2_frame_count(_);
         }
@@ -837,9 +806,9 @@ public:
     BuildingBlockParam<std::string> gain_key_ptr{"gain_key", "Gain"};
     BuildingBlockParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
 
-    Output<Halide::Func[]> output{ "output", Halide::type_of<T>(), D};
-    Output<Halide::Func[]> device_info{ "device_info", Halide::type_of<uint8_t>(), 1};
-    Output<Halide::Func[]> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
+    Output<Halide::Func[]> output{"output", Halide::type_of<T>(), D};
+    Output<Halide::Func[]> device_info{"device_info", Halide::type_of<uint8_t>(), 1};
+    Output<Halide::Func[]> frame_count{"frame_count", Halide::type_of<uint32_t>(), 1};
 
     std::vector<Input<double> *> gain;
     std::vector<Input<double> *> exposure;
@@ -852,7 +821,7 @@ public:
 
     void configure() {
         if (enable_control) {
-            for (auto i=0; i<num_devices; ++i) {
+            for (auto i = 0; i < num_devices; ++i) {
                 gain.push_back(Halide::Internal::GeneratorBase::add_input<double>("gain_" + std::to_string(i)));
                 exposure.push_back(Halide::Internal::GeneratorBase::add_input<double>("exposure_" + std::to_string(i)));
             }
@@ -884,13 +853,12 @@ public:
             std::vector<ExternFuncArgument> params{
                 id_buf,
                 static_cast<bool>(force_sim_mode),
-                static_cast<int32_t>(width), static_cast<int32_t>(height),static_cast<float_t>(fps),
+                static_cast<int32_t>(width), static_cast<int32_t>(height), static_cast<float_t>(fps),
                 static_cast<bool>(frame_sync), static_cast<bool>(realtime_display_mode),
                 static_cast<bool>(enable_control),
-                gain_key_buf, exposure_key_buf, pixel_format_buf
-            };
+                gain_key_buf, exposure_key_buf, pixel_format_buf};
 
-            for (int i = 0; i<num_devices; i++) {
+            for (int i = 0; i < num_devices; i++) {
                 if (i < gain.size()) {
                     params.push_back(*gain[i]);
                 } else {
@@ -906,10 +874,10 @@ public:
             output.resize(num_devices);
             cameraN.define_extern("ion_bb_image_io_u3v_multiple_camera" + std::to_string(num_devices), params, std::vector<Halide::Type>(num_devices, Halide::type_of<T>()), D);
             cameraN.compute_root();
-            if (num_devices == 1){
+            if (num_devices == 1) {
                 output[0](_) = cameraN(_);
             } else {
-                for (int i = 0; i<num_devices; i++) {
+                for (int i = 0; i < num_devices; i++) {
                     output[i](_) = cameraN(_)[i];
                 }
             }
@@ -929,8 +897,7 @@ public:
                 static_cast<bool>(force_sim_mode),
                 static_cast<int32_t>(width), static_cast<int32_t>(height), static_cast<float_t>(fps),
                 static_cast<bool>(frame_sync), static_cast<bool>(realtime_display_mode),
-                pixel_format_buf
-            };
+                pixel_format_buf};
 
             device_info.resize(num_devices);
             std::vector<Halide::Type> output_type;
@@ -939,9 +906,9 @@ public:
             }
             u3v_device_info.define_extern("ion_bb_image_io_u3v_device_info" + std::to_string(device_info.size()), params, output_type, 1);
             u3v_device_info.compute_root();
-            if (device_info.size() == 1){
+            if (device_info.size() == 1) {
                 device_info[0](_) = u3v_device_info(_);
-            }else{
+            } else {
                 for (int i = 0; i < device_info.size(); i++) {
                     device_info[i](_) = u3v_device_info(_)[i];
                 }
@@ -961,8 +928,7 @@ public:
                 static_cast<bool>(force_sim_mode),
                 static_cast<int32_t>(width), static_cast<int32_t>(height), static_cast<float_t>(fps),
                 static_cast<bool>(frame_sync), static_cast<bool>(realtime_display_mode),
-                pixel_format_buf
-            };
+                pixel_format_buf};
 
             frame_count.resize(num_devices);
             std::vector<Halide::Type> output_type;
@@ -971,9 +937,9 @@ public:
             }
             cameraN_fc.define_extern("ion_bb_image_io_u3v_multiple_camera_frame_count" + std::to_string(output.size()), params, output_type, 1);
             cameraN_fc.compute_root();
-            if (frame_count.size() == 1){
+            if (frame_count.size() == 1) {
                 frame_count[0](_) = cameraN_fc(_);
-            }else{
+            } else {
                 for (int i = 0; i < device_info.size(); i++) {
                     frame_count[i](_) = cameraN_fc(_)[i];
                 }
@@ -981,7 +947,6 @@ public:
         }
         this->register_disposer("u3v_dispose");
     }
-
 };
 
 using U3VCameraN_U8x3 = U3VCameraN<uint8_t, 3>;
@@ -990,7 +955,7 @@ using U3VCameraN_U16x2 = U3VCameraN<uint16_t, 2>;
 
 class U3VCameraGenDC : public ion::BuildingBlock<U3VCameraGenDC> {
 public:
-    BuildingBlockParam<int32_t> num_devices{"num_devices", 2};     // NOTE: num_devices refers to sensor count not usb device count
+    BuildingBlockParam<int32_t> num_devices{"num_devices", 2};  // NOTE: num_devices refers to sensor count not usb device count
     BuildingBlockParam<bool> frame_sync{"frame_sync", false};
     BuildingBlockParam<bool> realtime_display_mode{"realtime_display_mode", false};
 
@@ -998,8 +963,8 @@ public:
     BuildingBlockParam<std::string> gain_key_ptr{"gain_key", "Gain"};
     BuildingBlockParam<std::string> exposure_key_ptr{"exposure_key", "Exposure"};
 
-    Output<Halide::Func[]> gendc{ "gendc", Halide::type_of<uint8_t>(), 1};
-    Output<Halide::Func[]> device_info{ "device_info", Halide::type_of<uint8_t>(), 1};
+    Output<Halide::Func[]> gendc{"gendc", Halide::type_of<uint8_t>(), 1};
+    Output<Halide::Func[]> device_info{"device_info", Halide::type_of<uint8_t>(), 1};
 
     std::vector<Input<double> *> gain;
     std::vector<Input<double> *> exposure;
@@ -1012,7 +977,7 @@ public:
 
     void configure() {
         if (enable_control) {
-            for (auto i=0; i<num_devices; ++i) {
+            for (auto i = 0; i < num_devices; ++i) {
                 gain.push_back(Halide::Internal::GeneratorBase::add_input<double>("gain_" + std::to_string(i)));
                 exposure.push_back(Halide::Internal::GeneratorBase::add_input<double>("exposure_" + std::to_string(i)));
             }
@@ -1024,7 +989,7 @@ public:
 
         Func u3v_gendc("u3v_gendc");
         {
-            Buffer<uint8_t> id_buf =  this->get_id();
+            Buffer<uint8_t> id_buf = this->get_id();
 
             const std::string gain_key(gain_key_ptr);
             Buffer<uint8_t> gain_key_buf(static_cast<int>(gain_key.size() + 1));
@@ -1044,13 +1009,12 @@ public:
             std::vector<ExternFuncArgument> params{
                 id_buf,
                 static_cast<bool>(force_sim_mode),
-                static_cast<int32_t>(width), static_cast<int32_t>(height),static_cast<float_t>(fps),
+                static_cast<int32_t>(width), static_cast<int32_t>(height), static_cast<float_t>(fps),
                 static_cast<bool>(frame_sync), static_cast<bool>(realtime_display_mode),
                 static_cast<bool>(enable_control),
-                gain_key_buf, exposure_key_buf, pixel_format_buf
-            };
+                gain_key_buf, exposure_key_buf, pixel_format_buf};
 
-            for (int i = 0; i<num_devices; i++) {
+            for (int i = 0; i < num_devices; i++) {
                 if (i < gain.size()) {
                     params.push_back(*gain[i]);
                 } else {
@@ -1070,9 +1034,9 @@ public:
             }
             u3v_gendc.define_extern("ion_bb_image_io_u3v_gendc_camera" + std::to_string(gendc.size()), params, output_type, 1);
             u3v_gendc.compute_root();
-            if (gendc.size() == 1){
+            if (gendc.size() == 1) {
                 gendc[0](_) = u3v_gendc(_);
-            }else{
+            } else {
                 for (int i = 0; i < gendc.size(); i++) {
                     gendc[i](_) = u3v_gendc(_)[i];
                 }
@@ -1093,8 +1057,7 @@ public:
                 static_cast<bool>(force_sim_mode),
                 static_cast<int32_t>(width), static_cast<int32_t>(height), static_cast<float_t>(fps),
                 static_cast<bool>(frame_sync), static_cast<bool>(realtime_display_mode),
-                pixel_format_buf
-            };
+                pixel_format_buf};
 
             device_info.resize(num_devices);
             std::vector<Halide::Type> output_type;
@@ -1103,9 +1066,9 @@ public:
             }
             u3v_device_info.define_extern("ion_bb_image_io_u3v_device_info" + std::to_string(device_info.size()), params, output_type, 1);
             u3v_device_info.compute_root();
-            if (device_info.size() == 1){
+            if (device_info.size() == 1) {
                 device_info[0](_) = u3v_device_info(_);
-            }else{
+            } else {
                 for (int i = 0; i < device_info.size(); i++) {
                     device_info[i](_) = u3v_device_info(_)[i];
                 }
@@ -1116,19 +1079,17 @@ public:
     }
 };
 
-
-
 template<typename T, int D>
 class BinarySaver : public ion::BuildingBlock<BinarySaver<T, D>> {
 public:
-    BuildingBlockParam<std::string> output_directory_ptr{ "output_directory", "." };
+    BuildingBlockParam<std::string> output_directory_ptr{"output_directory", "."};
     BuildingBlockParam<std::string> prefix_ptr{"prefix", "raw-"};
 
     Input<Halide::Func> input_images{"input", Halide::type_of<T>(), D};
-    Input<Halide::Func> input_deviceinfo{ "input_deviceinfo", Halide::type_of<uint8_t>(), 1 };
-    Input<Halide::Func> frame_count{ "frame_count", Halide::type_of<uint32_t>(), 1 };
-    Input<int32_t> width{ "width" };
-    Input<int32_t> height{ "height" };
+    Input<Halide::Func> input_deviceinfo{"input_deviceinfo", Halide::type_of<uint8_t>(), 1};
+    Input<Halide::Func> frame_count{"frame_count", Halide::type_of<uint32_t>(), 1};
+    Input<int32_t> width{"width"};
+    Input<int32_t> height{"height"};
 
     Output<int32_t> output{"output"};
 
@@ -1162,7 +1123,7 @@ public:
         deviceinfo(_) = input_deviceinfo(_);
         deviceinfo.compute_root();
 
-        std::vector<ExternFuncArgument> params = {id_buf, image, deviceinfo, fc, width, height, dim, byte_depth, output_directory_buf, prefix_buf };
+        std::vector<ExternFuncArgument> params = {id_buf, image, deviceinfo, fc, width, height, dim, byte_depth, output_directory_buf, prefix_buf};
         Func ion_bb_image_io_binary_image_saver;
         ion_bb_image_io_binary_image_saver.define_extern("ion_bb_image_io_binary_image_saver", params, Int(32), 0);
         ion_bb_image_io_binary_image_saver.compute_root();
@@ -1172,24 +1133,22 @@ public:
     }
 };
 
-
 using BinarySaver_U8x3 = BinarySaver<uint8_t, 3>;
 using BinarySaver_U8x2 = BinarySaver<uint8_t, 2>;
 using BinarySaver_U16x2 = BinarySaver<uint16_t, 2>;
 
 class BinaryGenDCSaver : public ion::BuildingBlock<BinaryGenDCSaver> {
 public:
-    BuildingBlockParam<std::string> output_directory_ptr{ "output_directory", "." };
+    BuildingBlockParam<std::string> output_directory_ptr{"output_directory", "."};
 
     BuildingBlockParam<std::string> prefix_ptr{"prefix", "raw-"};
 
-    Input<Halide::Func> input_gendc{ "input_gendc", Halide::type_of<uint8_t>(), 1 };
-    Input<Halide::Func> input_deviceinfo{ "input_deviceinfo", Halide::type_of<uint8_t>(), 1 };
+    Input<Halide::Func> input_gendc{"input_gendc", Halide::type_of<uint8_t>(), 1};
+    Input<Halide::Func> input_deviceinfo{"input_deviceinfo", Halide::type_of<uint8_t>(), 1};
 
+    Input<int32_t> payloadsize{"payloadsize"};
 
-    Input<int32_t> payloadsize{ "payloadsize" };
-
-    Output<int> output{ "output" };
+    Output<int> output{"output"};
 
     void generate() {
         using namespace Halide;
@@ -1213,7 +1172,7 @@ public:
         deviceinfo(_) = input_deviceinfo(_);
         deviceinfo.compute_root();
 
-        std::vector<ExternFuncArgument> params = { id_buf, gendc, deviceinfo, payloadsize, output_directory_buf, prefix_buf };
+        std::vector<ExternFuncArgument> params = {id_buf, gendc, deviceinfo, payloadsize, output_directory_buf, prefix_buf};
         Func image_io_binary_gendc_saver;
         image_io_binary_gendc_saver.define_extern("ion_bb_image_io_binary_gendc_saver", params, Int(32), 0);
         image_io_binary_gendc_saver.compute_root();
@@ -1225,13 +1184,13 @@ public:
 
 class BinaryLoader : public ion::BuildingBlock<BinaryLoader> {
 public:
-    BuildingBlockParam<std::string> output_directory_ptr{ "output_directory_ptr", "" };
-    Input<int32_t> width{ "width", 0 };
-    Input<int32_t> height{ "height", 0 };
-    Output<Halide::Func> output0{ "output0", UInt(16), 2 };
-    Output<Halide::Func> output1{ "output1", UInt(16), 2 };
-    Output<Halide::Func> finished{ "finished", UInt(1), 1};
-    Output<Halide::Func> bin_idx{ "bin_idx", UInt(32), 1 };
+    BuildingBlockParam<std::string> output_directory_ptr{"output_directory_ptr", ""};
+    Input<int32_t> width{"width", 0};
+    Input<int32_t> height{"height", 0};
+    Output<Halide::Func> output0{"output0", UInt(16), 2};
+    Output<Halide::Func> output1{"output1", UInt(16), 2};
+    Output<Halide::Func> finished{"finished", UInt(1), 1};
+    Output<Halide::Func> bin_idx{"bin_idx", UInt(32), 1};
 
     void generate() {
         using namespace Halide;
@@ -1246,18 +1205,17 @@ public:
         output_directory_buf.fill(0);
         std::memcpy(output_directory_buf.data(), output_directory.c_str(), output_directory.size());
 
-        std::vector<ExternFuncArgument> params = { session_id_buf, width, height, output_directory_buf };
+        std::vector<ExternFuncArgument> params = {session_id_buf, width, height, output_directory_buf};
         Func binaryloader;
-        binaryloader.define_extern("binaryloader", params, { UInt(16), UInt(16) }, 2);
+        binaryloader.define_extern("binaryloader", params, {UInt(16), UInt(16)}, 2);
         binaryloader.compute_root();
         output0(_) = binaryloader(_)[0];
         output1(_) = binaryloader(_)[1];
 
-
         Func binaryloader_finished;
         binaryloader_finished.define_extern("binaryloader_finished",
-            { binaryloader, session_id_buf, width, height, output_directory_buf },
-            { type_of<bool>(), UInt(32)}, 1);
+                                            {binaryloader, session_id_buf, width, height, output_directory_buf},
+                                            {type_of<bool>(), UInt(32)}, 1);
         binaryloader_finished.compute_root();
         finished(_) = binaryloader_finished(_)[0];
         bin_idx(_) = binaryloader_finished(_)[1];
@@ -1280,7 +1238,6 @@ ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::Camera, image_io_camera);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::Camera2, image_io_camera2);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::CameraN, image_io_cameraN);
 #endif
-
 
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::ColorDataLoader, image_io_color_data_loader);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::GrayscaleDataLoader, image_io_grayscale_data_loader);
@@ -1310,7 +1267,7 @@ ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinaryLoader, image_io_binaryload
 
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinaryGenDCSaver, image_io_binary_gendc_saver);
 
-//backward compatability
+// backward compatability
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera1_U8x3, u3v_camera1_u8x3);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera1_U16x2, u3v_camera1_u16x2);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::U3VCamera2_U8x3, u3v_camera2_u8x3);

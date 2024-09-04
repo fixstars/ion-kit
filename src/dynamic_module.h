@@ -22,10 +22,10 @@
 #include "log.h"
 
 namespace {
-bool has_prefix_and_ext(const std::string& n) {
+bool has_prefix_and_ext(const std::string &n) {
     return n.find(ION_DYNAMIC_MODULE_PREFIX) != std::string::npos && n.find(ION_DYNAMIC_MODULE_EXT) != std::string::npos;
 }
-}
+}  // namespace
 
 namespace ion {
 
@@ -37,7 +37,7 @@ public:
     using Handle = void *;
 #endif
 
-    DynamicModule(const std::string& module_name_or_path, bool essential = true, bool lazy_load = false) {
+    DynamicModule(const std::string &module_name_or_path, bool essential = true, bool lazy_load = false) {
         if (module_name_or_path == "") {
             handle_ = nullptr;
             return;

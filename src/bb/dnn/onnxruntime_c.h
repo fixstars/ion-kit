@@ -171,7 +171,7 @@ ORT_RUNTIME_CLASS(Env);
 ORT_RUNTIME_CLASS(Status);  // nullptr for Status* indicates success
 ORT_RUNTIME_CLASS(MemoryInfo);
 ORT_RUNTIME_CLASS(IoBinding);
-ORT_RUNTIME_CLASS(Session);  //Don't call OrtReleaseSession from Dllmain (because session owns a thread pool)
+ORT_RUNTIME_CLASS(Session);  // Don't call OrtReleaseSession from Dllmain (because session owns a thread pool)
 ORT_RUNTIME_CLASS(Value);
 ORT_RUNTIME_CLASS(RunOptions);
 ORT_RUNTIME_CLASS(TypeInfo);
@@ -193,8 +193,9 @@ typedef OrtStatus *OrtStatusPtr;
 // __VA_ARGS__ on Windows and Linux are different
 #define ORT_API(RETURN_TYPE, NAME, ...) ORT_EXPORT RETURN_TYPE ORT_API_CALL NAME(__VA_ARGS__) NO_EXCEPTION
 
-#define ORT_API_STATUS(NAME, ...) \
-    ORT_EXPORT _Check_return_ _Ret_maybenull_ OrtStatusPtr ORT_API_CALL NAME(__VA_ARGS__) NO_EXCEPTION ORT_MUST_USE_RESULT
+#define ORT_API_STATUS(NAME, ...)                                                         \
+    ORT_EXPORT _Check_return_ _Ret_maybenull_ OrtStatusPtr ORT_API_CALL NAME(__VA_ARGS__) \
+    NO_EXCEPTION ORT_MUST_USE_RESULT
 
 // XXX: Unfortunately, SAL annotations are known to not work with function pointers
 #define ORT_API2_STATUS(NAME, ...) \
@@ -260,7 +261,7 @@ typedef enum OrtAllocatorType {
 /**
  * memory types for allocator, exec provider specific types should be extended in each provider
  * Whenever this struct is updated, please also update the MakeKey function in onnxruntime/core/framework/execution_provider.cc
-*/
+ */
 typedef enum OrtMemType {
     OrtMemTypeCPUInput = -2,              // Any CPU memory used by non-CPU execution provider
     OrtMemTypeCPUOutput = -1,             // CPU accessible memory outputted by non-CPU execution provider, i.e. CUDA_PINNED
@@ -281,16 +282,16 @@ typedef struct OrtApiBase OrtApiBase;
 
 struct OrtApi {
     /**
-* \param msg A null-terminated string. Its content will be copied into the newly created OrtStatus
-*/
+     * \param msg A null-terminated string. Its content will be copied into the newly created OrtStatus
+     */
     OrtStatus *(ORT_API_CALL *CreateStatus)(OrtErrorCode code, _In_ const char *msg)NO_EXCEPTION ORT_ALL_ARGS_NONNULL;
 
     OrtErrorCode(ORT_API_CALL *GetErrorCode)(_In_ const OrtStatus *status) NO_EXCEPTION ORT_ALL_ARGS_NONNULL;
 
     /**
- * \param status must not be NULL
- * \return The error message inside the `status`. Do not free the returned value.
- */
+     * \param status must not be NULL
+     * \return The error message inside the `status`. Do not free the returned value.
+     */
     const char *(ORT_API_CALL *GetErrorMessage)(_In_ const OrtStatus *status)NO_EXCEPTION ORT_ALL_ARGS_NONNULL;
 
     /**
@@ -299,8 +300,8 @@ struct OrtApi {
     ORT_API2_STATUS(CreateEnv, OrtLoggingLevel default_logging_level, _In_ const char *logid, _Outptr_ OrtEnv **out);
 
     /**
-   * \param out Should be freed by `OrtReleaseEnv` after use
-   */
+     * \param out Should be freed by `OrtReleaseEnv` after use
+     */
     ORT_API2_STATUS(CreateEnvWithCustomLogger, OrtLoggingFunction logging_function, _In_opt_ void *logger_param,
                     OrtLoggingLevel default_warning_level, _In_ const char *logid, _Outptr_ OrtEnv **out);
 
@@ -326,8 +327,8 @@ struct OrtApi {
                     _Inout_updates_all_(output_names_len) OrtValue **output);
 
     /**
-    * \return A pointer of the newly created object. The pointer should be freed by OrtReleaseSessionOptions after use
-    */
+     * \return A pointer of the newly created object. The pointer should be freed by OrtReleaseSessionOptions after use
+     */
     ORT_API2_STATUS(CreateSessionOptions, _Outptr_ OrtSessionOptions **options);
 
     // Set filepath to save optimized model after graph level transformations.
@@ -390,13 +391,13 @@ struct OrtApi {
     /*
      * Add custom ops to the OrtCustomOpDomain
      *  Note: The OrtCustomOp* pointer must remain valid until the OrtCustomOpDomain using it is released
-    */
+     */
     ORT_API2_STATUS(CustomOpDomain_Add, _Inout_ OrtCustomOpDomain *custom_op_domain, _In_ OrtCustomOp *op);
 
     /*
      * Add a custom op domain to the OrtSessionOptions
      *  Note: The OrtCustomOpDomain* must not be deleted until the sessions using it are released
-    */
+     */
     ORT_API2_STATUS(AddCustomOpDomain, _Inout_ OrtSessionOptions *options, _In_ OrtCustomOpDomain *custom_op_domain);
 
     /*
@@ -405,45 +406,45 @@ struct OrtApi {
      * It then passes in the provided session options to this function along with the api base.
      * The handle to the loaded library is returned in library_handle. It can be freed by the caller after all sessions using the passed in
      * session options are destroyed, or if an error occurs and it is non null.
-  */
+     */
     ORT_API2_STATUS(RegisterCustomOpsLibrary, _Inout_ OrtSessionOptions *options, _In_ const char *library_path,
                     void **library_handle);
 
     /**
-    * To use additional providers, you must build ORT with the extra providers enabled. Then call one of these
-    * functions to enable them in the session:
-    *   OrtSessionOptionsAppendExecutionProvider_CPU
-    *   OrtSessionOptionsAppendExecutionProvider_CUDA
-    *   OrtSessionOptionsAppendExecutionProvider_<remaining providers...>
-    * The order they are called indicates the preference order as well. In other words call this method
-    * on your most preferred execution provider first followed by the less preferred ones.
-    * If none are called Ort will use its internal CPU execution provider.
-    */
+     * To use additional providers, you must build ORT with the extra providers enabled. Then call one of these
+     * functions to enable them in the session:
+     *   OrtSessionOptionsAppendExecutionProvider_CPU
+     *   OrtSessionOptionsAppendExecutionProvider_CUDA
+     *   OrtSessionOptionsAppendExecutionProvider_<remaining providers...>
+     * The order they are called indicates the preference order as well. In other words call this method
+     * on your most preferred execution provider first followed by the less preferred ones.
+     * If none are called Ort will use its internal CPU execution provider.
+     */
 
     ORT_API2_STATUS(SessionGetInputCount, _In_ const OrtSession *sess, _Out_ size_t *out);
     ORT_API2_STATUS(SessionGetOutputCount, _In_ const OrtSession *sess, _Out_ size_t *out);
     ORT_API2_STATUS(SessionGetOverridableInitializerCount, _In_ const OrtSession *sess, _Out_ size_t *out);
 
     /**
-   * \param out  should be freed by OrtReleaseTypeInfo after use
-   */
+     * \param out  should be freed by OrtReleaseTypeInfo after use
+     */
     ORT_API2_STATUS(SessionGetInputTypeInfo, _In_ const OrtSession *sess, size_t index, _Outptr_ OrtTypeInfo **type_info);
 
     /**
-   * \param out  should be freed by OrtReleaseTypeInfo after use
-   */
+     * \param out  should be freed by OrtReleaseTypeInfo after use
+     */
     ORT_API2_STATUS(SessionGetOutputTypeInfo, _In_ const OrtSession *sess, size_t index,
                     _Outptr_ OrtTypeInfo **type_info);
 
     /**
- * \param out  should be freed by OrtReleaseTypeInfo after use
- */
+     * \param out  should be freed by OrtReleaseTypeInfo after use
+     */
     ORT_API2_STATUS(SessionGetOverridableInitializerTypeInfo, _In_ const OrtSession *sess, size_t index,
                     _Outptr_ OrtTypeInfo **type_info);
 
     /**
-   * \param value  is set to a null terminated string allocated using 'allocator'. The caller is responsible for freeing it.
-   */
+     * \param value  is set to a null terminated string allocated using 'allocator'. The caller is responsible for freeing it.
+     */
     ORT_API2_STATUS(SessionGetInputName, _In_ const OrtSession *sess, size_t index, _Inout_ OrtAllocator *allocator,
                     _Outptr_ char **value);
     ORT_API2_STATUS(SessionGetOutputName, _In_ const OrtSession *sess, size_t index, _Inout_ OrtAllocator *allocator,
@@ -452,8 +453,8 @@ struct OrtApi {
                     _Inout_ OrtAllocator *allocator, _Outptr_ char **value);
 
     /**
-   * \return A pointer to the newly created object. The pointer should be freed by OrtReleaseRunOptions after use
-   */
+     * \return A pointer to the newly created object. The pointer should be freed by OrtReleaseRunOptions after use
+     */
     ORT_API2_STATUS(CreateRunOptions, _Outptr_ OrtRunOptions **out);
 
     ORT_API2_STATUS(RunOptionsSetRunLogVerbosityLevel, _Inout_ OrtRunOptions *options, int value);
@@ -471,25 +472,25 @@ struct OrtApi {
     ORT_API2_STATUS(RunOptionsUnsetTerminate, _Inout_ OrtRunOptions *options);
 
     /**
-   * Create a tensor from an allocator. OrtReleaseValue will also release the buffer inside the output value
-   * \param out Should be freed by calling OrtReleaseValue
-   * \param type must be one of TENSOR_ELEMENT_DATA_TYPE_xxxx
-   */
+     * Create a tensor from an allocator. OrtReleaseValue will also release the buffer inside the output value
+     * \param out Should be freed by calling OrtReleaseValue
+     * \param type must be one of TENSOR_ELEMENT_DATA_TYPE_xxxx
+     */
     ORT_API2_STATUS(CreateTensorAsOrtValue, _Inout_ OrtAllocator *allocator, _In_ const int64_t *shape, size_t shape_len,
                     ONNXTensorElementDataType type, _Outptr_ OrtValue **out);
 
     /**
-   * Create a tensor with user's buffer. You can fill the buffer either before calling this function or after.
-   * p_data is owned by caller. OrtReleaseValue won't release p_data.
-   * \param out Should be freed by calling OrtReleaseValue
-   */
+     * Create a tensor with user's buffer. You can fill the buffer either before calling this function or after.
+     * p_data is owned by caller. OrtReleaseValue won't release p_data.
+     * \param out Should be freed by calling OrtReleaseValue
+     */
     ORT_API2_STATUS(CreateTensorWithDataAsOrtValue, _In_ const OrtMemoryInfo *info, _Inout_ void *p_data,
                     size_t p_data_len, _In_ const int64_t *shape, size_t shape_len, ONNXTensorElementDataType type,
                     _Outptr_ OrtValue **out);
 
     /**
-   * \Sets *out to 1 iff an OrtValue is a tensor, 0 otherwise
-   */
+     * \Sets *out to 1 iff an OrtValue is a tensor, 0 otherwise
+     */
     ORT_API2_STATUS(IsTensor, _In_ const OrtValue *value, _Out_ int *out);
 
     // This function doesn't work with string tensor
@@ -536,10 +537,10 @@ struct OrtApi {
     ORT_API2_STATUS(SetTensorElementType, _Inout_ OrtTensorTypeAndShapeInfo *, enum ONNXTensorElementDataType type);
 
     /**
- * \param info Created from CreateTensorTypeAndShapeInfo() function
- * \param dim_values An array with length of `dim_count`. Its elements can contain negative values.
- * \param dim_count length of dim_values
- */
+     * \param info Created from CreateTensorTypeAndShapeInfo() function
+     * \param dim_values An array with length of `dim_count`. Its elements can contain negative values.
+     * \param dim_count length of dim_values
+     */
     ORT_API2_STATUS(SetDimensions, OrtTensorTypeAndShapeInfo *info, _In_ const int64_t *dim_values, size_t dim_count);
 
     ORT_API2_STATUS(GetTensorElementType, _In_ const OrtTensorTypeAndShapeInfo *,
@@ -551,26 +552,26 @@ struct OrtApi {
                     _Out_writes_all_(dim_params_length) const char *dim_params[], size_t dim_params_length);
 
     /**
- * Return the number of elements specified by the tensor shape.
- * Return a negative value if unknown (i.e., any dimension is negative.)
- * e.g.
- * [] -> 1
- * [1,3,4] -> 12
- * [2,0,4] -> 0
- * [-1,3,4] -> -1
- */
+     * Return the number of elements specified by the tensor shape.
+     * Return a negative value if unknown (i.e., any dimension is negative.)
+     * e.g.
+     * [] -> 1
+     * [1,3,4] -> 12
+     * [2,0,4] -> 0
+     * [-1,3,4] -> -1
+     */
     ORT_API2_STATUS(GetTensorShapeElementCount, _In_ const OrtTensorTypeAndShapeInfo *info, _Out_ size_t *out);
 
     /**
- * \param out Should be freed by OrtReleaseTensorTypeAndShapeInfo after use
- */
+     * \param out Should be freed by OrtReleaseTensorTypeAndShapeInfo after use
+     */
     ORT_API2_STATUS(GetTensorTypeAndShape, _In_ const OrtValue *value, _Outptr_ OrtTensorTypeAndShapeInfo **out);
 
     /**
- * Get the type information of an OrtValue
- * \param value
- * \param out The returned value should be freed by OrtReleaseTypeInfo after use
- */
+     * Get the type information of an OrtValue
+     * \param value
+     * \param out The returned value should be freed by OrtReleaseTypeInfo after use
+     */
     ORT_API2_STATUS(GetTypeInfo, _In_ const OrtValue *value, _Outptr_result_maybenull_ OrtTypeInfo **out);
 
     ORT_API2_STATUS(GetValueType, _In_ const OrtValue *value, _Out_ enum ONNXType *out);
@@ -579,20 +580,20 @@ struct OrtApi {
                     enum OrtMemType mem_type1, _Outptr_ OrtMemoryInfo **out);
 
     /**
- * Convenience function for special case of CreateMemoryInfo, for the CPU allocator. Uses name = "Cpu" and id = 0.
- */
+     * Convenience function for special case of CreateMemoryInfo, for the CPU allocator. Uses name = "Cpu" and id = 0.
+     */
     ORT_API2_STATUS(CreateCpuMemoryInfo, enum OrtAllocatorType type, enum OrtMemType mem_type1,
                     _Outptr_ OrtMemoryInfo **out);
 
     /**
- * Test if two memory info are equal
- * \Sets 'out' to 0 if equal, -1 if not equal
- */
+     * Test if two memory info are equal
+     * \Sets 'out' to 0 if equal, -1 if not equal
+     */
     ORT_API2_STATUS(CompareMemoryInfo, _In_ const OrtMemoryInfo *info1, _In_ const OrtMemoryInfo *info2, _Out_ int *out);
 
     /**
- * Do not free the returned value
- */
+     * Do not free the returned value
+     */
     ORT_API2_STATUS(MemoryInfoGetName, _In_ const OrtMemoryInfo *ptr, _Out_ const char **out);
     ORT_API2_STATUS(MemoryInfoGetId, _In_ const OrtMemoryInfo *ptr, _Out_ int *out);
     ORT_API2_STATUS(MemoryInfoGetMemType, _In_ const OrtMemoryInfo *ptr, _Out_ OrtMemType *out);
@@ -613,52 +614,52 @@ struct OrtApi {
                     _In_ int64_t dim_value);
 
     /**
-   * APIs to support non-tensor types - map and sequence.
-   * Currently only the following types are supported
-   * Note: the following types should be kept in sync with data_types.h
-   * Map types
-   * =========
-   * std::map<std::string, std::string>
-   * std::map<std::string, int64_t>
-   * std::map<std::string, float>
-   * std::map<std::string, double>
-   * std::map<int64_t, std::string>
-   * std::map<int64_t, int64_t>
-   * std::map<int64_t, float>
-   * std::map<int64_t, double>
-   *
-   * Sequence types
-   * ==============
-   * std::vector<std::string>
-   * std::vector<int64_t>
-   * std::vector<float>
-   * std::vector<double>
-   * std::vector<std::map<std::string, float>>
-   * std::vector<std::map<int64_t, float>
-   */
+     * APIs to support non-tensor types - map and sequence.
+     * Currently only the following types are supported
+     * Note: the following types should be kept in sync with data_types.h
+     * Map types
+     * =========
+     * std::map<std::string, std::string>
+     * std::map<std::string, int64_t>
+     * std::map<std::string, float>
+     * std::map<std::string, double>
+     * std::map<int64_t, std::string>
+     * std::map<int64_t, int64_t>
+     * std::map<int64_t, float>
+     * std::map<int64_t, double>
+     *
+     * Sequence types
+     * ==============
+     * std::vector<std::string>
+     * std::vector<int64_t>
+     * std::vector<float>
+     * std::vector<double>
+     * std::vector<std::map<std::string, float>>
+     * std::vector<std::map<int64_t, float>
+     */
 
     /**
-   * If input OrtValue represents a map, you need to retrieve the keys and values
-   * separately. Use index=0 to retrieve keys and index=1 to retrieve values.
-   * If input OrtValue represents a sequence, use index to retrieve the index'th element
-   * of the sequence.
-   */
+     * If input OrtValue represents a map, you need to retrieve the keys and values
+     * separately. Use index=0 to retrieve keys and index=1 to retrieve values.
+     * If input OrtValue represents a sequence, use index to retrieve the index'th element
+     * of the sequence.
+     */
     ORT_API2_STATUS(GetValue, _In_ const OrtValue *value, int index, _Inout_ OrtAllocator *allocator,
                     _Outptr_ OrtValue **out);
 
     /**
-   * Returns 2 for type map and N for sequence where N is the number of elements
-   * in the sequence.
-   */
+     * Returns 2 for type map and N for sequence where N is the number of elements
+     * in the sequence.
+     */
     ORT_API2_STATUS(GetValueCount, _In_ const OrtValue *value, _Out_ size_t *out);
 
     /**
-   * To construct a map, use num_values = 2 and 'in' should be an arrary of 2 OrtValues
-   * representing keys and values.
-   * To construct a sequence, use num_values = N where N is the number of the elements in the
-   * sequence. 'in' should be an arrary of N OrtValues.
-   * \value_type should be either map or sequence.
-   */
+     * To construct a map, use num_values = 2 and 'in' should be an arrary of 2 OrtValues
+     * representing keys and values.
+     * To construct a sequence, use num_values = N where N is the number of the elements in the
+     * sequence. 'in' should be an arrary of N OrtValues.
+     * \value_type should be either map or sequence.
+     */
     ORT_API2_STATUS(CreateValue, _In_reads_(num_values) const OrtValue *const *in, size_t num_values,
                     enum ONNXType value_type, _Outptr_ OrtValue **out);
 
@@ -714,7 +715,7 @@ struct OrtApi {
     ORT_CLASS_RELEASE(Env);
     ORT_CLASS_RELEASE(Status);  // nullptr for Status* indicates success
     ORT_CLASS_RELEASE(MemoryInfo);
-    ORT_CLASS_RELEASE(Session);  //Don't call OrtReleaseSession from Dllmain (because session owns a thread pool)
+    ORT_CLASS_RELEASE(Session);  // Don't call OrtReleaseSession from Dllmain (because session owns a thread pool)
     ORT_CLASS_RELEASE(Value);
     ORT_CLASS_RELEASE(RunOptions);
     ORT_CLASS_RELEASE(TypeInfo);
@@ -727,60 +728,60 @@ struct OrtApi {
     // Version 2 - In development, feel free to add/remove/rearrange here
 
     /**
-    * GetDenotationFromTypeInfo
-	 * This api augments OrtTypeInfo to return denotations on the type.
-	 * This is used by WinML to determine if an input/output is intended to be an Image or a Tensor.
-    */
+     * GetDenotationFromTypeInfo
+     * This api augments OrtTypeInfo to return denotations on the type.
+     * This is used by WinML to determine if an input/output is intended to be an Image or a Tensor.
+     */
     ORT_API2_STATUS(GetDenotationFromTypeInfo, _In_ const OrtTypeInfo *, _Out_ const char **const denotation,
                     _Out_ size_t *len);
 
     // OrtTypeInfo Casting methods
 
     /**
-    * CastTypeInfoToMapTypeInfo
-	 * This api augments OrtTypeInfo to return an OrtMapTypeInfo when the type is a map.
-	 * The OrtMapTypeInfo has additional information about the map's key type and value type.
-	 * This is used by WinML to support model reflection APIs.
-	 * This is used by WinML to support model reflection APIs.
-	 *
-	 * Don't free the 'out' value
-    */
+     * CastTypeInfoToMapTypeInfo
+     * This api augments OrtTypeInfo to return an OrtMapTypeInfo when the type is a map.
+     * The OrtMapTypeInfo has additional information about the map's key type and value type.
+     * This is used by WinML to support model reflection APIs.
+     * This is used by WinML to support model reflection APIs.
+     *
+     * Don't free the 'out' value
+     */
     ORT_API2_STATUS(CastTypeInfoToMapTypeInfo, _In_ const OrtTypeInfo *type_info,
                     _Outptr_result_maybenull_ const OrtMapTypeInfo **out);
 
     /**
-    * CastTypeInfoToSequenceTypeInfo
-	 * This api augments OrtTypeInfo to return an OrtSequenceTypeInfo when the type is a sequence.
-	 * The OrtSequenceTypeInfo has additional information about the sequence's element type.
-    * This is used by WinML to support model reflection APIs.
-	 *
-	 * Don't free the 'out' value
-    */
+     * CastTypeInfoToSequenceTypeInfo
+     * This api augments OrtTypeInfo to return an OrtSequenceTypeInfo when the type is a sequence.
+     * The OrtSequenceTypeInfo has additional information about the sequence's element type.
+     * This is used by WinML to support model reflection APIs.
+     *
+     * Don't free the 'out' value
+     */
     ORT_API2_STATUS(CastTypeInfoToSequenceTypeInfo, _In_ const OrtTypeInfo *type_info,
                     _Outptr_result_maybenull_ const OrtSequenceTypeInfo **out);
 
     // OrtMapTypeInfo Accessors
 
     /**
-    * GetMapKeyType
-	 * This api augments get the key type of a map. Key types are restricted to being scalar types and use ONNXTensorElementDataType.
-	 * This is used by WinML to support model reflection APIs.
-    */
+     * GetMapKeyType
+     * This api augments get the key type of a map. Key types are restricted to being scalar types and use ONNXTensorElementDataType.
+     * This is used by WinML to support model reflection APIs.
+     */
     ORT_API2_STATUS(GetMapKeyType, _In_ const OrtMapTypeInfo *map_type_info, _Out_ enum ONNXTensorElementDataType *out);
 
     /**
-    * GetMapValueType
-	 * This api augments get the value type of a map.
-    */
+     * GetMapValueType
+     * This api augments get the value type of a map.
+     */
     ORT_API2_STATUS(GetMapValueType, _In_ const OrtMapTypeInfo *map_type_info, _Outptr_ OrtTypeInfo **type_info);
 
     // OrtSequenceTypeInfo Accessors
 
     /**
-    * GetSequenceElementType
-	 * This api augments get the element type of a sequence.
-	 * This is used by WinML to support model reflection APIs.
-    */
+     * GetSequenceElementType
+     * This api augments get the element type of a sequence.
+     * This is used by WinML to support model reflection APIs.
+     */
     ORT_API2_STATUS(GetSequenceElementType, _In_ const OrtSequenceTypeInfo *sequence_type_info,
                     _Outptr_ OrtTypeInfo **type_info);
 
@@ -788,20 +789,20 @@ struct OrtApi {
     ORT_CLASS_RELEASE(SequenceTypeInfo);
 
     /**
-   * \param out is set to a null terminated string allocated using 'allocator'. The caller is responsible for freeing it.
-   * Profiling is turned ON automatically if enabled for the particular session by invoking EnableProfiling()
-   * on the SessionOptions instance used to create the session.
-   */
+     * \param out is set to a null terminated string allocated using 'allocator'. The caller is responsible for freeing it.
+     * Profiling is turned ON automatically if enabled for the particular session by invoking EnableProfiling()
+     * on the SessionOptions instance used to create the session.
+     */
     ORT_API2_STATUS(SessionEndProfiling, _In_ OrtSession *sess, _Inout_ OrtAllocator *allocator, _Outptr_ char **out);
 
     /**
-   * \param out is a pointer to the newly created object. The pointer should be freed by calling ReleaseModelMetadata after use.
-   */
+     * \param out is a pointer to the newly created object. The pointer should be freed by calling ReleaseModelMetadata after use.
+     */
     ORT_API2_STATUS(SessionGetModelMetadata, _In_ const OrtSession *sess, _Outptr_ OrtModelMetadata **out);
 
     /**
-   * \param value  is set to a null terminated string allocated using 'allocator'. The caller is responsible for freeing it.
-   */
+     * \param value  is set to a null terminated string allocated using 'allocator'. The caller is responsible for freeing it.
+     */
     ORT_API2_STATUS(ModelMetadataGetProducerName, _In_ const OrtModelMetadata *model_metadata,
                     _Inout_ OrtAllocator *allocator, _Outptr_ char **value);
     ORT_API2_STATUS(ModelMetadataGetGraphName, _In_ const OrtModelMetadata *model_metadata,
@@ -811,9 +812,9 @@ struct OrtApi {
     ORT_API2_STATUS(ModelMetadataGetDescription, _In_ const OrtModelMetadata *model_metadata,
                     _Inout_ OrtAllocator *allocator, _Outptr_ char **value);
     /**
-   * \param value  is set to a null terminated string allocated using 'allocator'. The caller is responsible for freeing it.
-   * 'value' will be a nullptr if the given key is not found in the custom metadata map.
-   */
+     * \param value  is set to a null terminated string allocated using 'allocator'. The caller is responsible for freeing it.
+     * 'value' will be a nullptr if the given key is not found in the custom metadata map.
+     */
     ORT_API2_STATUS(ModelMetadataLookupCustomMetadataMap, _In_ const OrtModelMetadata *model_metadata,
                     _Inout_ OrtAllocator *allocator, _In_ const char *key, _Outptr_result_maybenull_ char **value);
 
@@ -822,19 +823,19 @@ struct OrtApi {
     ORT_CLASS_RELEASE(ModelMetadata);
 
     /*
-  * Creates an environment with global threadpools that will be shared across sessions.
-  * Use this in conjunction with DisablePerSessionThreads API or else the session will use
-  * its own thread pools.
-  */
+     * Creates an environment with global threadpools that will be shared across sessions.
+     * Use this in conjunction with DisablePerSessionThreads API or else the session will use
+     * its own thread pools.
+     */
     ORT_API2_STATUS(CreateEnvWithGlobalThreadPools, OrtLoggingLevel default_logging_level, _In_ const char *logid,
                     _In_ const OrtThreadingOptions *t_options, _Outptr_ OrtEnv **out);
 
     /* TODO: Should there be a version of CreateEnvWithGlobalThreadPools with custom logging function? */
 
     /*
-  * Calling this API will make the session use the global threadpools shared across sessions.
-  * This API should be used in conjunction with CreateEnvWithGlobalThreadPools API.
-  */
+     * Calling this API will make the session use the global threadpools shared across sessions.
+     * This API should be used in conjunction with CreateEnvWithGlobalThreadPools API.
+     */
     ORT_API2_STATUS(DisablePerSessionThreads, _Inout_ OrtSessionOptions *options);
 
     ORT_API2_STATUS(CreateThreadingOptions, _Outptr_ OrtThreadingOptions **out);
@@ -842,11 +843,11 @@ struct OrtApi {
     ORT_CLASS_RELEASE(ThreadingOptions);
 
     /**
-   * \param num_keys contains the number of keys in the custom metadata map
-   * \param keys is an array of null terminated strings (array count = num_keys) allocated using 'allocator'.
-   * The caller is responsible for freeing each string and the pointer array.
-   * 'keys' will be a nullptr if custom metadata map is empty.
-   */
+     * \param num_keys contains the number of keys in the custom metadata map
+     * \param keys is an array of null terminated strings (array count = num_keys) allocated using 'allocator'.
+     * The caller is responsible for freeing each string and the pointer array.
+     * 'keys' will be a nullptr if custom metadata map is empty.
+     */
     ORT_API2_STATUS(ModelMetadataGetCustomMetadataMapKeys, _In_ const OrtModelMetadata *model_metadata,
                     _Inout_ OrtAllocator *allocator, _Outptr_result_buffer_maybenull_(*num_keys) char ***keys, _Out_ int64_t *num_keys);
 
@@ -858,21 +859,21 @@ struct OrtApi {
                     _In_ int64_t dim_value);
 
     /**
-   * \param out_ptr will hold a pointer to the array of char *
-   * representing available providers.
-   * \param provider_length is a pointer to an int variable where
-   * the number of available providers will be added.
-   * The caller is responsible for freeing each char * and the pointer
-   * array by calling ReleaseAvailableProviders().
-   */
+     * \param out_ptr will hold a pointer to the array of char *
+     * representing available providers.
+     * \param provider_length is a pointer to an int variable where
+     * the number of available providers will be added.
+     * The caller is responsible for freeing each char * and the pointer
+     * array by calling ReleaseAvailableProviders().
+     */
     ORT_API2_STATUS(GetAvailableProviders, _Outptr_ char ***out_ptr,
                     _In_ int *provider_length);
 
     /**
-   * \param ptr is the pointer to an array of available providers you
-   * get after calling GetAvailableProviders().
-   * \param providers_length is the number of available providers.
-   */
+     * \param ptr is the pointer to an array of available providers you
+     * get after calling GetAvailableProviders().
+     * \param providers_length is the number of available providers.
+     */
     ORT_API2_STATUS(ReleaseAvailableProviders, _In_ char **ptr,
                     _In_ int providers_length);
 
@@ -909,12 +910,12 @@ struct OrtApi {
                     _In_z_ const char *config_key, _In_z_ const char *config_value);
 
     /**
-   * \param sess valid OrtSession instance
-   * \param mem_info - valid OrtMemoryInfo instance
-   * \param - out a ptr to a new instance of OrtAllocator according to the spec within mem_info
-   *         if successful
-   * \return OrtStatus or nullptr if successful
-   */
+     * \param sess valid OrtSession instance
+     * \param mem_info - valid OrtMemoryInfo instance
+     * \param - out a ptr to a new instance of OrtAllocator according to the spec within mem_info
+     *         if successful
+     * \return OrtStatus or nullptr if successful
+     */
     ORT_API2_STATUS(CreateAllocator, _In_ const OrtSession *sess, _In_ const OrtMemoryInfo *mem_info,
                     _Outptr_ OrtAllocator **out);
 
@@ -932,131 +933,131 @@ struct OrtApi {
     ORT_CLASS_RELEASE(IoBinding);
 
     /**
-   * The function will bind the OrtValue to a specified input name.
-   * The OrtValue must be a Tensor. ORT would use that value in place of input for the specified name.
-   * \param binding_ptr - an instance of OrtIoBinding created by CreateIoBinding()
-   * \param name - name for the model input
-   * \param  val_ptr - OrtValue of Tensor type.
-   * \return OrtStatus instance on error which the caller is responsible to free or nullptr on success
-   */
+     * The function will bind the OrtValue to a specified input name.
+     * The OrtValue must be a Tensor. ORT would use that value in place of input for the specified name.
+     * \param binding_ptr - an instance of OrtIoBinding created by CreateIoBinding()
+     * \param name - name for the model input
+     * \param  val_ptr - OrtValue of Tensor type.
+     * \return OrtStatus instance on error which the caller is responsible to free or nullptr on success
+     */
     ORT_API2_STATUS(BindInput, _Inout_ OrtIoBinding *binding_ptr, _In_ const char *name, _In_ const OrtValue *val_ptr);
 
     /**
-   * The function will bind the OrtValue to the specified output name.
-   * The OrtValue must be a Tensor. ORT would use that value in place of output for the specified name.
-   *
-   * \param binding_ptr - an instance of OrtIoBinding created by CreateIoBinding()
-   * \param name - name for the model output
-   * \param  val_ptr - OrtValue of Tensor type.
-   * \return OrtStatus instance on error which the caller is responsible to free or nullptr on success
-   */
+     * The function will bind the OrtValue to the specified output name.
+     * The OrtValue must be a Tensor. ORT would use that value in place of output for the specified name.
+     *
+     * \param binding_ptr - an instance of OrtIoBinding created by CreateIoBinding()
+     * \param name - name for the model output
+     * \param  val_ptr - OrtValue of Tensor type.
+     * \return OrtStatus instance on error which the caller is responsible to free or nullptr on success
+     */
     ORT_API2_STATUS(BindOutput, _Inout_ OrtIoBinding *binding_ptr, _In_ const char *name, _In_ const OrtValue *val_ptr);
 
     /**
-   * The function will bind the OrtValue to a device which specification is contained within OrtMemoryInfo
-   * You can either create an instance of OrtMemoryInfo with a device id or obtain one from the allocator that you are created/using
-   * This is useful when one or more outputs have dynamic shapes and, it is hard to pre-allocated and bind a chunk of
-   * memory within OrtValue ahead of time.
-   *
-   * \param binding_ptr - an instance of OrtIoBinding created by CreateIoBinding()
-   * \param name - name for the model output
-   * \param  mem_info_ptr - OrtMemoryInfo
-   * \return OrtStatus instance on error which the caller is responsible to free or nullptr on success
-   */
+     * The function will bind the OrtValue to a device which specification is contained within OrtMemoryInfo
+     * You can either create an instance of OrtMemoryInfo with a device id or obtain one from the allocator that you are created/using
+     * This is useful when one or more outputs have dynamic shapes and, it is hard to pre-allocated and bind a chunk of
+     * memory within OrtValue ahead of time.
+     *
+     * \param binding_ptr - an instance of OrtIoBinding created by CreateIoBinding()
+     * \param name - name for the model output
+     * \param  mem_info_ptr - OrtMemoryInfo
+     * \return OrtStatus instance on error which the caller is responsible to free or nullptr on success
+     */
     ORT_API2_STATUS(BindOutputToDevice, _Inout_ OrtIoBinding *binding_ptr, _In_ const char *name, _In_ const OrtMemoryInfo *val_ptr);
 
     /**
-    * The function returns the names of the outputs in the order they were bound. This is useful after running the model
-    * with bound outputs because the returned names are in order in which output OrtValues are returned. This API is optional
-    * to use. If you knew the order of outputs and its names you used for binding you would not need to use this API.
-    *
-    * \param  binding_ptr - a ptr to an instance of OrtIoBinding created obtained from CreateIoBinding()
-    * \param  allocator - a ptr to an instance of OrtAllocator obtained with CreateAllocator() or GetAllocatorWithDefaultOptions()
-    *                      the specified allocator will be used to allocate continuous buffers for output strings and lengths.
-    * \param buffer - pointer to a continuous buffer of non-zero terminated UTF-8 encoded strings. The number of strings stored is returned count parameter.
-    *                 this buffer will be allocated with the specified allocator and must be freed after it is no longer needed.
-    * \param lengths - a pointer to a continuous buffer of size_t lengths of strings returned in the buffer. The number of items is returned
-    *                  in the count. This buffer is allocated with the specified allocator and must be freed after it is no longer needed.
-    * \para count - is the number of strings returned. If the instance of OrtIoBiding has no bound outputs, zero is returned,
-    *              no memory allocation is performed and buffer and lengths are nullptr on return.
-    */
+     * The function returns the names of the outputs in the order they were bound. This is useful after running the model
+     * with bound outputs because the returned names are in order in which output OrtValues are returned. This API is optional
+     * to use. If you knew the order of outputs and its names you used for binding you would not need to use this API.
+     *
+     * \param  binding_ptr - a ptr to an instance of OrtIoBinding created obtained from CreateIoBinding()
+     * \param  allocator - a ptr to an instance of OrtAllocator obtained with CreateAllocator() or GetAllocatorWithDefaultOptions()
+     *                      the specified allocator will be used to allocate continuous buffers for output strings and lengths.
+     * \param buffer - pointer to a continuous buffer of non-zero terminated UTF-8 encoded strings. The number of strings stored is returned count parameter.
+     *                 this buffer will be allocated with the specified allocator and must be freed after it is no longer needed.
+     * \param lengths - a pointer to a continuous buffer of size_t lengths of strings returned in the buffer. The number of items is returned
+     *                  in the count. This buffer is allocated with the specified allocator and must be freed after it is no longer needed.
+     * \para count - is the number of strings returned. If the instance of OrtIoBiding has no bound outputs, zero is returned,
+     *              no memory allocation is performed and buffer and lengths are nullptr on return.
+     */
     ORT_API2_STATUS(GetBoundOutputNames, _In_ const OrtIoBinding *binding_ptr, _In_ OrtAllocator *allocator,
                     _Out_ char **buffer, _Out_writes_all_(count) size_t **lengths, _Out_ size_t *count);
 
     /**
-    * The function returns an array of pointers to individually allocated OrtValues that contain results of a model execution with RunWithBinding()
-    * The array contains the same number of OrtValues and they are in the same order as they were bound with BindOutput()
-    * or BindOutputToDevice().
-    * The returned OrtValues must be individually released after they are no longer needed.
-    * The array is allocated using the specified instance of the allocator and must be freed using the same allocator after
-    * all the OrtValues contained therein are individually released.
-    *
-    * \param binding_ptr - instance of OrtIoBidning
-    * \param allocator - instance of allocator to allocate output array
-    * \param output - pointer to the allocated buffer. Returns nullptr if no outputs.
-    * \param output_count - pointer to the number of OrtValues returned. Zero if no outputs.
-    */
+     * The function returns an array of pointers to individually allocated OrtValues that contain results of a model execution with RunWithBinding()
+     * The array contains the same number of OrtValues and they are in the same order as they were bound with BindOutput()
+     * or BindOutputToDevice().
+     * The returned OrtValues must be individually released after they are no longer needed.
+     * The array is allocated using the specified instance of the allocator and must be freed using the same allocator after
+     * all the OrtValues contained therein are individually released.
+     *
+     * \param binding_ptr - instance of OrtIoBidning
+     * \param allocator - instance of allocator to allocate output array
+     * \param output - pointer to the allocated buffer. Returns nullptr if no outputs.
+     * \param output_count - pointer to the number of OrtValues returned. Zero if no outputs.
+     */
     ORT_API2_STATUS(GetBoundOutputValues, _In_ const OrtIoBinding *binding_ptr, _In_ OrtAllocator *allocator,
                     _Out_writes_all_(output_count) OrtValue ***output, _Out_ size_t *output_count);
 
     /** Clears any previously specified bindings for inputs/outputs
-   */
+     */
     void(ORT_API_CALL *ClearBoundInputs)(_Inout_ OrtIoBinding *binding_ptr) NO_EXCEPTION ORT_ALL_ARGS_NONNULL;
     void(ORT_API_CALL *ClearBoundOutputs)(_Inout_ OrtIoBinding *binding_ptr) NO_EXCEPTION ORT_ALL_ARGS_NONNULL;
 
     /**
-   * Provides element-level access into a tensor.
-   * \param location_values a pointer to an array of index values that specify an element's location in the tensor data blob
-   * \param location_values_count length of location_values
-   * \param out a pointer to the element specified by location_values
-   * e.g.
-   * Given a tensor with overall shape [3,224,224], an element at
-   * location [2,150,128] can be accessed directly.
-   *
-   * This function only works for numeric tensors.
-   * This is a no-copy method whose pointer is only valid until the backing OrtValue is free'd.
-   */
+     * Provides element-level access into a tensor.
+     * \param location_values a pointer to an array of index values that specify an element's location in the tensor data blob
+     * \param location_values_count length of location_values
+     * \param out a pointer to the element specified by location_values
+     * e.g.
+     * Given a tensor with overall shape [3,224,224], an element at
+     * location [2,150,128] can be accessed directly.
+     *
+     * This function only works for numeric tensors.
+     * This is a no-copy method whose pointer is only valid until the backing OrtValue is free'd.
+     */
     ORT_API2_STATUS(TensorAt, _Inout_ OrtValue *value, const int64_t *location_values, size_t location_values_count, _Outptr_ void **out);
 
     /**
-   * Creates an allocator instance and registers it with the env to enable
-   * sharing between multiple sessions that use the same env instance.
-   * Lifetime of the created allocator will be valid for the duration of the environment.
-   * Returns an error if an allocator with the same OrtMemoryInfo is already registered.
-   * \param mem_info must be non-null.
-   * \param arena_cfg if nullptr defaults will be used.
-   * See docs/C_API.md for details.
-  */
+     * Creates an allocator instance and registers it with the env to enable
+     * sharing between multiple sessions that use the same env instance.
+     * Lifetime of the created allocator will be valid for the duration of the environment.
+     * Returns an error if an allocator with the same OrtMemoryInfo is already registered.
+     * \param mem_info must be non-null.
+     * \param arena_cfg if nullptr defaults will be used.
+     * See docs/C_API.md for details.
+     */
     ORT_API2_STATUS(CreateAndRegisterAllocator, _Inout_ OrtEnv *env, _In_ const OrtMemoryInfo *mem_info,
                     _In_ const OrtArenaCfg *arena_cfg);
 
     /**
-   * Set the language projection for collecting telemetry data when Env is created
-   * \param projection the source projected language.
-  */
+     * Set the language projection for collecting telemetry data when Env is created
+     * \param projection the source projected language.
+     */
     ORT_API2_STATUS(SetLanguageProjection, _In_ const OrtEnv *ort_env, _In_ OrtLanguageProjection projection);
 
     /**
-   * \param out is set to the nanoseconds of profiling's start time
-   */
+     * \param out is set to the nanoseconds of profiling's start time
+     */
     ORT_API2_STATUS(SessionGetProfilingStartTimeNs, _In_ const OrtSession *sess, _Outptr_ uint64_t *out);
 
     /**
- * Use this API to configure the global thread pool options to be used in the call to CreateEnvWithGlobalThreadPools.
- * A value of 0 means ORT will pick the default.
- * A value of 1 means the invoking thread will be used; no threads will be created in the thread pool.
- */
+     * Use this API to configure the global thread pool options to be used in the call to CreateEnvWithGlobalThreadPools.
+     * A value of 0 means ORT will pick the default.
+     * A value of 1 means the invoking thread will be used; no threads will be created in the thread pool.
+     */
     ORT_API2_STATUS(SetGlobalIntraOpNumThreads, _Inout_ OrtThreadingOptions *tp_options, int intra_op_num_threads);
     ORT_API2_STATUS(SetGlobalInterOpNumThreads, _Inout_ OrtThreadingOptions *tp_options, int inter_op_num_threads);
 
     /**
-   * Use this API to configure the global thread pool options to be used in the call to CreateEnvWithGlobalThreadPools.
-   * Allow spinning of thread pools when their queues are empty. This API will set the value for both
-   * inter_op and intra_op threadpools.
-   * \param allow_spinning valid values are 1 and 0.
-   * 1: threadpool will spin to wait for queue to become non-empty, 0: it won't spin.
-   * Prefer a value of 0 if your CPU usage is very high.
-   */
+     * Use this API to configure the global thread pool options to be used in the call to CreateEnvWithGlobalThreadPools.
+     * Allow spinning of thread pools when their queues are empty. This API will set the value for both
+     * inter_op and intra_op threadpools.
+     * \param allow_spinning valid values are 1 and 0.
+     * 1: threadpool will spin to wait for queue to become non-empty, 0: it won't spin.
+     * Prefer a value of 0 if your CPU usage is very high.
+     */
     ORT_API2_STATUS(SetGlobalSpinControl, _Inout_ OrtThreadingOptions *tp_options, int allow_spinning);
 };
 
@@ -1075,8 +1076,7 @@ public:
     using OrtSessionOptionsAppendExecutionProvider_CUDA_t = OrtStatus *(*)(OrtSessionOptions *options, int device_id);
 
     ONNXRuntime()
-        : dm_{"onnxruntime"}, api_(nullptr)
-    {
+        : dm_{"onnxruntime"}, api_(nullptr) {
         if (dm_.is_available()) {
             OrtGetApiBase_t get_ort_api_base = dm_.get_symbol<OrtGetApiBase_t>("OrtGetApiBase");
             const OrtApi *api = get_ort_api_base()->GetApi(ORT_API_VERSION);

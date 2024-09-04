@@ -34,40 +34,39 @@ int main() {
             Halide::Buffer<int32_t> param_buf = Halide::Buffer<int32_t>::make_scalar();
             param_buf.fill(1);
 
-//            std::vector< int > sizes;
-//            Halide::Buffer<int32_t> param_buf1(param_buf.data(),sizes);
+            //            std::vector< int > sizes;
+            //            Halide::Buffer<int32_t> param_buf1(param_buf.data(),sizes);
 
-            for(auto &n:b.nodes()){
-                for (auto& [pn, port] : n.unbound_iports()) {
-                      port.bind(param_buf);
-                      n.set_iport(port);
+            for (auto &n : b.nodes()) {
+                for (auto &[pn, port] : n.unbound_iports()) {
+                    port.bind(param_buf);
+                    n.set_iport(port);
                 }
 
-                for (auto& [pn, port] : n.unbound_oports()) {
+                for (auto &[pn, port] : n.unbound_oports()) {
                     port.bind(param_buf);
                     n.set_oport(port);
                 }
-
             }
 
-           b.run();
-           for (int y = 0; y < h; ++y) {
-               for (int x = 0; x < w; ++x) {
-                   if (out(0,0) !=  45  ) {
+            b.run();
+            for (int y = 0; y < h; ++y) {
+                for (int x = 0; x < w; ++x) {
+                    if (out(0, 0) != 45) {
                         throw runtime_error("Unexpected out value");
-                   }
+                    }
                 }
             }
 
-           if (param_buf(0) !=  3  ) {
-               throw runtime_error("Unexpected value");
-           }
+            if (param_buf(0) != 3) {
+                throw runtime_error("Unexpected value");
+            }
         }
 
-    } catch (const Halide::Error& e) {
+    } catch (const Halide::Error &e) {
         std::cerr << e.what() << std::endl;
         return 1;
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
         return 1;
     }

@@ -7,8 +7,7 @@
 
 using namespace ion;
 
-int main()
-{
+int main() {
     try {
         const char *file_name = "test.graph";
 
@@ -200,7 +199,7 @@ int main()
         b.set_target(Halide::get_host_target());
         b.load(file_name);
 
-        for (auto& n : b.nodes()) {
+        for (auto &n : b.nodes()) {
             std::cout << n.name() << std::endl;
             if (n.name() == "test_consumer") {
                 n.iport("min0").bind(&min0);

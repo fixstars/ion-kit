@@ -7,6 +7,6 @@ namespace ion {
 
 using Error = Halide::Error;
 
-} // ion
+}  // namespace ion
 
-#endif // ION_ERROR_H
+#endif  // ION_ERROR_H

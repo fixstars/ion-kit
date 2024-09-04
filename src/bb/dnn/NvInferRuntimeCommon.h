@@ -79,25 +79,23 @@
 struct cublasContext;
 struct cudnnContext;
 
-typedef struct CUstream_st* cudaStream_t; //!< Forward declaration of cudaStream_t.
-typedef struct CUevent_st* cudaEvent_t;   //!< Forward declaration of cudaEvent_t.
+typedef struct CUstream_st *cudaStream_t;  //!< Forward declaration of cudaStream_t.
+typedef struct CUevent_st *cudaEvent_t;    //!< Forward declaration of cudaEvent_t.
 
-static const int32_t NV_TENSORRT_VERSION
-    = (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + NV_TENSORRT_PATCH; // major, minor, patch
+static const int32_t NV_TENSORRT_VERSION = (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + NV_TENSORRT_PATCH;  // major, minor, patch
 
 //!
 //! \namespace nvinfer1
 //!
 //! \brief The TensorRT API version 1 namespace.
 //!
-namespace nvinfer1
-{
+namespace nvinfer1 {
 
-class IErrorRecorder; //!< Forward declare IErrorRecorder for use in other interfaces.
-class IGpuAllocator;  //!< Forward declare IGpuAllocator for use in other interfaces.
+class IErrorRecorder;  //!< Forward declare IErrorRecorder for use in other interfaces.
+class IGpuAllocator;   //!< Forward declare IGpuAllocator for use in other interfaces.
 
 //! Maximum number of elements in an enumeration type.
-template <typename T>
+template<typename T>
 constexpr inline int32_t EnumMax();
 
 //!
@@ -105,26 +103,24 @@ constexpr inline int32_t EnumMax();
 //!
 //! \brief Enumerates the types of activation to perform in an activation layer.
 //!
-enum class ActivationType : int32_t
-{
-    kRELU = 0,             //!< Rectified linear activation.
-    kSIGMOID = 1,          //!< Sigmoid activation.
-    kTANH = 2,             //!< TanH activation.
-    kLEAKY_RELU = 3,       //!< LeakyRelu activation: x>=0 ? x : alpha * x.
-    kELU = 4,              //!< Elu activation: x>=0 ? x : alpha * (exp(x) - 1).
-    kSELU = 5,             //!< Selu activation: x>0 ? beta * x : beta * (alpha*exp(x) - alpha)
-    kSOFTSIGN = 6,         //!< Softsign activation: x / (1+|x|)
-    kSOFTPLUS = 7,         //!< Parametric softplus activation: alpha*log(exp(beta*x)+1)
-    kCLIP = 8,             //!< Clip activation: max(alpha, min(beta, x))
-    kHARD_SIGMOID = 9,     //!< Hard sigmoid activation: max(0, min(1, alpha*x+beta))
-    kSCALED_TANH = 10,     //!< Scaled tanh activation: alpha*tanh(beta*x)
-    kTHRESHOLDED_RELU = 11 //!< Thresholded ReLU activation: x>alpha ? x : 0
+enum class ActivationType : int32_t {
+    kRELU = 0,              //!< Rectified linear activation.
+    kSIGMOID = 1,           //!< Sigmoid activation.
+    kTANH = 2,              //!< TanH activation.
+    kLEAKY_RELU = 3,        //!< LeakyRelu activation: x>=0 ? x : alpha * x.
+    kELU = 4,               //!< Elu activation: x>=0 ? x : alpha * (exp(x) - 1).
+    kSELU = 5,              //!< Selu activation: x>0 ? beta * x : beta * (alpha*exp(x) - alpha)
+    kSOFTSIGN = 6,          //!< Softsign activation: x / (1+|x|)
+    kSOFTPLUS = 7,          //!< Parametric softplus activation: alpha*log(exp(beta*x)+1)
+    kCLIP = 8,              //!< Clip activation: max(alpha, min(beta, x))
+    kHARD_SIGMOID = 9,      //!< Hard sigmoid activation: max(0, min(1, alpha*x+beta))
+    kSCALED_TANH = 10,      //!< Scaled tanh activation: alpha*tanh(beta*x)
+    kTHRESHOLDED_RELU = 11  //!< Thresholded ReLU activation: x>alpha ? x : 0
 };
 
 //! Maximum number of elements in ActivationType enum. \see ActivationType
-template <>
-constexpr inline int32_t EnumMax<ActivationType>()
-{
+template<>
+constexpr inline int32_t EnumMax<ActivationType>() {
     return 12;
 }
 
@@ -133,8 +129,7 @@ constexpr inline int32_t EnumMax<ActivationType>()
 //!
 //! \brief The type of weights and tensors.
 //!
-enum class DataType : int32_t
-{
+enum class DataType : int32_t {
     //! 32-bit floating point format.
     kFLOAT = 0,
 
@@ -152,9 +147,8 @@ enum class DataType : int32_t
 };
 
 //! Maximum number of elements in DataType enum. \see DataType
-template <>
-constexpr inline int32_t EnumMax<DataType>()
-{
+template<>
+constexpr inline int32_t EnumMax<DataType>() {
     return 5;
 }
 
@@ -162,18 +156,16 @@ constexpr inline int32_t EnumMax<DataType>()
 //! \enum DimensionType
 //! \brief The type of data encoded across this dimension.
 //!
-enum class DimensionType : int32_t
-{
-    kSPATIAL = 0, //!< Elements correspond to different spatial data.
-    kCHANNEL = 1, //!< Elements correspond to different channels.
-    kINDEX = 2,   //!< Elements correspond to different batch index.
-    kSEQUENCE = 3 //!< Elements correspond to different sequence values.
+enum class DimensionType : int32_t {
+    kSPATIAL = 0,  //!< Elements correspond to different spatial data.
+    kCHANNEL = 1,  //!< Elements correspond to different channels.
+    kINDEX = 2,    //!< Elements correspond to different batch index.
+    kSEQUENCE = 3  //!< Elements correspond to different sequence values.
 };
 
 //! Maximum number of elements in DimensionType enum. \see DimensionType
-template <>
-constexpr inline int32_t EnumMax<DimensionType>()
-{
+template<>
+constexpr inline int32_t EnumMax<DimensionType>() {
     return 4;
 }
 
@@ -191,14 +183,13 @@ constexpr inline int32_t EnumMax<DimensionType>()
 //! TensorRT can also return an "unknown rank" dims structure. This structure is represented by nbDims == -1
 //! and d[i] == -1 for all d.
 //!
-class Dims
-{
+class Dims {
 public:
-    static const int32_t MAX_DIMS = 8;           //!< The maximum number of dimensions supported for a tensor.
-    int32_t nbDims;                              //!< The number of dimensions.
-    int32_t d[MAX_DIMS];                         //!< The extent of each dimension.
-    TRT_DEPRECATED DimensionType type[MAX_DIMS]; //!< The type of each dimension, provided for backwards compatibility
-                                                 //!< and will be removed in TensorRT 8.0.
+    static const int32_t MAX_DIMS = 8;            //!< The maximum number of dimensions supported for a tensor.
+    int32_t nbDims;                               //!< The number of dimensions.
+    int32_t d[MAX_DIMS];                          //!< The extent of each dimension.
+    TRT_DEPRECATED DimensionType type[MAX_DIMS];  //!< The type of each dimension, provided for backwards compatibility
+                                                  //!< and will be removed in TensorRT 8.0.
 };
 
 //!
@@ -222,15 +213,14 @@ typedef uint32_t TensorFormats;
 //! For more information about data formats, see the topic "Data Format Description" located in the
 //! TensorRT Developer Guide (https://docs.nvidia.com/deeplearning/sdk/tensorrt-developer-guide/index.html).
 //!
-enum class TensorFormat : int32_t
-{
+enum class TensorFormat : int32_t {
     //! Row major linear format.
     //! For a tensor with dimensions {N, C, H, W} or {numbers, channels,
     //! columns, rows}, the dimensional index corresponds to {3, 2, 1, 0}
     //! and thus the order is W minor.
     kLINEAR = 0,
-    kNCHW TRT_DEPRECATED_ENUM = kLINEAR, //!< Deprecated name of kLINEAR, provided for backwards compatibility and will
-                                         //!< be removed in TensorRT 8.0.
+    kNCHW TRT_DEPRECATED_ENUM = kLINEAR,  //!< Deprecated name of kLINEAR, provided for backwards compatibility and will
+                                          //!< be removed in TensorRT 8.0.
 
     //! Two wide channel vectorized row major format. This format is bound to
     //! FP16. It is only available for dimensions >= 3.
@@ -239,8 +229,8 @@ enum class TensorFormat : int32_t
     //! [N][(C+1)/2][H][W][2], with the tensor coordinates (n, c, h, w)
     //! mapping to array subscript [n][c/2][h][w][c%2].
     kCHW2 = 1,
-    kNC2HW2 TRT_DEPRECATED_ENUM = kCHW2, //!< Deprecated name of kCHW2, provided for backwards compatibility and will
-                                         //!< be removed in TensorRT 8.0.
+    kNC2HW2 TRT_DEPRECATED_ENUM = kCHW2,  //!< Deprecated name of kCHW2, provided for backwards compatibility and will
+                                          //!< be removed in TensorRT 8.0.
 
     //! Eight channel format where C is padded to a multiple of 8. This format
     //! is bound to FP16. It is only available for dimensions >= 3.
@@ -249,8 +239,8 @@ enum class TensorFormat : int32_t
     //! [N][H][W][(C+7)/8*8], with the tensor coordinates (n, h, w, c)
     //! mapping to array subscript [n][h][w][c].
     kHWC8 = 2,
-    kNHWC8 TRT_DEPRECATED_ENUM = kHWC8, //!< Deprecated name of kHWC8, provided for backwards compatibility and will
-                                        //!< be removed in TensorRT 8.0.
+    kNHWC8 TRT_DEPRECATED_ENUM = kHWC8,  //!< Deprecated name of kHWC8, provided for backwards compatibility and will
+                                         //!< be removed in TensorRT 8.0.
 
     //! Four wide channel vectorized row major format. This format is bound to
     //! INT8 or FP16. It is only available for dimensions >= 3.
@@ -317,9 +307,8 @@ enum class TensorFormat : int32_t
 using PluginFormat = TensorFormat;
 
 //! Maximum number of elements in TensorFormat enum. \see TensorFormat
-template <>
-constexpr inline int32_t EnumMax<TensorFormat>()
-{
+template<>
+constexpr inline int32_t EnumMax<TensorFormat>() {
     return 9;
 }
 
@@ -333,10 +322,9 @@ constexpr inline int32_t EnumMax<TensorFormat>()
 //! \see IPluginV2IOExt::supportsFormat
 //! \see IPluginV2IOExt::configurePlugin
 //!
-struct PluginTensorDesc
-{
+struct PluginTensorDesc {
     Dims dims;
-    DataType type; //!< \warning DataType:kBOOL not supported.
+    DataType type;  //!< \warning DataType:kBOOL not supported.
     TensorFormat format;
     float scale;
 };
@@ -347,12 +335,11 @@ struct PluginTensorDesc
 //!
 //! Tag for plug-in versions.  Used in upper byte of getTensorRTVersion().
 //!
-enum class PluginVersion : uint8_t
-{
-    kV2 = 0,            //! IPluginV2
-    kV2_EXT = 1,        //! IPluginV2Ext
-    kV2_IOEXT = 2,      //! IPluginV2IOExt
-    kV2_DYNAMICEXT = 3, //! IPluginV2DynamicExt
+enum class PluginVersion : uint8_t {
+    kV2 = 0,             //! IPluginV2
+    kV2_EXT = 1,         //! IPluginV2Ext
+    kV2_IOEXT = 2,       //! IPluginV2IOExt
+    kV2_DYNAMICEXT = 3,  //! IPluginV2DynamicExt
 };
 
 //! \class IPluginV2
@@ -366,8 +353,7 @@ enum class PluginVersion : uint8_t
 //! \see IPluginCreator
 //! \see IPluginRegistry
 //!
-class IPluginV2
-{
+class IPluginV2 {
 public:
     //!
     //! \brief Return the API version with which this plugin was built.
@@ -375,8 +361,7 @@ public:
     //! Do not override this method as it is used by the TensorRT library to maintain backwards-compatibility with
     //! plugins.
     //!
-    virtual int32_t getTensorRTVersion() const TRTNOEXCEPT
-    {
+    virtual int32_t getTensorRTVersion() const TRTNOEXCEPT {
         return NV_TENSORRT_VERSION;
     }
 
@@ -384,13 +369,13 @@ public:
     //! \brief Return the plugin type. Should match the plugin name returned by the corresponding plugin creator
     // \see IPluginCreator::getPluginName()
     //!
-    virtual const char* getPluginType() const TRTNOEXCEPT = 0;
+    virtual const char *getPluginType() const TRTNOEXCEPT = 0;
 
     //!
     //! \brief Return the plugin version. Should match the plugin version returned by the corresponding plugin creator
     // \see IPluginCreator::getPluginVersion()
     //!
-    virtual const char* getPluginVersion() const TRTNOEXCEPT = 0;
+    virtual const char *getPluginVersion() const TRTNOEXCEPT = 0;
 
     //!
     //! \brief Get the number of outputs from the layer.
@@ -412,7 +397,7 @@ public:
     //! This function is called by the implementations of INetworkDefinition and IBuilder. In particular, it is called
     //! prior to any call to initialize().
     //!
-    virtual Dims getOutputDimensions(int32_t index, const Dims* inputs, int32_t nbInputDims) TRTNOEXCEPT = 0;
+    virtual Dims getOutputDimensions(int32_t index, const Dims *inputs, int32_t nbInputDims) TRTNOEXCEPT = 0;
 
     //!
     //! \brief Check format support.
@@ -456,8 +441,8 @@ public:
     //!
     //! \warning DataType:kBOOL not supported.
     //!
-    virtual void configureWithFormat(const Dims* inputDims, int32_t nbInputs, const Dims* outputDims, int32_t nbOutputs,
-        DataType type, PluginFormat format, int32_t maxBatchSize) TRTNOEXCEPT = 0;
+    virtual void configureWithFormat(const Dims *inputDims, int32_t nbInputs, const Dims *outputDims, int32_t nbOutputs,
+                                     DataType type, PluginFormat format, int32_t maxBatchSize) TRTNOEXCEPT = 0;
 
     //!
     //! \brief Initialize the layer for execution. This is called when the engine is created.
@@ -493,8 +478,8 @@ public:
     //!
     //! \return 0 for success, else non-zero (which will cause engine termination).
     //!
-    virtual int32_t enqueue(int32_t batchSize, const void* const* inputs, void** outputs, void* workspace,
-        cudaStream_t stream) TRTNOEXCEPT = 0;
+    virtual int32_t enqueue(int32_t batchSize, const void *const *inputs, void **outputs, void *workspace,
+                            cudaStream_t stream) TRTNOEXCEPT = 0;
 
     //!
     //! \brief Find the size of the serialization buffer required.
@@ -510,7 +495,7 @@ public:
     //!
     //! \see getSerializationSize()
     //!
-    virtual void serialize(void* buffer) const TRTNOEXCEPT = 0;
+    virtual void serialize(void *buffer) const TRTNOEXCEPT = 0;
 
     //!
     //! \brief Destroy the plugin object. This will be called when the network, builder or engine is destroyed.
@@ -520,21 +505,22 @@ public:
     //!
     //! \brief Clone the plugin object. This copies over internal plugin parameters and returns a new plugin object with these parameters.
     //!
-    virtual IPluginV2* clone() const TRTNOEXCEPT = 0;
+    virtual IPluginV2 *clone() const TRTNOEXCEPT = 0;
 
     //!
     //! \brief Set the namespace that this plugin object belongs to. Ideally, all plugin
     //! objects from the same plugin library should have the same namespace.
     //!
-    virtual void setPluginNamespace(const char* pluginNamespace) TRTNOEXCEPT = 0;
+    virtual void setPluginNamespace(const char *pluginNamespace) TRTNOEXCEPT = 0;
 
     //!
     //! \brief Return the namespace of the plugin object.
     //!
-    virtual const char* getPluginNamespace() const TRTNOEXCEPT = 0;
+    virtual const char *getPluginNamespace() const TRTNOEXCEPT = 0;
 
 protected:
-    virtual ~IPluginV2() {}
+    virtual ~IPluginV2() {
+    }
 };
 
 //! \class IPluginV2Ext
@@ -547,8 +533,7 @@ protected:
 //!
 //! \see IPluginV2
 //!
-class IPluginV2Ext : public IPluginV2
-{
+class IPluginV2Ext : public IPluginV2 {
 public:
     //!
     //! \brief Return the DataType of the plugin output at the requested index.
@@ -558,7 +543,7 @@ public:
     //! \warning DataType:kBOOL not supported.
     //!
     virtual nvinfer1::DataType getOutputDataType(
-        int32_t index, const nvinfer1::DataType* inputTypes, int32_t nbInputs) const TRTNOEXCEPT = 0;
+        int32_t index, const nvinfer1::DataType *inputTypes, int32_t nbInputs) const TRTNOEXCEPT = 0;
 
     //! \brief Return true if output tensor is broadcast across a batch.
     //!
@@ -571,7 +556,7 @@ public:
     //! physical replication of the values.
     //!
     virtual bool isOutputBroadcastAcrossBatch(
-        int32_t outputIndex, const bool* inputIsBroadcasted, int32_t nbInputs) const TRTNOEXCEPT = 0;
+        int32_t outputIndex, const bool *inputIsBroadcasted, int32_t nbInputs) const TRTNOEXCEPT = 0;
 
     //! \brief Return true if plugin can use input that is broadcast across batch without replication.
     //!
@@ -616,11 +601,12 @@ public:
     //! PluginV2IOExt or PluginV2DynamicExt for other PluginFormats.
     //!
 
-    virtual void configurePlugin(const Dims* inputDims, int32_t nbInputs, const Dims* outputDims, int32_t nbOutputs,
-        const DataType* inputTypes, const DataType* outputTypes, const bool* inputIsBroadcast,
-        const bool* outputIsBroadcast, PluginFormat floatFormat, int32_t maxBatchSize) TRTNOEXCEPT = 0;
+    virtual void configurePlugin(const Dims *inputDims, int32_t nbInputs, const Dims *outputDims, int32_t nbOutputs,
+                                 const DataType *inputTypes, const DataType *outputTypes, const bool *inputIsBroadcast,
+                                 const bool *outputIsBroadcast, PluginFormat floatFormat, int32_t maxBatchSize) TRTNOEXCEPT = 0;
 
-    virtual ~IPluginV2Ext() {}
+    virtual ~IPluginV2Ext() {
+    }
 
     //!
     //! \brief Attach the plugin object to an execution context and grant the plugin the access to some context resource.
@@ -633,7 +619,8 @@ public:
     //! If the plugin needs per-context resource, it can be allocated here.
     //! The plugin can also get context-owned CUDNN and CUBLAS context here.
     //!
-    virtual void attachToContext(cudnnContext* /*cudnn*/, cublasContext* /*cublas*/, IGpuAllocator* /*allocator*/) TRTNOEXCEPT {}
+    virtual void attachToContext(cudnnContext * /*cudnn*/, cublasContext * /*cublas*/, IGpuAllocator * /*allocator*/) TRTNOEXCEPT {
+    }
 
     //!
     //! \brief Detach the plugin object from its execution context.
@@ -641,14 +628,15 @@ public:
     //! This function is called automatically for each plugin when a execution context is destroyed.
     //! If the plugin owns per-context resource, it can be released here.
     //!
-    virtual void detachFromContext() TRTNOEXCEPT {}
+    virtual void detachFromContext() TRTNOEXCEPT {
+    }
 
     //!
     //! \brief Clone the plugin object. This copies over internal plugin parameters as well and returns a new plugin object with these parameters.
     //! If the source plugin is pre-configured with configurePlugin(), the returned object should also be pre-configured. The returned object should allow attachToContext() with a new execution context.
     //! Cloned plugin objects can share the same per-engine immutable resource (e.g. weights) with the source object (e.g. via ref-counting) to avoid duplication.
     //!
-    virtual IPluginV2Ext* clone() const _TENSORRT_OVERRIDE TRTNOEXCEPT = 0;
+    virtual IPluginV2Ext *clone() const _TENSORRT_OVERRIDE TRTNOEXCEPT = 0;
 
 protected:
     //!
@@ -658,18 +646,16 @@ protected:
     //! Do not override this method as it is used by the TensorRT library to maintain backwards-compatibility with
     //! plugins.
     //!
-    int32_t getTensorRTVersion() const _TENSORRT_OVERRIDE TRTNOEXCEPT
-    {
+    int32_t getTensorRTVersion() const _TENSORRT_OVERRIDE TRTNOEXCEPT {
         return (static_cast<int32_t>(PluginVersion::kV2_EXT) << 24 | (NV_TENSORRT_VERSION & 0xFFFFFF));
     }
 
     //!
     //! \brief Derived classes should not implement this. In a C++11 API it would be override final.
     //!
-    void configureWithFormat(const Dims* /*inputDims*/, int32_t /*nbInputs*/, const Dims* /*outputDims*/,
-        int32_t /*nbOutputs*/, DataType /*type*/, PluginFormat /*format*/,
-        int32_t /*maxBatchSize*/) _TENSORRT_OVERRIDE TRTNOEXCEPT
-    {
+    void configureWithFormat(const Dims * /*inputDims*/, int32_t /*nbInputs*/, const Dims * /*outputDims*/,
+                             int32_t /*nbOutputs*/, DataType /*type*/, PluginFormat /*format*/,
+                             int32_t /*maxBatchSize*/) _TENSORRT_OVERRIDE TRTNOEXCEPT {
     }
 };
 
@@ -682,8 +668,7 @@ protected:
 //!
 //! \see IPluginV2Ext
 //!
-class IPluginV2IOExt : public IPluginV2Ext
-{
+class IPluginV2IOExt : public IPluginV2Ext {
 public:
     //!
     //! \brief Configure the layer.
@@ -697,7 +682,7 @@ public:
     //! \param nbOutput Number of output tensors.
     //!
     virtual void configurePlugin(
-        const PluginTensorDesc* in, int32_t nbInput, const PluginTensorDesc* out, int32_t nbOutput) TRTNOEXCEPT = 0;
+        const PluginTensorDesc *in, int32_t nbInput, const PluginTensorDesc *out, int32_t nbOutput) TRTNOEXCEPT = 0;
 
     //!
     //! \brief Return true if plugin supports the format and datatype for the input/output indexed by pos.
@@ -732,7 +717,7 @@ public:
     //! Warning: TensorRT will stop asking for formats once it finds kFORMAT_COMBINATION_LIMIT on combinations.
     //!
     virtual bool supportsFormatCombination(
-        int32_t pos, const PluginTensorDesc* inOut, int32_t nbInputs, int32_t nbOutputs) const TRTNOEXCEPT = 0;
+        int32_t pos, const PluginTensorDesc *inOut, int32_t nbInputs, int32_t nbOutputs) const TRTNOEXCEPT = 0;
 
 protected:
     //!
@@ -745,8 +730,7 @@ protected:
     //! \deprecated Deprecated interface will be removed in TensorRT 8.0.
     //!
     TRT_DEPRECATED
-    int32_t getTensorRTVersion() const _TENSORRT_OVERRIDE
-    {
+    int32_t getTensorRTVersion() const _TENSORRT_OVERRIDE {
         return (static_cast<int32_t>(PluginVersion::kV2_IOEXT) << 24 | (NV_TENSORRT_VERSION & 0xFFFFFF));
     }
 
@@ -758,8 +742,7 @@ protected:
     //!
     TRT_DEPRECATED
     void configureWithFormat(
-        const Dims*, int32_t, const Dims*, int32_t, DataType, PluginFormat, int32_t) _TENSORRT_OVERRIDE _TENSORRT_FINAL
-    {
+        const Dims *, int32_t, const Dims *, int32_t, DataType, PluginFormat, int32_t) _TENSORRT_OVERRIDE _TENSORRT_FINAL {
     }
 
     //!
@@ -769,9 +752,8 @@ protected:
     //! \deprecated Deprecated interface will be removed in TensorRT 8.0.
     //!
     TRT_DEPRECATED
-    void configurePlugin(const Dims*, int32_t, const Dims*, int32_t, const DataType*, const DataType*, const bool*,
-        const bool*, PluginFormat, int32_t) _TENSORRT_OVERRIDE _TENSORRT_FINAL
-    {
+    void configurePlugin(const Dims *, int32_t, const Dims *, int32_t, const DataType *, const DataType *, const bool *,
+                         const bool *, PluginFormat, int32_t) _TENSORRT_OVERRIDE _TENSORRT_FINAL {
     }
 
     //!
@@ -781,8 +763,7 @@ protected:
     //! \deprecated Deprecated interface will be removed in TensorRT 8.0.
     //!
     TRT_DEPRECATED
-    bool supportsFormat(DataType, PluginFormat) const _TENSORRT_OVERRIDE _TENSORRT_FINAL
-    {
+    bool supportsFormat(DataType, PluginFormat) const _TENSORRT_OVERRIDE _TENSORRT_FINAL {
         return false;
     }
 };
@@ -792,16 +773,15 @@ protected:
 //! \brief The possible field types for custom layer.
 //!
 
-enum class PluginFieldType : int32_t
-{
-    kFLOAT16 = 0, //!< FP16 field type.
-    kFLOAT32 = 1, //!< FP32 field type.
-    kFLOAT64 = 2, //!< FP64 field type.
-    kINT8 = 3,    //!< INT8 field type.
-    kINT16 = 4,   //!< INT16 field type.
-    kINT32 = 5,   //!< INT32 field type.
-    kCHAR = 6,    //!< char field type.
-    kDIMS = 7,    //!< nvinfer1::Dims field type.
+enum class PluginFieldType : int32_t {
+    kFLOAT16 = 0,  //!< FP16 field type.
+    kFLOAT32 = 1,  //!< FP32 field type.
+    kFLOAT64 = 2,  //!< FP64 field type.
+    kINT8 = 3,     //!< INT8 field type.
+    kINT16 = 4,    //!< INT16 field type.
+    kINT32 = 5,    //!< INT32 field type.
+    kCHAR = 6,     //!< char field type.
+    kDIMS = 7,     //!< nvinfer1::Dims field type.
     kUNKNOWN = 8
 };
 
@@ -812,17 +792,16 @@ enum class PluginFieldType : int32_t
 //! This information can be parsed to decode necessary plugin metadata
 //!
 //!
-class PluginField
-{
+class PluginField {
 public:
     //!
     //! \brief Plugin field attribute name
     //!
-    const char* name{nullptr};
+    const char *name{nullptr};
     //!
     //! \brief Plugin field attribute data
     //!
-    const void* data{nullptr};
+    const void *data{nullptr};
     //!
     //! \brief Plugin field attribute type
     //! \see PluginFieldType
@@ -833,19 +812,14 @@ public:
     //!
     int32_t length{0};
 
-    PluginField(const char* name_ = nullptr, const void* data_ = nullptr, const PluginFieldType type_ = PluginFieldType::kUNKNOWN, int32_t length_ = 0)
-        : name(name_)
-        , data(data_)
-        , type(type_)
-        , length(length_)
-    {
+    PluginField(const char *name_ = nullptr, const void *data_ = nullptr, const PluginFieldType type_ = PluginFieldType::kUNKNOWN, int32_t length_ = 0)
+        : name(name_), data(data_), type(type_), length(length_) {
     }
 };
 
-struct PluginFieldCollection
-{
-    int32_t nbFields;          //!< Number of PluginField entries
-    const PluginField* fields; //!< Pointer to PluginField entries
+struct PluginFieldCollection {
+    int32_t nbFields;           //!< Number of PluginField entries
+    const PluginField *fields;  //!< Pointer to PluginField entries
 };
 
 //!
@@ -856,42 +830,40 @@ struct PluginFieldCollection
 //! \see IPlugin and IPluginFactory
 //!
 
-class IPluginCreator
-{
+class IPluginCreator {
 public:
     //!
     //! \brief Return the version of the API the plugin creator was compiled with.
     //!
-    virtual int32_t getTensorRTVersion() const TRTNOEXCEPT
-    {
+    virtual int32_t getTensorRTVersion() const TRTNOEXCEPT {
         return NV_TENSORRT_VERSION;
     }
 
     //!
     //! \brief Return the plugin name.
     //!
-    virtual const char* getPluginName() const TRTNOEXCEPT = 0;
+    virtual const char *getPluginName() const TRTNOEXCEPT = 0;
 
     //!
     //! \brief Return the plugin version.
     //!
-    virtual const char* getPluginVersion() const TRTNOEXCEPT = 0;
+    virtual const char *getPluginVersion() const TRTNOEXCEPT = 0;
 
     //!
     //! \brief Return a list of fields that needs to be passed to createPlugin.
     //! \see PluginFieldCollection
     //!
-    virtual const PluginFieldCollection* getFieldNames() TRTNOEXCEPT = 0;
+    virtual const PluginFieldCollection *getFieldNames() TRTNOEXCEPT = 0;
 
     //!
     //! \brief Return a plugin object. Return nullptr in case of error.
     //!
-    virtual IPluginV2* createPlugin(const char* name, const PluginFieldCollection* fc) TRTNOEXCEPT = 0;
+    virtual IPluginV2 *createPlugin(const char *name, const PluginFieldCollection *fc) TRTNOEXCEPT = 0;
 
     //!
     //! \brief Called during deserialization of plugin layer. Return a plugin object.
     //!
-    virtual IPluginV2* deserializePlugin(const char* name, const void* serialData, size_t serialLength) TRTNOEXCEPT = 0;
+    virtual IPluginV2 *deserializePlugin(const char *name, const void *serialData, size_t serialLength) TRTNOEXCEPT = 0;
 
     //!
     //! \brief Set the namespace of the plugin creator based on the plugin
@@ -899,14 +871,15 @@ public:
     //!
     //! \see IPluginRegistry::registerCreator()
     //!
-    virtual void setPluginNamespace(const char* pluginNamespace) TRTNOEXCEPT = 0;
+    virtual void setPluginNamespace(const char *pluginNamespace) TRTNOEXCEPT = 0;
 
     //!
     //! \brief Return the namespace of the plugin creator object.
     //!
-    virtual const char* getPluginNamespace() const TRTNOEXCEPT = 0;
+    virtual const char *getPluginNamespace() const TRTNOEXCEPT = 0;
 
-    virtual ~IPluginCreator() {}
+    virtual ~IPluginCreator() {
+    }
 };
 
 //!
@@ -924,29 +897,29 @@ public:
 //! \warning Do not inherit from this class, as doing so will break forward-compatibility of the API and ABI.
 //!
 
-class IPluginRegistry
-{
+class IPluginRegistry {
 public:
     //!
     //! \brief Register a plugin creator. Returns false if one with same type
     //! is already registered.
     //!
-    virtual bool registerCreator(IPluginCreator& creator, const char* pluginNamespace) noexcept = 0;
+    virtual bool registerCreator(IPluginCreator &creator, const char *pluginNamespace) noexcept = 0;
 
     //!
     //! \brief Return all the registered plugin creators and the number of
     //! registered plugin creators. Returns nullptr if none found.
     //!
-    virtual IPluginCreator* const* getPluginCreatorList(int32_t* numCreators) const noexcept = 0;
+    virtual IPluginCreator *const *getPluginCreatorList(int32_t *numCreators) const noexcept = 0;
 
     //!
     //! \brief Return plugin creator based on plugin type, version and
     //! namespace associated with plugin during network creation.
     //!
-    virtual IPluginCreator* getPluginCreator(const char* pluginType, const char* pluginVersion, const char* pluginNamespace = "") noexcept = 0;
+    virtual IPluginCreator *getPluginCreator(const char *pluginType, const char *pluginVersion, const char *pluginNamespace = "") noexcept = 0;
 
 protected:
-    virtual ~IPluginRegistry() noexcept {}
+    virtual ~IPluginRegistry() noexcept {
+    }
 
 public:
     //!
@@ -961,7 +934,7 @@ public:
     //
     //! \see getErrorRecorder
     //!
-    virtual void setErrorRecorder(IErrorRecorder* recorder) noexcept = 0;
+    virtual void setErrorRecorder(IErrorRecorder *recorder) noexcept = 0;
 
     //!
     //! \brief set the ErrorRecorder assigned to this interface.
@@ -974,23 +947,21 @@ public:
     //!
     //! \see setErrorRecorder
     //!
-    virtual IErrorRecorder* getErrorRecorder() const noexcept = 0;
+    virtual IErrorRecorder *getErrorRecorder() const noexcept = 0;
 };
 
 //!
 //! \enum TensorLocation
 //! \brief The location for tensor data storage, device or host.
 //!
-enum class TensorLocation : int32_t
-{
-    kDEVICE = 0, //!< Data stored on device.
-    kHOST = 1,   //!< Data stored on host.
+enum class TensorLocation : int32_t {
+    kDEVICE = 0,  //!< Data stored on device.
+    kHOST = 1,    //!< Data stored on host.
 };
 
 //! Maximum number of elements in TensorLocation enum. \see TensorLocation
-template <>
-constexpr inline int32_t EnumMax<TensorLocation>()
-{
+template<>
+constexpr inline int32_t EnumMax<TensorLocation>() {
     return 2;
 }
 
@@ -999,8 +970,7 @@ constexpr inline int32_t EnumMax<TensorLocation>()
 //!
 //! \brief Application-implemented class for controlling allocation on the GPU.
 //!
-class IGpuAllocator
-{
+class IGpuAllocator {
 public:
     //!
     //! A callback implemented by the application to handle acquisition of GPU memory.
@@ -1016,7 +986,7 @@ public:
     //!
     //! If an allocation request cannot be satisfied, nullptr should be returned.
     //!
-    virtual void* allocate(uint64_t size, uint64_t alignment, uint32_t flags) TRTNOEXCEPT = 0;
+    virtual void *allocate(uint64_t size, uint64_t alignment, uint32_t flags) TRTNOEXCEPT = 0;
 
     //!
     //! A callback implemented by the application to handle release of GPU memory.
@@ -1025,13 +995,14 @@ public:
     //!
     //! \param memory The acquired memory.
     //!
-    virtual void free(void* memory) TRTNOEXCEPT = 0;
+    virtual void free(void *memory) TRTNOEXCEPT = 0;
 
     //!
     //! Destructor declared virtual as general good practice for a class with virtual methods.
     //! TensorRT never calls the destructor for an IGpuAllocator defined by the application.
     //!
-    virtual ~IGpuAllocator() {}
+    virtual ~IGpuAllocator() {
+    }
 };
 
 //!
@@ -1042,21 +1013,19 @@ public:
 //! Note that although a logger is passed on creation to each instance of a IBuilder or safe::IRuntime interface, the logger is internally considered a singleton, and thus
 //! multiple instances of safe::IRuntime and/or IBuilder must all use the same logger.
 //!
-class ILogger
-{
+class ILogger {
 public:
     //!
     //! \enum Severity
     //!
     //! The severity corresponding to a log message.
     //!
-    enum class Severity : int32_t
-    {
-        kINTERNAL_ERROR = 0, //!< Internal error has occurred. Execution is unrecoverable.
-        kERROR = 1,          //!< Application error has occurred.
-        kWARNING = 2, //!< Application error has been discovered. TensorRT has recovered or fallen back to a default.
-        kINFO = 3,    //!< Informational messages with instructional information.
-        kVERBOSE = 4, //!< Verbose messages with debugging information.
+    enum class Severity : int32_t {
+        kINTERNAL_ERROR = 0,  //!< Internal error has occurred. Execution is unrecoverable.
+        kERROR = 1,           //!< Application error has occurred.
+        kWARNING = 2,         //!< Application error has been discovered. TensorRT has recovered or fallen back to a default.
+        kINFO = 3,            //!< Informational messages with instructional information.
+        kVERBOSE = 4,         //!< Verbose messages with debugging information.
     };
 
     //!
@@ -1065,15 +1034,15 @@ public:
     //! \param severity The severity of the message.
     //! \param msg The log message, null terminated.
     //!
-    virtual void log(Severity severity, const char* msg) TRTNOEXCEPT = 0;
+    virtual void log(Severity severity, const char *msg) TRTNOEXCEPT = 0;
 
-    virtual ~ILogger() {}
+    virtual ~ILogger() {
+    }
 };
 
 //! Maximum number of elements in ILogger::Severity enum. \see ILogger::Severity
-template <>
-constexpr inline int32_t EnumMax<ILogger::Severity>()
-{
+template<>
+constexpr inline int32_t EnumMax<ILogger::Severity>() {
     return 5;
 }
 
@@ -1082,8 +1051,7 @@ constexpr inline int32_t EnumMax<ILogger::Severity>()
 //!
 //! \brief Error codes that can be returned by TensorRT during execution.
 //!
-enum class ErrorCode : int32_t
-{
+enum class ErrorCode : int32_t {
     //!
     //! Execution completed successfully.
     //!
@@ -1172,9 +1140,8 @@ enum class ErrorCode : int32_t
 };
 
 //! Maximum number of elements in ErrorCode enum. \see ErrorCode
-template <>
-constexpr inline int32_t EnumMax<ErrorCode>()
-{
+template<>
+constexpr inline int32_t EnumMax<ErrorCode>() {
     return 11;
 }
 
@@ -1199,13 +1166,12 @@ constexpr inline int32_t EnumMax<ErrorCode>()
 //! pushed to the interface implementation and TensorRT does not hold any synchronization primitives when accessing
 //! the interface functions.
 //!
-class IErrorRecorder
-{
+class IErrorRecorder {
 public:
     //!
     //! A typedef of a c-style string for reporting error descriptions.
     //!
-    using ErrorDesc = const char*;
+    using ErrorDesc = const char *;
 
     //!
     //! A typedef of a 32bit integer for reference counting.
@@ -1326,20 +1292,20 @@ public:
     //!
     virtual RefCount decRefCount() noexcept = 0;
 
-}; // class IErrorRecorder
+};  // class IErrorRecorder
 
-} // namespace nvinfer1
+}  // namespace nvinfer1
 
 //!
 //! Internal C entry point for creating safe::IRuntime.
 //! @private
 //!
-extern "C" TENSORRTAPI void* createSafeInferRuntime_INTERNAL(void* logger, int32_t version);
+extern "C" TENSORRTAPI void *createSafeInferRuntime_INTERNAL(void *logger, int32_t version);
 
 //!
 //! \brief Return the logger object.
 //!
-extern "C" TENSORRTAPI nvinfer1::ILogger* getLogger();
+extern "C" TENSORRTAPI nvinfer1::ILogger *getLogger();
 
 //!
 //! \brief Return the library version number.
@@ -1351,10 +1317,9 @@ extern "C" TENSORRTAPI int32_t getInferLibVersion();
 //!
 //! \brief Return the plugin registry
 //!
-extern "C" TENSORRTAPI nvinfer1::IPluginRegistry* getPluginRegistry();
+extern "C" TENSORRTAPI nvinfer1::IPluginRegistry *getPluginRegistry();
 
-namespace nvinfer1
-{
+namespace nvinfer1 {
 
 //!
 //! \brief Register the plugin creator to the registry
@@ -1362,18 +1327,21 @@ namespace nvinfer1
 //! loaded. This static object will register all creators available in the
 //! library to the registry.
 //!
-template <typename T>
-class PluginRegistrar
-{
+template<typename T>
+class PluginRegistrar {
 public:
-    PluginRegistrar() { getPluginRegistry()->registerCreator(instance, ""); }
+    PluginRegistrar() {
+        getPluginRegistry()->registerCreator(instance, "");
+    }
+
 private:
     T instance{};
 };
 
-#define REGISTER_TENSORRT_PLUGIN(name) \
-    static nvinfer1::PluginRegistrar<name> pluginRegistrar##name {}
+#define REGISTER_TENSORRT_PLUGIN(name)                             \
+    static nvinfer1::PluginRegistrar<name> pluginRegistrar##name { \
+    }
 
-} // namespace nvinfer1
+}  // namespace nvinfer1
 
-#endif // NV_INFER_RUNTIME_COMMON_H
+#endif  // NV_INFER_RUNTIME_COMMON_H

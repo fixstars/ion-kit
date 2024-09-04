@@ -19,6 +19,7 @@ public:
     void schedule() {
         output.compute_root();
     }
+
 private:
     Halide::Var x, y;
 };
@@ -49,6 +50,7 @@ public:
 
     void schedule() {
     }
+
 private:
     Halide::Var x, y;
 };
@@ -91,7 +93,7 @@ public:
     Output<Halide::Func> output{"output", Int(32), 2};
 
     void generate() {
-        output(x, y) = select(y < Halide::cast<int32_t>(output_height)/2, input0(x, y), input1(x, clamp(y - output_height, 0, output_height)));
+        output(x, y) = select(y < Halide::cast<int32_t>(output_height) / 2, input0(x, y), input1(x, clamp(y - output_height, 0, output_height)));
     }
 
     void schedule() {
@@ -130,7 +132,7 @@ public:
 private:
     Halide::Var x, y;
 };
-using IncI32x2 = Inc<int32_t,2>;
+using IncI32x2 = Inc<int32_t, 2>;
 
 template<typename T, int D>
 class IncX : public BuildingBlock<IncX<T, D>> {
@@ -149,7 +151,7 @@ public:
 private:
     Halide::Var x, y;
 };
-using IncXI32x2 = IncX<int32_t,2>;
+using IncXI32x2 = IncX<int32_t, 2>;
 
 class Dup : public BuildingBlock<Dup> {
 public:
@@ -172,7 +174,7 @@ public:
     Output<Halide::Func> output{"output", Int(32), 2};
 
     void generate() {
-        output(x, y) = input(x/2, y/2);
+        output(x, y) = input(x / 2, y / 2);
     }
 
 private:
@@ -204,7 +206,7 @@ public:
     void generate() {
         Halide::Expr v = 0;
         for (int i = 0; i < array_input.size(); ++i) {
-             v += array_input[i](x, y);
+            v += array_input[i](x, y);
         }
         output(x, y) = v;
     }
@@ -245,7 +247,6 @@ public:
 private:
     Halide::Var x, y;
 };
-
 
 class ExternIncI32x2 : public BuildingBlock<ExternIncI32x2> {
 public:
@@ -297,7 +298,7 @@ public:
 class IncByOffset : public BuildingBlock<IncByOffset> {
 public:
     Input<Halide::Func> input{"input", Int(32), 2};
-    Input<Halide::Func> input_offset{"input_offset", Int(32), 0}; // to imitate scalar input
+    Input<Halide::Func> input_offset{"input_offset", Int(32), 0};  // to imitate scalar input
     BuildingBlockParam<int32_t> v{"v", 1};
     Output<Halide::Func> output{"output", Int(32), 2};
     Output<int32_t> output_offset{"output_offset"};
@@ -311,10 +312,9 @@ private:
     Halide::Var x, y;
 };
 
-
-} // test
-} // bb
-} // ion
+}  // namespace test
+}  // namespace bb
+}  // namespace ion
 
 ION_REGISTER_BUILDING_BLOCK(ion::bb::test::Producer, test_producer);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::test::Consumer, test_consumer);

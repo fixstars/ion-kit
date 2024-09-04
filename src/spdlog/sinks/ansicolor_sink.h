@@ -22,8 +22,7 @@ namespace sinks {
  */
 
 template<typename ConsoleMutex>
-class ansicolor_sink : public sink
-{
+class ansicolor_sink : public sink {
 public:
     using mutex_t = typename ConsoleMutex::mutex_t;
     ansicolor_sink(FILE *target_file, color_mode mode);
@@ -91,15 +90,13 @@ private:
 };
 
 template<typename ConsoleMutex>
-class ansicolor_stdout_sink : public ansicolor_sink<ConsoleMutex>
-{
+class ansicolor_stdout_sink : public ansicolor_sink<ConsoleMutex> {
 public:
     explicit ansicolor_stdout_sink(color_mode mode = color_mode::automatic);
 };
 
 template<typename ConsoleMutex>
-class ansicolor_stderr_sink : public ansicolor_sink<ConsoleMutex>
-{
+class ansicolor_stderr_sink : public ansicolor_sink<ConsoleMutex> {
 public:
     explicit ansicolor_stderr_sink(color_mode mode = color_mode::automatic);
 };
@@ -110,9 +107,9 @@ using ansicolor_stdout_sink_st = ansicolor_stdout_sink<details::console_nullmute
 using ansicolor_stderr_sink_mt = ansicolor_stderr_sink<details::console_mutex>;
 using ansicolor_stderr_sink_st = ansicolor_stderr_sink<details::console_nullmutex>;
 
-} // namespace sinks
-} // namespace spdlog
+}  // namespace sinks
+}  // namespace spdlog
 
 #ifdef SPDLOG_HEADER_ONLY
-#    include "ansicolor_sink-inl.h"
+#include "ansicolor_sink-inl.h"
 #endif

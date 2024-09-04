@@ -11,22 +11,21 @@ class Builder;
 
 class Graph {
 public:
-
     struct Impl;
 
     Graph();
 
-    Graph(Builder & builder , const std::string& name = "");
+    Graph(Builder &builder, const std::string &name = "");
 
-    Graph& operator+=(const Graph& rhs);
+    Graph &operator+=(const Graph &rhs);
 
-    friend Graph operator+(const Graph& lhs, const Graph& rhs);
+    friend Graph operator+(const Graph &lhs, const Graph &rhs);
 
     /**
      * Adding new node to the graph.
      * @arg n: The name of the building block which should be matched with second argument of ION_REGISTER_BUILDING_BLOCK().
      */
-    Node add(const std::string& name);
+    Node add(const std::string &name);
 
     /**
      * Run the pipeline immediately.
@@ -36,13 +35,13 @@ public:
      * Set the user context which will be applied the pipeline built with this graph.
      * @arg user_context_ptr: The pointer to the user context.
      */
-    Graph& set_jit_context(Halide::JITUserContext *user_context_ptr);
+    Graph &set_jit_context(Halide::JITUserContext *user_context_ptr);
 
     /**
      * Get the node list.
      */
-    const std::vector<Node>& nodes() const;
-    std::vector<Node>& nodes();
+    const std::vector<Node> &nodes() const;
+    std::vector<Node> &nodes();
 
     bool defined() const {
         return impl_.get() != nullptr;
@@ -52,6 +51,6 @@ private:
     std::shared_ptr<Impl> impl_;
 };
 
-} // namespace ion
+}  // namespace ion
 
-#endif // ION_GRAPH_H
+#endif  // ION_GRAPH_H

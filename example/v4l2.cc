@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
     b.run();
 
     auto t1 = std::chrono::high_resolution_clock::now();
-    for (int i=0; i<100; ++i) {
+    for (int i = 0; i < 100; ++i) {
         b.run();
     }
     auto t2 = std::chrono::high_resolution_clock::now();

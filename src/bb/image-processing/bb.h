@@ -788,8 +788,7 @@ public:
         r = {
             -static_cast<int32_t>(window_size), static_cast<int32_t>(window_size) * 2 + 1,
             -static_cast<int32_t>(window_size), static_cast<int32_t>(window_size) * 2 + 1,
-            "r"
-        };
+            "r"};
 
         color_diff = (input_mirror(x + r.x, y + r.y) - input_mirror(x, y)) * (input_mirror(x + r.x, y + r.y) - input_mirror(x, y));
         sigma_inv(x, y) = 1 / sigma(x, y);
@@ -863,8 +862,7 @@ public:
         r = {
             -static_cast<int32_t>(window_size), static_cast<int32_t>(window_size) * 2 + 1,
             -static_cast<int32_t>(window_size), static_cast<int32_t>(window_size) * 2 + 1,
-            "r"
-        };
+            "r"};
 
         color_diff = ColorDifference::calc(
             color_difference_method,
@@ -951,8 +949,7 @@ public:
         r = {
             -static_cast<int32_t>(window_size), static_cast<int32_t>(window_size) * 2 + 1,
             -static_cast<int32_t>(window_size), static_cast<int32_t>(window_size) * 2 + 1,
-            "r"
-        };
+            "r"};
         sum(x, y, Halide::_) += input(x + r.x, y + r.y, Halide::_) * kernel(r.x + window_size, r.y + window_size, Halide::_);
         output(x, y, Halide::_) = sum(x, y, Halide::_);
     }
@@ -1470,7 +1467,7 @@ public:
     Output<Halide::Func> output{"output", Halide::type_of<T>(), D};
 
     void generate() {
-        using namespace  Halide;
+        using namespace Halide;
 
         Var x, y;
 
@@ -1993,7 +1990,6 @@ public:
         Expr bv = saturating_cast<uint8_t>(cast<float>(input(x, y, 2)) * gain_r);
         output(x, y, c) = select(c == 0, rv, c == 1, gv, bv);
     }
-
 };
 
 }  // namespace image_processing

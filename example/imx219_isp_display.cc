@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
         constexpr int32_t num = 2;
         Node n;
         Node ns[num];
-        for (int i=0; i<num; ++i) {
+        for (int i = 0; i < num; ++i) {
             n = b.add("image_io_imx219").set_params(Param("index", i));
             n = b.add("image_processing_bayer_downscale_uint16")(n["output"]).set_params(Param("input_width", width_v), Param("input_height", height_v), Param("downscale_factor", "2"));
             n = b.add("image_processing_normalize_raw_image")(n["output"]).set_params(Param("bit_width", "10"), Param("bit_shift", "6"));
@@ -46,21 +46,20 @@ int main(int argc, char *argv[]) {
 
         b.save("graph.json");
 
-        for (int i=0; i<100; ++i) {
+        for (int i = 0; i < 100; ++i) {
             b.run();
             std::cout << "." << std::flush;
         }
 
-    } catch (Halide::Error& e) {
+    } catch (Halide::Error &e) {
         std::cerr << e.what() << std::endl;
         return 1;
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
         return 1;
     }
 
     std::cout << "Passed" << std::endl;
-
 
     return 0;
 }

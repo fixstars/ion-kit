@@ -12,6 +12,6 @@ Type type_of() {
     return Halide::type_of<T>();
 }
 
-} // ion
+}  // namespace ion
 
-#endif // ION_TYPE_H
+#endif  // ION_TYPE_H
