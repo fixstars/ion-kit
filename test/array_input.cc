@@ -26,8 +26,7 @@ int main() {
                 Halide::Buffer<int32_t>{w, h},
                 Halide::Buffer<int32_t>{w, h},
                 Halide::Buffer<int32_t>{w, h},
-                Halide::Buffer<int32_t>{w, h}
-            };
+                Halide::Buffer<int32_t>{w, h}};
 
             Halide::Buffer<int32_t> out(w, h);
 
@@ -40,7 +39,7 @@ int main() {
                 }
             }
 
-            for (int i=0; i<len; ++i) {
+            for (int i = 0; i < len; ++i) {
                 input[i].bind(ins[i]);
             }
             n["output"].bind(out);
@@ -55,10 +54,8 @@ int main() {
                               ins[2](x, y) +
                               ins[3](x, y) +
                               ins[4](x, y));
-                    if (v!= out(x, y)) {
-                        throw runtime_error("Unexpected out value at ("  + std::to_string(x) + ", " + std::to_string(y) + "):"
-                                            + " expect=" + std::to_string(v)
-                                            + " actual=" + std::to_string(out(x, y)));
+                    if (v != out(x, y)) {
+                        throw runtime_error("Unexpected out value at (" + std::to_string(x) + ", " + std::to_string(y) + "):" + " expect=" + std::to_string(v) + " actual=" + std::to_string(out(x, y)));
                     }
                 }
             }
@@ -77,11 +74,10 @@ int main() {
 
             std::vector<Halide::Buffer<int32_t>> ins{
                 Halide::Buffer<int32_t>{w, h},
-                    Halide::Buffer<int32_t>{w, h},
-                    Halide::Buffer<int32_t>{w, h},
-                    Halide::Buffer<int32_t>{w, h},
-                    Halide::Buffer<int32_t>{w, h}
-            };
+                Halide::Buffer<int32_t>{w, h},
+                Halide::Buffer<int32_t>{w, h},
+                Halide::Buffer<int32_t>{w, h},
+                Halide::Buffer<int32_t>{w, h}};
 
             for (int y = 0; y < h; ++y) {
                 for (int x = 0; x < w; ++x) {
@@ -106,10 +102,8 @@ int main() {
                               ins[2](x, y) +
                               ins[3](x, y) +
                               ins[4](x, y));
-                    if (v!= out(x, y)) {
-                        throw runtime_error("Unexpected out value at ("  + std::to_string(x) + ", " + std::to_string(y) + "):"
-                                            + " expect=" + std::to_string(v)
-                                            + " actual=" + std::to_string(out(x, y)));
+                    if (v != out(x, y)) {
+                        throw runtime_error("Unexpected out value at (" + std::to_string(x) + ", " + std::to_string(y) + "):" + " expect=" + std::to_string(v) + " actual=" + std::to_string(out(x, y)));
                     }
                 }
             }
@@ -121,11 +115,10 @@ int main() {
 
             std::vector<Halide::Buffer<int32_t>> ins{
                 Halide::Buffer<int32_t>{w, h},
-                    Halide::Buffer<int32_t>{w, h},
-                    Halide::Buffer<int32_t>{w, h},
-                    Halide::Buffer<int32_t>{w, h},
-                    Halide::Buffer<int32_t>{w, h}
-            };
+                Halide::Buffer<int32_t>{w, h},
+                Halide::Buffer<int32_t>{w, h},
+                Halide::Buffer<int32_t>{w, h},
+                Halide::Buffer<int32_t>{w, h}};
 
             Builder b;
             b.set_target(Halide::get_host_target());
@@ -155,15 +148,12 @@ int main() {
                               ins[2](x, y) +
                               ins[3](x, y) +
                               ins[4](x, y));
-                    if (v!= out(x, y)) {
-                        throw runtime_error("Unexpected out value at ("  + std::to_string(x) + ", " + std::to_string(y) + "):"
-                                            + " expect=" + std::to_string(v)
-                                            + " actual=" + std::to_string(out(x, y)));
+                    if (v != out(x, y)) {
+                        throw runtime_error("Unexpected out value at (" + std::to_string(x) + ", " + std::to_string(y) + "):" + " expect=" + std::to_string(v) + " actual=" + std::to_string(out(x, y)));
                     }
                 }
             }
         }
-
 
     } catch (Halide::Error &e) {
         std::cerr << e.what() << std::endl;

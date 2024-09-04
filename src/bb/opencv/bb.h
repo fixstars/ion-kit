@@ -58,4 +58,4 @@ private:
 };
 ION_REGISTER_BUILDING_BLOCK(Display, opencv_display);
 
-#endif // ION_BB_OPENCV_BB_H
+#endif  // ION_BB_OPENCV_BB_H

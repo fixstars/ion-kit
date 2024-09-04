@@ -5,8 +5,7 @@
 
 using namespace ion;
 
-int main()
-{
+int main() {
     try {
         int size = 32;
 
@@ -15,8 +14,8 @@ int main()
         Param vp{"v", std::to_string(1)};
 
         Builder b;
-        //b.set_target(Halide::get_host_target()); // CPU
-        b.set_target(Halide::get_host_target().with_feature(Halide::Target::CUDA)); // GPU
+        // b.set_target(Halide::get_host_target()); // CPU
+        b.set_target(Halide::get_host_target().with_feature(Halide::Target::CUDA));  // GPU
 
         Node n;
         Port ip{"input", Halide::type_of<int32_t>(), 2};
@@ -25,10 +24,10 @@ int main()
 
         b.compile("gpu_extern");
 
-    } catch (const Halide::Error& e) {
+    } catch (const Halide::Error &e) {
         std::cerr << e.what() << std::endl;
         return 1;
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
         return 1;
     }

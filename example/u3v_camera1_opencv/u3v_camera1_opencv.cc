@@ -29,12 +29,11 @@ int positive_pow(int base, int expo) {
     if (expo == 1) {
         return base;
     } else {
-        return base * positive_pow(base, expo-1);
+        return base * positive_pow(base, expo - 1);
     }
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     try {
         // Define builders to build, compile, and execute pipelines.
         //  Build the pipeline by adding nodes to the Builder.
@@ -48,19 +47,18 @@ int main(int argc, char *argv[])
 
         //  Connect the input port to the Node instance created by b.add().
         Node n = b.add("image_io_u3v_cameraN_u16x2")(&gain, &exposure)
-            .set_params(
-                Param("num_devices", 1),
-                Param("frame_sync", false),
-                Param("gain_key", FEATURE_GAIN_KEY),
-                Param("exposure_key", FEATURE_EXPOSURE_KEY),
-                Param("realtime_display_mode", true),
-                Param("enable_control", true)
-                );
+                     .set_params(
+                         Param("num_devices", 1),
+                         Param("frame_sync", false),
+                         Param("gain_key", FEATURE_GAIN_KEY),
+                         Param("exposure_key", FEATURE_EXPOSURE_KEY),
+                         Param("realtime_display_mode", true),
+                         Param("enable_control", true));
 
         // Map output buffer and ports by using Port::bind.
         // - output: output of the obtained video data
         // - frame_count: output of the frame number of the obtained video
-        std::vector< int > buf_size = std::vector < int >{ width, height };
+        std::vector<int> buf_size = std::vector<int>{width, height};
         Buffer<uint16_t> output(buf_size);
         Buffer<uint32_t> frame_count(1);
 
@@ -69,9 +67,8 @@ int main(int argc, char *argv[])
 
         // Obtain image data continuously for 100 frames to facilitate operation check.
         int loop_num = 100;
-        int coef =  positive_pow(2, NUM_BIT_SHIFT);
-        for (int i = 0; i < loop_num; ++i)
-        {
+        int coef = positive_pow(2, NUM_BIT_SHIFT);
+        for (int i = 0; i < loop_num; ++i) {
             // JIT compilation and execution of pipelines with Builder.
             b.run();
 
@@ -89,10 +86,10 @@ int main(int argc, char *argv[])
             cv::waitKey(1);
         }
 
-    } catch (const ion::Error& e) {
+    } catch (const ion::Error &e) {
         std::cerr << e.what() << std::endl;
         return 1;
     }
 
-  return 0;
+    return 0;
 }

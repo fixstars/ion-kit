@@ -16,28 +16,26 @@ namespace opencv {
 std::map<std::string, Halide::ExternCFunction> extern_functions;
 
 class RegisterExtern {
- public:
-     RegisterExtern(std::string key, Halide::ExternCFunction f) {
-         extern_functions[key] = f;
-     }
+public:
+    RegisterExtern(std::string key, Halide::ExternCFunction f) {
+        extern_functions[key] = f;
+    }
 };
 
-
-} // image_io
-} // bb
-} // ion
+}  // namespace opencv
+}  // namespace bb
+}  // namespace ion
 #define ION_REGISTER_EXTERN(NAME) static auto ion_register_extern_##NAME = ion::bb::opencv::RegisterExtern(#NAME, NAME);
 
-extern "C" ION_EXPORT
-int ion_bb_opencv_median_blur(halide_buffer_t *in, int ksize, halide_buffer_t *out) {
-    auto& cv(ion::bb::OpenCV::get_instance());
+extern "C" ION_EXPORT int ion_bb_opencv_median_blur(halide_buffer_t *in, int ksize, halide_buffer_t *out) {
+    auto &cv(ion::bb::OpenCV::get_instance());
     if (!cv.is_available()) {
         ion::log::error("OpenCV is not available");
         return -1;
     }
 
     if (in->is_bounds_query()) {
-        for (auto i=0; i<in->dimensions; ++i) {
+        for (auto i = 0; i < in->dimensions; ++i) {
             in->dim[i].min = out->dim[i].min;
             in->dim[i].extent = out->dim[i].extent;
         }
@@ -50,10 +48,10 @@ int ion_bb_opencv_median_blur(halide_buffer_t *in, int ksize, halide_buffer_t *o
         }
 
         auto src = cv.cvCreateMatHeader(height, width, cv_type);
-        cv.cvSetData(src, in->host, 3*width*sizeof(uint8_t));
+        cv.cvSetData(src, in->host, 3 * width * sizeof(uint8_t));
 
         auto dst = cv.cvCreateMatHeader(height, width, cv_type);
-        cv.cvSetData(dst, out->host, 3*width*sizeof(uint8_t));
+        cv.cvSetData(dst, out->host, 3 * width * sizeof(uint8_t));
 
         cv.cvSmooth(src, dst, CV_MEDIAN, ksize, ksize, 0, 0);
 
@@ -65,9 +63,8 @@ int ion_bb_opencv_median_blur(halide_buffer_t *in, int ksize, halide_buffer_t *o
 }
 ION_REGISTER_EXTERN(ion_bb_opencv_median_blur);
 
-extern "C" ION_EXPORT
-int ion_bb_opencv_display(halide_buffer_t *in, int width, int height, int idx, halide_buffer_t *out) {
-    auto& cv(ion::bb::OpenCV::get_instance());
+extern "C" ION_EXPORT int ion_bb_opencv_display(halide_buffer_t *in, int width, int height, int idx, halide_buffer_t *out) {
+    auto &cv(ion::bb::OpenCV::get_instance());
     if (!cv.is_available()) {
         ion::log::error("OpenCV is not available");
         return -1;
@@ -75,14 +72,14 @@ int ion_bb_opencv_display(halide_buffer_t *in, int width, int height, int idx, h
 
     if (in->is_bounds_query()) {
         in->dim[0].min = 0;
-        in->dim[0].extent = 3; // RGB
+        in->dim[0].extent = 3;  // RGB
         in->dim[1].min = 0;
         in->dim[1].extent = width;
         in->dim[2].min = 0;
         in->dim[2].extent = height;
     } else {
         auto img = cv.cvCreateMatHeader(height, width, CV_MAKETYPE(CV_8U, 3));
-        cv.cvSetData(img, in->host, 3*width*sizeof(uint8_t));
+        cv.cvSetData(img, in->host, 3 * width * sizeof(uint8_t));
 
         auto name = "img" + std::to_string(idx);
         cv.cvShowImage(name.c_str(), img);
@@ -97,4 +94,4 @@ ION_REGISTER_EXTERN(ion_bb_opencv_display);
 
 #undef ION_REGISTER_EXTERN
 
-#endif // ION_BB_OPENCV_RT_H
+#endif  // ION_BB_OPENCV_RT_H

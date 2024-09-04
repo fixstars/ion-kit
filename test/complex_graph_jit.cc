@@ -2,14 +2,13 @@
 
 using namespace ion;
 
-int main()
-{
+int main() {
     try {
         int32_t size = 16;
 
         ion::Buffer<int32_t> in(std::vector<int>{size, size});
-        for (int y=0; y<size; ++y) {
-            for (int x=0; x<size; ++x) {
+        for (int y = 0; y < size; ++y) {
+            for (int x = 0; x < size; ++x) {
                 in(x, y) = 40;
             }
         }
@@ -41,8 +40,8 @@ int main()
         b.run();
 
         int32_t split_n = 2;
-        for (int y=0; y<size/split_n; ++y) {
-            for (int x=0; x<size; ++x) {
+        for (int y = 0; y < size / split_n; ++y) {
+            for (int x = 0; x < size; ++x) {
                 std::cerr << out0(x, y) << " ";
                 if (out0(x, y) != 41) {
                     return -1;
@@ -51,8 +50,8 @@ int main()
             std::cerr << std::endl;
         }
 
-        for (int y=0; y<size/split_n; ++y) {
-            for (int x=0; x<size; ++x) {
+        for (int y = 0; y < size / split_n; ++y) {
+            for (int x = 0; x < size; ++x) {
                 std::cerr << out1(x, y) << " ";
                 if (out1(x, y) != 42) {
                     return -1;
@@ -61,10 +60,10 @@ int main()
             std::cerr << std::endl;
         }
 
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
         return 1;
-    } catch (const Halide::Error& e) {
+    } catch (const Halide::Error &e) {
         std::cerr << e.what() << std::endl;
         return 1;
     }

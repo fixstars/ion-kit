@@ -33,14 +33,18 @@ std::map<Halide::OutputFileType, std::string> compute_output_files(const Halide:
 
 std::string to_string(Halide::Argument::Kind kind) {
     switch (kind) {
-    case Halide::Argument::Kind::InputScalar: return "InputScalar";
-    case Halide::Argument::Kind::InputBuffer: return "InputBuffer";
-    case Halide::Argument::Kind::OutputBuffer: return "OutputBuffer";
-    default: return "Unknown";
+    case Halide::Argument::Kind::InputScalar:
+        return "InputScalar";
+    case Halide::Argument::Kind::InputBuffer:
+        return "InputBuffer";
+    case Halide::Argument::Kind::OutputBuffer:
+        return "OutputBuffer";
+    default:
+        return "Unknown";
     }
 }
 
-} // anonymous
+}  // namespace
 
 using json = nlohmann::json;
 
@@ -51,78 +55,73 @@ struct Builder::Impl {
     std::map<std::string, Halide::JITExtern> jit_externs;
     std::vector<Graph> graphs;
     std::vector<Node> nodes;
-    std::vector<std::tuple<std::string, std::function<void(const char*)>>> disposers;
+    std::vector<std::tuple<std::string, std::function<void(const char *)>>> disposers;
 
     // Cacheable
     Halide::Pipeline pipeline;
     Halide::Callable callable;
     std::unique_ptr<Halide::JITUserContext> jit_ctx;
-    Halide::JITUserContext* jit_ctx_ptr;
-    std::vector<const void*> args;
+    Halide::JITUserContext *jit_ctx_ptr;
+    std::vector<const void *> args;
 
-    Impl() : jit_ctx(new Halide::JITUserContext), jit_ctx_ptr(jit_ctx.get()) {
+    Impl()
+        : jit_ctx(new Halide::JITUserContext), jit_ctx_ptr(jit_ctx.get()) {
     }
     ~Impl();
 };
 
 Builder::Builder()
-    : impl_(new Impl)
-{
+    : impl_(new Impl) {
 }
 
-Builder::~Builder()
-{
+Builder::~Builder() {
 }
 
-Builder::Impl::~Impl()
-{
+Builder::Impl::~Impl() {
     for (auto [bb_id, disposer] : disposers) {
         disposer(bb_id.c_str());
     }
 }
 
-Node Builder::add(const std::string& name)
-{
+Node Builder::add(const std::string &name) {
     Node n(sole::uuid4().str(), name, impl_->target);
     impl_->nodes.push_back(n);
     return n;
 }
 
-Node Builder::add(const std::string& name, const GraphID & graph_id)
-{
+Node Builder::add(const std::string &name, const GraphID &graph_id) {
     Node n(sole::uuid4().str(), name, impl_->target, graph_id);
     impl_->nodes.push_back(n);
     return n;
 }
 
-Graph Builder::add_graph(const std::string& name) {
+Graph Builder::add_graph(const std::string &name) {
     Graph g(*this, name);
     impl_->graphs.push_back(g);
     return g;
 }
 
-Builder& Builder::set_target(const Halide::Target& target) {
+Builder &Builder::set_target(const Halide::Target &target) {
     impl_->target = target;
     return *this;
 }
 
-Builder& Builder::set_jit_context(Halide::JITUserContext *user_context_ptr) {
+Builder &Builder::set_jit_context(Halide::JITUserContext *user_context_ptr) {
     impl_->jit_ctx_ptr = user_context_ptr;
     return *this;
 }
 
-Builder& Builder::with_bb_module(const std::string& module_name_or_path) {
+Builder &Builder::with_bb_module(const std::string &module_name_or_path) {
     auto bb_module = std::make_shared<DynamicModule>(module_name_or_path);
-    auto register_extern = bb_module->get_symbol<void (*)(std::map<std::string, Halide::JITExtern>&)>("register_externs");
+    auto register_extern = bb_module->get_symbol<void (*)(std::map<std::string, Halide::JITExtern> &)>("register_externs");
     if (register_extern) {
         register_extern(impl_->jit_externs);
-
     }
     impl_->bb_modules[module_name_or_path] = bb_module;
     return *this;
 }
 
-void Builder::save(const std::string& file_name) {
+void Builder::save(const std::string &file_name) {
     determine_and_validate(impl_->nodes);
     std::ofstream ofs(file_name);
     json j;
@@ -132,7 +131,7 @@ void Builder::save(const std::string& file_name) {
     return;
 }
 
-void Builder::load(const std::string& file_name) {
+void Builder::load(const std::string &file_name) {
     std::ifstream ifs(file_name);
     json j;
     ifs >> j;
@@ -141,7 +140,7 @@ void Builder::load(const std::string& file_name) {
     return;
 }
 
-void Builder::compile(const std::string& function_name, const CompileOption& option) {
+void Builder::compile(const std::string &function_name, const CompileOption &option) {
     using namespace Halide;
 
     // Build pipeline and module first
@@ -193,7 +192,7 @@ void Builder::compile(const std::string& function_name, const CompileOption& opt
 }
 
 void Builder::run() {
-     if (!impl_->pipeline.defined()) {
+    if (!impl_->pipeline.defined()) {
         impl_->pipeline = lower(*this, impl_->nodes, false);
         if (!impl_->pipeline.defined()) {
             log::warn("This pipeline doesn't produce any outputs. Please bind a buffer with output port.");
@@ -204,10 +203,9 @@ void Builder::run() {
     if (!impl_->callable.defined()) {
         std::map<std::string, Halide::JITExtern> jit_externs;
         for (auto bb : impl_->bb_modules) {
-            auto register_extern = bb.second->get_symbol<void (*)(std::map<std::string, Halide::JITExtern>&)>("register_externs");
+            auto register_extern = bb.second->get_symbol<void (*)(std::map<std::string, Halide::JITExtern> &)>("register_externs");
             if (register_extern) {
                 register_extern(jit_externs);
-
             }
         }
         impl_->pipeline.set_jit_externs(jit_externs);
@@ -220,7 +218,7 @@ void Builder::run() {
         impl_->args.clear();
         impl_->args.push_back(&impl_->jit_ctx_ptr);
 
-        const auto& args(generate_arguments_instance(inferred_args, impl_->nodes));
+        const auto &args(generate_arguments_instance(inferred_args, impl_->nodes));
         impl_->args.insert(impl_->args.end(), args.begin(), args.end());
     }
 
@@ -230,12 +228,12 @@ void Builder::run() {
 std::vector<std::string> Builder::bb_names(void) {
     std::vector<std::string> names;
     for (auto n : Halide::Internal::GeneratorRegistry::enumerate()) {
-         names.push_back(n);
+        names.push_back(n);
     }
     return names;
 }
 
-std::vector<ArgInfo> Builder::bb_arginfos(const std::string& name) {
+std::vector<ArgInfo> Builder::bb_arginfos(const std::string &name) {
     auto generator_names = Halide::Internal::GeneratorRegistry::enumerate();
 
     if (std::find(generator_names.begin(), generator_names.end(), name) == generator_names.end()) {
@@ -257,7 +255,7 @@ std::vector<ArgInfo> Builder::bb_arginfos(const std::string& name) {
 
     try {
         bb->build_pipeline();
-    } catch (const Halide::CompileError& e) {
+    } catch (const Halide::CompileError &e) {
         log::error(e.what());
         throw std::runtime_error(e.what());
     }
@@ -269,7 +267,7 @@ std::string Builder::bb_metadata(void) {
 
     std::vector<Metadata> md;
     for (auto n : Halide::Internal::GeneratorRegistry::enumerate()) {
-         md.push_back(Metadata(n));
+        md.push_back(Metadata(n));
     }
 
     json j(md);
@@ -281,15 +279,15 @@ Target Builder::target() const {
     return impl_->target;
 }
 
-const std::vector<Node>& Builder::nodes() const {
+const std::vector<Node> &Builder::nodes() const {
     return impl_->nodes;
 }
 
-std::vector<Node>& Builder::nodes() {
+std::vector<Node> &Builder::nodes() {
     return impl_->nodes;
 }
 
-const std::map<std::string, Halide::JITExtern>& Builder::jit_externs() const {
+const std::map<std::string, Halide::JITExtern> &Builder::jit_externs() const {
     return impl_->jit_externs;
 }
 
@@ -299,21 +297,19 @@ void Builder::print_loop_nest() {
     }
 }
 
-void Builder::register_disposer(Impl *impl, const std::string& bb_id, const std::string& disposer_symbol) {
+void Builder::register_disposer(Impl *impl, const std::string &bb_id, const std::string &disposer_symbol) {
     log::info("Builder::register_disposer");
-    for (const auto& kv : impl->bb_modules) {
-        const auto& dm(kv.second);
-        auto disposer_ptr = dm->get_symbol<void (*)(const char*)>(disposer_symbol);
+    for (const auto &kv : impl->bb_modules) {
+        const auto &dm(kv.second);
+        auto disposer_ptr = dm->get_symbol<void (*)(const char *)>(disposer_symbol);
         if (disposer_ptr) {
             impl->disposers.push_back(std::make_tuple(bb_id, disposer_ptr));
         }
     }
 }
 
-
-const Builder::Impl* Builder::impl_ptr() const {
+const Builder::Impl *Builder::impl_ptr() const {
     return impl_.get();
 }
 
-
-} //namespace ion
+}  // namespace ion

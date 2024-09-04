@@ -13,5 +13,4 @@ Target get_target_from_environment() {
     return Halide::get_target_from_environment();
 }
 
-} // ion
-
+}  // namespace ion

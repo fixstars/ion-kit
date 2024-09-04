@@ -13,7 +13,6 @@
 #include <dlfcn.h>
 #endif
 
-
 #include <opencv2/core.hpp>
 
 namespace ion {

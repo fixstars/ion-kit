@@ -17,7 +17,6 @@
 
 #include "ion/export.h"
 
-
 #include "log.h"
 
 #include "httplib.h"
@@ -38,7 +37,7 @@ namespace bb {
 namespace image_io {
 
 template<typename... Rest>
-std::string format(const char *fmt, const Rest &... rest) {
+std::string format(const char *fmt, const Rest &...rest) {
     int length = snprintf(NULL, 0, fmt, rest...) + 1;  // Explicit place for null termination
     std::vector<char> buf(length, 0);
     snprintf(&buf[0], length, fmt, rest...);
@@ -158,8 +157,9 @@ std::tuple<std::string, std::string> parse_url(const std::string &url) {
 template<typename T>
 class ImageSequence {
 
- public:
-     ImageSequence(const std::string& session_id, const std::string& url) : idx_(0) {
+public:
+    ImageSequence(const std::string &session_id, const std::string &url)
+        : idx_(0) {
         namespace fs = std::filesystem;
 
         std::string host_name;
@@ -196,18 +196,17 @@ class ImageSequence {
             zf.extractall(dir_path.string());
         } else {
             std::ofstream ofs(dir_path / fs::path(url).filename(), std::ios::binary);
-            ofs.write(reinterpret_cast<const char*>(data.data()), data.size());
+            ofs.write(reinterpret_cast<const char *>(data.data()), data.size());
         }
 
-        for (auto& d : fs::directory_iterator(dir_path)) {
+        for (auto &d : fs::directory_iterator(dir_path)) {
             paths_.push_back(d.path());
         }
         // Dictionary order
         std::sort(paths_.begin(), paths_.end());
+    }
 
-     }
-
-     void get(int width, int height, int imread_flags, Halide::Runtime::Buffer<T> &buf) {
+    void get(int width, int height, int imread_flags, Halide::Runtime::Buffer<T> &buf) {
         namespace fs = std::filesystem;
 
         auto path = paths_[idx_];
@@ -215,63 +214,58 @@ class ImageSequence {
 
         std::ifstream ifs(path, std::ios::binary);
         std::vector<uint8_t> img_data(size);
-        ifs.read(reinterpret_cast<char*>(img_data.data()), size);
+        ifs.read(reinterpret_cast<char *>(img_data.data()), size);
         if (path.extension() == ".raw") {
             switch (imread_flags) {
-                case IMREAD_GRAYSCALE:
-                    if (size == width * height * sizeof(uint8_t)) {
-                        Halide::Runtime::Buffer<uint8_t> buf_8(std::vector<int>{width, height}); //read in 8 bit
-                        std::memcpy(buf_8.data(), img_data.data(), size);   // set_img_data
-                        auto buf_16 = Halide::Tools::ImageTypeConversion::convert_image(buf_8, halide_type_of<uint16_t>());
-                        buf.copy_from(buf_16);
-                    } else if (size == width * height * sizeof(uint16_t)) {
-                        std::memcpy(buf.data(), img_data.data(), size);
-                    } else {
-                        throw std::runtime_error("Unsupported raw format");
-                    }
-                    break;
-                case IMREAD_COLOR:
-                    if (size == 3 * width * height * sizeof(uint8_t)) {
-                        // Expect interleaved RGB
-                        Halide::Runtime::Buffer <uint8_t> buf_interleaved = Halide::Runtime::Buffer <uint8_t>::make_interleaved(width, height, 3); ;
-                        std::memcpy(buf_interleaved.data(), img_data.data(), size);   // set_img_data
-                        auto buffer_planar = buf_interleaved.copy_to_planar();
-                        buf.copy_from(buffer_planar);
-                    } else {
-                        throw std::runtime_error("Unsupported raw format");
-                    }
-                    break;
-                default:
-                    throw std::runtime_error("Unsupported flags");
+            case IMREAD_GRAYSCALE:
+                if (size == width * height * sizeof(uint8_t)) {
+                    Halide::Runtime::Buffer<uint8_t> buf_8(std::vector<int>{width, height});  // read in 8 bit
+                    std::memcpy(buf_8.data(), img_data.data(), size);                         // set_img_data
+                    auto buf_16 = Halide::Tools::ImageTypeConversion::convert_image(buf_8, halide_type_of<uint16_t>());
+                    buf.copy_from(buf_16);
+                } else if (size == width * height * sizeof(uint16_t)) {
+                    std::memcpy(buf.data(), img_data.data(), size);
+                } else {
+                    throw std::runtime_error("Unsupported raw format");
+                }
+                break;
+            case IMREAD_COLOR:
+                if (size == 3 * width * height * sizeof(uint8_t)) {
+                    // Expect interleaved RGB
+                    Halide::Runtime::Buffer<uint8_t> buf_interleaved = Halide::Runtime::Buffer<uint8_t>::make_interleaved(width, height, 3);
+                    ;
+                    std::memcpy(buf_interleaved.data(), img_data.data(), size);  // set_img_data
+                    auto buffer_planar = buf_interleaved.copy_to_planar();
+                    buf.copy_from(buffer_planar);
+                } else {
+                    throw std::runtime_error("Unsupported raw format");
+                }
+                break;
+            default:
+                throw std::runtime_error("Unsupported flags");
             }
         } else {
             switch (imread_flags) {
-                case IMREAD_GRAYSCALE:
-                {
-                    Halide::Runtime::Buffer<T> img_buf = Halide::Tools::load_and_convert_image(path.string());
-                    buf.copy_from(img_buf);
-                }
-                    break;
-                case IMREAD_COLOR:
-                  {
-                    Halide::Runtime::Buffer<uint8_t> img_buf = Halide::Tools::load_image(path.string());
-                    buf.copy_from(img_buf);
-                  }
-                    break;
-                default:
-                    throw std::runtime_error("Unsupported flags");
+            case IMREAD_GRAYSCALE: {
+                Halide::Runtime::Buffer<T> img_buf = Halide::Tools::load_and_convert_image(path.string());
+                buf.copy_from(img_buf);
+            } break;
+            case IMREAD_COLOR: {
+                Halide::Runtime::Buffer<uint8_t> img_buf = Halide::Tools::load_image(path.string());
+                buf.copy_from(img_buf);
+            } break;
+            default:
+                throw std::runtime_error("Unsupported flags");
             }
-
         }
-        idx_ = ((idx_+1) % paths_.size());
+        idx_ = ((idx_ + 1) % paths_.size());
         return;
     }
 
- private:
+private:
     int32_t idx_;
     std::vector<std::filesystem::path> paths_;
 };
-
 
 struct rawHeader {
 
@@ -307,19 +301,19 @@ struct rawHeader {
 
 // PFNC
 // https://www.emva.org/wp-content/uploads/GenICamPixelFormatValues.pdf
-#define PFNC_Mono8 0x01080001 //PFNC Monochrome 8-bit
-#define PFNC_Mono10 0x01100003 //PFNC Monochrome 10-bit unpacked
-#define PFNC_Mono12 0x01100005 //PFNC Monochrome 12-bit unpacked
-#define PFNC_RGB8 0x02180014 //PFNC Red-Green-Blue 8-bit
-#define PFNC_BGR8 0x02180015 //PFNC Blue-Green-Red 8-bit
+#define PFNC_Mono8 0x01080001   // PFNC Monochrome 8-bit
+#define PFNC_Mono10 0x01100003  // PFNC Monochrome 10-bit unpacked
+#define PFNC_Mono12 0x01100005  // PFNC Monochrome 12-bit unpacked
+#define PFNC_RGB8 0x02180014    // PFNC Red-Green-Blue 8-bit
+#define PFNC_BGR8 0x02180015    // PFNC Blue-Green-Red 8-bit
 
-#define PFNC_BayerBG8 0x0108000B //PFNC Bayer Blue-Green 8-bit
-#define PFNC_BayerBG10 0x0110000F //PFNC Bayer Blue-Green 10-bit unpacked
-#define PFNC_BayerBG12 0x01100013 //PFNC Bayer Blue-Green 12-bit unpacked
+#define PFNC_BayerBG8 0x0108000B   // PFNC Bayer Blue-Green 8-bit
+#define PFNC_BayerBG10 0x0110000F  // PFNC Bayer Blue-Green 10-bit unpacked
+#define PFNC_BayerBG12 0x01100013  // PFNC Bayer Blue-Green 12-bit unpacked
 
-#define PFNC_BayerGR8 0x01080008 //PFNC Bayer Green-Red 8-bit
-#define PFNC_BayerGR12 0x01100010 //PFNC Bayer Green-Red 12-bit unpacked
-#define PFNC_YCbCr422_8 0x0210003B //PFNC YCbCr 4:2:2 8-bit
+#define PFNC_BayerGR8 0x01080008    // PFNC Bayer Green-Red 8-bit
+#define PFNC_BayerGR12 0x01100010   // PFNC Bayer Green-Red 12-bit unpacked
+#define PFNC_YCbCr422_8 0x0210003B  // PFNC YCbCr 4:2:2 8-bit
 
 }  // namespace image_io
 }  // namespace bb

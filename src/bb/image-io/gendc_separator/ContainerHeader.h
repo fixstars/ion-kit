@@ -3,23 +3,23 @@
 
 #include "ComponentHeader.h"
 
-class ContainerHeader : public Header{
+class ContainerHeader : public Header {
 public:
+    ContainerHeader() {
+    }
 
-    ContainerHeader(){}
-
-    ContainerHeader(char* descriptor){
+    ContainerHeader(char *descriptor) {
         size_t offset = 0;
         int32_t signature;
         int16_t header_type;
 
         // check if the container is GenDC
         offset += Read(descriptor, offset, signature);
-        if (signature != Signature_){
+        if (signature != Signature_) {
             std::cerr << "This ptr does NOT hace GenDC Signature" << std::endl;
         }
 
-        for (int i = 0 ; i < Version_.size(); i++){
+        for (int i = 0; i < Version_.size(); i++) {
             int8_t v;
             offset += Read(descriptor, offset, v);
             Version_.at(i) = v;
@@ -27,7 +27,7 @@ public:
         offset += sizeof(Reserved_);
 
         offset += Read(descriptor, offset, header_type);
-        if (header_type != HeaderType_){
+        if (header_type != HeaderType_) {
             std::cerr << "wrong header type in container header" << std::endl;
         }
         offset += Read(descriptor, offset, Flags_);
@@ -40,18 +40,18 @@ public:
         offset += Read(descriptor, offset, DescriptorSize_);
         offset += Read(descriptor, offset, ComponentCount_);
 
-        for (int i = 0; i < ComponentCount_; ++i){
+        for (int i = 0; i < ComponentCount_; ++i) {
             int64_t single_component_offset;
             offset += Read(descriptor, offset, single_component_offset);
             ComponentOffset_.push_back(single_component_offset);
         }
 
-        for (int64_t & co : ComponentOffset_){
+        for (int64_t &co : ComponentOffset_) {
             component_header_.push_back(ComponentHeader(descriptor, co));
         }
     }
 
-    ContainerHeader& operator=(const ContainerHeader& src) {
+    ContainerHeader &operator=(const ContainerHeader &src) {
         component_header_ = src.component_header_;
 
         // Signature_ = 0x43444E47;
@@ -71,15 +71,15 @@ public:
         return *this;
     }
 
-    ComponentHeader getComponentByIndex(int ith_component_index){
+    ComponentHeader getComponentByIndex(int ith_component_index) {
         return component_header_[ith_component_index];
     }
 
-    int32_t getFirstComponentIndexByTypeID(int64_t type_id){
+    int32_t getFirstComponentIndexByTypeID(int64_t type_id) {
         int cnt = 0;
-        for (ComponentHeader &ch : component_header_){
-            if (ch.isComponentValid()){
-                if (type_id==ch.getTypeId()){
+        for (ComponentHeader &ch : component_header_) {
+            if (ch.isComponentValid()) {
+                if (type_id == ch.getTypeId()) {
                     return cnt;
                 }
             }
@@ -88,34 +88,33 @@ public:
         return -1;
     }
 
-
-    int32_t getDescriptorSize(){
+    int32_t getDescriptorSize() {
         return DescriptorSize_;
     }
 
-    size_t GenerateDescriptor(char* ptr){
+    size_t GenerateDescriptor(char *ptr) {
         size_t offset = 0;
         offset = GenerateHeader(ptr);
 
-        for ( ComponentHeader &ch : component_header_){
+        for (ComponentHeader &ch : component_header_) {
             offset = ch.GenerateDescriptor(ptr, offset);
         }
 
-        if ( offset != DescriptorSize_){
+        if (offset != DescriptorSize_) {
             std::cerr << "Descriptor size is wrong" << DescriptorSize_ << " != " << offset << std::endl;
         }
         return offset;
     }
 
-    std::tuple<int32_t, int32_t> getFirstAvailableDataOffset(bool image){
+    std::tuple<int32_t, int32_t> getFirstAvailableDataOffset(bool image) {
         // returns the component and part header index where
         // - component is valid
         // - part header type is 0x4200 (GDC_2D) if image is true
         int32_t ith_comp = 0;
-        for (ComponentHeader &ch : component_header_){
-            if (ch.isComponentValid()){
+        for (ComponentHeader &ch : component_header_) {
+            if (ch.isComponentValid()) {
                 int32_t jth_part = ch.getFirstAvailableDataOffset(image);
-                if (jth_part != -1){
+                if (jth_part != -1) {
                     return std::make_tuple(ith_comp, jth_part);
                 }
                 ++ith_comp;
@@ -124,28 +123,28 @@ public:
         return std::make_tuple(-1, -1);
     }
 
-    int64_t getDataOffset(int32_t ith_component = 0, int32_t jth_part = 0){
-        if (ith_component == 0 && jth_part == 0){
+    int64_t getDataOffset(int32_t ith_component = 0, int32_t jth_part = 0) {
+        if (ith_component == 0 && jth_part == 0) {
             return DataOffset_;
         }
         return component_header_.at(ith_component).getDataOffset(jth_part);
     }
 
-    int64_t getDataSize(){
+    int64_t getDataSize() {
         return DataSize_;
     }
 
-    int64_t getDataSize(int32_t ith_component = 0, int32_t jth_part = 0){
+    int64_t getDataSize(int32_t ith_component = 0, int32_t jth_part = 0) {
         return component_header_.at(ith_component).getDataSize(jth_part);
     }
 
     int32_t getOffsetFromTypeSpecific(int32_t ith_component, int32_t jth_part,
-        int32_t kth_typespecific, int32_t typespecific_offset = 0){
+                                      int32_t kth_typespecific, int32_t typespecific_offset = 0) {
 
         return component_header_.at(ith_component).getOffsetFromTypeSpecific(jth_part, kth_typespecific, typespecific_offset);
     }
 
-    void DisplayHeaderInfo(){
+    void DisplayHeaderInfo() {
         int total_size = 0;
         std::cout << "\nCONTAINER HEADER" << std::endl;
         total_size += DisplayItemInfo("Signature_", Signature_, 1, true);
@@ -163,13 +162,13 @@ public:
 
         total_size += DisplayContainer("ComponentOffset_", ComponentOffset_, 1);
 
-        for (ComponentHeader &ch : component_header_){
+        for (ComponentHeader &ch : component_header_) {
             ch.DisplayHeaderInfo();
         }
     }
 
 private:
-    size_t GenerateHeader(char* ptr){
+    size_t GenerateHeader(char *ptr) {
         // modify the order/items only when the structure is changed.
         // when you change this, don't forget to change copy constructor.
         size_t offset = 0;
@@ -187,7 +186,7 @@ private:
         offset += Write(ptr, offset, ComponentCount_);
         offset += WriteContainer(ptr, offset, ComponentOffset_);
 
-        if ( offset != HeaderSize_){
+        if (offset != HeaderSize_) {
             std::cerr << "Container header size is wrong" << HeaderSize_ << " != " << offset << std::endl;
         }
         return offset;
@@ -204,7 +203,7 @@ private:
     int16_t Flags_;
     // int32_t HeaderSize_;
     int64_t Id_;
-    int64_t VariableFields_; //including 6 Byte-wide Reserved
+    int64_t VariableFields_;  // including 6 Byte-wide Reserved
     int64_t DataSize_;
     int64_t DataOffset_;
     int32_t DescriptorSize_;

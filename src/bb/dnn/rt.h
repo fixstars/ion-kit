@@ -22,15 +22,15 @@ namespace dnn {
 std::map<std::string, Halide::ExternCFunction> extern_functions;
 
 class RegisterExtern {
- public:
-     RegisterExtern(std::string key, Halide::ExternCFunction f) {
-         extern_functions[key] = f;
-     }
+public:
+    RegisterExtern(std::string key, Halide::ExternCFunction f) {
+        extern_functions[key] = f;
+    }
 };
 
-} // image_io
-} // bb
-} // ion
+}  // namespace dnn
+}  // namespace bb
+}  // namespace ion
 #define ION_REGISTER_EXTERN(NAME) static auto ion_register_extern_##NAME = ion::bb::dnn::RegisterExtern(#NAME, NAME);
 
 extern "C" ION_EXPORT int ion_bb_dnn_generic_object_detection(halide_buffer_t *in,
@@ -273,7 +273,7 @@ extern "C" ION_EXPORT int ion_bb_dnn_classify_gender(halide_buffer_t *in_img,
 
         return 0;
 
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
         return -1;
     } catch (...) {

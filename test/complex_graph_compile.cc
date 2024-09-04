@@ -4,8 +4,7 @@
 
 using namespace ion;
 
-int main()
-{
+int main() {
     try {
         Halide::Type t = Halide::type_of<int32_t>();
         Port input{"input", t, 2}, width{"width", t}, height{"height", t};
@@ -25,10 +24,10 @@ int main()
         ln = b.add("test_inc_i32x2")(n["output0"]).set_params(v0);
         rn = b.add("test_inc_i32x2")(n["output1"]).set_params(v0);
         b.compile("complex_graph");
-    } catch (const Halide::Error& e) {
+    } catch (const Halide::Error &e) {
         std::cerr << e.what() << std::endl;
         return 1;
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
         return 1;
     }

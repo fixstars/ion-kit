@@ -6,8 +6,7 @@
 using namespace std;
 using namespace ion;
 
-int main()
-{
+int main() {
     try {
         Builder b;
         b.add("sonzai_shinai_bb");
