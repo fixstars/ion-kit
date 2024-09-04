@@ -251,7 +251,7 @@ protected:
 
         if (sensor_idx < num_sensor_ ){
             if(devices_[sensor_idx].gain_ != v){
-                err_ =  Set(devices_[sensor_idx].device_, key.c_str(), v);
+                err_ =  set(devices_[sensor_idx].device_, key.c_str(), v);
                 devices_[sensor_idx].gain_ = v;
             }
             return;
@@ -263,7 +263,7 @@ protected:
     void set_gain(int32_t sensor_idx, const std::string key, int32_t v) {
         if (sensor_idx < num_sensor_ ){
             if(devices_[sensor_idx].int_gain_ != v){
-                err_ =  Set(devices_[sensor_idx].device_, key.c_str(), static_cast<int64_t>(v));
+                err_ =  set(devices_[sensor_idx].device_, key.c_str(), static_cast<int64_t>(v));
                 devices_[sensor_idx].int_gain_ = v;
             }
             return;
@@ -281,7 +281,7 @@ protected:
 
         if (sensor_idx < num_sensor_ ){
             if(devices_[sensor_idx].exposure_ != v){
-                err_ = Set(devices_[sensor_idx].device_, key.c_str(), v);
+                err_ = set(devices_[sensor_idx].device_, key.c_str(), v);
                 devices_[sensor_idx].exposure_ = v;
             }
             return;
@@ -293,7 +293,7 @@ protected:
     void set_exposure(int32_t sensor_idx, const std::string key, int32_t v) {
         if (sensor_idx < num_sensor_ ){
             if(devices_[sensor_idx].int_exposure_ != v){
-                err_ = Set(devices_[sensor_idx].device_, key.c_str(), static_cast<int64_t>(v));
+                err_ = set(devices_[sensor_idx].device_, key.c_str(), static_cast<int64_t>(v));
                 devices_[sensor_idx].int_exposure_ = v;
             }
             return;
@@ -336,7 +336,7 @@ protected:
         devices_(num_sensor), buffers_(num_sensor), operation_mode_(OperationMode::Came1USB1), frame_cnt_(0), device_idx_(-1), disposed_(false), sim_mode_(sim_mode), order_filp_(false)
     {
         init_symbols();
-        log::debug("U3V:: 24-08-29 : revert the order of AcquisitionStart and create stream as a default");
+        log::debug("U3V:: 24-09-03 : Tested on device 1.2");
         log::info("Using aravis-{}.{}.{}", arv_get_major_version(), arv_get_minor_version(), arv_get_micro_version());
     }
 
@@ -435,24 +435,24 @@ protected:
     }
 
     template<typename T>
-    GError* Set(ArvDevice* dev_handle, const char* key, T v) {
-        return SetFeatureValue(dev_handle, key, v);
+    GError* set(ArvDevice* dev_handle, const char* key, T v) {
+        return set_feature_value(dev_handle, key, v);
     }
 
     template<typename T>
-    GError* Get(ArvDevice* dev_handle, const char* key, T* v) {
+    GError* get(ArvDevice* dev_handle, const char* key, T* v) {
         T vp;
-        err_ = GetFeatureValue(dev_handle, key, vp);
+        err_ = get_feature_value(dev_handle, key, vp);
         *v = vp;
         return err_;
     }
 
-    GError* SetFeatureValue(ArvDevice *device, const char *feature, const char *value){
+    GError* set_feature_value(ArvDevice *device, const char *feature, const char *value){
         arv_device_set_string_feature_value (device, feature, value, &err_);
         return err_;
     }
 
-    GError* SetFeatureValue(ArvDevice *device, const char *feature, double value){
+    GError* set_feature_value(ArvDevice *device, const char *feature, double value){
         double min_v, max_v;
         arv_device_get_float_feature_bounds (device, feature, &min_v, &max_v, &err_);
         if (err_ != nullptr) {
@@ -466,7 +466,7 @@ protected:
         return err_;
     }
 
-    GError* SetFeatureValue(ArvDevice *device, const char *feature, int64_t value){
+    GError* set_feature_value(ArvDevice *device, const char *feature, int64_t value){
         int64_t min_v, max_v;
         arv_device_get_integer_feature_bounds(device, feature, &min_v, &max_v, &err_);
         if (err_ != nullptr) {
@@ -479,12 +479,28 @@ protected:
         return err_;
     }
 
-    GError* GetFeatureValue(ArvDevice *device, const char *feature, int64_t& value){
+    GError* get_feature_value(ArvDevice *device, const char *feature, int64_t& value){
         value = arv_device_get_integer_feature_value(device, feature, &err_);
         return err_;
     }
 
-    GError* CommandAcquisitionModeContdStart(){
+    void validate_user_input(int32_t num_detected_device, char* dev_id){
+        if (num_detected_device < num_sensor_){
+            log::info("{} device is found; but the num_sensor is set to {}", num_detected_device, num_sensor_);
+            throw std::runtime_error("Device number is not match, please set num_device again");
+        }
+        frame_sync_ = num_sensor_ > 1 ? frame_sync_ : false;
+
+        if (num_detected_device > num_sensor_ && dev_id == nullptr) {
+            log::info("{} devices are found; The first {} device is selected", num_detected_device, num_sensor_);
+        }
+
+        log::info("Creating U3V instance with {} sensors...", num_sensor_);
+        log::info("Acquisition option::{} is {}", "frame_sync_", frame_sync_);
+        log::info("Acquisition option::{} is {}", "realtime_display_mode_", realtime_display_mode_);
+    }
+
+    void command_acquisition_mode_contd_and_start(){
         for (auto i=0; i<devices_.size(); ++i) {
             arv_device_set_string_feature_value(devices_[i].device_, "AcquisitionMode", arv_acquisition_mode_to_string(ARV_ACQUISITION_MODE_CONTINUOUS), &err_);
             if (err_) {
@@ -498,7 +514,399 @@ protected:
             }
             log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionStart");
         }
-        return err_;
+    }
+
+    void open_fake_devices(int32_t width, int32_t height , float_t fps, const std::string & pixel_format){
+        auto path = std::getenv("GENICAM_FILENAME");
+        if (path == nullptr){
+            throw std::runtime_error("Please define GENICAM_FILENAME by `set GENICAM_FILENAME=` or `export GENICAM_FILENAME=`");
+        }
+        pixel_format_ = pixel_format;
+        arv_set_fake_camera_genicam_filename (path);
+
+        arv_enable_interface ("Fake");
+        log::info("Creating U3V instance with {} fake sensors...", num_sensor_);
+
+        auto fake_camera0 = arv_camera_new ("Fake_1", &err_);
+        if (err_) {
+            throw std::runtime_error(err_->message);
+        }
+        auto fake_device0 = arv_camera_get_device(fake_camera0);
+        devices_[0].device_ = fake_device0;
+        devices_[0].dev_id_=  "fake_0";
+        devices_[0].camera_ = fake_camera0;
+        if (num_sensor_==2){
+            // aravis only provide on ARV_FAKE_DEVICE_ID https://github.com/Sensing-Dev/aravis/blob/main/src/arvfakeinterface.c
+            auto fake_camera1 = arv_camera_new ("Fake_1", &err_);
+            if (err_) {
+                throw std::runtime_error(err_->message);
+            }
+            auto fake_device1 = arv_camera_get_device(fake_camera1);
+            devices_[1].device_ = fake_device1;
+            devices_[1].dev_id_=  "fake_1";
+            devices_[1].camera_ = fake_camera1;
+        }
+        // Config fake cameras
+        for (int i = 0;i< num_sensor_;i++){
+            // setting the params if it is not zero
+            log::info("Width {}, Height {} PixelFormat {}...", width, height, pixel_format_);
+            arv_device_set_integer_feature_value (devices_[i].device_, "Width", width, &err_);
+            if (err_) {
+                throw std::runtime_error(err_->message);
+            }
+            arv_device_set_integer_feature_value (devices_[i].device_, "Height", height, &err_);
+            if (err_) {
+                throw std::runtime_error(err_->message);
+            }
+            arv_device_set_float_feature_value (devices_[i].device_, "AcquisitionFrameRate",fps, &err_);
+            if (err_) {
+                throw std::runtime_error(err_->message);
+            }
+            if (pixel_format_ != "Mono8"){
+                arv_device_set_string_feature_value(devices_[i].device_, "PixelFormat", pixel_format.c_str(), &err_);
+                if (err_) {
+                    throw std::runtime_error(err_->message);
+                }
+            }
+            devices_[i].u3v_payload_size_ =  arv_device_get_integer_feature_value (devices_[i].device_, "PayloadSize", &err_);
+            if (err_) {
+                throw std::runtime_error(err_->message);
+            }
+            auto px =arv_device_get_integer_feature_value(devices_[i].device_, "PixelFormat", &err_);
+            if (err_) {
+                throw std::runtime_error(err_->message);
+            }
+            auto fps = arv_device_get_float_feature_value(devices_[i].device_, "AcquisitionFrameRate", &err_);
+            if (err_) {
+                throw std::runtime_error(err_->message);
+            }
+            struct rawHeader header=  { 1, width, height,
+                1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+                width, height, width, height, static_cast<float>(fps), px, 0};
+            devices_[i].header_info_ = header;
+            devices_[i].image_payload_size_ = devices_[i].u3v_payload_size_;
+            devices_[i].frame_count_  = 0;
+
+        }
+    }
+
+    void open_real_devices(int32_t num_detected_device, int32_t num_usb_to_open, char* dev_id){
+
+        int index_on_detected_device = 0;
+        int index_on_opened_device = 0;
+
+        while (index_on_detected_device < num_detected_device && index_on_opened_device < num_usb_to_open){
+
+            const char* device_protocol = arv_get_device_protocol(index_on_detected_device);
+            if (strcmp(device_protocol, "USB3Vision") == 0){
+
+                if (dev_id != nullptr && dev_id == arv_get_device_id (index_on_detected_device)){
+                    /* if device id is specified
+                    TODO: dev_id may be more than 1
+                    */
+                    devices_[index_on_opened_device].dev_id_ = dev_id;
+                }
+                else{
+                    /* if device id is not specified */
+                    devices_[index_on_opened_device].dev_id_ = arv_get_device_id (index_on_detected_device);
+                }
+
+                log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "DeviceID", devices_[index_on_opened_device].dev_id_);
+
+                devices_[index_on_opened_device].device_ = arv_open_device(devices_[index_on_opened_device].dev_id_, &err_);
+                if (err_ ) {
+                    throw std::runtime_error(err_->message);
+                }
+
+                if (devices_[index_on_opened_device].device_ == nullptr) {
+                    throw std::runtime_error("device is null");
+                }
+
+                pixel_format_ = arv_device_get_string_feature_value(devices_[index_on_opened_device].device_, "PixelFormat", &err_);
+                if (err_ ) {
+                    log::error(err_->message);
+                    err_ = nullptr;
+                }else{
+                    log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "PixelFormat", pixel_format_);
+                }
+                
+                // Here PayloadSize is the one for U3V data
+                devices_[index_on_opened_device].u3v_payload_size_ = arv_device_get_integer_feature_value(devices_[index_on_opened_device].device_, "PayloadSize", &err_);
+                if (err_ ) {
+                    throw std::runtime_error(err_->message);
+                }
+                log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "PayloadSize", devices_[index_on_opened_device].u3v_payload_size_);
+
+                // check it the device has gendc mode ==============================
+                is_gendc_ = arv_device_is_feature_available(devices_[index_on_opened_device].device_, "GenDCDescriptor", &err_);
+                if (err_) {
+                    throw std::runtime_error(err_->message);
+                }
+                is_gendc_ &= arv_device_is_feature_available(devices_[index_on_opened_device].device_, "GenDCStreamingMode", &err_);
+                if (err_) {
+                    throw std::runtime_error(err_->message);
+                }
+
+                // check it the device is gendc mode ===============================
+                if (is_gendc_){
+                    const char * streaming_mode;
+                    streaming_mode = arv_device_get_string_feature_value(devices_[index_on_opened_device].device_, "GenDCStreamingMode", &err_);
+                    if (err_) {
+                        throw std::runtime_error(err_->message);
+                    }
+                    is_gendc_ &= (strcmp(streaming_mode, "On")==0);
+                }
+
+                // Some type of U3V Camera supports Frame count generated by its device
+                const char* device_vender_name;
+                device_vender_name = arv_device_get_string_feature_value(devices_[index_on_opened_device].device_, "DeviceVendorName", &err_);
+                if (err_) {
+                    log::error(err_->message);
+                    err_ = nullptr;
+                }else{
+                    if (strcmp(device_vender_name, "Sony Semiconductor Solutions Corporation")==0){
+                        const char* device_model_name;
+                        device_model_name = arv_device_get_string_feature_value(devices_[index_on_opened_device].device_, "DeviceModelName", &err_);
+                        if (err_) {
+                            log::error(err_->message);
+                            err_ = nullptr;
+                        }else{
+                            if (strcmp(device_model_name, "    ")==0){
+                               is_param_integer_ = true;
+                                frame_count_method_ = FrameCountMethod::TIMESTAMP;
+                                arv_uv_device_set_usb_mode(devices_[index_on_opened_device].device_, ARV_UV_USB_MODE_SYNC); //hotfix for v1.0
+                            }
+                        }
+                        if (is_gendc_){
+                            frame_count_method_ = FrameCountMethod::TYPESPECIFIC3;
+                            order_filp_ = true;
+                        }
+                    }
+                }
+
+                log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "frame_count method is ",
+                    frame_count_method_ == FrameCountMethod::TIMESTAMP ? "Timestamp":
+                    frame_count_method_ == FrameCountMethod::TYPESPECIFIC3 ? "TypeSpecific" : "Unavailabe");
+
+                // Check each parameters for GenDC device ==========================
+                int group_id = 0;
+                if (is_gendc_){
+                    log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "GenDC", "Available");
+                    uint64_t gendc_desc_size = 0;
+                    char* buffer = reinterpret_cast<char *>(arv_device_dup_register_feature_value(devices_[index_on_opened_device].device_,"GenDCDescriptor", &gendc_desc_size, &err_ ));
+                    if (err_) {
+                        throw std::runtime_error(err_->message);
+                    }
+
+                    if(isGenDC(buffer)){
+                        gendc_descriptor_= ContainerHeader(buffer);
+                        std::tuple<int32_t, int32_t> data_comp_and_part = gendc_descriptor_.getFirstAvailableDataOffset(true);
+                        if (std::get<0>(data_comp_and_part) == -1){
+                            devices_[index_on_opened_device].is_data_image_ = false;
+                            data_comp_and_part = gendc_descriptor_.getFirstAvailableDataOffset(false);
+                            if (std::get<0>(data_comp_and_part) == -1){
+                                throw std::runtime_error("None of the data in GenDC is available\n");
+                            }
+                        }else{
+                            devices_[index_on_opened_device].is_data_image_ = true;
+                        }
+                        devices_[index_on_opened_device].data_offset_ = gendc_descriptor_.getDataOffset(std::get<0>(data_comp_and_part), std::get<1>(data_comp_and_part));
+                        devices_[index_on_opened_device].image_payload_size_ = gendc_descriptor_.getDataSize(std::get<0>(data_comp_and_part), std::get<1>(data_comp_and_part));
+                        if (frame_count_method_ == FrameCountMethod::TYPESPECIFIC3){
+                            devices_[index_on_opened_device].framecount_offset_ = gendc_descriptor_.getOffsetFromTypeSpecific(std::get<0>(data_comp_and_part), std::get<1>(data_comp_and_part), 3, 0);
+                        }
+                        int32_t image_component_index = gendc_descriptor_.getFirstComponentIndexByTypeID(ComponentIDIntensity);
+                        if (image_component_index == -1){
+                            throw ::std::runtime_error("No available component found");
+                        }
+                        ComponentHeader image_component = gendc_descriptor_.getComponentByIndex(image_component_index);
+                        group_id = gendc_descriptor_.getComponentByIndex(image_component_index).getGroupID();
+                    }
+                    free(buffer);
+                }else{
+                    devices_[index_on_opened_device].data_offset_ = 0;
+                    devices_[index_on_opened_device].image_payload_size_ = devices_[index_on_opened_device].u3v_payload_size_;
+                    log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "GenDC", "Not Supported");
+                }
+
+
+                // Set Device Info =================================================
+                {
+                    int32_t wi = arv_device_get_integer_feature_value(devices_[index_on_opened_device].device_, "Width", &err_);
+                    if (err_) {
+                        throw std::runtime_error(err_->message);
+                    }
+                    int32_t hi = arv_device_get_integer_feature_value(devices_[index_on_opened_device].device_, "Height", &err_);
+                    if (err_) {
+                        throw std::runtime_error(err_->message);
+                    }
+                    double fps = 0.0;
+                    if (arv_device_is_feature_available(devices_[index_on_opened_device].device_, "AcquisitionFrameRate", &err_)){
+                        fps = arv_device_get_float_feature_value(devices_[index_on_opened_device].device_, "AcquisitionFrameRate", &err_);
+                    }
+                    if (err_) {
+                        throw std::runtime_error(err_->message);
+                    }
+                    log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "Width", wi);
+                    log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "Height", hi);
+
+                    int32_t px = arv_device_get_integer_feature_value (devices_[index_on_opened_device].device_, "PixelFormat", &err_);
+                    if (err_ || px == 0){
+                        log::info("The pixel format is not supported for header info");
+                        err_ = nullptr;
+                        px = 0;
+                    }
+
+                    devices_[index_on_opened_device].header_info_ = { 1, wi, hi,
+                        1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+                        wi, hi, wi, hi, static_cast<float>(fps), px, group_id
+                    };
+                }
+
+                if (index_on_opened_device == 0 && arv_device_is_feature_available(devices_[index_on_opened_device].device_, "OperationMode", &err_)){
+                    if (err_) {
+                        throw std::runtime_error(err_->message);
+                    }
+                    const char* operation_mode_in_string;
+                    operation_mode_in_string = arv_device_get_string_feature_value(devices_[index_on_opened_device].device_, "OperationMode", &err_);
+                    if (err_) {
+                        throw std::runtime_error(err_->message);
+                    }
+                    if (strcmp(operation_mode_in_string, "Came2USB1")==0){
+                        operation_mode_ = OperationMode::Came2USB1;
+                    }else if (strcmp(operation_mode_in_string, "Came1USB1")==0){
+                        operation_mode_ = OperationMode::Came1USB1;
+                    }else if (strcmp(operation_mode_in_string, "Came2USB2")==0){
+                        operation_mode_ = OperationMode::Came2USB2;
+                    }else if (strcmp(operation_mode_in_string, "Came1USB2")==0){
+                        operation_mode_ = OperationMode::Came1USB2;
+                        num_usb_to_open += 1;
+                        devices_.resize(num_usb_to_open);
+                        buffers_.resize(num_usb_to_open);
+                    }
+                    log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "OperationMode", operation_mode_in_string);
+                }
+                index_on_opened_device += 1;
+            }else{
+                log::info("\tDevice/USB {}::{} : {} ... skipped", index_on_opened_device, "device protocol", device_protocol);
+            }
+
+            index_on_detected_device += 1;
+        }
+    }
+
+    void create_stream_and_start_acquisition(bool specific_device_to_flip_order){
+        /*
+        * ion-kit starts the acquisition before stream creation This is a tentative fix only in ion-kit due to hardware issue
+        * In aravis, the acquisition should be done afterward. Since this maps better with GenAPI, where buffers
+        * must be pushed to DataStream objectsbefore DataStream acquisition is started.
+        * refer to https://github.com/AravisProject/aravis/blob/2ebaa8661761ea4bbc4df878aa67b4a9e1a9a3b9/docs/reference/aravis/porting-0.10.md
+        */
+        if (specific_device_to_flip_order){
+            log::info("Execute AcquisitionStart before create stream on this device.");
+            command_acquisition_mode_contd_and_start();
+        }
+        //start streaming after AcquisitionStart
+        for (auto i=0; i<devices_.size(); ++i) {
+            devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, nullptr, nullptr, &err_);
+            if (err_) {
+                throw std::runtime_error(err_->message);
+            }
+            if (devices_[i].stream_ == nullptr) {
+                throw std::runtime_error("stream is null");
+            }
+        }
+
+        if (! specific_device_to_flip_order){
+            command_acquisition_mode_contd_and_start();
+        }
+    }
+
+    void allocate_buffers(){
+        for (auto i=0; i<devices_.size(); ++i) {
+            const size_t buffer_size = 1 * 1024 * 1024 * 1024; // 1GiB for each
+            auto n = (buffer_size + devices_[i].u3v_payload_size_ - 1) / devices_[i].u3v_payload_size_;
+            for (auto j=0; j<n; ++j) {
+                auto b = arv_buffer_new_allocate(devices_[i].u3v_payload_size_);
+                buffers_[i].push_back(b);
+                arv_stream_push_buffer(devices_[i].stream_, b);
+            }
+            log::info("\tDevice/USB {}::{} : {}", i, "Buffer Size", buffer_size);
+            log::info("\tDevice/USB {}::{} : {}", i, "Number of Buffers", n);
+
+        }
+    }
+
+    void sync_frame_count(std::vector<ArvBuffer *> &bufs, int timeout_us){
+        uint32_t max_cnt = 0;
+        while (true) {
+            // Update max_cnt
+            for (int i = 0; i < num_sensor_; ++i) {
+                if (max_cnt < devices_[i].frame_count_) {
+                    max_cnt = devices_[i].frame_count_;
+                }
+            }
+
+            // Check all count is same as max_cnt;
+            bool synchronized = true;
+            for (int i = 0; i < num_sensor_; ++i) {
+                synchronized &= devices_[i].frame_count_ == max_cnt;
+            }
+
+            // If it is synchronized, break the loop
+            if (synchronized) {
+                break;
+            }
+
+            // Acquire buffer until cnt is at least max_cnt
+            for (int i = 0; i < devices_.size(); ++i) {
+                while (devices_[i].frame_count_ < max_cnt) {
+                    arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
+                    bufs[i] = arv_stream_timeout_pop_buffer(devices_[i].stream_, timeout_us);
+
+                    if (bufs[i] == nullptr) {
+                        log::error("pop_buffer failed  when sync frame due to timeout ({}s)", timeout_us * 1e-6f);
+                        throw ::std::runtime_error("buffer is null");
+                    }
+                    devices_[i].frame_count_ = frame_count_method_ == FrameCountMethod::TYPESPECIFIC3
+                        ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
+                        : frame_count_method_ == FrameCountMethod::TIMESTAMP
+                        ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF)
+                        : -1;
+                    i == 0 ?
+                        log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", devices_[i].frame_count_, "") :
+                        log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", "", devices_[i].frame_count_);
+                }
+            }
+        }
+    }
+
+    void consume_old_buffer(std::vector<ArvBuffer *> &bufs, int timeout_us = 3 * 1000 * 1000){
+        std::vector<int32_t> N_output_buffers(num_sensor_);
+        for (auto i = 0; i < num_sensor_; ++i) {
+            int32_t num_input_buffer;
+            arv_stream_get_n_buffers(devices_[i].stream_, &num_input_buffer, &(N_output_buffers[i]));
+        }
+        // if all stream has N output buffers, discard N-1 of them
+        for (auto i = 0; i < num_sensor_; ++i) {
+            for (auto j = 0; j < N_output_buffers[i] - 1; ++j) {
+                bufs[i] = arv_stream_timeout_pop_buffer(devices_[i].stream_, timeout_us);
+                if (bufs[i] == nullptr) {
+                    log::error("pop_buffer(L2) failed due to timeout ({}s)", timeout_us * 1e-6f);
+                    throw ::std::runtime_error("buffer is null");
+                }
+                devices_[i].frame_count_ = frame_count_method_ == FrameCountMethod::TYPESPECIFIC3
+                    ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
+                    : frame_count_method_ == FrameCountMethod::TIMESTAMP
+                    ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF)
+                    : -1;
+                i == 0 ?
+                    log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]", devices_[i].frame_count_, "") :
+                    log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]", "", devices_[i].frame_count_);
+                arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
+
+            }
+        }
     }
 
     g_object_unref_t g_object_unref;
@@ -635,50 +1043,7 @@ public:
 private:
     U3VFakeCam(int32_t num_sensor, int32_t width, int32_t height , float_t fps, const std::string & pixel_format,  char* dev_id = nullptr)
      : U3V(num_sensor,  false, false, true,  width, height , fps, pixel_format,  nullptr){
-         auto path = std::getenv("GENICAM_FILENAME");
-        if (path == nullptr){
-            throw std::runtime_error("Please define GENICAM_FILENAME by `set GENICAM_FILENAME=` or `export GENICAM_FILENAME=`");
-
-        }
-        pixel_format_ = pixel_format;
-        arv_set_fake_camera_genicam_filename (path);
-
-        arv_enable_interface ("Fake");
-        log::info("Creating U3V instance with {} fake sensors...", num_sensor_);
-
-        auto fake_camera0 = arv_camera_new ("Fake_1", &err_);
-        auto fake_device0 = arv_camera_get_device(fake_camera0);
-        devices_[0].device_ = fake_device0;
-        devices_[0].dev_id_=  "fake_0";
-        devices_[0].camera_ = fake_camera0;
-        if (num_sensor_==2){
-            // aravis only provide on ARV_FAKE_DEVICE_ID https://github.com/Sensing-Dev/aravis/blob/main/src/arvfakeinterface.c
-            auto fake_camera1 = arv_camera_new ("Fake_1", &err_);
-            auto fake_device1 = arv_camera_get_device(fake_camera1);
-            devices_[1].device_ = fake_device1;
-            devices_[1].dev_id_=  "fake_1";
-            devices_[1].camera_ = fake_camera1;
-        }
-        // Config fake cameras
-        for (int i = 0;i< num_sensor_;i++){
-            // setting the params if it is not zero
-            log::info("Width {}, Height {} PixelFormat {}...", width, height, pixel_format_);
-            arv_device_set_integer_feature_value (devices_[i].device_, "Width", width, &err_);
-            arv_device_set_integer_feature_value (devices_[i].device_, "Height", height, &err_);
-            arv_device_set_float_feature_value (devices_[i].device_, "AcquisitionFrameRate",fps, &err_);
-            if (pixel_format_ != "Mono8")
-                arv_device_set_string_feature_value(devices_[i].device_, "PixelFormat", pixel_format.c_str(), &err_);
-            devices_[i].u3v_payload_size_ =  arv_device_get_integer_feature_value (devices_[i].device_, "PayloadSize", &err_);
-            auto px =arv_device_get_integer_feature_value(devices_[i].device_, "PixelFormat", &err_);
-            auto fps = arv_device_get_float_feature_value(devices_[i].device_, "AcquisitionFrameRate", &err_);
-            struct rawHeader header=  { 1, width, height,
-                1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
-                width, height, width, height, static_cast<float>(fps), px, 0};
-            devices_[i].header_info_ = header;
-            devices_[i].image_payload_size_ = devices_[i].u3v_payload_size_;
-            devices_[i].frame_count_  = 0;
-
-        }
+        open_fake_devices(width, height, fps, pixel_format);
 
         // Start streaming and start acquisition
         for (auto i=0; i<devices_.size(); ++i) {
@@ -843,361 +1208,18 @@ private:
             sim_mode_ = true;
         }
         if (sim_mode_){
-            auto path = std::getenv("GENICAM_FILENAME");
-            if (path == nullptr){
-                throw std::runtime_error("Please define GENICAM_FILENAME by `set GENICAM_FILENAME=` or `export GENICAM_FILENAME=`");
-            }
-            pixel_format_ = pixel_format;
-            arv_set_fake_camera_genicam_filename (path);
-
-            arv_enable_interface ("Fake");
-            log::info("Creating U3V instance with {} fake sensors...", num_sensor_);
-
-            auto fake_camera0 = arv_camera_new ("Fake_1", &err_);
-            auto fake_device0 = arv_camera_get_device(fake_camera0);
-            devices_[0].device_ = fake_device0;
-            devices_[0].dev_id_=  "fake_0";
-            devices_[0].camera_ = fake_camera0;
-            if (num_sensor_==2){
-                // aravis only provide on ARV_FAKE_DEVICE_ID https://github.com/Sensing-Dev/aravis/blob/main/src/arvfakeinterface.c
-                auto fake_camera1 = arv_camera_new ("Fake_1", &err_);
-                auto fake_device1 = arv_camera_get_device(fake_camera1);
-                devices_[1].device_ = fake_device1;
-                devices_[1].dev_id_=  "fake_1";
-                devices_[1].camera_ = fake_camera1;
-            }
-            // Config fake cameras
-            for (int i = 0;i< num_sensor_;i++){
-                // setting the params if it is not zero
-                log::info("Width {}, Height {} PixelFormat {}...", width, height, pixel_format_);
-                arv_device_set_integer_feature_value (devices_[i].device_, "Width", width, &err_);
-                arv_device_set_integer_feature_value (devices_[i].device_, "Height", height, &err_);
-                arv_device_set_float_feature_value (devices_[i].device_, "AcquisitionFrameRate",fps, &err_);
-                if (pixel_format_ != "Mono8")
-                    arv_device_set_string_feature_value(devices_[i].device_, "PixelFormat", pixel_format.c_str(), &err_);
-                devices_[i].u3v_payload_size_ =  arv_device_get_integer_feature_value (devices_[i].device_, "PayloadSize", &err_);
-                auto px =arv_device_get_integer_feature_value(devices_[i].device_, "PixelFormat", &err_);
-                auto fps = arv_device_get_float_feature_value(devices_[i].device_, "AcquisitionFrameRate", &err_);
-                struct rawHeader header=  { 1, width, height,
-                    1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
-                    width, height, width, height, static_cast<float>(fps), px, 0};
-                devices_[i].header_info_ = header;
-                devices_[i].image_payload_size_ = devices_[i].u3v_payload_size_;
-                devices_[i].frame_count_  = 0;
-
-            }
+            open_fake_devices(width, height, fps, pixel_format);
 
             // Start streaming and start acquisition
-            for (auto i=0; i<devices_.size(); ++i) {
-                devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, NULL, NULL, &err_);
-            }
-
-            for (auto i=0; i<devices_.size(); ++i) {
-                arv_device_execute_command(devices_[i].device_, "AcquisitionStart", &err_);
-                log::info("\tFake Device {}::{} : {}", i, "Command", "AcquisitionStart");
-            }
+            create_stream_and_start_acquisition(order_filp_);
         }else{
-            if (num_device < num_sensor_){
-                log::info("{} device is found; but the num_sensor is set to {}", num_device, num_sensor_);
-                throw std::runtime_error("Device number is not match, please set num_device again");
-            }
-            frame_sync_ = num_sensor_ > 1 ? frame_sync_ : false;
-            unsigned int target_device_idx;
-            if (num_sensor != num_sensor_ && dev_id == nullptr) {
-                num_sensor = num_sensor_;
-                log::info("Multiple devices are found; The first device is selected");
-            }
-
-            log::info("Creating U3V instance with {} sensors...", num_sensor_);
-            log::info("Acquisition option::{} is {}", "frame_sync_", frame_sync_);
-            log::info("Acquisition option::{} is {}", "realtime_display_mode_", realtime_display_mode_);
-
-            int index_on_detected_device = 0;
-            int index_on_opened_device = 0;
-            int num_usb_to_open = num_sensor_;
-
-            while (index_on_detected_device < num_device && index_on_opened_device < num_usb_to_open){
-
-                const char* device_protocol = arv_get_device_protocol(index_on_detected_device);
-                if (strcmp(device_protocol, "USB3Vision") == 0){
-
-                    if (dev_id == arv_get_device_id (index_on_detected_device) && dev_id != nullptr){
-                        /* if device id is specified
-                        TODO: dev_id may be more than 1
-                        */
-                        devices_[index_on_opened_device].dev_id_ = dev_id;
-                    }
-                    else{
-                        /* if device id is not specified */
-                        devices_[index_on_opened_device].dev_id_ = arv_get_device_id (index_on_detected_device);
-                    }
-
-                    log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "DeviceID", devices_[index_on_opened_device].dev_id_);
-
-                    devices_[index_on_opened_device].device_ = arv_open_device(devices_[index_on_opened_device].dev_id_, &err_);
-                    if (err_ ) {
-                        throw std::runtime_error(err_->message);
-                    }
-
-                    if (devices_[index_on_opened_device].device_ == nullptr) {
-                        throw std::runtime_error("device is null");
-                    }
-
-                    pixel_format_ = arv_device_get_string_feature_value(devices_[index_on_opened_device].device_, "PixelFormat", &err_);
-                    if (err_ ) {
-                        throw std::runtime_error(err_->message);
-                    }
-                    log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "PixelFormat", pixel_format_);
-
-                    // Here PayloadSize is the one for U3V data
-                    devices_[index_on_opened_device].u3v_payload_size_ = arv_device_get_integer_feature_value(devices_[index_on_opened_device].device_, "PayloadSize", &err_);
-                    log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "PayloadSize", devices_[index_on_opened_device].u3v_payload_size_);
-                    if (err_ ) {
-                        throw std::runtime_error(err_->message);
-                    }
-
-                    // check it the device has gendc mode ==============================
-                    is_gendc_ = arv_device_is_feature_available(devices_[index_on_opened_device].device_, "GenDCDescriptor", &err_);
-                    if (err_) {
-                        throw std::runtime_error(err_->message);
-                    }
-                    is_gendc_ &= arv_device_is_feature_available(devices_[index_on_opened_device].device_, "GenDCStreamingMode", &err_);
-                    if (err_) {
-                        throw std::runtime_error(err_->message);
-                    }
-
-                    // Some type of U3V Camera supports Frame count generated by its device
-                    const char* device_vender_name;
-                    device_vender_name = arv_device_get_string_feature_value(devices_[index_on_opened_device].device_, "DeviceVendorName", &err_);
-                    if (strcmp(device_vender_name, "Sony Semiconductor Solutions Corporation")==0){
-                        const char* device_model_name;
-                        device_model_name = arv_device_get_string_feature_value(devices_[index_on_opened_device].device_, "DeviceModelName", &err_);
-                        if (strcmp(device_model_name, "    ")==0){
-                            is_param_integer_ = true;
-                            frame_count_method_ = FrameCountMethod::TIMESTAMP;
-                            arv_uv_device_set_usb_mode(devices_[index_on_opened_device].device_, ARV_UV_USB_MODE_SYNC); //hotfix for v1.0
-                        }
-                        if (is_gendc_){
-                            frame_count_method_ = FrameCountMethod::TYPESPECIFIC3;
-                        }
-                    }
-                    log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "frame_count method is ",
-                        frame_count_method_ == FrameCountMethod::TIMESTAMP ? "Timestamp":
-                        frame_count_method_ == FrameCountMethod::TYPESPECIFIC3 ? "TypeSpecific" : "Unavailabe");
-
-                    // check it the device is gendc mode ===============================
-                    if (is_gendc_){
-                        const char * streaming_mode;
-                        streaming_mode = arv_device_get_string_feature_value(devices_[index_on_opened_device].device_, "GenDCStreamingMode", &err_);
-                        if (err_) {
-                            throw std::runtime_error(err_->message);
-                        }
-                        is_gendc_ &= (strcmp(streaming_mode, "On")==0);
-                    }
-
-                    // Check each parameters for GenDC device ==========================
-                    int group_id = 0;
-                    if (is_gendc_){
-                        log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "GenDC", "Available");
-                        uint64_t gendc_desc_size = 0;
-                        char* buffer = reinterpret_cast<char *>(arv_device_dup_register_feature_value(devices_[index_on_opened_device].device_,"GenDCDescriptor", &gendc_desc_size, &err_ ));
-
-                        if (err_) {
-                            throw std::runtime_error(err_->message);
-                        }
-
-                        if(isGenDC(buffer)){
-                            gendc_descriptor_= ContainerHeader(buffer);
-                            std::tuple<int32_t, int32_t> data_comp_and_part = gendc_descriptor_.getFirstAvailableDataOffset(true);
-                            if (std::get<0>(data_comp_and_part) == -1){
-                                devices_[index_on_opened_device].is_data_image_ = false;
-                                data_comp_and_part = gendc_descriptor_.getFirstAvailableDataOffset(false);
-                                if (std::get<0>(data_comp_and_part) == -1){
-                                    throw std::runtime_error("None of the data in GenDC is available\n");
-                                }
-                            }else{
-                                devices_[index_on_opened_device].is_data_image_ = true;
-                            }
-                            devices_[index_on_opened_device].data_offset_ = gendc_descriptor_.getDataOffset(std::get<0>(data_comp_and_part), std::get<1>(data_comp_and_part));
-                            devices_[index_on_opened_device].image_payload_size_ = gendc_descriptor_.getDataSize(std::get<0>(data_comp_and_part), std::get<1>(data_comp_and_part));
-                            if (frame_count_method_ == FrameCountMethod::TYPESPECIFIC3){
-                                devices_[index_on_opened_device].framecount_offset_ = gendc_descriptor_.getOffsetFromTypeSpecific(std::get<0>(data_comp_and_part), std::get<1>(data_comp_and_part), 3, 0);
-                            }
-
-                            int32_t image_component_index = gendc_descriptor_.getFirstComponentIndexByTypeID(ComponentIDIntensity);
-                            if (image_component_index == -1){
-                                throw ::std::runtime_error("No available component found");
-                            }
-                            ComponentHeader image_component = gendc_descriptor_.getComponentByIndex(image_component_index);
-                            group_id = gendc_descriptor_.getComponentByIndex(image_component_index).getGroupID();
-                        }
-                        free(buffer);
-                    }else{
-                        devices_[index_on_opened_device].data_offset_ = 0;
-                        devices_[index_on_opened_device].image_payload_size_ = devices_[index_on_opened_device].u3v_payload_size_;
-                        log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "GenDC", "Not Supported");
-                    }
-
-
-                    // Set Device Info =================================================
-                    {
-                        int32_t wi = arv_device_get_integer_feature_value(devices_[index_on_opened_device].device_, "Width", &err_);
-                        int32_t hi = arv_device_get_integer_feature_value(devices_[index_on_opened_device].device_, "Height", &err_);
-                        double fps = 0.0;
-                        if (arv_device_is_feature_available(devices_[index_on_opened_device].device_, "AcquisitionFrameRate", &err_)){
-                            fps = arv_device_get_float_feature_value(devices_[index_on_opened_device].device_, "AcquisitionFrameRate", &err_);
-                        }
-                        log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "Width", wi);
-                        log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "Height", hi);
-
-                        int32_t px = arv_device_get_integer_feature_value (devices_[index_on_opened_device].device_, "PixelFormat", &err_);
-                        if (px == 0){
-                            log::info("The pixel format is not supported for header info");
-                        }
-
-
-                        devices_[index_on_opened_device].header_info_ = { 1, wi, hi,
-                            1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
-                            wi, hi, wi, hi, static_cast<float>(fps), px, group_id
-                        };
-                    }
-
-                    if (index_on_opened_device == 0 && arv_device_is_feature_available(devices_[index_on_opened_device].device_, "OperationMode", &err_)){
-                        const char* operation_mode_in_string;
-                        operation_mode_in_string = arv_device_get_string_feature_value(devices_[index_on_opened_device].device_, "OperationMode", &err_);
-                        if (strcmp(operation_mode_in_string, "Came2USB1")==0){
-                            operation_mode_ = OperationMode::Came2USB1;
-                        }else if (strcmp(operation_mode_in_string, "Came1USB1")==0){
-                            operation_mode_ = OperationMode::Came1USB1;
-                        }else if (strcmp(operation_mode_in_string, "Came2USB2")==0){
-                            operation_mode_ = OperationMode::Came2USB2;
-                        }else if (strcmp(operation_mode_in_string, "Came1USB2")==0){
-                            operation_mode_ = OperationMode::Came1USB2;
-                            num_usb_to_open += 1;
-                            devices_.resize(num_usb_to_open);
-                            buffers_.resize(num_usb_to_open);
-                        }
-                        log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "OperationMode", operation_mode_in_string);
-                    }
-                    index_on_opened_device += 1;
-                }else{
-                    log::info("\tDevice/USB {}::{} : {} ... skipped", index_on_opened_device, "device protocol", device_protocol);
-                }
-
-                index_on_detected_device += 1;
-            }
-            /*
-             * ion-kit starts the acquisition before stream creation This is a tentative fix only in ion-kit due to hardware issue
-             * In aravis, the acquisition should be done afterward. Since this maps better with GenAPI, where buffers
-             * must be pushed to DataStream objectsbefore DataStream acquisition is started.
-             * refer to https://github.com/AravisProject/aravis/blob/2ebaa8661761ea4bbc4df878aa67b4a9e1a9a3b9/docs/reference/aravis/porting-0.10.md
-             */
-            if (order_filp_){
-                err_ = CommandAcquisitionModeContdStart();
-            }
-            //start streaming after AcquisitionStart
-            for (auto i=0; i<devices_.size(); ++i) {
-                devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, nullptr, nullptr, &err_);
-                if (err_) {
-                    throw std::runtime_error(err_->message);
-                }
-                if (devices_[i].stream_ == nullptr) {
-                    throw std::runtime_error("stream is null");
-                }
-            }
-
-            if (! order_filp_){
-                err_ = CommandAcquisitionModeContdStart();
-            }
-
-            for (auto i=0; i<devices_.size(); ++i) {
-                const size_t buffer_size = 1 * 1024 * 1024 * 1024; // 1GiB for each
-                auto n = (buffer_size + devices_[i].u3v_payload_size_ - 1) / devices_[i].u3v_payload_size_;
-                for (auto j=0; j<n; ++j) {
-                    auto b = arv_buffer_new_allocate(devices_[i].u3v_payload_size_);
-                    buffers_[i].push_back(b);
-                    arv_stream_push_buffer(devices_[i].stream_, b);
-                }
-                log::info("\tDevice/USB {}::{} : {}", i, "Buffer Size", buffer_size);
-                log::info("\tDevice/USB {}::{} : {}", i, "Number of Buffers", n);
-
-            }
-
+            // Real Camera
+            validate_user_input(num_device, dev_id);
+            open_real_devices(num_device, num_sensor_, dev_id);
+            create_stream_and_start_acquisition(order_filp_);
+            allocate_buffers();
         }
     };
-
-
-    void sync_frame_count(std::vector<ArvBuffer *> &bufs, int timeout_us){
-        uint32_t max_cnt = 0;
-        while (true) {
-            // Update max_cnt
-            for (int i = 0; i < num_sensor_; ++i) {
-                if (max_cnt < devices_[i].frame_count_) {
-                    max_cnt = devices_[i].frame_count_;
-                }
-            }
-
-            // Check all count is same as max_cnt;
-            bool synchronized = true;
-            for (int i = 0; i < num_sensor_; ++i) {
-                synchronized &= devices_[i].frame_count_ == max_cnt;
-            }
-
-            // If it is synchronized, break the loop
-            if (synchronized) {
-                break;
-            }
-
-            // Acquire buffer until cnt is at least max_cnt
-            for (int i = 0; i < devices_.size(); ++i) {
-                while (devices_[i].frame_count_ < max_cnt) {
-                    arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
-                    bufs[i] = arv_stream_timeout_pop_buffer(devices_[i].stream_, timeout_us);
-
-                    if (bufs[i] == nullptr) {
-                        log::error("pop_buffer failed  when sync frame due to timeout ({}s)", timeout_us * 1e-6f);
-                        throw ::std::runtime_error("buffer is null");
-                    }
-                    devices_[i].frame_count_ = frame_count_method_ == FrameCountMethod::TYPESPECIFIC3
-                        ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
-                        : frame_count_method_ == FrameCountMethod::TIMESTAMP
-                        ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF)
-                        : -1;
-                    i == 0 ?
-                        log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", devices_[i].frame_count_, "") :
-                        log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", "", devices_[i].frame_count_);
-                }
-            }
-        }
-    }
-
-    void consume_old_buffer(std::vector<ArvBuffer *> &bufs, int timeout_us = 3 * 1000 * 1000){
-        std::vector<int32_t> N_output_buffers(num_sensor_);
-        for (auto i = 0; i < num_sensor_; ++i) {
-            int32_t num_input_buffer;
-            arv_stream_get_n_buffers(devices_[i].stream_, &num_input_buffer, &(N_output_buffers[i]));
-        }
-        // if all stream has N output buffers, discard N-1 of them
-        for (auto i = 0; i < num_sensor_; ++i) {
-            for (auto j = 0; j < N_output_buffers[i] - 1; ++j) {
-                bufs[i] = arv_stream_timeout_pop_buffer(devices_[i].stream_, timeout_us);
-                if (bufs[i] == nullptr) {
-                    log::error("pop_buffer(L2) failed due to timeout ({}s)", timeout_us * 1e-6f);
-                    throw ::std::runtime_error("buffer is null");
-                }
-                devices_[i].frame_count_ = frame_count_method_ == FrameCountMethod::TYPESPECIFIC3
-                    ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
-                    : frame_count_method_ == FrameCountMethod::TIMESTAMP
-                    ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF)
-                    : -1;
-                i == 0 ?
-                    log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]", devices_[i].frame_count_, "") :
-                    log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]", "", devices_[i].frame_count_);
-                arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
-
-            }
-        }
-    }
 };
 
 
@@ -1346,358 +1368,18 @@ private:
             sim_mode_ = true;
         }
         if (sim_mode_){
-            auto path = std::getenv("GENICAM_FILENAME");
-            if (path == nullptr){
-                throw std::runtime_error("Please define GENICAM_FILENAME by `set GENICAM_FILENAME=` or `export GENICAM_FILENAME=`");
-            }
-            pixel_format_ = pixel_format;
-            arv_set_fake_camera_genicam_filename (path);
-
-            arv_enable_interface ("Fake");
-            log::info("Creating U3V instance with {} fake sensors...", num_sensor_);
-
-            auto fake_camera0 = arv_camera_new ("Fake_1", &err_);
-            auto fake_device0 = arv_camera_get_device(fake_camera0);
-            devices_[0].device_ = fake_device0;
-            devices_[0].dev_id_=  "fake_0";
-            devices_[0].camera_ = fake_camera0;
-            if (num_sensor_==2){
-                // aravis only provide on ARV_FAKE_DEVICE_ID https://github.com/Sensing-Dev/aravis/blob/main/src/arvfakeinterface.c
-                auto fake_camera1 = arv_camera_new ("Fake_1", &err_);
-                auto fake_device1 = arv_camera_get_device(fake_camera1);
-                devices_[1].device_ = fake_device1;
-                devices_[1].dev_id_=  "fake_1";
-                devices_[1].camera_ = fake_camera1;
-            }
-            // Config fake cameras
-            for (int i = 0;i< num_sensor_;i++){
-                // setting the params if it is not zero
-                log::info("Width {}, Height {} PixelFormat {}...", width, height, pixel_format_);
-                arv_device_set_integer_feature_value (devices_[i].device_, "Width", width, &err_);
-                arv_device_set_integer_feature_value (devices_[i].device_, "Height", height, &err_);
-                arv_device_set_float_feature_value (devices_[i].device_, "AcquisitionFrameRate",fps, &err_);
-                if (pixel_format_ != "Mono8")
-                    arv_device_set_string_feature_value(devices_[i].device_, "PixelFormat", pixel_format.c_str(), &err_);
-                devices_[i].u3v_payload_size_ =  arv_device_get_integer_feature_value (devices_[i].device_, "PayloadSize", &err_);
-                auto px =arv_device_get_integer_feature_value(devices_[i].device_, "PixelFormat", &err_);
-                auto fps = arv_device_get_float_feature_value(devices_[i].device_, "AcquisitionFrameRate", &err_);
-                struct rawHeader header=  { 1, width, height,
-                    1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
-                    width, height, width, height, static_cast<float>(fps), px, 0};
-                devices_[i].header_info_ = header;
-                devices_[i].image_payload_size_ = devices_[i].u3v_payload_size_;
-                devices_[i].frame_count_  = 0;
-
-            }
+            open_fake_devices(width, height, fps, pixel_format);
 
             // Start streaming and start acquisition
-            for (auto i=0; i<devices_.size(); ++i) {
-                devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, NULL, NULL, &err_);
-            }
-
-            for (auto i=0; i<devices_.size(); ++i) {
-                arv_device_execute_command(devices_[i].device_, "AcquisitionStart", &err_);
-                log::info("\tFake Device {}::{} : {}", i, "Command", "AcquisitionStart");
-            }
+            create_stream_and_start_acquisition(order_filp_);
         }else{
-            if (num_sensor < num_sensor_){
-                log::info("{} camera is found; but the number is set to {}", num_sensor, num_sensor_);
-                throw std::runtime_error("Device number is not match, please set num_device again");
-            }
-            frame_sync_ = num_sensor_ > 1 ? frame_sync_ : false;
-            unsigned int target_device_idx;
-            if (num_sensor != num_sensor_ && dev_id == nullptr) {
-                num_sensor = num_sensor_;
-                log::info("Multiple devices are found; The first device is selected");
-            }
-
-            log::info("Creating U3V instance with {} sensors...", num_sensor_);
-            log::info("Acquisition option::{} is {}", "frame_sync_", frame_sync_);
-            log::info("Acquisition option::{} is {}", "realtime_display_mode_", realtime_display_mode_);
-
-            int index_on_detected_device = 0;
-            int index_on_opened_device = 0;
-            int num_usb_to_open = num_sensor_;
-
-            while (index_on_detected_device < num_device && index_on_opened_device < num_usb_to_open){
-
-                const char* device_protocol = arv_get_device_protocol(index_on_detected_device);
-                if (strcmp(device_protocol, "USB3Vision") == 0){
-
-                    if (dev_id == arv_get_device_id (index_on_detected_device) && dev_id != nullptr){
-                        /* if device id is specified
-                        TODO: dev_id may be more than 1
-                        */
-                        devices_[index_on_opened_device].dev_id_ = dev_id;
-                    }
-                    else{
-                        /* if device id is not specified */
-                        devices_[index_on_opened_device].dev_id_ = arv_get_device_id (index_on_detected_device);
-                    }
-
-                    log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "DeviceID", devices_[index_on_opened_device].dev_id_);
-
-                    devices_[index_on_opened_device].device_ = arv_open_device(devices_[index_on_opened_device].dev_id_, &err_);
-                    if (err_ ) {
-                        throw std::runtime_error(err_->message);
-                    }
-
-                    if (devices_[index_on_opened_device].device_ == nullptr) {
-                        throw std::runtime_error("device is null");
-                    }
-
-                    pixel_format_ = arv_device_get_string_feature_value(devices_[index_on_opened_device].device_, "PixelFormat", &err_);
-                    if (err_ ) {
-                        throw std::runtime_error(err_->message);
-                    }
-                    log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "PixelFormat", pixel_format_);
-
-                    // Here PayloadSize is the one for U3V data
-                    devices_[index_on_opened_device].u3v_payload_size_ = arv_device_get_integer_feature_value(devices_[index_on_opened_device].device_, "PayloadSize", &err_);
-                    log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "PayloadSize", devices_[index_on_opened_device].u3v_payload_size_);
-                    if (err_ ) {
-                        throw std::runtime_error(err_->message);
-                    }
-
-                    // check it the device has gendc mode ==============================
-                    is_gendc_ = arv_device_is_feature_available(devices_[index_on_opened_device].device_, "GenDCDescriptor", &err_);
-                    if (err_) {
-                        throw std::runtime_error(err_->message);
-                    }
-                    is_gendc_ &= arv_device_is_feature_available(devices_[index_on_opened_device].device_, "GenDCStreamingMode", &err_);
-                    if (err_) {
-                        throw std::runtime_error(err_->message);
-                    }
-
-                    // check it the device is gendc mode ===============================
-                    if (is_gendc_){
-                        const char * streaming_mode;
-                        streaming_mode = arv_device_get_string_feature_value(devices_[index_on_opened_device].device_, "GenDCStreamingMode", &err_);
-                        if (err_) {
-                            throw std::runtime_error(err_->message);
-                        }
-                        is_gendc_ &= (strcmp(streaming_mode, "On")==0);
-                    }
-
-                    // Some type of U3V Camera supports Frame count generated by its device
-                    const char* device_vender_name;
-                    device_vender_name = arv_device_get_string_feature_value(devices_[index_on_opened_device].device_, "DeviceVendorName", &err_);
-                    if (strcmp(device_vender_name, "Sony Semiconductor Solutions Corporation")==0){
-                        const char* device_model_name;
-                        device_model_name = arv_device_get_string_feature_value(devices_[index_on_opened_device].device_, "DeviceModelName", &err_);
-                        if (strcmp(device_model_name, "    ")==0){
-                            is_param_integer_ = true;
-                            frame_count_method_ = FrameCountMethod::TIMESTAMP;
-                            arv_uv_device_set_usb_mode(devices_[index_on_opened_device].device_, ARV_UV_USB_MODE_SYNC); //hotfix for v1.0
-                        }
-                        if (is_gendc_){
-                            frame_count_method_ = FrameCountMethod::TYPESPECIFIC3;
-                        }
-                    }
-                    log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "frame_count method is ",
-                        frame_count_method_ == FrameCountMethod::TIMESTAMP ? "Timestamp":
-                        frame_count_method_ == FrameCountMethod::TYPESPECIFIC3 ? "TypeSpecific" : "Unavailabe");
-
-                    // Check each parameters for GenDC device ==========================
-                    int group_id = 0;
-                    if (is_gendc_){
-                        log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "GenDC", "Available");
-                        uint64_t gendc_desc_size = 0;
-                        char* buffer = reinterpret_cast<char *>(arv_device_dup_register_feature_value(devices_[index_on_opened_device].device_,"GenDCDescriptor", &gendc_desc_size, &err_ ));
-                        if (err_) {
-                            throw std::runtime_error(err_->message);
-                        }
-
-                        if(isGenDC(buffer)){
-                            gendc_descriptor_= ContainerHeader(buffer);
-                            std::tuple<int32_t, int32_t> data_comp_and_part = gendc_descriptor_.getFirstAvailableDataOffset(true);
-                            if (std::get<0>(data_comp_and_part) == -1){
-                                devices_[index_on_opened_device].is_data_image_ = false;
-                                data_comp_and_part = gendc_descriptor_.getFirstAvailableDataOffset(false);
-                                if (std::get<0>(data_comp_and_part) == -1){
-                                    throw std::runtime_error("None of the data in GenDC is available\n");
-                                }
-                            }else{
-                                devices_[index_on_opened_device].is_data_image_ = true;
-                            }
-                            devices_[index_on_opened_device].data_offset_ = gendc_descriptor_.getDataOffset(std::get<0>(data_comp_and_part), std::get<1>(data_comp_and_part));
-                            devices_[index_on_opened_device].image_payload_size_ = gendc_descriptor_.getDataSize(std::get<0>(data_comp_and_part), std::get<1>(data_comp_and_part));
-                            if (frame_count_method_ == FrameCountMethod::TYPESPECIFIC3){
-                                devices_[index_on_opened_device].framecount_offset_ = gendc_descriptor_.getOffsetFromTypeSpecific(std::get<0>(data_comp_and_part), std::get<1>(data_comp_and_part), 3, 0);
-                            }
-                            int32_t image_component_index = gendc_descriptor_.getFirstComponentIndexByTypeID(ComponentIDIntensity);
-                            if (image_component_index == -1){
-                                throw ::std::runtime_error("No available component found");
-                            }
-                            ComponentHeader image_component = gendc_descriptor_.getComponentByIndex(image_component_index);
-                            group_id = gendc_descriptor_.getComponentByIndex(image_component_index).getGroupID();
-                        }
-                        free(buffer);
-                    }else{
-                        devices_[index_on_opened_device].data_offset_ = 0;
-                        devices_[index_on_opened_device].image_payload_size_ = devices_[index_on_opened_device].u3v_payload_size_;
-                        log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "GenDC", "Not Supported");
-                    }
-
-
-                    // Set Device Info =================================================
-                    {
-                        int32_t wi = arv_device_get_integer_feature_value(devices_[index_on_opened_device].device_, "Width", &err_);
-                        int32_t hi = arv_device_get_integer_feature_value(devices_[index_on_opened_device].device_, "Height", &err_);
-                        double fps = 0.0;
-                        if (arv_device_is_feature_available(devices_[index_on_opened_device].device_, "AcquisitionFrameRate", &err_)){
-                            fps = arv_device_get_float_feature_value(devices_[index_on_opened_device].device_, "AcquisitionFrameRate", &err_);
-                        }
-                        log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "Width", wi);
-                        log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "Height", hi);
-
-                        int32_t px = arv_device_get_integer_feature_value (devices_[index_on_opened_device].device_, "PixelFormat", &err_);
-                        if (px == 0){
-                            log::info("The pixel format is not supported for header info");
-                        }
-
-                        devices_[index_on_opened_device].header_info_ = { 1, wi, hi,
-                            1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
-                            wi, hi, wi, hi, static_cast<float>(fps), px, group_id
-                        };
-                    }
-
-                    if (index_on_opened_device == 0 && arv_device_is_feature_available(devices_[index_on_opened_device].device_, "OperationMode", &err_)){
-                        const char* operation_mode_in_string;
-                        operation_mode_in_string = arv_device_get_string_feature_value(devices_[index_on_opened_device].device_, "OperationMode", &err_);
-                        if (strcmp(operation_mode_in_string, "Came2USB1")==0){
-                            operation_mode_ = OperationMode::Came2USB1;
-                        }else if (strcmp(operation_mode_in_string, "Came1USB1")==0){
-                            operation_mode_ = OperationMode::Came1USB1;
-                        }else if (strcmp(operation_mode_in_string, "Came2USB2")==0){
-                            operation_mode_ = OperationMode::Came2USB2;
-                        }else if (strcmp(operation_mode_in_string, "Came1USB2")==0){
-                            operation_mode_ = OperationMode::Came1USB2;
-                            num_usb_to_open += 1;
-                            devices_.resize(num_usb_to_open);
-                            buffers_.resize(num_usb_to_open);
-                        }
-                        log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "OperationMode", operation_mode_in_string);
-                    }
-                    index_on_opened_device += 1;
-                }else{
-                    log::info("\tDevice/USB {}::{} : {} ... skipped", index_on_opened_device, "device protocol", device_protocol);
-                }
-
-                index_on_detected_device += 1;
-            }
-
-            /*
-             * ion-kit starts the acquisition before stream creation This is a tentative fix only in ion-kit due to hardware issue
-             * In aravis, the acquisition should be done afterward. Since this maps better with GenAPI, where buffers
-             * must be pushed to DataStream objectsbefore DataStream acquisition is started.
-             * refer to https://github.com/AravisProject/aravis/blob/2ebaa8661761ea4bbc4df878aa67b4a9e1a9a3b9/docs/reference/aravis/porting-0.10.md
-             */
-            if (order_filp_){
-                err_ = CommandAcquisitionModeContdStart();
-            }
-            //start streaming after AcquisitionStart
-            for (auto i=0; i<devices_.size(); ++i) {
-                devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, nullptr, nullptr, &err_);
-                if (err_) {
-                    throw std::runtime_error(err_->message);
-                }
-                if (devices_[i].stream_ == nullptr) {
-                    throw std::runtime_error("stream is null");
-                }
-            }
-
-            if (! order_filp_){
-                err_ = CommandAcquisitionModeContdStart();
-            }
-
-            for (auto i=0; i<devices_.size(); ++i) {
-                const size_t buffer_size = 1 * 1024 * 1024 * 1024; // 1GiB for each
-                auto n = (buffer_size + devices_[i].u3v_payload_size_ - 1) / devices_[i].u3v_payload_size_;
-                for (auto j=0; j<n; ++j) {
-                    auto b = arv_buffer_new_allocate(devices_[i].u3v_payload_size_);
-                    buffers_[i].push_back(b);
-                    arv_stream_push_buffer(devices_[i].stream_, b);
-                }
-                log::info("\tDevice/USB {}::{} : {}", i, "Buffer Size", buffer_size);
-                log::info("\tDevice/USB {}::{} : {}", i, "Number of Buffers", n);
-
-            }
-
+            // Real Camera
+            validate_user_input(num_device, dev_id);
+            open_real_devices(num_device, num_sensor_, dev_id);
+            create_stream_and_start_acquisition(order_filp_);
+            allocate_buffers();
         }
     };
-
-    void consume_old_buffer(std::vector<ArvBuffer *> &bufs, int timeout_us = 3 * 1000 * 1000){
-        std::vector<int32_t> N_output_buffers(num_sensor_);
-        for (auto i = 0; i < num_sensor_; ++i) {
-            int32_t num_input_buffer;
-            arv_stream_get_n_buffers(devices_[i].stream_, &num_input_buffer, &(N_output_buffers[i]));
-        }
-        // if all stream has N output buffers, discard N-1 of them
-        for (auto i = 0; i < num_sensor_; ++i) {
-            for (auto j = 0; j < N_output_buffers[i] - 1; ++j) {
-                bufs[i] = arv_stream_timeout_pop_buffer(devices_[i].stream_, timeout_us);
-                if (bufs[i] == nullptr) {
-                    log::error("pop_buffer(L2) failed due to timeout ({}s)", timeout_us * 1e-6f);
-                    throw ::std::runtime_error("buffer is null");
-                }
-                devices_[i].frame_count_ = frame_count_method_ == FrameCountMethod::TYPESPECIFIC3
-                    ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
-                    : frame_count_method_ == FrameCountMethod::TIMESTAMP
-                    ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF)
-                    : -1;
-                i == 0 ?
-                    log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]", devices_[i].frame_count_, "") :
-                    log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20}) [skipped for realtime display]", "", devices_[i].frame_count_);
-                arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
-
-            }
-        }
-    }
-
-    void sync_frame_count(std::vector<ArvBuffer *> &bufs, int timeout_us){
-        uint32_t max_cnt = 0;
-        while (true) {
-            // Update max_cnt
-            for (int i = 0; i < num_sensor_; ++i) {
-                if (max_cnt < devices_[i].frame_count_) {
-                    max_cnt = devices_[i].frame_count_;
-                }
-            }
-
-            // Check all count is same as max_cnt;
-            bool synchronized = true;
-            for (int i = 0; i < num_sensor_; ++i) {
-                synchronized &= devices_[i].frame_count_ == max_cnt;
-            }
-
-            // If it is synchronized, break the loop
-            if (synchronized) {
-                break;
-            }
-
-            // Acquire buffer until cnt is at least max_cnt
-            for (int i = 0; i < devices_.size(); ++i) {
-                while (devices_[i].frame_count_ < max_cnt) {
-                    arv_stream_push_buffer(devices_[i].stream_, bufs[i]);
-                    bufs[i] = arv_stream_timeout_pop_buffer(devices_[i].stream_, timeout_us);
-
-                    if (bufs[i] == nullptr) {
-                        log::error("pop_buffer failed  when sync frame due to timeout ({}s)", timeout_us * 1e-6f);
-                        throw ::std::runtime_error("buffer is null");
-                    }
-                    devices_[i].frame_count_ = frame_count_method_ == FrameCountMethod::TYPESPECIFIC3
-                        ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[i], devices_[i]))
-                        : frame_count_method_ == FrameCountMethod::TIMESTAMP
-                        ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[i]) & 0x00000000FFFFFFFF)
-                        : -1;
-                    i == 0 ?
-                        log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", devices_[i].frame_count_, "") :
-                        log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", "", devices_[i].frame_count_);
-                }
-            }
-        }
-    }
 
 };
 
