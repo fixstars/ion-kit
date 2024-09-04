@@ -21,7 +21,8 @@ namespace sinks {
  * colors
  */
 template<typename ConsoleMutex>
-class wincolor_sink : public sink {
+class wincolor_sink : public sink
+{
 public:
     wincolor_sink(void *out_handle, color_mode mode);
     ~wincolor_sink() override;
@@ -58,13 +59,15 @@ protected:
 };
 
 template<typename ConsoleMutex>
-class wincolor_stdout_sink : public wincolor_sink<ConsoleMutex> {
+class wincolor_stdout_sink : public wincolor_sink<ConsoleMutex>
+{
 public:
     explicit wincolor_stdout_sink(color_mode mode = color_mode::automatic);
 };
 
 template<typename ConsoleMutex>
-class wincolor_stderr_sink : public wincolor_sink<ConsoleMutex> {
+class wincolor_stderr_sink : public wincolor_sink<ConsoleMutex>
+{
 public:
     explicit wincolor_stderr_sink(color_mode mode = color_mode::automatic);
 };
@@ -74,9 +77,9 @@ using wincolor_stdout_sink_st = wincolor_stdout_sink<details::console_nullmutex>
 
 using wincolor_stderr_sink_mt = wincolor_stderr_sink<details::console_mutex>;
 using wincolor_stderr_sink_st = wincolor_stderr_sink<details::console_nullmutex>;
-}  // namespace sinks
-}  // namespace spdlog
+} // namespace sinks
+} // namespace spdlog
 
 #ifdef SPDLOG_HEADER_ONLY
-#include "wincolor_sink-inl.h"
+#    include "wincolor_sink-inl.h"
 #endif
