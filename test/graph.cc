@@ -2,8 +2,7 @@
 
 using namespace ion;
 
-int main()
-{
+int main() {
     {
         try {
             Builder b;
@@ -29,8 +28,8 @@ int main()
             n0["output"].bind(out0);
             g0.run();
 
-            for (int y=0; y<size; ++y) {
-                for (int x=0; x<size; ++x) {
+            for (int y = 0; y < size; ++y) {
+                for (int x = 0; x < size; ++x) {
                     if (out0(x, y) != 41) {
                         return 1;
                     }
@@ -45,8 +44,8 @@ int main()
             n1["output"].bind(out1);
             g1.run();
 
-            for (int y=0; y<size; ++y) {
-                for (int x=0; x<size; ++x) {
+            for (int y = 0; y < size; ++y) {
+                for (int x = 0; x < size; ++x) {
                     if (out0(x, y) != 41) {
                         return 1;
                     }
@@ -62,8 +61,8 @@ int main()
             Graph g2(g0 + g1);
             g2.run();
 
-            for (int y=0; y<size; ++y) {
-                for (int x=0; x<size; ++x) {
+            for (int y = 0; y < size; ++y) {
+                for (int x = 0; x < size; ++x) {
                     if (out0(x, y) != 41) {
                         return 1;
                     }
@@ -75,14 +74,13 @@ int main()
 
             std::cout << "first test Passed" << std::endl;
 
-        } catch (Halide::Error& e) {
+        } catch (Halide::Error &e) {
             std::cerr << e.what() << std::endl;
             return 1;
-        } catch (const std::exception& e) {
+        } catch (const std::exception &e) {
             std::cerr << e.what() << std::endl;
             return 1;
         }
-
     }
 
     {
@@ -94,7 +92,6 @@ int main()
             int32_t size = 1;
             // Test 1
             Buffer<int32_t> ibuf0(std::vector<int32_t>{1, 1});
-
 
             Port ip0{"input", Halide::type_of<int32_t>(), 2};
             Port vp0{"v", Halide::type_of<int32_t>()};
@@ -135,7 +132,6 @@ int main()
             obuf1.fill(0);
             n1["output"].bind(obuf1);
 
-
             ibuf1(0, 0) = 42;
             v1 = 1;
             obuf1(0, 0) = 0;
@@ -172,5 +168,4 @@ int main()
     }
     std::cout << "All Passed" << std::endl;
     return 0;
-
 }

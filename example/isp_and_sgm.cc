@@ -94,16 +94,16 @@ int main(int argc, char *argv[]) {
         Node color_matrix_r, color_conversion_r, gamma_correction_r, distortion_lut_r, distortion_correction_r, resize_r, final_luminance_r;
 
         loader = b.add("image_io_grayscale_data_loader")
-            .set_params(
-                Param("width", raw_width),
-                Param("height", raw_height),
-                Param("url", "http://ion-kit.s3.us-west-2.amazonaws.com/images/OV5647x2-5184x1944-GB10.raw"));
+                     .set_params(
+                         Param("width", raw_width),
+                         Param("height", raw_height),
+                         Param("url", "http://ion-kit.s3.us-west-2.amazonaws.com/images/OV5647x2-5184x1944-GB10.raw"));
 
         normalize = b.add("image_processing_normalize_raw_image")
-            .set_params(
-                Param("bit_width", "10"),
-                Param("bit_shift", "6"))(
-                    loader["output"]);
+                        .set_params(
+                            Param("bit_width", "10"),
+                            Param("bit_shift", "6"))(
+                            loader["output"]);
 
         crop_l = b.add("image_processing_crop_image_2d_float")
                      .set_params(

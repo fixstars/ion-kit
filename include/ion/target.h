@@ -11,6 +11,6 @@ Target get_host_target();
 
 Target get_target_from_environment();
 
-} // ion
+}  // namespace ion
 
-#endif // ION_TARGET_H
+#endif  // ION_TARGET_H

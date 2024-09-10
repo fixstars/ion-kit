@@ -160,16 +160,14 @@ jobs:
           cp  windows/bin/Halide.dll python/ionpy/module/windows/Halide.dll
           cp  windows/bin/ion-core.dll python/ionpy/module/windows/ion-core.dll
           cp  windows/bin/ion-bb.dll python/ionpy/module/windows/ion-bb.dll
-          
-          mkdir aravis
-          curl -L https://github.com/Sensing-Dev/aravis/releases/download/v0.8.31/aravis-0.8.31-x86-64-windows.zip -o aravis/aravis-bin.zip
-          cd aravis && tar -xf aravis-bin.zip && cd ../
+
+          curl -L https://github.com/Sensing-Dev/aravis/releases/download/v0.8.31/aravis-0.8.31-x86-64-windows.zip -o aravis-bin.zip
+          tar -xf aravis-bin.zip 
           cp aravis/bin/aravis-0.8-0.dll python/ionpy/module/windows/aravis-0.8-0.dll
           
-          mkdir dependency
-          curl -L https://github.com/Sensing-Dev/aravis/releases/download/v0.8.31/aravis-0.8.31-dependencies.zip -o dependency/dependency-bin.zip
-          cd dependency && tar -xf dependency-bin.zip && cd ../
-          mv dependency/*.dll python/ionpy/module/windows/
+          curl -L https://github.com/Sensing-Dev/aravis/releases/download/v0.8.31/aravis-0.8.31-dependencies.zip -o dependency-bin.zip
+          tar -xf dependency-bin.zip 
+          mv aravis_dependencies/bin/*.dll python/ionpy/module/windows/
           
           ls  python/ionpy/module/windows
 

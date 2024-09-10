@@ -1963,8 +1963,8 @@ public:
 class Schedule : public ion::BuildingBlock<Schedule> {
 public:
     BuildingBlockParam<std::string> output_name{"output_name", ""};
-    BuildingBlockParam<std::string> compute_level{"compute_level", ""}; // "compute_inline" or "compute_root"
-    BuildingBlockParam<std::string> concurrency{"concurrency", ""}; // comma separated string
+    BuildingBlockParam<std::string> compute_level{"compute_level", ""};  // "compute_inline" or "compute_root"
+    BuildingBlockParam<std::string> concurrency{"concurrency", ""};      // comma separated string
 
     Input<Halide::Func> input{"input"};
     Output<Halide::Func> output{"output"};
@@ -1988,7 +1988,7 @@ public:
                 } else {
                     Var x = f.args()[0];
                     Var y = f.args()[1];
-                    for (int i=2; i<f.args().size(); ++i) {
+                    for (int i = 2; i < f.args().size(); ++i) {
                         f.fuse(y, f.args()[i], y);
                     }
                     Var xo, yo, xi, yi;
@@ -2002,7 +2002,7 @@ public:
                 } else {
                     Var x = f.args()[0];
                     Var y = f.args()[1];
-                    for (int i=2; i<f.args().size(); ++i) {
+                    for (int i = 2; i < f.args().size(); ++i) {
                         f.fuse(y, f.args()[i], y);
                     }
                     f.parallel(y);

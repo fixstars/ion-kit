@@ -4,8 +4,7 @@
 
 using namespace ion;
 
-int main()
-{
+int main() {
     try {
         Builder b;
         b.with_bb_module("ion-bb-test");
@@ -15,10 +14,10 @@ int main()
             return 1;
         }
 
-    } catch (const Halide::Error& e) {
+    } catch (const Halide::Error &e) {
         std::cerr << e.what() << std::endl;
         return 1;
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
         return 1;
     }

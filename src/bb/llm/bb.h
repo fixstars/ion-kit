@@ -18,13 +18,13 @@ public:
     BuildingBlockParam<int32_t> height{"height", 480};
 
     void generate() {
-        using namespace Halide; 
+        using namespace Halide;
 
         // NOTE: These tricks is required for the input parameter which is passed as an external function argument
         Func input_;
         input_(_) = input(_);
         input_.compute_root();
-        
+
         Func prompt_;
         prompt_(_) = prompt(_);
         prompt_.compute_root();

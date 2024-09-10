@@ -23,7 +23,7 @@ namespace dnn {
 
 class OrtSessionManager {
 public:
-    OrtSessionManager(const std::string& model_root_url, const std ::string &cache_root, bool cuda_enable)
+    OrtSessionManager(const std::string &model_root_url, const std ::string &cache_root, bool cuda_enable)
         : ort_{new ONNXRuntime()} {
         const OrtApi *api = ort_->get_api();
         ort_->check_status(api->CreateEnv(ORT_LOGGING_LEVEL_WARNING, "ion_bb_dnn_ort", &env));
@@ -39,7 +39,7 @@ public:
         //     ort_->enable_tensorrt_provider(session_options, 0);
         // }
 
-        //std::string model_url = model_root_url + "yolov4-tiny_416_416.onnx";
+        // std::string model_url = model_root_url + "yolov4-tiny_416_416.onnx";
         std::string model_name = "ssd_mobilenet_v2_coco_2018_03_29.onnx";
 
         std::ifstream ifs(cache_root + model_name, std::ios::binary);
@@ -48,8 +48,8 @@ public:
             ifs.seekg(0, std::ios::end);
             auto end = ifs.tellg();
             ifs.seekg(0, std::ios::beg);
-            model_.resize(end-begin);
-            ifs.read(reinterpret_cast<char*>(model_.data()), model_.size());
+            model_.resize(end - begin);
+            ifs.read(reinterpret_cast<char *>(model_.data()), model_.size());
         } else {
             std::string model_url = model_root_url + model_name;
             std::string host_name;
@@ -71,8 +71,8 @@ public:
             model_.resize(res->body.size());
             std::memcpy(model_.data(), res->body.c_str(), res->body.size());
 
-            std::ofstream ofs (cache_root + model_name, std::ios::binary);
-            ofs.write(reinterpret_cast<const char*>(model_.data()), model_.size());
+            std::ofstream ofs(cache_root + model_name, std::ios::binary);
+            ofs.write(reinterpret_cast<const char *>(model_.data()), model_.size());
         }
 
         ort_->check_status(api->CreateSessionFromArray(env, model_.data(), model_.size(), session_options, &session));
@@ -90,7 +90,7 @@ public:
         return session;
     }
 
-    static OrtSessionManager *make(const std::string &uuid, const std::string& model_root_url, const std ::string &cache_root, bool cuda_enable) {
+    static OrtSessionManager *make(const std::string &uuid, const std::string &model_root_url, const std ::string &cache_root, bool cuda_enable) {
         static std::map<std::string, std::unique_ptr<OrtSessionManager>> map_;
         OrtSessionManager *ort_manager;
         if (map_.count(uuid) == 0) {
@@ -136,9 +136,9 @@ bool is_ort_available() {
 }
 
 int object_detection_ort(halide_buffer_t *in,
-                         const std::string& session_id,
-                         const std::string& model_root_url,
-                         const std::string& cache_root,
+                         const std::string &session_id,
+                         const std::string &model_root_url,
+                         const std::string &cache_root,
                          bool cuda_enable,
                          halide_buffer_t *out) {
 
@@ -184,7 +184,7 @@ int object_detection_ort(halide_buffer_t *in,
 
     int num_images = in->dimensions == 3 ? 1 : in->dim[3].extent;
 
-    for (int i=0; i<num_images; ++i) {
+    for (int i = 0; i < num_images; ++i) {
         int offset = input_size * i;
         cv::Mat in_(height, width, CV_32FC3, in->host + offset);
 
@@ -202,7 +202,7 @@ int object_detection_ort(halide_buffer_t *in,
 
         resized.convertTo(input_tensor_data, CV_8UC3, 255.0);
 
-        uint8_t *input_tensor_ptr = reinterpret_cast<uint8_t*>(input_tensor_data.ptr());
+        uint8_t *input_tensor_ptr = reinterpret_cast<uint8_t *>(input_tensor_data.ptr());
 
         OrtMemoryInfo *memory_info;
         ort->check_status(api->CreateCpuMemoryInfo(OrtArenaAllocator, OrtMemTypeDefault, &memory_info));
@@ -213,7 +213,7 @@ int object_detection_ort(halide_buffer_t *in,
         assert(is_tensor);
         api->ReleaseMemoryInfo(memory_info);
 
-        //std::vector<const char *> output_tensor_names = {"boxes", "confs"};
+        // std::vector<const char *> output_tensor_names = {"boxes", "confs"};
         std::vector<const char *> output_tensor_names = {"detection_boxes:0", "detection_classes:0", "detection_scores:0", "num_detections:0"};
         std::vector<OrtValue *> output_tensors(4);
         ort->check_status(api->Run(session, NULL, &input_name, (const OrtValue *const *)&input_tensor, 1, output_tensor_names.data(), 4, output_tensors.data()));
@@ -247,7 +247,7 @@ int object_detection_ort(halide_buffer_t *in,
         // const int num = 2535;
         // const int num_classes = 80;
 
-        //const auto prediceted_boxes = yolo_post_processing(boxes_ptr, confs_ptr, num, num_classes);
+        // const auto prediceted_boxes = yolo_post_processing(boxes_ptr, confs_ptr, num, num_classes);
         const auto prediceted_boxes = ssd_post_processing(boxes_ptr, classes_ptr, scores_ptr, static_cast<int>(lround(*nums_ptr)));
         cv::Mat out_(height, width, CV_32FC3, out->host + offset);
         in_.copyTo(out_);
@@ -268,4 +268,4 @@ int object_detection_ort(halide_buffer_t *in,
 }  // namespace bb
 }  // namespace ion
 
-#endif // ION_BB_DNN_RT_ORT_H
+#endif  // ION_BB_DNN_RT_ORT_H

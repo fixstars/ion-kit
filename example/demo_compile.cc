@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
             // IMX219
             Node imx = b.add("image_io_imx219")
                            .set_params(Param{"index", std::to_string(i)},
-                                      Param{"url", "http://ion-kit.s3.us-west-2.amazonaws.com/images/pedestrian.png"});
+                                       Param{"url", "http://ion-kit.s3.us-west-2.amazonaws.com/images/pedestrian.png"});
 
             // ISP
             Node downscale = b.add("image_processing_bayer_downscale_uint16")

@@ -5,8 +5,7 @@
 
 using namespace ion;
 
-int main()
-{
+int main() {
     try {
         int size = 32;
 
@@ -23,27 +22,25 @@ int main()
         n = b.add("test_extern_inc_i32x2")(ip).set_params(wp, hp, vp);
         n = b.add("test_extern_inc_i32x2")(n["output"]).set_params(wp, hp, vp);
 
-
-
         Halide::Buffer<int32_t> ibuf(std::vector<int32_t>{size, size});
-        for (int y=0; y<size; ++y) {
-            for (int x=0; x<size; ++x) {
+        for (int y = 0; y < size; ++y) {
+            for (int x = 0; x < size; ++x) {
                 ibuf(x, y) = 42;
             }
         }
         ip.bind(ibuf);
 
         Halide::Buffer<int32_t> obuf(std::vector<int32_t>{size, size});
-        for (int y=0; y<size; ++y) {
-            for (int x=0; x<size; ++x) {
+        for (int y = 0; y < size; ++y) {
+            for (int x = 0; x < size; ++x) {
                 obuf(x, y) = 0;
             }
         }
         n["output"].bind(obuf);
         b.run();
 
-        for (int y=0; y<size; ++y) {
-            for (int x=0; x<size; ++x) {
+        for (int y = 0; y < size; ++y) {
+            for (int x = 0; x < size; ++x) {
                 if (obuf(x, y) != 44) {
                     throw std::runtime_error("Invalid value");
                 }
@@ -52,10 +49,10 @@ int main()
 
         std::cout << "OK" << std::endl;
 
-    } catch (const Halide::Error& e) {
+    } catch (const Halide::Error &e) {
         std::cout << e.what() << std::endl;
         return 1;
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cout << e.what() << std::endl;
         return 1;
     }

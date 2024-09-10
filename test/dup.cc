@@ -5,8 +5,7 @@
 
 using namespace ion;
 
-int main()
-{
+int main() {
     try {
         Param v41("v", 41);
 
@@ -24,7 +23,7 @@ int main()
         outBuf1(0, 0) = 1;
         intm.bind(outBuf1);
 
-        for (int i=0; i<10; ++i) {
+        for (int i = 0; i < 10; ++i) {
             b.run();
             if (outBuf0(0, 0) != outBuf1(0, 0)) {
                 std::cout << "o0:" << outBuf0(0, 0) << std::endl;
@@ -33,10 +32,10 @@ int main()
             }
         }
 
-    } catch (const Halide::Error& e) {
+    } catch (const Halide::Error &e) {
         std::cerr << e.what() << std::endl;
         return 1;
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
         return 1;
     }

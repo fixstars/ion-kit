@@ -3,14 +3,15 @@
 
 #include "PartHeader.h"
 
-class ComponentHeader : public Header{
+class ComponentHeader : public Header {
 public:
-    ComponentHeader(){}
+    ComponentHeader() {
+    }
 
-    ComponentHeader(char* header_info, size_t offset = 0){
+    ComponentHeader(char *header_info, size_t offset = 0) {
         int16_t header_type;
         offset += Read(header_info, offset, header_type);
-        if (header_type != HeaderType_){
+        if (header_type != HeaderType_) {
             std::cerr << "wrong header type in component header" << std::endl;
         }
 
@@ -28,21 +29,20 @@ public:
         offset += sizeof(Reserved2_);
         offset += Read(header_info, offset, PartCount_);
 
-        for (int i = 0; i < PartCount_; ++i){
+        for (int i = 0; i < PartCount_; ++i) {
             int64_t single_part_offset;
             offset += Read(header_info, offset, single_part_offset);
             PartOffset_.push_back(single_part_offset);
         }
 
-        for (int64_t & po : PartOffset_){
+        for (int64_t &po : PartOffset_) {
             partheader_.push_back(PartHeader(header_info, po));
         }
-
     }
 
-    ComponentHeader& operator=(const ComponentHeader& src) {
+    ComponentHeader &operator=(const ComponentHeader &src) {
         partheader_ = src.partheader_;
-    
+
         // HeaderType_ = 0x2000;
         Flags_ = src.Flags_;
         HeaderSize_ = src.HeaderSize_;
@@ -61,45 +61,44 @@ public:
         return *this;
     }
 
-    int64_t getGroupID(){
+    int64_t getGroupID() {
         return GroupId_;
     }
 
-    int64_t getTypeId(){
+    int64_t getTypeId() {
         return TypeId_;
     }
 
-    int16_t getSourceId(){
+    int16_t getSourceId() {
         return SourceId_;
     }
 
-    int16_t getPartCount(){
+    int16_t getPartCount() {
         return PartCount_;
     }
 
-
-    size_t GenerateDescriptor(char* ptr, size_t offset=0){
+    size_t GenerateDescriptor(char *ptr, size_t offset = 0) {
         offset = GenerateHeader(ptr, offset);
 
-        for (PartHeader & ph : partheader_){
+        for (PartHeader &ph : partheader_) {
             offset = ph.GenerateDescriptor(ptr, offset);
         }
         return offset;
     }
 
-    bool isComponentValid(){
+    bool isComponentValid() {
         return Flags_ == 0;
     }
 
-    int32_t getFirstAvailableDataOffset(bool image){
+    int32_t getFirstAvailableDataOffset(bool image) {
         // returns the part header index where
         // - component is valid
         // - part header type is 0x4200 (GDC_2D) if image is true
         int32_t jth_part = 0;
-        for (PartHeader &ph : partheader_){
-            if (image && ph.isData2DImage()){
+        for (PartHeader &ph : partheader_) {
+            if (image && ph.isData2DImage()) {
                 return jth_part;
-            }else if (!image && !ph.isData2DImage()){
+            } else if (!image && !ph.isData2DImage()) {
                 return jth_part;
             }
             ++jth_part;
@@ -107,19 +106,19 @@ public:
         return -1;
     }
 
-    int64_t getDataOffset(int32_t jth_part){
+    int64_t getDataOffset(int32_t jth_part) {
         return partheader_.at(jth_part).getDataOffset();
     }
 
-    int64_t getDataSize(int32_t jth_part){
+    int64_t getDataSize(int32_t jth_part) {
         return partheader_.at(jth_part).getDataSize();
     }
 
-    int32_t getOffsetFromTypeSpecific(int32_t jth_part, int32_t kth_typespecific, int32_t typespecific_offset = 0){
+    int32_t getOffsetFromTypeSpecific(int32_t jth_part, int32_t kth_typespecific, int32_t typespecific_offset = 0) {
         return PartOffset_.at(jth_part) + partheader_.at(jth_part).getOffsetFromTypeSpecific(kth_typespecific, typespecific_offset);
     }
 
-    void DisplayHeaderInfo(){
+    void DisplayHeaderInfo() {
         int total_size = 0;
         std::cout << "\nCOMPONENT HEADER" << std::endl;
         total_size += DisplayItemInfo("HeaderType_", HeaderType_, 2, true);
@@ -139,13 +138,13 @@ public:
 
         total_size += DisplayContainer("PartOffset_", PartOffset_, 2);
 
-        for (PartHeader &ph : partheader_){
+        for (PartHeader &ph : partheader_) {
             ph.DisplayHeaderInfo();
         }
     }
 
 private:
-    size_t GenerateHeader(char* ptr, size_t offset=0){
+    size_t GenerateHeader(char *ptr, size_t offset = 0) {
         // modify the order/items only when the structure is changed.
         // when you change this, don't forget to change copy constructor.
         size_t cpy_offset = offset;
@@ -163,17 +162,17 @@ private:
         offset += Write(ptr, offset, Format_);
         offset += Write(ptr, offset, Reserved2_);
         offset += Write(ptr, offset, PartCount_);
-        
+
         offset += WriteContainer(ptr, offset, PartOffset_);
 
-        if ((offset - cpy_offset) != HeaderSize_){
+        if ((offset - cpy_offset) != HeaderSize_) {
             std::cerr << "Component header size is wrong" << HeaderSize_ << " != " << offset - cpy_offset << std::endl;
         }
         return offset;
     }
 
     std::vector<PartHeader> partheader_;
-    
+
     const int16_t HeaderType_ = 0x2000;
     int16_t Flags_;
     // int32_t HeaderSize_;
@@ -190,6 +189,5 @@ private:
     int16_t PartCount_;
     std::vector<int64_t> PartOffset_;
 };
-
 
 #endif /*COMPONENTHEADER_H*/

@@ -8,17 +8,17 @@
 namespace Halide {
 class Argument;
 class Pipeline;
-}
+}  // namespace Halide
 
 namespace ion {
 class Node;
 
-void determine_and_validate(std::vector<Node>& nodes);
+void determine_and_validate(std::vector<Node> &nodes);
 
-std::vector<const void*> generate_arguments_instance(const std::vector<Halide::Argument>& inferred_args, const std::vector<Node>& nodes);
+std::vector<const void *> generate_arguments_instance(const std::vector<Halide::Argument> &inferred_args, const std::vector<Node> &nodes);
 
-Halide::Pipeline lower(Builder builder, std::vector<Node>& nodes, bool implicit_output);
+Halide::Pipeline lower(Builder builder, std::vector<Node> &nodes, bool implicit_output);
 
-} // namespace ion
+}  // namespace ion
 
-#endif // ION_LOWER_H
+#endif  // ION_LOWER_H

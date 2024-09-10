@@ -5,4 +5,4 @@
 #define JSON_ASSERT GGML_ASSERT
 #include "json.hpp"
 
-std::string json_schema_to_grammar(const nlohmann::ordered_json& schema);
+std::string json_schema_to_grammar(const nlohmann::ordered_json &schema);

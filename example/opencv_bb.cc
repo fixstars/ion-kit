@@ -18,8 +18,8 @@ int main(int argc, char *argv[]) {
         n = b.add("opencv_display")(n["output"]);
 
         Halide::Buffer<uint8_t> in_buf(3, width, height);
-        for (int y=0; y<height; ++y) {
-            for (int x=0; x<width; ++x) {
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
                 in_buf(0, x, y) = y * width + x;
                 in_buf(1, x, y) = y * width + x;
                 in_buf(2, x, y) = y * width + x;
@@ -28,11 +28,10 @@ int main(int argc, char *argv[]) {
 
         Halide::Buffer<int32_t> r = Halide::Buffer<int32_t>::make_scalar();
 
-
         in.bind(in_buf);
         n["output"].bind(r);
 
-        for (int i=0; i<1000; ++i) {
+        for (int i = 0; i < 1000; ++i) {
             b.run();
         }
 

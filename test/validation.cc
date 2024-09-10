@@ -7,8 +7,7 @@
 
 using namespace ion;
 
-int main()
-{
+int main() {
     try {
         Buffer<int32_t> input(2, 2);
         Buffer<int32_t> output(2, 2);
@@ -25,7 +24,7 @@ int main()
 
             try {
                 b.run();
-            } catch (const std::exception& e) {
+            } catch (const std::exception &e) {
                 // The error should thrown as runtime_error, not Halide::Error
                 std::cerr << e.what() << std::endl;
             }
@@ -43,7 +42,7 @@ int main()
 
             try {
                 b.run();
-            } catch (const std::exception& e) {
+            } catch (const std::exception &e) {
                 // The error should thrown as runtime_error, not Halide::Error
                 std::cerr << e.what() << std::endl;
             }
@@ -61,7 +60,7 @@ int main()
 
             try {
                 b.run();
-            } catch (const std::exception& e) {
+            } catch (const std::exception &e) {
                 // The error should thrown as runtime_error, not Halide::Error
                 std::cerr << e.what() << std::endl;
             }
@@ -82,16 +81,16 @@ int main()
 
             try {
                 b.run();
-            } catch (const std::exception& e) {
+            } catch (const std::exception &e) {
                 // The error should thrown as runtime_error, not Halide::Error
                 std::cerr << e.what() << std::endl;
             }
         }
 
-    } catch (Halide::Error& e) {
+    } catch (Halide::Error &e) {
         std::cerr << e.what() << std::endl;
         return 1;
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
         return 0;
     }

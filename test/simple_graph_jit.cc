@@ -2,8 +2,7 @@
 
 using namespace ion;
 
-int main()
-{
+int main() {
     try {
         // New API
         int32_t min0 = 0, extent0 = 2, min1 = 0, extent1 = 2, v = 1;
@@ -20,15 +19,15 @@ int main()
 
         b.save("simple_graph.graph");
 
-        for (int i=0; i<5; ++i) {
+        for (int i = 0; i < 5; ++i) {
             std::cout << i << "'th loop" << std::endl;
             b.run();
         }
 
-    } catch (Halide::Error& e) {
+    } catch (Halide::Error &e) {
         std::cerr << e.what() << std::endl;
         return 1;
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
         return 1;
     }

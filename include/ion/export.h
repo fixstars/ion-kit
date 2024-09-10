@@ -7,4 +7,4 @@
 #define ION_EXPORT __attribute__((visibility("default")))
 #endif
 
-#endif // ION_EXPORT_H
+#endif  // ION_EXPORT_H

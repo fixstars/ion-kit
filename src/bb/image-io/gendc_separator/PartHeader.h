@@ -9,29 +9,30 @@
 
 #include "Descriptor.h"
 
-int getByteInFormat(int format){
-    switch (format){
-        case Mono12:
-            return 2;
-        case Data8:
-            return 1;
-        case Data16:
-            return 2;
-        case Data32:
-            return 4;
-        case Data32f:
-            return 4;
-        default:
-            throw std::invalid_argument("wrong format\n");
+int getByteInFormat(int format) {
+    switch (format) {
+    case Mono12:
+        return 2;
+    case Data8:
+        return 1;
+    case Data16:
+        return 2;
+    case Data32:
+        return 4;
+    case Data32f:
+        return 4;
+    default:
+        throw std::invalid_argument("wrong format\n");
     }
 }
 // namespace {
 
-class PartHeader : public Header{
-public: 
-    PartHeader(){}
+class PartHeader : public Header {
+public:
+    PartHeader() {
+    }
     // constructor with existing header info
-    PartHeader(char* header_info, size_t offset = 0){
+    PartHeader(char *header_info, size_t offset = 0) {
 
         size_t total_size = 0;
         offset += Read(header_info, offset, HeaderType_);
@@ -47,63 +48,63 @@ public:
         // get number of typespecific fields from HeaderSize_
         int num_typespecific = getNumTypeSpecific(HeaderSize_);
 
-        if (num_typespecific > 0){
+        if (num_typespecific > 0) {
             offset += Read(header_info, offset, Dimension_[0]);
             offset += Read(header_info, offset, Dimension_[1]);
         }
-        if (num_typespecific > 1){
+        if (num_typespecific > 1) {
             offset += Read(header_info, offset, Padding_[0]);
             offset += Read(header_info, offset, Padding_[1]);
         }
-        if (num_typespecific > 2){
+        if (num_typespecific > 2) {
             offset += sizeof(InfoReserved_);
             int64_t typespecific_item;
-            for (int i = 0; i < num_typespecific - 2; ++i){
+            for (int i = 0; i < num_typespecific - 2; ++i) {
                 offset += Read(header_info, offset, typespecific_item);
                 TypeSpecific_.push_back(typespecific_item);
-            }         
+            }
         }
     }
 
-    PartHeader& operator=(const PartHeader& src) {
+    PartHeader &operator=(const PartHeader &src) {
         HeaderType_ = src.HeaderType_;
-        Flags_= src.Flags_;
-        HeaderSize_= src.HeaderSize_;
-        Format_= src.Format_;
+        Flags_ = src.Flags_;
+        HeaderSize_ = src.HeaderSize_;
+        Format_ = src.Format_;
         // Reserved_ = 0;
-        FlowId_= src.FlowId_;
-        FlowOffset_= src.FlowOffset_;
-        DataSize_= src.DataSize_;
-        DataOffset_= src.DataOffset_;
+        FlowId_ = src.FlowId_;
+        FlowOffset_ = src.FlowOffset_;
+        DataSize_ = src.DataSize_;
+        DataOffset_ = src.DataOffset_;
 
-        Dimension_= src.Dimension_;
-        Padding_= src.Padding_;
-        TypeSpecific_= src.TypeSpecific_;
+        Dimension_ = src.Dimension_;
+        Padding_ = src.Padding_;
+        TypeSpecific_ = src.TypeSpecific_;
         return *this;
     }
 
-    size_t GenerateDescriptor(char* ptr, size_t offset=0){
+    size_t GenerateDescriptor(char *ptr, size_t offset = 0) {
         offset = GenerateHeader(ptr, offset);
         return offset;
     }
 
-    bool isData2DImage(){
+    bool isData2DImage() {
         return HeaderType_ == 0x4200;
     }
 
-    int64_t getDataOffset(){
+    int64_t getDataOffset() {
         return DataOffset_;
     }
 
-    int64_t getDataSize(){
+    int64_t getDataSize() {
         return DataSize_;
     }
 
-    int32_t getOffsetFromTypeSpecific(int32_t kth_typespecific, int32_t typespecific_offset = 0){
+    int32_t getOffsetFromTypeSpecific(int32_t kth_typespecific, int32_t typespecific_offset = 0) {
         return offset_for_version[GENDC_V10].at(2) + 8 * (kth_typespecific - 1) + typespecific_offset;
     }
 
-    void DisplayHeaderInfo(){
+    void DisplayHeaderInfo() {
         int total_size = 0;
         std::cout << "\nPART HEADER" << std::endl;
         total_size += DisplayItemInfo("HeaderType_", HeaderType_, 3, true);
@@ -120,17 +121,17 @@ public:
         total_size += DisplayContainer("Padding_", Padding_, 3);
         total_size += DisplayItemInfo("InfoReserved_", InfoReserved_, 3);
 
-        total_size += DisplayContainer("TypeSpecific_", TypeSpecific_, 3);     
+        total_size += DisplayContainer("TypeSpecific_", TypeSpecific_, 3);
     }
 
 private:
     // you need parameters to create the object
 
-    int getNumTypeSpecific(size_t header_size){
-        return static_cast<int>(( header_size - 40 ) / 8);
+    int getNumTypeSpecific(size_t header_size) {
+        return static_cast<int>((header_size - 40) / 8);
     }
 
-    size_t GenerateHeader(char* ptr, size_t offset = 0){
+    size_t GenerateHeader(char *ptr, size_t offset = 0) {
         // modify the order/items only when the structure is changed.
         // when you change this, don't forget to change copy constructor.
         size_t cpy_offset = offset;
@@ -148,7 +149,7 @@ private:
         offset += Write(ptr, offset, InfoReserved_);
         offset += WriteContainer(ptr, offset, TypeSpecific_);
 
-        if ((offset - cpy_offset) != HeaderSize_){
+        if ((offset - cpy_offset) != HeaderSize_) {
             std::cerr << "Part header size is wrong" << HeaderSize_ << " != " << offset - cpy_offset << std::endl;
         }
         return offset;
@@ -156,7 +157,7 @@ private:
 
     int16_t HeaderType_;
     int16_t Flags_;
-    // int32_t HeaderSize_; 
+    // int32_t HeaderSize_;
     int32_t Format_;
     const int16_t Reserved_ = 0;
     int16_t FlowId_;

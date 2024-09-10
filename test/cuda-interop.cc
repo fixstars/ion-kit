@@ -13,7 +13,7 @@
         if (err != cudaSuccess) {                                                                                    \
             std::stringstream ss;                                                                                    \
             ss << "CUDA error: " << cudaGetErrorString(err) << "(" << err << ") at " << __FILE__ << ":" << __LINE__; \
-            throw  std::runtime_error(ss.str());                                                                     \
+            throw std::runtime_error(ss.str());                                                                      \
         }                                                                                                            \
     } while (0)
 
@@ -28,7 +28,6 @@
             throw std::runtime_error(ss.str());                                                      \
         }                                                                                            \
     } while (0)
-
 
 struct Sqrt : ion::BuildingBlock<Sqrt> {
     ion::Input<Halide::Func> input{"input0", Int(32), 2};
@@ -109,13 +108,13 @@ int main() {
 
         CUdevice device;
         CU_SAFE_CALL(cuDeviceGet(&device, 0));
-        
+
         CU_SAFE_CALL(cuCtxCreate(reinterpret_cast<CUcontext *>(&state.cuda_context), 0, device));
 
         std::cout << "CUcontext is created on application side : " << state.cuda_context << std::endl;
-        
+
         CU_SAFE_CALL(cuCtxSetCurrent(reinterpret_cast<CUcontext>(state.cuda_context)));
-        
+
         // CUstream is interchangeable with cudaStream_t (ref: https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__DRIVER.html)
         CU_SAFE_CALL(cuStreamCreate(reinterpret_cast<CUstream *>(&state.cuda_stream), CU_STREAM_DEFAULT));
 
@@ -166,7 +165,7 @@ int main() {
         // CUDA cleanup
         CUDA_SAFE_CALL(cudaFree(src));
         CUDA_SAFE_CALL(cudaFree(dst));
-        
+
         CU_SAFE_CALL(cuStreamDestroy(reinterpret_cast<CUstream>(state.cuda_stream)));
         CU_SAFE_CALL(cuCtxDestroy(reinterpret_cast<CUcontext>(state.cuda_context)));
 

@@ -63,8 +63,8 @@ std::vector<DetectionBox> yolo_post_processing(const float *boxes, const float *
     return detected_boxes;
 }
 
-} // dnn
-} // bb
-} // ion
+}  // namespace dnn
+}  // namespace bb
+}  // namespace ion
 
 #endif
