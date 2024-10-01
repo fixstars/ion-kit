@@ -7,6 +7,7 @@ pre_built_path = os.path.join(os.path.dirname(__file__), 'module')
 if platform.system() == 'Windows':
     ion_core_module = os.path.join(pre_built_path, 'windows/ion-core.dll')
     ion_bb_module = os.path.join(pre_built_path, 'windows/ion-bb.dll')
+    os.add_dll_directory(os.path.join(pre_built_path, 'windows'))
 elif platform.system() == 'Darwin':
     ion_core_module = os.path.join(pre_built_path, 'macos/libion-core.dylib')
     ion_bb_module = os.path.join(pre_built_path, 'macos/libion-bb.dylib')
@@ -14,9 +15,6 @@ elif platform.system() == 'Linux':
     ion_core_module = os.path.join(pre_built_path, 'linux/libion-core.so')
     ion_bb_module = os.path.join(pre_built_path, 'linux/libion-bb.so')
 
-# libion-core.so must be in a directory listed in $LD_LIBRARY_PATH.
-# ion-core.dll must be in a directory listed in %PATH%.
-# libion-core.dylib must be in a directory listed in $DYLD_LIBRARY_PATH.
 ion_core = ctypes.cdll.LoadLibrary(ion_core_module)
 ion_bb = ctypes.cdll.LoadLibrary(ion_bb_module)
 
