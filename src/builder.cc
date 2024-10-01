@@ -226,11 +226,7 @@ void Builder::run() {
 }
 
 std::vector<std::string> Builder::bb_names(void) {
-    std::vector<std::string> names;
-    for (auto n : Halide::Internal::GeneratorRegistry::enumerate()) {
-        names.push_back(n);
-    }
-    return names;
+    return Halide::Internal::GeneratorRegistry::enumerate();
 }
 
 std::vector<ArgInfo> Builder::bb_arginfos(const std::string &name) {
