@@ -656,27 +656,27 @@ protected:
                 if (err_) {
                     log::error(err_->message);
                     err_ = nullptr;
-                } else {
+                    device_vender_name = "";
+                }
 #ifdef _WIN32
                     order_filp_ = false;
 #else
-                    if (strcmp(device_vender_name, "Sony Semiconductor Solutions Corporation") == 0) {
-                        const char *device_model_name;
-                        device_model_name = arv_device_get_string_feature_value(devices_[index_on_opened_device].device_, "DeviceModelName", &err_);
-                        if (err_) {
-                            log::error(err_->message);
-                            err_ = nullptr;
-                        } else {
-                            if (strcmp(device_model_name, "    ") == 0) {
-                                is_param_integer_ = true;
-                                frame_count_method_ = FrameCountMethod::TIMESTAMP;
-                                arv_uv_device_set_usb_mode(devices_[index_on_opened_device].device_, ARV_UV_USB_MODE_SYNC);  // hotfix for v1.0
-                            }
+                if (strcmp(device_vender_name, "Sony Semiconductor Solutions Corporation") == 0) {
+                    const char *device_model_name;
+                    device_model_name = arv_device_get_string_feature_value(devices_[index_on_opened_device].device_, "DeviceModelName", &err_);
+                    if (err_) {
+                        log::error(err_->message);
+                        err_ = nullptr;
+                    } else {
+                        if (strcmp(device_model_name, "    ") == 0) {
+                            is_param_integer_ = true;
+                            frame_count_method_ = FrameCountMethod::TIMESTAMP;
+                            arv_uv_device_set_usb_mode(devices_[index_on_opened_device].device_, ARV_UV_USB_MODE_SYNC);  // hotfix for v1.0
                         }
-                        if (is_gendc_) {
-                            frame_count_method_ = FrameCountMethod::TYPESPECIFIC3;
-                            order_filp_ = true;
-                        }
+                    }
+                    if (is_gendc_) {
+                        frame_count_method_ = FrameCountMethod::TYPESPECIFIC3;
+                        order_filp_ = true;
                     }
                 }
 #endif
