@@ -657,6 +657,9 @@ protected:
                     log::error(err_->message);
                     err_ = nullptr;
                 } else {
+#ifdef _WIN32
+                    order_filp_ = false;
+#else
                     if (strcmp(device_vender_name, "Sony Semiconductor Solutions Corporation") == 0) {
                         const char *device_model_name;
                         device_model_name = arv_device_get_string_feature_value(devices_[index_on_opened_device].device_, "DeviceModelName", &err_);
@@ -676,7 +679,7 @@ protected:
                         }
                     }
                 }
-
+#endif
                 log::info("\tDevice/USB {}::{} : {}", index_on_opened_device, "frame_count method is ",
                           frame_count_method_ == FrameCountMethod::TIMESTAMP     ? "Timestamp" :
                           frame_count_method_ == FrameCountMethod::TYPESPECIFIC3 ? "TypeSpecific" :
