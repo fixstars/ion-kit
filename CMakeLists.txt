@@ -71,6 +71,15 @@ else()
     # TODO:
 endif()
 
+if(UNIX)
+    find_package(spdlog)
+    if(spdlog_FOUND)
+        message(STATUS "Found system spdlog")
+        target_link_libraries(ion-core PUBLIC spdlog::spdlog )
+    else()
+        target_include_directories(ion-core PUBLIC ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/src/ionlog)
+    endif()
+endif()
 
 #
 # ion-bb
