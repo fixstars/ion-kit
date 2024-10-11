@@ -672,7 +672,9 @@ protected:
                         }
                         if (is_gendc_) {
                             frame_count_method_ = FrameCountMethod::TYPESPECIFIC3;
+#ifndef _WIN32
                             order_filp_ = true;
+#endif
                         }
                     }
                 }
