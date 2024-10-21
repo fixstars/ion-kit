@@ -103,9 +103,9 @@ public:
      */
     template<typename T,
              typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    Port(T *vptr)
+    Port(T *vptr, int size = 1)
         : impl_(new Impl(NodeID(""), Halide::Internal::unique_name("_ion_port_"), Halide::type_of<T>(), 0, GraphID(""))), index_(-1) {
-        this->bind(vptr);
+        this->bind(vptr, size);
     }
 
     /**
@@ -113,9 +113,9 @@ public:
      */
     template<typename T,
              typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    Port(T *vptr, const GraphID &gid)
+    Port(T *vptr, const GraphID &gid, int size = 1)
         : impl_(new Impl(NodeID(""), Halide::Internal::unique_name("_ion_port_"), Halide::type_of<T>(), 0, gid)), index_(-1) {
-        this->bind(vptr);
+        this->bind(vptr, size);
     }
 
     /**
@@ -222,21 +222,26 @@ public:
     }
 
     template<typename T>
-    void bind(T *v) {
-        bind(Halide::type_of<T>(), v);
+    void bind(T *v, int size = 1) {
+        if (size == 1) {
+            auto i = index_ == -1 ? 0 : index_;
+            bind(Halide::type_of<T>(), v, i);
+        }else{
+            for(int i = 0;i < size; i++){
+                bind(Halide::type_of<T>(), (void *)v, i);
+                v = v + 1;
+            }
+        }
     }
 
-    void bind(Halide::Type target_type, void *v) {
-        auto i = index_ == -1 ? 0 : index_;
-
+    void bind(Halide::Type target_type, void *v, int idx) {
         if (has_pred()) {
-            impl_->params[i] = Halide::Parameter{target_type, false, 0, argument_name(pred_id(), id(), pred_name(), i, graph_id())};
+            impl_->params[idx] = Halide::Parameter{target_type, false, 0, argument_name(pred_id(), id(), pred_name(), idx, graph_id())};
         } else {
-            impl_->params[i] = Halide::Parameter{type(), false, dimensions(), argument_name(pred_id(), id(), pred_name(), i, graph_id())};
+            impl_->params[idx] = Halide::Parameter{type(), false, dimensions(), argument_name(pred_id(), id(), pred_name(), idx, graph_id())};
         }
-
-        impl_->instances[i] = v;
-        impl_->bound_address[i] = std::make_tuple(v, false);
+        impl_->instances[idx] = v;
+        impl_->bound_address[idx] = std::make_tuple(v, false);
     }
 
     template<typename T>
