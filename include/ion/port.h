@@ -118,6 +118,26 @@ public:
         this->bind(vptr);
     }
 
+
+     /**
+     * Construct new port from scalar array
+     */
+    template<class T, size_t N>
+    Port(std::array<T, N> * arr)
+        : impl_(new Impl(NodeID(""), Halide::Internal::unique_name("_ion_port_"), Halide::type_of<T>(), 0, GraphID(""))), index_(-1) {
+        this->bind(arr);
+    }
+
+     /**
+     * Construct new port from scalar array and bind graph id to port
+     */
+    template<class T, size_t N>
+    Port(std::array<T, N> * arr, const GraphID &gid)
+        : impl_(new Impl(NodeID(""), Halide::Internal::unique_name("_ion_port_"), Halide::type_of<T>(), 0, gid)), index_(-1) {
+        this->bind(arr);
+    }
+
+
     /**
      * Construct new port from buffer
      */
@@ -152,21 +172,6 @@ public:
     Port(const std::vector<Halide::Buffer<T>> &bufs, const GraphID &gid)
         : impl_(new Impl(NodeID(""), unify_name(bufs), Halide::type_of<T>(), unify_dimension(bufs), gid)), index_(-1) {
         this->bind(bufs);
-    }
-
-    template<class T, size_t N>
-    Port(std::array<T, N> * arr)
-        : impl_(new Impl(NodeID(""), Halide::Internal::unique_name("_ion_port_"), Halide::type_of<T>(), 0, GraphID(""))), index_(-1) {
-        this->bind(arr);
-    }
-
-     /**
-     * Construct new port from scalar array and bind graph id to port
-     */
-    template<class T, size_t N>
-    Port(std::array<T, N> * arr, const GraphID &gid)
-        : impl_(new Impl(NodeID(""), Halide::Internal::unique_name("_ion_port_"), Halide::type_of<T>(), 0, gid)), index_(-1) {
-        this->bind(arr);
     }
 
     // Getter
@@ -259,11 +264,9 @@ public:
    void bind(std::array<T, N> * arr) {
        for (int i = 0; i < N; i++) {
            if (has_pred()) {
-               impl_->params[i] = Halide::Parameter{Halide::type_of<T>(), false, 0,
-                                                    argument_name(pred_id(), id(), pred_name(), i, graph_id())};
+               impl_->params[i] = Halide::Parameter{Halide::type_of<T>(), false, 0, argument_name(pred_id(), id(), pred_name(), i, graph_id())};
            } else {
-               impl_->params[i] = Halide::Parameter{type(), false, dimensions(),
-                                                    argument_name(pred_id(), id(), pred_name(), i, graph_id())};
+               impl_->params[i] = Halide::Parameter{type(), false, dimensions(), argument_name(pred_id(), id(), pred_name(), i, graph_id())};
            }
            impl_->instances[i] = &(arr->at(i));
            impl_->bound_address[i] = std::make_tuple(&(arr->at(i)), false);
