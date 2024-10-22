@@ -169,6 +169,15 @@ private:
             return Port(arg, impl_->graph_id);
     }
 
+
+    template<class T, size_t N>
+    Port make_iport(std::array<T, N> * arg) const {
+        if (to_string(impl_->graph_id).empty())
+            return Port(arg);
+        else
+            return Port(arg, impl_->graph_id);
+    }
+
     std::shared_ptr<Impl> impl_;
 };
 

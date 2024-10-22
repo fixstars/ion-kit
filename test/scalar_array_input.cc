@@ -29,12 +29,11 @@ int main() {
         Builder b;
         b.set_target(Halide::get_host_target());
 
-        int32_t offsets[4] = {1, 2, 3, 4};
-
+        std::array<int, 4> offsets = {1, 2, 3, 4};
         Port offset_p = Port("input_offsets",Halide::Int(32));  ;
 
         auto n = b.add("test_scalar_array")(in, offset_p).set_params(Param("input_offsets.size", 4));
-        offset_p.bind(offsets,4);
+        offset_p.bind(&offsets);
         n["output"].bind(outs);
         b.run();
 

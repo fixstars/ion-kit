@@ -103,9 +103,9 @@ public:
      */
     template<typename T,
              typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    Port(T *vptr, int size = 1)
+    Port(T *vptr)
         : impl_(new Impl(NodeID(""), Halide::Internal::unique_name("_ion_port_"), Halide::type_of<T>(), 0, GraphID(""))), index_(-1) {
-        this->bind(vptr, size);
+        this->bind(vptr);
     }
 
     /**
@@ -113,9 +113,9 @@ public:
      */
     template<typename T,
              typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
-    Port(T *vptr, const GraphID &gid, int size = 1)
+    Port(T *vptr, const GraphID &gid)
         : impl_(new Impl(NodeID(""), Halide::Internal::unique_name("_ion_port_"), Halide::type_of<T>(), 0, gid)), index_(-1) {
-        this->bind(vptr, size);
+        this->bind(vptr);
     }
 
     /**
@@ -152,6 +152,21 @@ public:
     Port(const std::vector<Halide::Buffer<T>> &bufs, const GraphID &gid)
         : impl_(new Impl(NodeID(""), unify_name(bufs), Halide::type_of<T>(), unify_dimension(bufs), gid)), index_(-1) {
         this->bind(bufs);
+    }
+
+    template<class T, size_t N>
+    Port(std::array<T, N> * arr)
+        : impl_(new Impl(NodeID(""), Halide::Internal::unique_name("_ion_port_"), Halide::type_of<T>(), 0, GraphID(""))), index_(-1) {
+        this->bind(arr);
+    }
+
+     /**
+     * Construct new port from scalar array and bind graph id to port
+     */
+    template<class T, size_t N>
+    Port(std::array<T, N> * arr, const GraphID &gid)
+        : impl_(new Impl(NodeID(""), Halide::Internal::unique_name("_ion_port_"), Halide::type_of<T>(), 0, gid)), index_(-1) {
+        this->bind(arr);
     }
 
     // Getter
@@ -222,27 +237,38 @@ public:
     }
 
     template<typename T>
-    void bind(T *v, int size = 1) {
-        if (size == 1) {
-            auto i = index_ == -1 ? 0 : index_;
-            bind(Halide::type_of<T>(), v, i);
-        }else{
-            for(int i = 0;i < size; i++){
-                bind(Halide::type_of<T>(), (void *)v, i);
-                v = v + 1;
-            }
-        }
+    void bind(T *v) {
+        bind(Halide::type_of<T>(), v);
     }
 
-    void bind(Halide::Type target_type, void *v, int idx) {
+    void bind(Halide::Type target_type, void *v) {
+        auto i = index_ == -1 ? 0 : index_;
+
         if (has_pred()) {
-            impl_->params[idx] = Halide::Parameter{target_type, false, 0, argument_name(pred_id(), id(), pred_name(), idx, graph_id())};
+            impl_->params[i] = Halide::Parameter{target_type, false, 0, argument_name(pred_id(), id(), pred_name(), i, graph_id())};
         } else {
-            impl_->params[idx] = Halide::Parameter{type(), false, dimensions(), argument_name(pred_id(), id(), pred_name(), idx, graph_id())};
+            impl_->params[i] = Halide::Parameter{type(), false, dimensions(), argument_name(pred_id(), id(), pred_name(), i, graph_id())};
         }
-        impl_->instances[idx] = v;
-        impl_->bound_address[idx] = std::make_tuple(v, false);
+
+        impl_->instances[i] = v;
+        impl_->bound_address[i] = std::make_tuple(v, false);
     }
+
+
+   template<class T, size_t N>
+   void bind(std::array<T, N> * arr) {
+       for (int i = 0; i < N; i++) {
+           if (has_pred()) {
+               impl_->params[i] = Halide::Parameter{Halide::type_of<T>(), false, 0,
+                                                    argument_name(pred_id(), id(), pred_name(), i, graph_id())};
+           } else {
+               impl_->params[i] = Halide::Parameter{type(), false, dimensions(),
+                                                    argument_name(pred_id(), id(), pred_name(), i, graph_id())};
+           }
+           impl_->instances[i] = &(arr->at(i));
+           impl_->bound_address[i] = std::make_tuple(&(arr->at(i)), false);
+       }
+   }
 
     template<typename T>
     void bind(const Halide::Buffer<T> &buf) {
