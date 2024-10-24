@@ -105,10 +105,66 @@ ion_port_bind_f32 = ion_core.ion_port_bind_f32
 ion_port_bind_f32.restype = ctypes.c_int
 ion_port_bind_f32.argtypes = [ c_ion_port_t, ctypes.POINTER(ctypes.c_float) ]
 
-# int ion_port_bind_f64(ion_port_t, double*;
+# int ion_port_bind_f64(ion_port_t, double*;);
 ion_port_bind_f64 = ion_core.ion_port_bind_f64
 ion_port_bind_f64.restype = ctypes.c_int
 ion_port_bind_f64.argtypes = [ c_ion_port_t, ctypes.POINTER(ctypes.c_double) ]
+
+# int ion_port_bind_i8_array(ion_port_t, int8_t*, int);
+ion_port_bind_i8_array = ion_core.ion_port_bind_i8_array
+ion_port_bind_i8_array.restype = ctypes.c_int
+ion_port_bind_i8_array.argtypes = [c_ion_port_t, ctypes.POINTER(ctypes.c_int8), ctypes.c_int ]
+
+# int ion_port_bind_i16_array(ion_port_t, int16_t*, int);
+ion_port_bind_i16_array = ion_core.ion_port_bind_i16_array
+ion_port_bind_i16_array.restype = ctypes.c_int
+ion_port_bind_i16_array.argtypes = [c_ion_port_t, ctypes.POINTER(ctypes.c_int16), ctypes.c_int ]
+
+# int ion_port_bind_i32_array(ion_port_t, int32_t*, int);
+ion_port_bind_i32_array = ion_core.ion_port_bind_i32_array
+ion_port_bind_i32_array.restype = ctypes.c_int
+ion_port_bind_i32_array.argtypes = [c_ion_port_t, ctypes.POINTER(ctypes.c_int32), ctypes.c_int ]
+
+# int ion_port_bind_i64_array(ion_port_t, int64_t*, int);
+ion_port_bind_i64_array = ion_core.ion_port_bind_i64_array
+ion_port_bind_i64_array.restype = ctypes.c_int
+ion_port_bind_i64_array.argtypes = [ c_ion_port_t, ctypes.POINTER(ctypes.c_int64), ctypes.c_int ]
+
+# int ion_port_map_set_u1_array(ion_port_t, bool*, int);
+ion_port_bind_u1_array = ion_core.ion_port_bind_u1_array
+ion_port_bind_u1_array.restype = ctypes.c_int
+ion_port_bind_u1_array.argtypes = [ c_ion_port_t, ctypes.POINTER(ctypes.c_bool), ctypes.c_int ]
+
+# int ion_port_bind_u8_array(ion_port_t, uint8_t*, int);
+ion_port_bind_u8_array = ion_core.ion_port_bind_u8_array
+ion_port_bind_u8_array.restype = ctypes.c_int
+ion_port_bind_u8_array.argtypes = [ c_ion_port_t, ctypes.POINTER(ctypes.c_uint8), ctypes.c_int ]
+
+# int ion_port_bind_u16_array(ion_port_t, uint16_t*, int);
+ion_port_bind_u16_array = ion_core.ion_port_bind_u16_array
+ion_port_bind_u16_array.restype = ctypes.c_int
+ion_port_bind_u16_array.argtypes = [ c_ion_port_t, ctypes.POINTER(ctypes.c_uint16), ctypes.c_int ]
+
+# int ion_port_bind_u32_array(ion_port_t, uint32_t*, int);
+ion_port_bind_u32_array = ion_core.ion_port_bind_u32_array
+ion_port_bind_u32_array.restype = ctypes.c_int
+ion_port_bind_u32_array.argtypes = [ c_ion_port_t, ctypes.POINTER(ctypes.c_uint32), ctypes.c_int ]
+
+# int ion_port_bind_u64_array(ion_port_t, uint64_t*, int);
+ion_port_bind_u64_array = ion_core.ion_port_bind_u64_array
+ion_port_bind_u64_array.restype = ctypes.c_int
+ion_port_bind_u64_array.argtypes = [ c_ion_port_t, ctypes.POINTER(ctypes.c_uint64), ctypes.c_int ]
+
+# int ion_port_bind_f32_array(ion_port_t, float*, int);
+ion_port_bind_f32_array = ion_core.ion_port_bind_f32_array
+ion_port_bind_f32_array.restype = ctypes.c_int
+ion_port_bind_f32_array.argtypes = [ c_ion_port_t, ctypes.POINTER(ctypes.c_float), ctypes.c_int ]
+
+# int ion_port_bind_f64_array(ion_port_t, double*, int);
+ion_port_bind_f64_array = ion_core.ion_port_bind_f64_array
+ion_port_bind_f64_array.restype = ctypes.c_int
+ion_port_bind_f64_array.argtypes = [ c_ion_port_t, ctypes.POINTER(ctypes.c_double), ctypes.c_int ]
+
 
 # int ion_port_bind_buffer(ion_port_t, ion_buffer_t);
 ion_port_bind_buffer = ion_core.ion_port_bind_buffer

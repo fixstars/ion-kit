@@ -23,7 +23,21 @@ from .native import (
     ion_port_bind_f32,
     ion_port_bind_f64,
     ion_port_bind_buffer,
-    ion_port_bind_buffer_array
+    ion_port_bind_buffer_array,
+
+    ion_port_bind_i8_array,
+    ion_port_bind_i16_array,
+    ion_port_bind_i32_array,
+    ion_port_bind_i64_array,
+
+    ion_port_bind_u1_array,
+    ion_port_bind_u8_array,
+    ion_port_bind_u16_array,
+    ion_port_bind_u32_array,
+    ion_port_bind_u64_array,
+
+    ion_port_bind_f32_array,
+    ion_port_bind_f64_array,
 )
 
 from .Type import Type
@@ -62,38 +76,93 @@ class Port:
         if self.obj: # check not nullptr
             ion_port_destroy(self.obj)
 
-    def bind(self, v: Union[int, float, Buffer, List[Buffer]]):
+    def bind(self, v: Union[int, float, Buffer, List[Union[Buffer, int, float]]]):
         if self.dim == 0:
-            if self.bind_value is None:
-                self.bind_value = np.ctypeslib.as_ctypes_type(self.type.to_dtype())(v)
-            else:
-                self.bind_value.value = v
             # scalar
-            if self.type.code_ == TypeCode.Int:
-                if self.type.bits_ == 8 and ion_port_bind_i8(self.obj, ctypes.byref(self.bind_value)) != 0:
-                    raise Exception('Invalid operation')
-                elif self.type.bits_ == 16 and ion_port_bind_i16(self.obj, ctypes.byref(self.bind_value)) != 0:
-                    raise Exception('Invalid operation')
-                elif self.type.bits_ == 32 and ion_port_bind_i32(self.obj, ctypes.byref(self.bind_value)) != 0:
-                    raise Exception('Invalid operation')
-                elif self.type.bits_ == 64 and ion_port_bind_i64(self.obj, ctypes.byref(self.bind_value)) != 0:
-                    raise Exception('Invalid operation')
-            elif self.type.code_ == TypeCode.Uint:
-                if self.type.bits_ == 1 and ion_port_bind_u1(self.obj, ctypes.byref(self.bind_value)) != 0:
-                    raise Exception('Invalid operation')
-                if self.type.bits_ == 8 and ion_port_bind_u8(self.obj, ctypes.byref(self.bind_value)) != 0:
-                    raise Exception('Invalid operation')
-                if self.type.bits_ == 16 and ion_port_bind_u16(self.obj, ctypes.byref(self.bind_value)) != 0:
-                    raise Exception('Invalid operation')
-                if self.type.bits_ == 32 and ion_port_bind_u32(self.obj, ctypes.byref(self.bind_value)) != 0:
-                    raise Exception('Invalid operation')
-                if self.type.bits_ == 64 and ion_port_bind_u64(self.obj, ctypes.byref(self.bind_value)) != 0:
-                    raise Exception('Invalid operation')
-            elif self.type.code_ == TypeCode.Float:
-                if self.type.bits_ == 32 and ion_port_bind_f32(self.obj, ctypes.byref(self.bind_value)) != 0:
-                    raise Exception('Invalid operation')
-                if self.type.bits_ == 64 and ion_port_bind_f64(self.obj, ctypes.byref(self.bind_value)) != 0:
-                    raise Exception('Invalid operation')
+            if type(v) is not list:
+                if self.bind_value is None:
+                    self.bind_value = np.ctypeslib.as_ctypes_type(self.type.to_dtype())(v)
+                else:
+                    self.bind_value.value = v
+
+                if self.type.code_ == TypeCode.Int:
+                    if self.type.bits_ == 8 and ion_port_bind_i8_array(self.obj, ctypes.byref(self.bind_value)) != 0:
+                        raise Exception('Invalid operation')
+                    elif self.type.bits_ == 16 and ion_port_bind_i16(self.obj, ctypes.byref(self.bind_value)) != 0:
+                        raise Exception('Invalid operation')
+                    elif self.type.bits_ == 32 and ion_port_bind_i32(self.obj, ctypes.byref(self.bind_value)) != 0:
+                        raise Exception('Invalid operation')
+                    elif self.type.bits_ == 64 and ion_port_bind_i64(self.obj, ctypes.byref(self.bind_value)) != 0:
+                        raise Exception('Invalid operation')
+                elif self.type.code_ == TypeCode.Uint:
+                    if self.type.bits_ == 1 and ion_port_bind_u1(self.obj, ctypes.byref(self.bind_value)) != 0:
+                        raise Exception('Invalid operation')
+                    if self.type.bits_ == 8 and ion_port_bind_u8(self.obj, ctypes.byref(self.bind_value)) != 0:
+                        raise Exception('Invalid operation')
+                    if self.type.bits_ == 16 and ion_port_bind_u16(self.obj, ctypes.byref(self.bind_value)) != 0:
+                        raise Exception('Invalid operation')
+                    if self.type.bits_ == 32 and ion_port_bind_u32(self.obj, ctypes.byref(self.bind_value)) != 0:
+                        raise Exception('Invalid operation')
+                    if self.type.bits_ == 64 and ion_port_bind_u64(self.obj, ctypes.byref(self.bind_value)) != 0:
+                        raise Exception('Invalid operation')
+                elif self.type.code_ == TypeCode.Float:
+                    if self.type.bits_ == 32 and ion_port_bind_f32(self.obj, ctypes.byref(self.bind_value)) != 0:
+                        raise Exception('Invalid operation')
+                    if self.type.bits_ == 64 and ion_port_bind_f64(self.obj, ctypes.byref(self.bind_value)) != 0:
+                        raise Exception('Invalid operation')
+            else:
+                # scalar array
+                c_arr = None
+                if self.type.code_ == TypeCode.Int:
+                    if self.type.bits_ == 8:
+                        c_arr = (ctypes.c_int8 * len(v))(*v)
+                        if ion_port_bind_i8_array(self.obj, c_arr, len(v)) != 0:
+                            raise Exception('Invalid operation')
+                    elif self.type.bits_ == 16:
+                        c_arr = (ctypes.c_int16 * len(v))(*v)
+                        if ion_port_bind_i16_array(self.obj, c_arr, len(v)) != 0:
+                            raise Exception('Invalid operation')
+                    elif self.type.bits_ == 32 :
+                        c_arr = (ctypes.c_int32 * len(v))(*v)
+                        if ion_port_bind_i32_array(self.obj, c_arr, len(v)) != 0:
+                            raise Exception('Invalid operation')
+                    elif self.type.bits_ == 64:
+                        c_arr = (ctypes.c_int64 * len(v))(*v)
+                        if ion_port_bind_i64_array(self.obj, c_arr, len(v)) != 0:
+                            raise Exception('Invalid operation')
+                elif self.type.code_ == TypeCode.Uint:
+                    if self.type.bits_ == 1:
+                        c_arr = (ctypes.c_bool * len(v))(*v)
+                        if ion_port_bind_u1_array(self.obj, c_arr, len(v)) != 0:
+                            raise Exception('Invalid operation')
+                    if self.type.bits_ == 8 :
+                        c_arr = (ctypes.c_uint8 * len(v))(*v)
+                        if ion_port_bind_u8_array(self.obj, c_arr, len(v)) != 0:
+                            raise Exception('Invalid operation')
+                    if self.type.bits_ == 16:
+                        c_arr = (ctypes.c_uint16 * len(v))(*v)
+                        if ion_port_bind_u16_array(self.obj, c_arr, len(v)) != 0:
+                            raise Exception('Invalid operation')
+                    if self.type.bits_ == 32:
+                        c_arr = (ctypes.c_uint32* len(v))(*v)
+                        if ion_port_bind_u32_array(self.obj, c_arr, len(v)) != 0:
+                            raise Exception('Invalid operation')
+                    if self.type.bits_ == 64:
+                        c_arr = (ctypes.c_uint64 * len(v))(*v)
+                        if ion_port_bind_u64_array(self.obj, c_arr, len(v)) != 0:
+                            raise Exception('Invalid operation')
+                elif self.type.code_ == TypeCode.Float:
+                    if self.type.bits_ == 32:
+                        c_arr = (ctypes.c_float * len(v))(*v)
+                        if ion_port_bind_f32(self.obj, c_arr, len(v)) != 0:
+                            raise Exception('Invalid operation')
+                    if self.type.bits_ == 64:
+                        c_arr = (ctypes.c_double * len(v))(*v)
+                        if ion_port_bind_f64(self.obj, c_arr, len(v)) != 0:
+                            raise Exception('Invalid operation')
+
+                self.bind_value = c_arr
+
         #  vector
         else:
 
