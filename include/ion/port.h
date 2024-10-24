@@ -118,6 +118,26 @@ public:
         this->bind(vptr);
     }
 
+
+     /**
+     * Construct new port from scalar array
+     */
+    template<class T, size_t N>
+    Port(std::array<T, N> * arr)
+        : impl_(new Impl(NodeID(""), Halide::Internal::unique_name("_ion_port_"), Halide::type_of<T>(), 0, GraphID(""))), index_(-1) {
+        this->bind(arr);
+    }
+
+     /**
+     * Construct new port from scalar array and bind graph id to port
+     */
+    template<class T, size_t N>
+    Port(std::array<T, N> * arr, const GraphID &gid)
+        : impl_(new Impl(NodeID(""), Halide::Internal::unique_name("_ion_port_"), Halide::type_of<T>(), 0, gid)), index_(-1) {
+        this->bind(arr);
+    }
+
+
     /**
      * Construct new port from buffer
      */
@@ -238,6 +258,37 @@ public:
         impl_->instances[i] = v;
         impl_->bound_address[i] = std::make_tuple(v, false);
     }
+
+
+   template<class T, size_t N>
+   void bind(std::array<T, N> * arr) {
+       for (int i = 0; i < N; i++) {
+           if (has_pred()) {
+               impl_->params[i] = Halide::Parameter{Halide::type_of<T>(), false, 0, argument_name(pred_id(), id(), pred_name(), i, graph_id())};
+           } else {
+               impl_->params[i] = Halide::Parameter{type(), false, dimensions(), argument_name(pred_id(), id(), pred_name(), i, graph_id())};
+           }
+           impl_->instances[i] = &(arr->at(i));
+           impl_->bound_address[i] = std::make_tuple(&(arr->at(i)), false);
+       }
+   }
+
+
+   // For C API and Python binding compatibility
+   template<class T>
+   void bind(T *v, int size) {
+       for (int i = 0; i < size; i++) {
+           if (has_pred()) {
+               impl_->params[i] = Halide::Parameter{Halide::type_of<T>(), false, 0, argument_name(pred_id(), id(), pred_name(), i, graph_id())};
+           } else {
+               impl_->params[i] = Halide::Parameter{type(), false, dimensions(), argument_name(pred_id(), id(), pred_name(), i, graph_id())};
+           }
+           impl_->instances[i] = v;
+           impl_->bound_address[i] = std::make_tuple(v, false);
+           v +=1;
+       }
+   }
+
 
     template<typename T>
     void bind(const Halide::Buffer<T> &buf) {
