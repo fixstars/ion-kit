@@ -26,6 +26,9 @@ namespace ion {
 namespace bb {
 namespace image_io {
 
+#define TIMEOUT_IN_US_SHORTER 3 * 1000 * 1000
+#define TIMEOUT_IN_US_LONGER 30 * 1000 * 1000
+
 class U3V {
 protected:
     struct GError {
@@ -871,7 +874,7 @@ protected:
         }
     }
 
-    void consume_old_buffer(std::vector<ArvBuffer *> &bufs, int timeout_us = 3 * 1000 * 1000) {
+    void consume_old_buffer(std::vector<ArvBuffer *> &bufs, int timeout_us = TIMEOUT_IN_US_SHORTER) {
         std::vector<int32_t> N_output_buffers(num_sensor_);
         for (auto i = 0; i < num_sensor_; ++i) {
             int32_t num_input_buffer;
@@ -1008,7 +1011,7 @@ public:
         return *instances_[id].get();
     }
     void get(std::vector<Halide::Buffer<>> &outs) override {
-        auto timeout_us = 30 * 1000 * 1000;
+        auto timeout_us = TIMEOUT_IN_US_LONGER;
         std::vector<ArvBuffer *> bufs(num_sensor_);
         for (int i = 0; i < num_sensor_; i++) {
             auto size = devices_[i].u3v_payload_size_;
@@ -1060,7 +1063,7 @@ public:
     }
 
     void get(std::vector<Halide::Buffer<>> &outs) override {
-        auto timeout_us = 30 * 1000 * 1000;
+        auto timeout_us = TIMEOUT_IN_US_LONGER;
         int32_t num_device = devices_.size();
         if (sim_mode_) {
             std::vector<ArvBuffer *> bufs(num_device);
@@ -1124,7 +1127,7 @@ public:
 
                 // first buffer
                 device_idx_ = (device_idx_ + 1) >= num_device ? 0 : device_idx_ + 1;
-                bufs[device_idx_] = arv_stream_timeout_pop_buffer(devices_[device_idx_].stream_, 30 * 1000 * 1000);
+                bufs[device_idx_] = arv_stream_timeout_pop_buffer(devices_[device_idx_].stream_, timeout_us);
                 if (bufs[device_idx_] == nullptr) {
                     log::error("pop_buffer(L4) failed due to timeout ({}s)", timeout_us * 1e-6f);
                     throw ::std::runtime_error("buffer is null");
@@ -1141,7 +1144,7 @@ public:
 
                 while (frame_cnt_ >= latest_cnt) {
                     arv_stream_push_buffer(devices_[device_idx_].stream_, bufs[device_idx_]);
-                    bufs[device_idx_] = arv_stream_timeout_pop_buffer(devices_[device_idx_].stream_, 30 * 1000 * 1000);
+                    bufs[device_idx_] = arv_stream_timeout_pop_buffer(devices_[device_idx_].stream_, timeout_us);
                     if (bufs[device_idx_] == nullptr) {
                         log::error("pop_buffer(L4) failed due to timeout ({}s)", timeout_us * 1e-6f);
                         throw ::std::runtime_error("buffer is null");
@@ -1214,8 +1217,7 @@ public:
     }
 
     void get(std::vector<void *> &outs) override {
-        // TODO: Is 3 second fine?
-        auto timeout_us = 3 * 1000 * 1000;
+        auto timeout_us = TIMEOUT_IN_US_LONGER;
 
         int32_t num_device = devices_.size();
         std::vector<ArvBuffer *> bufs(num_device);
@@ -1274,7 +1276,7 @@ public:
 
             // first buffer
             device_idx_ = (device_idx_ + 1) >= num_device ? 0 : device_idx_ + 1;
-            bufs[device_idx_] = arv_stream_timeout_pop_buffer(devices_[device_idx_].stream_, 30 * 1000 * 1000);
+            bufs[device_idx_] = arv_stream_timeout_pop_buffer(devices_[device_idx_].stream_, timeout_us);
             if (bufs[device_idx_] == nullptr) {
                 log::error("pop_buffer(L4) failed due to timeout ({}s)", timeout_us * 1e-6f);
                 throw ::std::runtime_error("buffer is null");
@@ -1291,10 +1293,9 @@ public:
 
             while (frame_cnt_ >= latest_cnt) {
                 arv_stream_push_buffer(devices_[device_idx_].stream_, bufs[device_idx_]);
-                auto timeout2_us = 30 * 1000 * 1000;
-                bufs[device_idx_] = arv_stream_timeout_pop_buffer(devices_[device_idx_].stream_, timeout2_us);
+                bufs[device_idx_] = arv_stream_timeout_pop_buffer(devices_[device_idx_].stream_, timeout_us);
                 if (bufs[device_idx_] == nullptr) {
-                    log::error("pop_buffer(L8) failed due to timeout ({}s)", timeout2_us * 1e-6f);
+                    log::error("pop_buffer(L8) failed due to timeout ({}s)", timeout_us * 1e-6f);
                     throw ::std::runtime_error("buffer is null");
                 }
                 devices_[device_idx_].frame_count_ = frame_count_method_ == FrameCountMethod::TYPESPECIFIC3 ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[device_idx_], devices_[device_idx_])) : frame_count_method_ == FrameCountMethod::TIMESTAMP ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[device_idx_]) & 0x00000000FFFFFFFF) :
