@@ -895,6 +895,44 @@ protected:
         }
     }
 
+    uint32_t skip_invalid_framecount_0xFFFFFFFF(std::vector<ArvBuffer *>& bufs, uint32_t latest_cnt, int32_t timeout_us){
+        
+        uint32_t new_latest_cnt = 0;
+
+        int32_t tmp_sig = 0;;
+        memcpy (&tmp_sig, ((char *) arv_buffer_get_data(bufs[device_idx_], nullptr)), sizeof(int32_t));
+        
+        if (tmp_sig == 0xFFFFFFFF){
+            log::trace("GNDC signature with framecount 0xFFFFFFFF: {} ... let's take it again", tmp_sig);
+            bufs[device_idx_] = arv_stream_timeout_pop_buffer(devices_[device_idx_].stream_, timeout_us);
+            if (bufs[device_idx_] == nullptr) {
+                log::error("pop_buffer(L11) failed due to timeout ({}s)", timeout_us * 1e-6f);
+                throw ::std::runtime_error("buffer is null");
+            }
+            devices_[device_idx_].frame_count_ = frame_count_method_ == FrameCountMethod::TYPESPECIFIC3
+                ? static_cast<uint32_t>(get_frame_count_from_genDC_descriptor(bufs[device_idx_], devices_[device_idx_]))
+                : frame_count_method_ == FrameCountMethod::TIMESTAMP
+                ? static_cast<uint32_t>(arv_buffer_get_timestamp(bufs[device_idx_]) & 0x00000000FFFFFFFF)
+                : -1;
+            new_latest_cnt = devices_[device_idx_].frame_count_;
+            device_idx_ == 0 ?
+            log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", devices_[device_idx_].frame_count_, "") :
+            log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", "", devices_[device_idx_].frame_count_);
+            tmp_sig = 0;;
+            memcpy (&tmp_sig, ((char *) arv_buffer_get_data(bufs[device_idx_], nullptr)), sizeof(int32_t));
+
+            if (new_latest_cnt == 0xFFFFFFFF){
+                log::error("pop_buffer(L12) failed due to sequential invalid framecount {}", latest_cnt, tmp_sig);
+                throw ::std::runtime_error("buffer is null");
+            }
+
+            return new_latest_cnt;
+        }else{
+            log::error("pop_buffer(L13) failed due to invalid framecount {} with signature {}", latest_cnt, tmp_sig);
+            throw ::std::runtime_error("buffer is null");
+        }   
+    }
+
     g_object_unref_t g_object_unref;
 
     arv_get_major_version_t arv_get_major_version;
@@ -1136,6 +1174,10 @@ public:
                     log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", devices_[device_idx_].frame_count_, "") :
                     log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", "", devices_[device_idx_].frame_count_);
 
+                if (latest_cnt == 0xFFFFFFFF && frame_count_method_ == FrameCountMethod::TYPESPECIFIC3 ){
+                    latest_cnt = skip_invalid_framecount_0xFFFFFFFF(bufs, latest_cnt, timeout_us);
+                }
+
                 int internal_count = 0;
                 int max_internal_count = 1000;
 
@@ -1285,6 +1327,10 @@ public:
             device_idx_ == 0 ?
                 log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", devices_[device_idx_].frame_count_, "") :
                 log::trace("All-Popped Frames (USB0, USB1)=({:20}, {:20})", "", devices_[device_idx_].frame_count_);
+
+            if (latest_cnt == 0xFFFFFFFF && frame_count_method_ == FrameCountMethod::TYPESPECIFIC3 ){
+                latest_cnt = skip_invalid_framecount_0xFFFFFFFF(bufs, latest_cnt, timeout_us);
+            }
 
             int internal_count = 0;
             int max_internal_count = 1000;
