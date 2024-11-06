@@ -1985,9 +1985,9 @@ public:
     void generate() {
         using namespace Halide;
         Var x, y, c;
-        Expr rv = saturating_cast<uint8_t>(cast<float>(input(x, y, 0)) * gain_b);
+        Expr rv = saturating_cast<uint8_t>(cast<float>(input(x, y, 0)) * gain_r);
         Expr gv = saturating_cast<uint8_t>(cast<float>(input(x, y, 1)) * gain_g);
-        Expr bv = saturating_cast<uint8_t>(cast<float>(input(x, y, 2)) * gain_r);
+        Expr bv = saturating_cast<uint8_t>(cast<float>(input(x, y, 2)) * gain_b);
         output(x, y, c) = select(c == 0, rv, c == 1, gv, bv);
     }
 };
