@@ -132,7 +132,7 @@ jobs:
           cp  $GITHUB_WORKSPACE/macos/lib/libion-bb.dylib python/ionpy/module/macos/libion-bb.dylib
           
           mkdir $GITHUB_WORKSPACE/aravis
-          curl -L https://github.com/Sensing-Dev/aravis/releases/download/v0.8.31/aravis-0.8.31-arm-64-macos.tar.gz| tar zx -C $GITHUB_WORKSPACE/aravis --strip-components 1
+          curl -L https://github.com/Sensing-Dev/aravis/releases/download/v0.8.31.post1/aravis-0.8.31.post1-arm-64-macos.tar.gz| tar zx -C $GITHUB_WORKSPACE/aravis --strip-components 1
           cp  $GITHUB_WORKSPACE/aravis/lib/libaravis-0.8.0.dylib python/ionpy/module/macos/libaravis-0.8.dylib
           ls python/ionpy/module/macos
 
@@ -147,7 +147,7 @@ jobs:
           cp  $GITHUB_WORKSPACE/linux/lib/libHalide.so.17.0.1 python/ionpy/module/linux/libHalide.so.17
           
           mkdir $GITHUB_WORKSPACE/aravis     
-          curl -L https://github.com/Sensing-Dev/aravis/releases/download/v0.8.31/aravis-0.8.31-x86-64-linux.tar.gz | tar zx -C $GITHUB_WORKSPACE/aravis --strip-components 1
+          curl -L https://github.com/Sensing-Dev/aravis/releases/download/v0.8.31.post1/aravis-0.8.31.post1-x86-64-linux.tar.gz | tar zx -C $GITHUB_WORKSPACE/aravis --strip-components 1
           cp  $GITHUB_WORKSPACE/aravis/lib/x86_64-linux-gnu/libaravis-0.8.so.0.8.31 python/ionpy/module/linux/libaravis-0.8.so     
           ls python/ionpy/module/linux
 
@@ -161,11 +161,11 @@ jobs:
           cp  windows/bin/ion-core.dll python/ionpy/module/windows/ion-core.dll
           cp  windows/bin/ion-bb.dll python/ionpy/module/windows/ion-bb.dll
 
-          curl -L https://github.com/Sensing-Dev/aravis/releases/download/v0.8.31/aravis-0.8.31-x86-64-windows.zip -o aravis-bin.zip
+          curl -L https://github.com/Sensing-Dev/aravis/releases/download/v0.8.31.post1/aravis-0.8.31.post1-x86-64-windows.zip -o aravis-bin.zip
           tar -xf aravis-bin.zip 
           cp aravis/bin/aravis-0.8-0.dll python/ionpy/module/windows/aravis-0.8-0.dll
           
-          curl -L https://github.com/Sensing-Dev/aravis/releases/download/v0.8.31/aravis-0.8.31-dependencies.zip -o dependency-bin.zip
+          curl -L https://github.com/Sensing-Dev/aravis/releases/download/v0.8.31.post1/aravis-0.8.31.post1-dependencies.zip -o dependency-bin.zip
           tar -xf dependency-bin.zip 
           mv aravis_dependencies/bin/*.dll python/ionpy/module/windows/
           
