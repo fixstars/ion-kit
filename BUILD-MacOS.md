@@ -3,12 +3,12 @@
 Here is the list of dependent software.
 
 - Mandatory
-  - [Halide (v16.0.0)](https://github.com/halide/Halide/releases/tag/v16.0.0)
+  - [Halide (v17.0.1)](https://github.com/halide/Halide/releases/tag/v17.0.1)
 
 For Halide, please find latest binary release [here](https://github.com/halide/Halide/releases).
 
 ```sh
-curl -sL https://github.com/halide/Halide/releases/download/v16.0.0/Halide-16.0.0-arm-64-osx-1e963ff817ef0968cc25d811a25a7350c8953ee6.tar.gz | tar zx
+curl -sL https://github.com/halide/Halide/releases/download/v17.0.1/Halide-17.0.1-x86-64-osx-52541176253e74467dabc42eeee63d9a62c199f6.tar.gz | tar zx
 ```
 
 ## 2. Build
