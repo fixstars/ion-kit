@@ -1182,17 +1182,18 @@ public:
     }
 };
 
-class BinaryLoader : public ion::BuildingBlock<BinaryLoader> {
+template<typename T>
+class BinaryLoader : public ion::BuildingBlock<BinaryLoader<T>> {
 public:
     BuildingBlockParam<std::string> output_directory_ptr{"output_directory", ""};
     BuildingBlockParam<std::string> prefix_ptr{"prefix", "raw-"};
     BuildingBlockParam<int32_t> width{"width", 640};
     BuildingBlockParam<int32_t> height{"height", 480};
 
-    Output<Halide::Func> output{"output", UInt(16), 2};
-    Output<Halide::Func> finished{"finished", UInt(1), 1};
-    Output<Halide::Func> bin_idx{"bin_idx", UInt(32), 1};
-    Output<Halide::Func> frame_count{"frame_count", UInt(32), 1};
+    Output<Halide::Func> output{"output", type_of<T>(), 2};
+    Output<Halide::Func> finished{"finished", Halide::UInt(1), 1};
+    Output<Halide::Func> bin_idx{"bin_idx", Halide::UInt(32), 1};
+    Output<Halide::Func> frame_count{"frame_count", Halide::UInt(32), 1};
 
     void generate() {
         using namespace Halide;
@@ -1212,7 +1213,7 @@ public:
 
             std::vector<ExternFuncArgument> params = {id_buf, static_cast<int32_t>(width), static_cast<int32_t>(height), output_directory_buf ,prefix_buf};
 
-            binaryloader.define_extern("binaryloader", params, UInt(16), 2);
+            binaryloader.define_extern("binaryloader", params, type_of<T>(), 2);
             binaryloader.compute_root();
             output(_) = binaryloader(_);
         }
@@ -1231,7 +1232,7 @@ public:
             std::memcpy(output_directory_buf.data(), output_directory.c_str(), output_directory.size());
             binaryloader_finished.define_extern("binaryloader_finished",
                                                   {binaryloader, id_buf, static_cast<int32_t>(width), static_cast<int32_t>(height), output_directory_buf, prefix_buf},
-                                                  {type_of<bool>(), UInt(32),UInt(32)}, 1);
+                                                  {UInt(1), UInt(32),UInt(32)}, 1);
             binaryloader_finished.compute_root();
             finished(_) = binaryloader_finished(_)[0];
             bin_idx(_) = binaryloader_finished(_)[1];
@@ -1240,6 +1241,9 @@ public:
         this->register_disposer("reader_dispose");
     }
 };
+
+using BinaryLoader_U8x2 = BinaryLoader<uint8_t>;
+using BinaryLoader_U16x2 = BinaryLoader<uint16_t>;
 
 }  // namespace image_io
 }  // namespace bb
@@ -1282,7 +1286,8 @@ ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinarySaver_U8x3, image_io_binary
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinarySaver_U8x2, image_io_binarysaver_u8x2);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinarySaver_U16x2, image_io_binarysaver_u16x2);
 
-ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinaryLoader, image_io_binaryloader);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinaryLoader_U8x2, image_io_binaryloader_u8x2);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinaryLoader_U16x2, image_io_binaryloader_u16x2);
 
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinaryGenDCSaver, image_io_binary_gendc_saver);
 

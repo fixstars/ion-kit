@@ -523,7 +523,6 @@ private:
           file_idx_(0), latest_frame_(width * height),
           latest_frame_count_(0), finished_(false) {
 
-        std::cout<<"file_idx_"<<file_idx_<<std::endl;
         open_and_check(output_directory_, file_idx_, ifs_, &finished_);
         if (finished_) {
             return;
