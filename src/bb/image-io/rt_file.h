@@ -111,7 +111,7 @@ namespace {
 
 class Writer {
 public:
-    static Writer &get_instance(const std::string &id, std::vector<int32_t> &payload_size, const ::std::string &output_directory, bool write_framecount, const std::string &prefix = "raw-") {
+    static Writer &get_instance(const std::string &id, std::vector<int32_t> &payload_size, const std::string &output_directory, bool write_framecount, const std::string &prefix = "raw-") {
 
         if (instances.count(id) == 0) {
             instances[id] = std::unique_ptr<Writer>(new Writer(payload_size, output_directory, write_framecount, prefix));
@@ -121,7 +121,7 @@ public:
 
     ~Writer() {
         if (!disposed_) {
-            ion::log::debug("Trying to call dispose from distructor since disposed_ is {}", disposed_);
+            ion::log::debug("Trying to call dispose from destructor since disposed_ is {}", disposed_);
             dispose();
         }
     }
@@ -131,21 +131,21 @@ public:
         if (with_header_) {
             write_config_file(header_info);
         }
-        ::std::unique_lock<::std::mutex> lock(mutex_);
+        std::unique_lock<std::mutex> lock(mutex_);
         buf_cv_.wait(lock, [&] { return !buf_queue_.empty() || ep_; });
         if (ep_) {
-            ::std::rethrow_exception(ep_);
+            std::rethrow_exception(ep_);
         }
         uint8_t *buffer = buf_queue_.front();
         buf_queue_.pop();
         size_t offset = 0;
         for (int i = 0; i < outs.size(); ++i) {
-            ::std::memcpy(buffer + offset, reinterpret_cast<int32_t *>(framecounts) + i, sizeof(int32_t));
+            std::memcpy(buffer + offset, reinterpret_cast<int32_t *>(framecounts) + i, sizeof(int32_t));
             offset += sizeof(int32_t);
-            ::std::memcpy(buffer + offset, outs[i], size[i]);
+            std::memcpy(buffer + offset, outs[i], size[i]);
             offset += size[i];
         }
-        task_queue_.push(::std::make_tuple(0, buffer, offset));
+        task_queue_.push(std::make_tuple(0, buffer, offset));
         task_cv_.notify_one();
     }
 
@@ -153,19 +153,19 @@ public:
         if (with_header_) {
             write_config_file(header_info);
         }
-        ::std::unique_lock<::std::mutex> lock(mutex_);
+        std::unique_lock<std::mutex> lock(mutex_);
         buf_cv_.wait(lock, [&] { return !buf_queue_.empty() || ep_; });
         if (ep_) {
-            ::std::rethrow_exception(ep_);
+            std::rethrow_exception(ep_);
         }
         uint8_t *buffer = buf_queue_.front();
         buf_queue_.pop();
         size_t offset = 0;
         for (int i = 0; i < outs.size(); ++i) {
-            ::std::memcpy(buffer + offset, outs[i], size[i]);
+            std::memcpy(buffer + offset, outs[i], size[i]);
             offset += size[i];
         }
-        task_queue_.push(::std::make_tuple(0, buffer, offset));
+        task_queue_.push(std::make_tuple(0, buffer, offset));
         task_cv_.notify_one();
     }
 
@@ -226,9 +226,9 @@ private:
             buffers_.emplace_back(total_payload_size);
             buf_queue_.push(buffers_[i].data());
         }
-        thread_ = ::std::make_shared<::std::thread>(entry_point, this);
+        thread_ = std::make_shared<std::thread>(entry_point, this);
         auto filename = prefix_ + std::to_string(0) + ".bin";
-        ofs_ = ::std::ofstream(output_directory_ / filename, ::std::ios::binary);
+        ofs_ = std::ofstream(output_directory_ / filename, std::ios::binary);
     }
 
     int get_buffer_num(int width, int height, int num_sensor = 2, int data_in_byte = 2) {
@@ -247,8 +247,8 @@ private:
         try {
             obj->thread_main();
         } catch (...) {
-            ::std::unique_lock<::std::mutex> lock(obj->mutex_);
-            obj->ep_ = ::std::current_exception();
+            std::unique_lock<std::mutex> lock(obj->mutex_);
+            obj->ep_ = std::current_exception();
         }
     }
 
@@ -264,24 +264,24 @@ private:
 
         while (true) {
             {
-                ::std::unique_lock<::std::mutex> lock(mutex_);
+                std::unique_lock<std::mutex> lock(mutex_);
                 task_cv_.wait(lock, [&] { return !task_queue_.empty() || !keep_running_; });
                 if (!keep_running_) {
                     break;
                 }
-                ::std::tie(frame_count, buffer, size) = task_queue_.front();
+                std::tie(frame_count, buffer, size) = task_queue_.front();
                 task_queue_.pop();
             }
 
             if (i == rotate_limit) {
                 i = 0;
-                ofs_ = ::std::ofstream(output_directory_ / (prefix_ + ::std::to_string(file_idx++) + ".bin"), ::std::ios::binary);
+                ofs_ = std::ofstream(output_directory_ / (prefix_ + std::to_string(file_idx++) + ".bin"), std::ios::binary);
             }
 
             ofs_.write(reinterpret_cast<const char *>(buffer), size);
 
             {
-                ::std::unique_lock<::std::mutex> lock(mutex_);
+                std::unique_lock<std::mutex> lock(mutex_);
                 buf_queue_.push(buffer);
                 buf_cv_.notify_one();
             }
@@ -292,23 +292,23 @@ private:
         // Flush everything
         while (true) {
             {
-                ::std::unique_lock<::std::mutex> lock(mutex_);
+                std::unique_lock<std::mutex> lock(mutex_);
                 if (task_queue_.empty()) {
                     break;
                 }
-                ::std::tie(frame_count, buffer, size) = task_queue_.front();
+                std::tie(frame_count, buffer, size) = task_queue_.front();
                 task_queue_.pop();
             }
 
             if (i == rotate_limit) {
                 i = 0;
-                ofs_ = ::std::ofstream(output_directory_ / (prefix_ + ::std::to_string(file_idx++) + ".bin"), ::std::ios::binary);
+                ofs_ = std::ofstream(output_directory_ / (prefix_ + std::to_string(file_idx++) + ".bin"), std::ios::binary);
             }
 
             ofs_.write(reinterpret_cast<const char *>(buffer), size);
 
             {
-                ::std::unique_lock<::std::mutex> lock(mutex_);
+                std::unique_lock<std::mutex> lock(mutex_);
                 buf_queue_.push(buffer);
                 buf_cv_.notify_one();
             }
@@ -319,17 +319,17 @@ private:
         ofs_.close();
     }
 
-    static ::std::unordered_map<::std::string, std::unique_ptr<Writer>> instances;  // declares Writer::instance
-    ::std::shared_ptr<::std::thread> thread_;
-    ::std::vector<::std::vector<uint8_t>> buffers_;
-    ::std::mutex mutex_;
-    ::std::condition_variable buf_cv_;
-    ::std::condition_variable task_cv_;
-    ::std::queue<uint8_t *> buf_queue_;
-    ::std::queue<::std::tuple<uint32_t, uint8_t *, size_t>> task_queue_;
+    static std::unordered_map<std::string, std::unique_ptr<Writer>> instances;  // declares Writer::instance
+    std::shared_ptr<std::thread> thread_;
+    std::vector<std::vector<uint8_t>> buffers_;
+    std::mutex mutex_;
+    std::condition_variable buf_cv_;
+    std::condition_variable task_cv_;
+    std::queue<uint8_t *> buf_queue_;
+    std::queue<std::tuple<uint32_t, uint8_t *, size_t>> task_queue_;
     bool keep_running_;
-    ::std::exception_ptr ep_;
-    ::std::ofstream ofs_;
+    std::exception_ptr ep_;
+    std::ofstream ofs_;
     uint32_t width_;
     uint32_t height_;
     std::filesystem::path output_directory_;
@@ -339,7 +339,7 @@ private:
     bool with_header_;
 };
 
-::std::unordered_map<::std::string, std::unique_ptr<Writer>> Writer::instances;  // defines Writer::instance
+std::unordered_map<std::string, std::unique_ptr<Writer>> Writer::instances;  // defines Writer::instance
 }  // namespace
 
 extern "C" int ION_EXPORT writer_dispose(const char *id) {
@@ -352,9 +352,9 @@ extern "C" ION_EXPORT int ion_bb_image_io_binary_gendc_saver(halide_buffer_t *id
                                                              halide_buffer_t *out) {
     try {
         const std::string id(reinterpret_cast<const char *>(id_buf->host));
-        const ::std::string output_directory(reinterpret_cast<const char *>(output_directory_buf->host));
+        const std::string output_directory(reinterpret_cast<const char *>(output_directory_buf->host));
         std::vector<int32_t> payloadsize_list{payloadsize};
-        const ::std::string prefix(reinterpret_cast<const char *>(prefix_buf->host));
+        const std::string prefix(reinterpret_cast<const char *>(prefix_buf->host));
         auto &w(Writer::get_instance(id, payloadsize_list, output_directory, false, prefix));
         if (gendc->is_bounds_query() || deviceinfo->is_bounds_query()) {
             if (gendc->is_bounds_query()) {
@@ -376,11 +376,11 @@ extern "C" ION_EXPORT int ion_bb_image_io_binary_gendc_saver(halide_buffer_t *id
         }
 
         return 0;
-    } catch (const ::std::exception &e) {
-        ::std::cerr << e.what() << ::std::endl;
+    } catch (const std::exception &e) {
+        std::cerr << e.what() << std::endl;
         return -1;
     } catch (...) {
-        ::std::cerr << "Unknown error" << ::std::endl;
+        std::cerr << "Unknown error" << std::endl;
         return -1;
     }
 }
@@ -398,8 +398,8 @@ extern "C" ION_EXPORT int ion_bb_image_io_binary_image_saver(
         const std::string id(reinterpret_cast<const char *>(id_buf->host));
         int32_t frame_size = dim == 2 ? width * height * byte_depth : width * height * 3 * byte_depth;
         std::vector<int32_t> frame_size_list{frame_size};
-        const ::std::string output_directory(reinterpret_cast<const char *>(output_directory_buf->host));
-        const ::std::string prefix(reinterpret_cast<const char *>(prefix_buf->host));
+        const std::string output_directory(reinterpret_cast<const char *>(output_directory_buf->host));
+        const std::string prefix(reinterpret_cast<const char *>(prefix_buf->host));
         auto &w(Writer::get_instance(id, frame_size_list, output_directory, true, prefix));
 
         if (image->is_bounds_query() || deviceinfo->is_bounds_query() || frame_count->is_bounds_query()) {
@@ -433,11 +433,11 @@ extern "C" ION_EXPORT int ion_bb_image_io_binary_image_saver(
         }
 
         return 0;
-    } catch (const ::std::exception &e) {
-        ::std::cerr << e.what() << ::std::endl;
+    } catch (const std::exception &e) {
+        std::cerr << e.what() << std::endl;
         return -1;
     } catch (...) {
-        ::std::cerr << "Unknown error" << ::std::endl;
+        std::cerr << "Unknown error" << std::endl;
         return -1;
     }
 }
@@ -448,56 +448,44 @@ namespace {
 
 class Reader {
 public:
-    static Reader &get_instance(::std::string session_id, int width, int height, const ::std::string &output_directory) {
+    static Reader &get_instance(std::string session_id, int width, int height, const std::string &output_directory, const std::string & prefix) {
         auto it = instances.find(session_id);
         if (it == instances.end()) {
-            instances[session_id] = std::unique_ptr<Reader>(new Reader(width, height, output_directory));
+            instances[session_id] = std::unique_ptr<Reader>(new Reader(width, height, output_directory, prefix));
         }
 
         return *instances[session_id];
     }
 
-    void get(uint8_t *ptr0, uint8_t *ptr1, size_t size) {
+    void get(uint8_t *ptr,  size_t size) {
 
         current_idx_ = file_idx_;
+
 
         if (finished_) {
             return;
         }
 
-        if (read_count_ < offset_frame_count_) {
-            ::std::memset(ptr0, 0, size);
-            ::std::memset(ptr1, 0, size);
-        } else {
-            uint32_t frame_count = 0;
-            ifs_.read(reinterpret_cast<char *>(&frame_count), sizeof(frame_count));
+        uint32_t frame_count = 0;
+        ifs_.read(reinterpret_cast<char *>(&frame_count), sizeof(frame_count));
+        ifs_.read(reinterpret_cast<char *>(latest_frame_.data()), size);
+        std::memcpy(ptr, latest_frame_.data(), size);
 
-            if (frame_count != (latest_frame_count_ + 1)) {
-                ifs_.seekg(-static_cast<int>(sizeof(frame_count)), ::std::ios::cur);
-            } else {
-                ifs_.read(reinterpret_cast<char *>(latest_frame0_.data()), size);
-                ifs_.read(reinterpret_cast<char *>(latest_frame1_.data()), size);
-            }
-
-            ::std::memcpy(ptr0, latest_frame0_.data(), size);
-            ::std::memcpy(ptr1, latest_frame1_.data(), size);
-
-            latest_frame_count_++;
-
-            // rotate
-            ifs_.peek();
-            if (ifs_.eof()) {
-                open_and_check(width_, height_, output_directory_, file_idx_, ifs_, &finished_);
-                if (finished_) {
-                    ifs_ = ::std::ifstream();
-                }
-            }
+        // rotate
+        ifs_.peek();
+        if (ifs_.eof()) {
+            open_and_check(output_directory_, file_idx_, ifs_, &finished_);
         }
-        read_count_++;
+        latest_frame_count_ = frame_count;
+        std::cout<<static_cast<int>(frame_count)<<std::endl;
     }
 
-    void close() {
-        ifs_.close();
+    ~Reader() {
+        if (!finished_) {
+            ion::log::debug("Trying to call dispose from destructor since finished_ is {}", finished_);
+            close();
+            finished_ = true;
+        }
     }
 
     bool get_finished() const {
@@ -508,17 +496,35 @@ public:
         return current_idx_;
     }
 
-    void release_instance(const ::std::string &session_id) {
-        instances.erase(session_id);
+    uint32_t get_frame_count() {
+        return latest_frame_count_;
+    }
+
+    void close() {
+        ifs_.close();
+        finished_= true;
+    }
+
+    static void release_instance(const char *id) {
+        ion::log::debug("Reader::release_instance() :: is called");
+        if (instances.count(id) == 0) {
+            return;
+        }
+        Reader &r = *instances[id].get();
+        r.close();
+        instances.erase(id);
+
+        ion::log::debug("Reader::release_instance() :: Instance is delete");
     }
 
 private:
-    Reader(int width, int height, const ::std::string &output_directory)
-        : width_(width), height_(height), output_directory_(output_directory),
-          file_idx_(0), latest_frame0_(width * height), latest_frame1_(width * height),
-          latest_frame_count_((::std::numeric_limits<uint32_t>::max)()), read_count_(0), finished_(false) {
+    Reader(int width, int height, const std::string &output_directory, const std::string &prefix)
+        : width_(width), height_(height), output_directory_(output_directory), prefix_(prefix),
+          file_idx_(0), latest_frame_(width * height),
+          latest_frame_count_(0), finished_(false) {
 
-        open_and_check(width_, height_, output_directory_, file_idx_, ifs_, &finished_);
+        std::cout<<"file_idx_"<<file_idx_<<std::endl;
+        open_and_check(output_directory_, file_idx_, ifs_, &finished_);
         if (finished_) {
             return;
         }
@@ -526,77 +532,79 @@ private:
         // Determine counter might be reset to zero (may dropped first few frames)
         uint32_t prev_frame_count = 0;
         const size_t size = static_cast<size_t>(width * height * sizeof(uint16_t));
-        while (true) {
-            uint32_t frame_count = 0;
-            ifs_.read(reinterpret_cast<char *>(&frame_count), sizeof(frame_count));
-            ifs_.seekg(2 * size, ::std::ios::cur);
-            if (prev_frame_count > frame_count) {
-                ifs_.seekg(-static_cast<int>(sizeof(frame_count)) - 2 * size, ::std::ios::cur);
-                offset_frame_count_ = frame_count;
-                break;
-            }
-            prev_frame_count = frame_count;
-            ifs_.peek();
-
-            if (ifs_.eof()) {
-                open_and_check(width_, height_, output_directory_, file_idx_, ifs_, &finished_);
-                if (finished_) {
-                    // Seek to first file and set offset when We cannot find base frame.
-                    file_idx_ = 0;
-                    open_and_check(width_, height_, output_directory_, file_idx_, ifs_, &finished_);
-                    ifs_.read(reinterpret_cast<char *>(&offset_frame_count_), sizeof(offset_frame_count_));
-                    ifs_.seekg(-static_cast<int>(sizeof(offset_frame_count_)), ::std::ios::cur);
-                    finished_ = false;
-                    read_count_ = offset_frame_count_;
-                    latest_frame_count_ = read_count_ - 1;
-                    break;
-                }
-            }
-        }
+//        while (true) {
+//            uint32_t frame_count = 0;
+//            ifs_.read(reinterpret_cast<char *>(&frame_count), sizeof(frame_count));
+//            ifs_.seekg(2 * size, std::ios::cur);
+//            if (prev_frame_count > frame_count) {
+//                ifs_.seekg(-static_cast<int>(sizeof(frame_count)) - 2 * size, std::ios::cur);
+//                offset_frame_count_ = frame_count;
+//                break;
+//            }
+//            prev_frame_count = frame_count;
+//            ifs_.peek();
+//
+//            if (ifs_.eof()) {
+//                open_and_check(width_, height_, output_directory_, file_idx_, ifs_, &finished_);
+//                if (finished_) {
+//                    // Seek to first file and set offset when We cannot find base frame.
+//                    file_idx_ = 0;
+//                    open_and_check(width_, height_, output_directory_, file_idx_, ifs_, &finished_);
+//                    ifs_.read(reinterpret_cast<char *>(&offset_frame_count_), sizeof(offset_frame_count_));
+//                    ifs_.seekg(-static_cast<int>(sizeof(offset_frame_count_)), std::ios::cur);
+//                    finished_ = false;
+//                    read_count_ = offset_frame_count_;
+//                    latest_frame_count_ = read_count_ - 1;
+//                    break;
+//                }
+//            }
+//        }
         current_idx_ = file_idx_;
     }
 
-    void open_and_check(uint32_t width, uint32_t height, const std::filesystem::path output_directory, uint32_t &file_idx, ::std::ifstream &ifs, bool *finished) {
-        auto file_path = output_directory / ("raw-" + ::std::to_string(file_idx++) + ".bin");
-
-        ifs = ::std::ifstream(file_path, ::std::ios::binary);
+    void open_and_check(const std::filesystem::path output_directory, uint32_t &file_idx, std::ifstream &ifs, bool *finished) {
+        auto file_path = output_directory / (prefix_ + std::to_string(file_idx++) + ".bin");
+        ifs.close();  // ensure the previous stream is closed before reopening
+        ifs.clear();  // clear any error flags
+        ifs.open(file_path, std::ios::binary);
         if (ifs.fail()) {
             *finished = true;
             return;
         }
-
-        // skip header (size is 512)
-        ifs.seekg(512, ::std::ios_base::beg);
     }
 
     uint32_t width_;
     uint32_t height_;
     std::filesystem::path output_directory_;
+    const std::string prefix_;
     uint32_t file_idx_;
-    ::std::vector<uint16_t> latest_frame0_;
-    ::std::vector<uint16_t> latest_frame1_;
+    std::vector<uint16_t> latest_frame_;
     uint32_t latest_frame_count_;
-    uint32_t offset_frame_count_;
-    uint32_t read_count_;
-    ::std::ifstream ifs_;
+    std::ifstream ifs_;
     bool finished_;
 
     uint32_t current_idx_;
-    static ::std::unordered_map<::std::string, std::unique_ptr<Reader>> instances;  // declares Writer::instance
+    static std::unordered_map<std::string, std::unique_ptr<Reader>> instances;  // declares Writer::instance
 };
 
-::std::unordered_map<::std::string, std::unique_ptr<Reader>> Reader::instances;  // defines Writer::instance
+std::unordered_map<std::string, std::unique_ptr<Reader>> Reader::instances;  // defines Writer::instance
 }  // namespace
 
-extern "C" ION_EXPORT int binaryloader(halide_buffer_t *session_id_buf, int width, int height, halide_buffer_t *output_directory_buf,
-                                       halide_buffer_t *out0, halide_buffer_t *out1) {
+
+extern "C" int ION_EXPORT reader_dispose(const char *id) {
+    Reader::release_instance(id);
+    return 0;
+}
+
+extern "C" ION_EXPORT int binaryloader(halide_buffer_t *id_buf, int width, int height, halide_buffer_t *output_directory_buf, halide_buffer_t *prefix_buf,
+                                       halide_buffer_t *out0) {
     try {
 
-        const ::std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
-        const ::std::string output_directory(reinterpret_cast<const char *>(output_directory_buf->host));
-
-        auto &r(Reader::get_instance(session_id, width, height, output_directory));
-        if (out0->is_bounds_query() || out1->is_bounds_query()) {
+        const std::string id(reinterpret_cast<const char *>(id_buf->host));
+        const std::string output_directory(reinterpret_cast<const char *>(output_directory_buf->host));
+        const std::string prefix(reinterpret_cast<const char *>(prefix_buf->host));
+        auto &r(Reader::get_instance(id, width, height, output_directory,prefix));
+        if (out0->is_bounds_query()) {
 
             if (out0->is_bounds_query()) {
                 out0->dim[0].min = 0;
@@ -604,63 +612,47 @@ extern "C" ION_EXPORT int binaryloader(halide_buffer_t *session_id_buf, int widt
                 out0->dim[1].min = 0;
                 out0->dim[1].extent = height;
             }
-            if (out1->is_bounds_query()) {
-                out1->dim[0].min = 0;
-                out1->dim[0].extent = width;
-                out1->dim[1].min = 0;
-                out1->dim[1].extent = height;
-            }
         } else {
-            r.get(out0->host, out1->host, out0->size_in_bytes());
+            r.get(out0->host,  out0->size_in_bytes());
         }
         return 0;
-    } catch (const ::std::exception &e) {
-        ::std::cerr << e.what() << ::std::endl;
+    } catch (const std::exception &e) {
+        std::cerr << e.what() << std::endl;
         return -1;
     } catch (...) {
-        ::std::cerr << "Unknown error" << ::std::endl;
+        std::cerr << "Unknown error" << std::endl;
         return -1;
     }
 }
 ION_REGISTER_EXTERN(binaryloader);
 
-extern "C" ION_EXPORT int binaryloader_finished(halide_buffer_t *in0, halide_buffer_t *in1, halide_buffer_t *session_id_buf, int width, int height,
-                                                halide_buffer_t *output_directory_buf,
-                                                halide_buffer_t *finished, halide_buffer_t *bin_idx) {
+extern "C" ION_EXPORT int binaryloader_finished(halide_buffer_t *in, halide_buffer_t *id_buf, int width, int height,
+                                                halide_buffer_t *output_directory_buf, halide_buffer_t *prefix_buf,
+                                                halide_buffer_t *finished, halide_buffer_t *bin_idx,halide_buffer_t *frame_count) {
 
     try {
-        if (in0->is_bounds_query() || in1->is_bounds_query()) {
-            if (in0->is_bounds_query()) {
-                in0->dim[0].min = 0;
-                in0->dim[0].extent = width;
-                in0->dim[1].min = 0;
-                in0->dim[1].extent = height;
-            }
-            if (in1->is_bounds_query()) {
-                in1->dim[0].min = 0;
-                in1->dim[0].extent = width;
-                in1->dim[1].min = 0;
-                in1->dim[1].extent = height;
+        if (in->is_bounds_query() ) {
+            if (in->is_bounds_query()) {
+                in->dim[0].min = 0;
+                in->dim[0].extent = width;
+                in->dim[1].min = 0;
+                in->dim[1].extent = height;
             }
         } else {
-            const ::std::string session_id(reinterpret_cast<const char *>(session_id_buf->host));
-            const ::std::string output_directory(reinterpret_cast<const char *>(output_directory_buf->host));
-            auto &r(Reader::get_instance(session_id, width, height, output_directory));
-            auto finished_flag = r.get_finished();
-            *reinterpret_cast<bool *>(finished->host) = finished_flag;
+            const std::string id(reinterpret_cast<const char *>(id_buf->host));
+            const std::string prefix(reinterpret_cast<const char *>(prefix_buf->host));
+            const std::string output_directory(reinterpret_cast<const char *>(output_directory_buf->host));
+            auto &r(Reader::get_instance(id, width, height, output_directory,prefix));
+            *reinterpret_cast<bool *>(finished->host) = r.get_finished();
             *reinterpret_cast<uint32_t *>(bin_idx->host) = r.get_index();
-            if (finished_flag) {
-                r.close();
-                r.release_instance(session_id);
-            }
+            *reinterpret_cast<uint32_t *>(frame_count->host) = r.get_frame_count();
         }
-
         return 0;
-    } catch (const ::std::exception &e) {
-        ::std::cerr << e.what() << ::std::endl;
+    } catch (const std::exception &e) {
+        std::cerr << e.what() << std::endl;
         return -1;
     } catch (...) {
-        ::std::cerr << "Unknown error" << ::std::endl;
+        std::cerr << "Unknown error" << std::endl;
         return -1;
     }
 }
