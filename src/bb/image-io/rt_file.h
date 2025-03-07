@@ -448,19 +448,16 @@ namespace {
 
 class Reader {
 public:
-    static Reader &get_instance(std::string session_id, int width, int height, const std::string &output_directory, const std::string & prefix) {
-        auto it = instances.find(session_id);
+    static Reader &get_instance(const std::string &id, int width, int height, const std::string &output_directory, const std::string & prefix) {
+        auto it = instances.find(id);
         if (it == instances.end()) {
-            instances[session_id] = std::unique_ptr<Reader>(new Reader(width, height, output_directory, prefix));
+            instances[id] = std::unique_ptr<Reader>(new Reader(width, height, output_directory, prefix));
         }
-
-        return *instances[session_id];
+        return *instances[id];
     }
 
     void get(uint8_t *ptr,  size_t size) {
-
         current_idx_ = file_idx_;
-
 
         if (finished_) {
             return;
@@ -477,7 +474,6 @@ public:
             open_and_check(output_directory_, file_idx_, ifs_, &finished_);
         }
         latest_frame_count_ = frame_count;
-        std::cout<<static_cast<int>(frame_count)<<std::endl;
     }
 
     ~Reader() {
@@ -492,11 +488,11 @@ public:
         return finished_;
     }
 
-    uint32_t get_index() {
+    uint32_t get_index() const {
         return current_idx_;
     }
 
-    uint32_t get_frame_count() {
+    uint32_t get_frame_count() const {
         return latest_frame_count_;
     }
 
@@ -527,41 +523,10 @@ private:
         if (finished_) {
             return;
         }
-
-        // Determine counter might be reset to zero (may dropped first few frames)
-        uint32_t prev_frame_count = 0;
-        const size_t size = static_cast<size_t>(width * height * sizeof(uint16_t));
-//        while (true) {
-//            uint32_t frame_count = 0;
-//            ifs_.read(reinterpret_cast<char *>(&frame_count), sizeof(frame_count));
-//            ifs_.seekg(2 * size, std::ios::cur);
-//            if (prev_frame_count > frame_count) {
-//                ifs_.seekg(-static_cast<int>(sizeof(frame_count)) - 2 * size, std::ios::cur);
-//                offset_frame_count_ = frame_count;
-//                break;
-//            }
-//            prev_frame_count = frame_count;
-//            ifs_.peek();
-//
-//            if (ifs_.eof()) {
-//                open_and_check(width_, height_, output_directory_, file_idx_, ifs_, &finished_);
-//                if (finished_) {
-//                    // Seek to first file and set offset when We cannot find base frame.
-//                    file_idx_ = 0;
-//                    open_and_check(width_, height_, output_directory_, file_idx_, ifs_, &finished_);
-//                    ifs_.read(reinterpret_cast<char *>(&offset_frame_count_), sizeof(offset_frame_count_));
-//                    ifs_.seekg(-static_cast<int>(sizeof(offset_frame_count_)), std::ios::cur);
-//                    finished_ = false;
-//                    read_count_ = offset_frame_count_;
-//                    latest_frame_count_ = read_count_ - 1;
-//                    break;
-//                }
-//            }
-//        }
         current_idx_ = file_idx_;
     }
 
-    void open_and_check(const std::filesystem::path output_directory, uint32_t &file_idx, std::ifstream &ifs, bool *finished) {
+    void open_and_check(const std::filesystem::path &output_directory, uint32_t &file_idx, std::ifstream &ifs, bool *finished) {
         auto file_path = output_directory / (prefix_ + std::to_string(file_idx++) + ".bin");
         ifs.close();  // ensure the previous stream is closed before reopening
         ifs.clear();  // clear any error flags
@@ -583,10 +548,10 @@ private:
     bool finished_;
 
     uint32_t current_idx_;
-    static std::unordered_map<std::string, std::unique_ptr<Reader>> instances;  // declares Writer::instance
+    static std::unordered_map<std::string, std::unique_ptr<Reader>> instances;  // declares Reader::instance
 };
 
-std::unordered_map<std::string, std::unique_ptr<Reader>> Reader::instances;  // defines Writer::instance
+std::unordered_map<std::string, std::unique_ptr<Reader>> Reader::instances;  // defines Reader::instance
 }  // namespace
 
 
