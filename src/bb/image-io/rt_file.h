@@ -479,8 +479,7 @@ public:
     ~Reader() {
         if (!finished_) {
             ion::log::debug("Trying to call dispose from destructor since finished_ is {}", finished_);
-            close();
-            finished_ = true;
+            dispose();
         }
     }
 
@@ -496,9 +495,11 @@ public:
         return latest_frame_count_;
     }
 
-    void close() {
+    void dispose() {
+        ion::log::debug("Reader::dispose() :: is called");
         ifs_.close();
         finished_= true;
+        ion::log::debug("Reader::dispose() :: is finished");
     }
 
     static void release_instance(const char *id) {
@@ -507,7 +508,7 @@ public:
             return;
         }
         Reader &r = *instances[id].get();
-        r.close();
+        r.dispose();
         instances.erase(id);
 
         ion::log::debug("Reader::release_instance() :: Instance is delete");
