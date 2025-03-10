@@ -107,6 +107,39 @@ ION_PORT_BIND_IMPL(double *, f64)
 
 #undef ION_PORT_BIND_IMPL
 
+#define ION_PORT_BIND_ARRAY_IMPL(T, POSTFIX)               \
+    int ion_port_bind_##POSTFIX##_array(ion_port_t obj, T v, int size) {    \
+        try {                                             \
+            reinterpret_cast<Port *>(obj)->bind(v, size); \
+        } catch (const Halide::Error &e) {                \
+            log::error(e.what());                         \
+            return 1;                                     \
+        } catch (const std::exception &e) {               \
+            log::error(e.what());                         \
+            return 1;                                     \
+        } catch (...) {                                   \
+            log::error("Unknown exception was happened"); \
+            return 1;                                     \
+        }                                                 \
+                                                          \
+        return 0;                                         \
+    }
+
+ION_PORT_BIND_ARRAY_IMPL(int8_t *, i8)
+ION_PORT_BIND_ARRAY_IMPL(int16_t *, i16)
+ION_PORT_BIND_ARRAY_IMPL(int32_t *, i32)
+ION_PORT_BIND_ARRAY_IMPL(int64_t *, i64)
+ION_PORT_BIND_ARRAY_IMPL(bool *, u1)
+ION_PORT_BIND_ARRAY_IMPL(uint8_t *, u8)
+ION_PORT_BIND_ARRAY_IMPL(uint16_t *, u16)
+ION_PORT_BIND_ARRAY_IMPL(uint32_t *, u32)
+ION_PORT_BIND_ARRAY_IMPL(uint64_t *, u64)
+ION_PORT_BIND_ARRAY_IMPL(float *, f32)
+ION_PORT_BIND_ARRAY_IMPL(double *, f64)
+
+#undef ION_PORT_BIND_ARRAY_IMPL
+
+
 int ion_port_bind_buffer(ion_port_t obj, ion_buffer_t b) {
     try {
         // NOTE: Halide::Buffer class layout is safe to call Halide::Buffer<void>::type()
