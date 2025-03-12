@@ -1187,9 +1187,8 @@ class BinaryLoader : public ion::BuildingBlock<BinaryLoader<T>> {
 public:
     BuildingBlockParam<std::string> output_directory_ptr{"output_directory", ""};
     BuildingBlockParam<std::string> prefix_ptr{"prefix", "raw-"};
-    BuildingBlockParam<int32_t> width{"width", 640};
-    BuildingBlockParam<int32_t> height{"height", 480};
-
+    Input<int32_t>width{"width"};
+    Input<int32_t> height{"height"};
     Output<Halide::Func> output{"output", type_of<T>(), 2};
     Output<Halide::Func> finished{"finished", Halide::UInt(1), 1};
     Output<Halide::Func> bin_idx{"bin_idx", Halide::UInt(32), 1};
@@ -1211,7 +1210,7 @@ public:
             prefix_buf.fill(0);
             std::memcpy(prefix_buf.data(), prefix.c_str(), prefix.size());
 
-            std::vector<ExternFuncArgument> params = {id_buf, static_cast<int32_t>(width), static_cast<int32_t>(height), output_directory_buf ,prefix_buf};
+            std::vector<ExternFuncArgument> params = {id_buf, width, height, output_directory_buf ,prefix_buf};
 
             binaryloader.define_extern("binaryloader", params, type_of<T>(), 2);
             binaryloader.compute_root();
@@ -1231,7 +1230,7 @@ public:
             output_directory_buf.fill(0);
             std::memcpy(output_directory_buf.data(), output_directory.c_str(), output_directory.size());
             binaryloader_finished.define_extern("binaryloader_finished",
-                                                  {binaryloader, id_buf, static_cast<int32_t>(width), static_cast<int32_t>(height), output_directory_buf, prefix_buf},
+                                                  {binaryloader, id_buf, width, height, output_directory_buf, prefix_buf},
                                                   {UInt(1), UInt(32),UInt(32)}, 1);
             binaryloader_finished.compute_root();
             finished(_) = binaryloader_finished(_)[0];
