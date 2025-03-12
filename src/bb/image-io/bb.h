@@ -1286,6 +1286,7 @@ ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinarySaver_U8x3, image_io_binary
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinarySaver_U8x2, image_io_binarysaver_u8x2);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinarySaver_U16x2, image_io_binarysaver_u16x2);
 
+ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinaryLoader_U16x2, image_io_binaryloader);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinaryLoader_U8x2, image_io_binaryloader_u8x2);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::image_io::BinaryLoader_U16x2, image_io_binaryloader_u16x2);
 
