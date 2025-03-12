@@ -562,23 +562,23 @@ extern "C" int ION_EXPORT reader_dispose(const char *id) {
 }
 
 extern "C" ION_EXPORT int binaryloader(halide_buffer_t *id_buf, int width, int height, halide_buffer_t *output_directory_buf, halide_buffer_t *prefix_buf,
-                                       halide_buffer_t *out0) {
+                                       halide_buffer_t *out) {
     try {
 
         const std::string id(reinterpret_cast<const char *>(id_buf->host));
         const std::string output_directory(reinterpret_cast<const char *>(output_directory_buf->host));
         const std::string prefix(reinterpret_cast<const char *>(prefix_buf->host));
         auto &r(Reader::get_instance(id, width, height, output_directory,prefix));
-        if (out0->is_bounds_query()) {
+        if (out->is_bounds_query()) {
 
-            if (out0->is_bounds_query()) {
-                out0->dim[0].min = 0;
-                out0->dim[0].extent = width;
-                out0->dim[1].min = 0;
-                out0->dim[1].extent = height;
+            if (out->is_bounds_query()) {
+                out->dim[0].min = 0;
+                out->dim[0].extent = width;
+                out->dim[1].min = 0;
+                out->dim[1].extent = height;
             }
         } else {
-            r.get(out0->host,  out0->size_in_bytes());
+            r.get(out->host,  out->size_in_bytes());
         }
         return 0;
     } catch (const std::exception &e) {
