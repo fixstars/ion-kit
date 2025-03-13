@@ -11,7 +11,7 @@ from setuptools._distutils.util import convert_path
 
 
 def get_plat():
-    if platform.system() == 'Linux':
+    if platform.system() == 'Linux' and platform.machine() == 'x86_64':
         plat_form = "manylinux1_x86_64"
     else:
         plat_form = sysconfig.get_platform()
