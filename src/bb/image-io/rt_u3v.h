@@ -16,10 +16,10 @@
 #define ComponentIDIntensity 1
 #ifdef _WIN32
 #define GOBJECT_FILE "gobject-2.0-0"
-#define ARAVIS_FILE "aravis-0.8-0"
+#define ARAVIS_FILE "aravis-0.10-0"
 #else
 #define GOBJECT_FILE "gobject-2.0"
-#define ARAVIS_FILE "aravis-0.8"
+#define ARAVIS_FILE "aravis-0.10"
 #endif
 
 namespace ion {
@@ -141,7 +141,8 @@ protected:
     using arv_acquisition_mode_to_string_t = const char *(*)(ArvAcquisitionMode);
     using arv_device_execute_command_t = void (*)(ArvDevice *, const char *, GError **);
     using arv_stream_timeout_pop_buffer_t = ArvBuffer *(*)(ArvStream *, uint64_t);
-    using arv_stream_get_n_buffers_t = void (*)(ArvStream *, int32_t *, int32_t *);
+    using arv_stream_get_n_owned_buffers_t = void (*)(ArvStream *, int32_t *, int32_t *, int32_t *);
+    using arv_device_start_acquisition_t = bool (*)(ArvDevice *device, GError **error);
     using arv_buffer_get_status_t = ArvBufferStatus (*)(ArvBuffer *);
     using arv_buffer_get_payload_type_t = ArvBufferPayloadType (*)(ArvBuffer *);
     using arv_buffer_get_data_t = void *(*)(ArvBuffer *, size_t *);
@@ -392,7 +393,8 @@ protected:
         GET_SYMBOL(arv_device_create_stream, "arv_device_create_stream");
         GET_SYMBOL(arv_buffer_new_allocate, "arv_buffer_new_allocate");
         GET_SYMBOL(arv_stream_push_buffer, "arv_stream_push_buffer");
-        GET_SYMBOL(arv_stream_get_n_buffers, "arv_stream_get_n_buffers");
+        GET_SYMBOL(arv_stream_get_n_owned_buffers, "arv_stream_get_n_owned_buffers");
+        GET_SYMBOL(arv_device_start_acquisition, "arv_device_start_acquisition");
         GET_SYMBOL(arv_acquisition_mode_to_string, "arv_acquisition_mode_to_string");
         GET_SYMBOL(arv_device_is_feature_available, "arv_device_is_feature_available");
         GET_SYMBOL(arv_device_execute_command, "arv_device_execute_command");
@@ -506,7 +508,7 @@ protected:
             }
             log::info("\tDevice/USB {}::{} : {}", i, "Command", "AcquisitionMode");
 
-            arv_device_execute_command(devices_[i].device_, "AcquisitionStart", &err_);
+            arv_device_start_acquisition (devices_[i].device_, &err_);
             if (err_) {
                 throw std::runtime_error(err_->message);
             }
@@ -814,6 +816,9 @@ protected:
             }
         }
 
+        // allocate buffer
+        allocate_buffers();
+
         if (!specific_device_to_flip_order) {
             command_acquisition_mode_contd_and_start();
         }
@@ -877,8 +882,8 @@ protected:
     void consume_old_buffer(std::vector<ArvBuffer *> &bufs, int timeout_us = TIMEOUT_IN_US_SHORTER) {
         std::vector<int32_t> N_output_buffers(num_sensor_);
         for (auto i = 0; i < num_sensor_; ++i) {
-            int32_t num_input_buffer;
-            arv_stream_get_n_buffers(devices_[i].stream_, &num_input_buffer, &(N_output_buffers[i]));
+            int32_t num_input_buffer, n_buffer_filling;
+            arv_stream_get_n_owned_buffers(devices_[i].stream_, &num_input_buffer, &(N_output_buffers[i]), &n_buffer_filling);
         }
         // if all stream has N output buffers, discard N-1 of them
         for (auto i = 0; i < num_sensor_; ++i) {
@@ -969,7 +974,8 @@ protected:
 
     arv_buffer_new_allocate_t arv_buffer_new_allocate;
     arv_stream_push_buffer_t arv_stream_push_buffer;
-    arv_stream_get_n_buffers_t arv_stream_get_n_buffers;
+    arv_stream_get_n_owned_buffers_t arv_stream_get_n_owned_buffers;
+    arv_device_start_acquisition_t arv_device_start_acquisition;
     arv_acquisition_mode_to_string_t arv_acquisition_mode_to_string;
     arv_device_execute_command_t arv_device_execute_command;
     arv_stream_timeout_pop_buffer_t arv_stream_timeout_pop_buffer;
@@ -1052,7 +1058,6 @@ public:
         std::vector<ArvBuffer *> bufs(num_sensor_);
         for (int i = 0; i < num_sensor_; i++) {
             auto size = devices_[i].u3v_payload_size_;
-            arv_stream_push_buffer(devices_[i].stream_, arv_buffer_new_allocate(size));
             bufs[i] = arv_stream_timeout_pop_buffer(devices_[i].stream_, timeout_us);
             if (bufs[i] == nullptr) {
                 log::error("pop_buffer(L1) failed due to timeout ({}s)", timeout_us * 1e-6f);
@@ -1068,15 +1073,8 @@ private:
         : U3V(num_sensor, false, false, true, width, height, fps, pixel_format, nullptr) {
         open_fake_devices(width, height, fps, pixel_format);
 
-        // Start streaming and start acquisition
-        for (auto i = 0; i < devices_.size(); ++i) {
-            devices_[i].stream_ = arv_device_create_stream(devices_[i].device_, NULL, NULL, &err_);
-        }
-
-        for (auto i = 0; i < devices_.size(); ++i) {
-            arv_device_execute_command(devices_[i].device_, "AcquisitionStart", &err_);
-            log::info("\tFake Device {}::{} : {}", i, "Command", "AcquisitionStart");
-        }
+        open_fake_devices(width, height, fps, pixel_format);
+        create_stream_and_start_acquisition(order_filp_);
     };
 };
 
@@ -1106,7 +1104,6 @@ public:
             std::vector<ArvBuffer *> bufs(num_device);
             for (int i = 0; i < num_device; i++) {
                 auto size = devices_[i].u3v_payload_size_;
-                arv_stream_push_buffer(devices_[i].stream_, arv_buffer_new_allocate(size));
                 bufs[i] = arv_stream_timeout_pop_buffer(devices_[i].stream_, timeout_us);
                 if (bufs[i] == nullptr) {
                     log::error("pop_buffer(L1) failed due to timeout ({}s)", timeout_us * 1e-6f);
@@ -1228,12 +1225,12 @@ private:
 
             // Start streaming and start acquisition
             create_stream_and_start_acquisition(order_filp_);
+
         } else {
             // Real Camera
             validate_user_input(num_device, dev_id);
             open_real_devices(num_device, num_sensor_, dev_id);
             create_stream_and_start_acquisition(order_filp_);
-            allocate_buffers();
         }
     };
 };
@@ -1266,7 +1263,6 @@ public:
             std::vector<ArvBuffer *> bufs(num_sensor_);
             for (int i = 0; i < num_sensor_; i++) {
                 auto size = devices_[i].u3v_payload_size_;
-                arv_stream_push_buffer(devices_[i].stream_, arv_buffer_new_allocate(size));
                 bufs[i] = arv_stream_timeout_pop_buffer(devices_[i].stream_, timeout_us);
                 if (bufs[i] == nullptr) {
                     log::error("pop_buffer(L1) failed due to timeout ({}s)", timeout_us * 1e-6f);
@@ -1383,7 +1379,6 @@ private:
             validate_user_input(num_device, dev_id);
             open_real_devices(num_device, num_sensor_, dev_id);
             create_stream_and_start_acquisition(order_filp_);
-            allocate_buffers();
         }
     };
 };
