@@ -143,6 +143,7 @@ protected:
     using arv_stream_timeout_pop_buffer_t = ArvBuffer *(*)(ArvStream *, uint64_t);
     using arv_stream_get_n_owned_buffers_t = void (*)(ArvStream *, int32_t *, int32_t *, int32_t *);
     using arv_device_start_acquisition_t = bool (*)(ArvDevice *device, GError **error);
+    using arv_device_stop_acquisition_t = bool (*)(ArvDevice *device, GError **error);
     using arv_buffer_get_status_t = ArvBufferStatus (*)(ArvBuffer *);
     using arv_buffer_get_payload_type_t = ArvBufferPayloadType (*)(ArvBuffer *);
     using arv_buffer_get_data_t = void *(*)(ArvBuffer *, size_t *);
@@ -205,7 +206,7 @@ public:
         log::debug("U3V::dispose() :: is called");
         for (auto i = 0; i < devices_.size(); ++i) {
             auto d = devices_[i];
-            arv_device_execute_command(d.device_, "AcquisitionStop", &err_);
+            arv_device_stop_acquisition(d.device_,  &err_);
             log::debug("U3V::dispose() :: AcquisitionStop");
             /*
             Note:
@@ -395,6 +396,7 @@ protected:
         GET_SYMBOL(arv_stream_push_buffer, "arv_stream_push_buffer");
         GET_SYMBOL(arv_stream_get_n_owned_buffers, "arv_stream_get_n_owned_buffers");
         GET_SYMBOL(arv_device_start_acquisition, "arv_device_start_acquisition");
+        GET_SYMBOL(arv_device_stop_acquisition, "arv_device_stop_acquisition");
         GET_SYMBOL(arv_acquisition_mode_to_string, "arv_acquisition_mode_to_string");
         GET_SYMBOL(arv_device_is_feature_available, "arv_device_is_feature_available");
         GET_SYMBOL(arv_device_execute_command, "arv_device_execute_command");
@@ -976,6 +978,7 @@ protected:
     arv_stream_push_buffer_t arv_stream_push_buffer;
     arv_stream_get_n_owned_buffers_t arv_stream_get_n_owned_buffers;
     arv_device_start_acquisition_t arv_device_start_acquisition;
+    arv_device_stop_acquisition_t arv_device_stop_acquisition;
     arv_acquisition_mode_to_string_t arv_acquisition_mode_to_string;
     arv_device_execute_command_t arv_device_execute_command;
     arv_stream_timeout_pop_buffer_t arv_stream_timeout_pop_buffer;
