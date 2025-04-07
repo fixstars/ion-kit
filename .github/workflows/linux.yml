@@ -45,11 +45,11 @@ jobs:
 
           # zlib, libjpeg, libpng
           git clone https://github.com/microsoft/vcpkg.git && bash vcpkg/bootstrap-vcpkg.sh
-          ${{ github.workspace }}/vcpkg/vcpkg install 
+          vcpkg/vcpkg install 
 
       - name: Configure
         shell: bash
-        run: cmake -D CMAKE_TOOLCHAIN_FILE=${VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -D ION_BUILD_TEST=ON -D ION_BUILD_EXAMPLE=ON $GITHUB_WORKSPACE
+        run: cmake -D CMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -D ION_BUILD_TEST=ON -D ION_BUILD_EXAMPLE=ON $GITHUB_WORKSPACE
 
       - name: Build
         shell: bash
