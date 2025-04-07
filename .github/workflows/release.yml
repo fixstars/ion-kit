@@ -32,10 +32,10 @@ jobs:
 
           # zlib, libjpeg, libpng
           git clone https://github.com/microsoft/vcpkg.git && bash vcpkg/bootstrap-vcpkg.sh
-          ${{ github.workspace }}/vcpkg/vcpkg install
+          vcpkg/vcpkg install
 
       - name: Configure
-        run: cmake -D CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/scripts/buildsystems/vcpkg.cmake -D CMAKE_BUILD_TYPE=Release -D ION_BUILD_TEST=OFF -D ION_BUILD_EXAMPLE=OFF -D ION_BUNDLE_HALIDE=ON -D HalideHelpers_DIR=${HOME}/Halide/lib/cmake/HalideHelpers -D Halide_DIR=${HOME}/Halide/lib/cmake/Halide $GITHUB_WORKSPACE
+        run: cmake -D CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake -D CMAKE_BUILD_TYPE=Release -D ION_BUILD_TEST=OFF -D ION_BUILD_EXAMPLE=OFF -D ION_BUNDLE_HALIDE=ON -D HalideHelpers_DIR=${HOME}/Halide/lib/cmake/HalideHelpers -D Halide_DIR=${HOME}/Halide/lib/cmake/Halide $GITHUB_WORKSPACE
 
       - name: Build
         run: cmake --build . --config Release --target package
@@ -76,7 +76,7 @@ jobs:
 
       - name: Configure
         shell: bash
-        run: cmake -G "Visual Studio 16 2019" -A x64 -D VCPKG_TARGET_TRIPLET=x64-windows-static -D CMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake -D ION_BUILD_DOC=OFF -D ION_BUILD_TEST=OFF -D ION_BUILD_EXAMPLE=OFF -D ION_BUNDLE_HALIDE=ON -D HalideHelpers_DIR=${HOME}/Halide/lib/cmake/HalideHelpers -D Halide_DIR=${HOME}/Halide/lib/cmake/Halide $GITHUB_WORKSPACE
+        run: cmake -G "Visual Studio 16 2019" -A x64 -D VCPKG_TARGET_TRIPLET=x64-windows-static -D CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake -D ION_BUILD_DOC=OFF -D ION_BUILD_TEST=OFF -D ION_BUILD_EXAMPLE=OFF -D ION_BUNDLE_HALIDE=ON -D HalideHelpers_DIR=${HOME}/Halide/lib/cmake/HalideHelpers -D Halide_DIR=${HOME}/Halide/lib/cmake/Halide $GITHUB_WORKSPACE
 
       - name: Build
         shell: bash
@@ -108,11 +108,11 @@ jobs:
           
             # zlib, libjpeg, libpng
             git clone https://github.com/microsoft/vcpkg.git && bash vcpkg/bootstrap-vcpkg.sh
-            ${{ github.workspace }}/vcpkg/vcpkg install
+            vcpkg/vcpkg install
 
       - name: Configure
         shell: bash
-        run: cmake -D CMAKE_BUILD_TYPE=Release -D ION_BUILD_TEST=OFF -D ION_BUILD_EXAMPLE=OFF -D ION_BUNDLE_HALIDE=ON -D HalideHelpers_DIR=${HOME}/Halide/lib/cmake/HalideHelpers -D Halide_DIR=${HOME}/Halide/lib/cmake/Halide $GITHUB_WORKSPACE
+        run: cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake -D ION_BUILD_TEST=OFF -D ION_BUILD_EXAMPLE=OFF -D ION_BUNDLE_HALIDE=ON -D HalideHelpers_DIR=${HOME}/Halide/lib/cmake/HalideHelpers -D Halide_DIR=${HOME}/Halide/lib/cmake/Halide $GITHUB_WORKSPACE
 
       - name: Build
         shell: bash
