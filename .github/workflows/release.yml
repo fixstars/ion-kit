@@ -31,7 +31,8 @@ jobs:
           find ${HOME}/Halide -type d | xargs chmod 755
 
           # zlib, libjpeg, libpng
-          vcpkg install
+          git clone https://github.com/microsoft/vcpkg.git && bash vcpkg/bootstrap-vcpkg.sh
+          ${{ github.workspace }}/vcpkg/vcpkg install
 
       - name: Configure
         run: cmake -D CMAKE_TOOLCHAIN_FILE=${VCPKG_INSTALLATION_ROOT}/scripts/buildsystems/vcpkg.cmake -D CMAKE_BUILD_TYPE=Release -D ION_BUILD_TEST=OFF -D ION_BUILD_EXAMPLE=OFF -D ION_BUNDLE_HALIDE=ON -D HalideHelpers_DIR=${HOME}/Halide/lib/cmake/HalideHelpers -D Halide_DIR=${HOME}/Halide/lib/cmake/Halide $GITHUB_WORKSPACE
@@ -70,7 +71,8 @@ jobs:
           mv Halide*/* ${HOME}/Halide
 
           # zlib, libjpeg, libpng
-          vcpkg install --triplet=x64-windows-static
+          git clone https://github.com/microsoft/vcpkg.git && .\vcpkg\bootstrap-vcpkg.bat
+          ${{ github.workspace }}\vcpkg\vcpkg.exe install --triplet=x64-windows-static
 
       - name: Configure
         shell: bash
@@ -103,6 +105,10 @@ jobs:
             mkdir ${HOME}/Halide
             curl -L https://github.com/halide/Halide/releases/download/v17.0.1/Halide-17.0.1-arm-64-osx-52541176253e74467dabc42eeee63d9a62c199f6.tar.gz | tar zx -C ${HOME}/Halide --strip-components 1
             find ${HOME}/Halide -type d | xargs chmod 755
+          
+            # zlib, libjpeg, libpng
+            git clone https://github.com/microsoft/vcpkg.git && bash vcpkg/bootstrap-vcpkg.sh
+            ${{ github.workspace }}/vcpkg/vcpkg install
 
       - name: Configure
         shell: bash

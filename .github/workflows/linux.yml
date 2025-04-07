@@ -44,7 +44,8 @@ jobs:
           sudo cp -r ${HOME}/onnxruntime/* /usr/
 
           # zlib, libjpeg, libpng
-          vcpkg install
+          git clone https://github.com/microsoft/vcpkg.git && bash vcpkg/bootstrap-vcpkg.sh
+          ${{ github.workspace }}/vcpkg/vcpkg install 
 
       - name: Configure
         shell: bash
