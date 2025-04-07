@@ -71,8 +71,8 @@ jobs:
           mv Halide*/* ${HOME}/Halide
 
           # zlib, libjpeg, libpng
-          git clone https://github.com/microsoft/vcpkg.git && .\vcpkg\bootstrap-vcpkg.bat
-          ${{ github.workspace }}\vcpkg\vcpkg.exe install --triplet=x64-windows-static
+          git clone https://github.com/microsoft/vcpkg.git && ./vcpkg/bootstrap-vcpkg.bat
+          vcpkg/vcpkg.exe install --triplet=x64-windows-static
 
       - name: Configure
         shell: bash
