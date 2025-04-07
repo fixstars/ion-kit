@@ -128,7 +128,7 @@ void determine_and_validate(std::vector<Node> &nodes) {
                     throw std::runtime_error(msg);
                 }
 
-                port.determine_succ(n.id(), pn, arginfo.name);
+                port.determine_succ(n.name(), n.id(), pn, arginfo.name);
                 pn = arginfo.name;
             }
 
