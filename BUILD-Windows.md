@@ -3,7 +3,7 @@
 Here is the list of dependent software.
 
 - Mandatory
-  - [Halide (v16.0.0)](https://github.com/halide/Halide/releases/tag/v16.0.0)
+  - [Halide (v17.0.1)](https://github.com/halide/Halide/releases/tag/v17.0.1)
 - Optional
   - [libjpeg](https://libjpeg-turbo.org/)
   - [libpng](http://www.libpng.org/)
