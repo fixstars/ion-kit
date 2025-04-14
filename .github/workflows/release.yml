@@ -126,17 +126,17 @@ jobs:
 
 
 
-    dispatch:
-      runs-on: ubuntu-20.04
-      needs: [ release-macos,release-linux,release-windows ]
-      steps:
-        - uses: actions/checkout@v4
-        - name: Repository Dispatch
-          uses: peter-evans/repository-dispatch@v3
-          with:
-            token: ${{ secrets.GITHUB_TOKEN }}
-            event-type: released
-            client-payload: '{"ION_KIT_VERSION": "${{ github.ref_name }}"}'
+  dispatch:
+    runs-on: ubuntu-20.04
+    needs: [ release-macos,release-linux,release-windows ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          event-type: released
+          client-payload: '{"ION_KIT_VERSION": "${{ github.ref_name }}"}'
 
 
 
