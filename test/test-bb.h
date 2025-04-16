@@ -312,6 +312,24 @@ private:
     Halide::Var x, y;
 };
 
+
+class scalarArray : public BuildingBlock<scalarArray> {
+public:
+    Input<Halide::Func> input{"input", Int(32), 2};
+    Input<int32_t []> input_offsets{"input_offsets"};
+    Output<Halide::Func[]> output{"output", Int(32), 2};
+
+    void generate() {
+        output.resize(input_offsets.size());
+        for (int i = 0; i < input_offsets.size(); i++){
+            output[i](x, y) =  input(x, y)  + input_offsets[i];
+        }
+    }
+
+private:
+    Halide::Var x, y;
+};
+
 }  // namespace test
 }  // namespace bb
 }  // namespace ion
@@ -332,5 +350,6 @@ ION_REGISTER_BUILDING_BLOCK(ion::bb::test::ExternIncI32x2, test_extern_inc_i32x2
 ION_REGISTER_BUILDING_BLOCK(ion::bb::test::AddI32x2, test_add_i32x2);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::test::SubI32x2, test_sub_i32x2);
 ION_REGISTER_BUILDING_BLOCK(ion::bb::test::IncByOffset, test_inc_by_offset);
+ION_REGISTER_BUILDING_BLOCK(ion::bb::test::scalarArray, test_scalar_array);
 
 #endif
