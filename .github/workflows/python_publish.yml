@@ -25,7 +25,7 @@ jobs:
 
       - name: Sleep for 10m to wait released is completely finished (unix)
         if: runner.os != 'Windows'
-        run: sleep 10m
+        run: sleep 600s
         shell: bash
 
 
@@ -110,10 +110,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-
       - name: Sleep for 10m to wait released is completely finished (unix)
         if: runner.os != 'Windows'
-        run: sleep 10m
+        run: sleep 600s
         shell: bash
 
 
