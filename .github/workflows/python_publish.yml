@@ -23,16 +23,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Sleep for 10m to wait released is completely finished
+        if: runner.os != 'Windows'
+        run: sleep 10m
+        shell: bash
 
-      # - name: GitHub Tag Name
-      #   run: |
-      #    echo "Tag name from GITHUB_REF_NAME: $GITHUB_REF_NAME"
-      #    echo "Tag name from github.ref_name: ${{  github.ref_name }}"
-      #    echo ${{ github.event.release.tag_name }}
+
+      - name: Sleep for 10m to wait released is completely finished
+        if: runner.os == 'Windows'
+        run: Start-Sleep -s 600
+        shell: powershell
 
       - uses: robinraju/release-downloader@v1.9
         with:
-          repository: "fixstars/ion-kit"
           latest: false
           fileName: "ion-kit*"
           tag: ${{ github.event.release.tag_name }}
@@ -116,8 +119,7 @@ jobs:
 
       - uses: robinraju/release-downloader@v1.9
         with:
-          repository: "fixstars/ion-kit"
-          latest: true
+          latest: false
           fileName: "ion-kit*"
           tag: ${{ github.event.release.tag_name }}
 
