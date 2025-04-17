@@ -25,7 +25,7 @@ jobs:
 
       - name: Sleep for 10m to wait released is completely finished (unix)
         if: runner.os != 'Windows'
-        run: sleep 600s
+        run: sleep 600
         shell: bash
 
 
@@ -112,7 +112,7 @@ jobs:
 
       - name: Sleep for 10m to wait released is completely finished (unix)
         if: runner.os != 'Windows'
-        run: sleep 600s
+        run: sleep 600
         shell: bash
 
 
