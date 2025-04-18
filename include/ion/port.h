@@ -166,7 +166,7 @@ public:
                              [&](const Port::Channel& c) { return std::get<0>(c) == nid; });
     }
 
-    void determine_succ(const NodeID& nid, const std::string& old_pn, const std::string& new_pn);
+    void determine_succ(const std::string & n_name, const NodeID &nid, const std::string &old_pn, const std::string &new_pn);
 
     /**
      * Overloaded operator to set the port index and return a reference to the current port. eg. port[0]

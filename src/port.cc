@@ -16,14 +16,14 @@ Port::Impl::Impl(const NodeID & nid, const std::string& pn, const Halide::Type& 
     params[0] = Halide::Internal::Parameter(type, dimensions != 0, dimensions, argument_name(nid, pn, 0, gid));
 }
 
-void Port::determine_succ(const NodeID& nid, const std::string& old_pn, const std::string& new_pn) {
+void Port::determine_succ(const std::string & n_name,const NodeID &nid, const std::string &old_pn, const std::string &new_pn) {
     auto it = std::find(impl_->succ_chans.begin(), impl_->succ_chans.end(), Channel{nid, old_pn});
     if (it == impl_->succ_chans.end()) {
         log::error("fixme");
         throw std::runtime_error("fixme");
     }
 
-    log::debug("Determine free port {} as {} on Node {}", old_pn, new_pn, nid.value());
+    log::debug("Determine free port {} as {} on Node: {}_{}", old_pn, new_pn, n_name, nid.value());
     impl_->succ_chans.erase(it);
     impl_->succ_chans.insert(Channel{nid, new_pn});
 }
