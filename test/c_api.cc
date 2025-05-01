@@ -307,6 +307,133 @@ int main() {
             if (ret != 0)
                 return ret;
         }
+
+        {
+            ion_type_t t = {.code = ion_type_int, .bits = 32, .lanes = 1};
+
+            ion_port_t ip;
+            ret = ion_port_create(&ip, "input", t, 2);
+            if (ret != 0)
+                return ret;
+
+
+            ion_port_t offsets_p;
+            ret = ion_port_create(&offsets_p, "input_offsets", t, 0);
+            if (ret != 0)
+                return ret;
+
+            ion_param_t len;
+            ret = ion_param_create(&len, "input_offsets.size", "4");
+            if (ret != 0)
+                return ret;
+
+            ion_builder_t b;
+            ret = ion_builder_create(&b);
+            if (ret != 0)
+                return ret;
+
+            ret = ion_builder_set_target(b, "host");
+            if (ret != 0)
+                return ret;
+
+            ret = ion_builder_with_bb_module(b, "ion-bb-test");
+            if (ret != 0)
+                return ret;
+
+
+            ion_node_t n;
+            ret = ion_builder_add_node(b, "test_scalar_array", &n);
+            if (ret != 0)
+                return ret;
+
+            ret = ion_node_set_params(n, &len, 1);
+            if (ret != 0)
+                return ret;
+
+            ion_port_t *ports = (ion_port_t *) malloc(2 * sizeof(ion_port_t));
+            ports[0] = ip;
+            ports[1] = offsets_p;
+            ret = ion_node_set_iports(n, ports, 2);
+            if (ret != 0)
+                return ret;
+
+            int sizes[] = {4, 4};
+            ion_buffer_t ibuf;
+            ret = ion_buffer_create(&ibuf, t, sizes, 2);
+            if (ret != 0)
+                return ret;
+
+            int in[4 * 4];
+            for (int i = 0; i < 4 * 4; ++i) {
+                in[i] = 42;
+            }
+            ret = ion_buffer_write(ibuf, in, 4 * 4 * sizeof(int));
+            if (ret != 0)
+                return ret;
+
+            ion_port_t op;
+            ret = ion_node_get_port(n, "output", &op);
+            if (ret != 0)
+                return ret;
+
+            ion_buffer_t *obufs = (ion_buffer_t *) malloc(4 * sizeof(ion_buffer_t));
+            for (int i = 0; i < 4; ++i) {
+                ret = ion_buffer_create(obufs + i, t, sizes, 2);
+                if (ret != 0)
+                    return ret;
+            }
+
+            int in_offsets[4];
+            for (int i = 0; i < 4; ++i) {
+                in_offsets[i] = i;
+            }
+
+            ret = ion_port_bind_i32_array(offsets_p, (int *) (&in_offsets), 4);
+            if (ret != 0)
+                return ret;
+
+            ret = ion_port_bind_buffer(ip, ibuf);
+            if (ret != 0)
+                return ret;
+
+            ret = ion_port_bind_buffer_array(op, obufs, 4);
+            if (ret != 0)
+                return ret;
+
+            ret = ion_builder_run(b);
+            if (ret != 0)
+                return ret;
+
+            for (int i = 0;i < 4 ;i++){
+                 int out[4 * 4] = {0};
+                ret = ion_buffer_read(*(obufs + i), out, 4 * 4 * sizeof(int));
+                if (ret != 0)
+                    return ret;
+                if (out[0] != 42 + i) {
+                    printf("%d\n", out[0]);
+                    return -1;
+                }
+            }
+
+            ret = ion_port_destroy(ip);
+            if (ret != 0)
+                return ret;
+
+            ret = ion_port_destroy(offsets_p);
+            if (ret != 0)
+                return ret;
+
+            ret = ion_port_destroy(op);
+            if (ret != 0)
+                return ret;
+
+            ret = ion_builder_destroy(b);
+            if (ret != 0)
+                return ret;
+
+            free(ports);
+        }
+
         {
 
             ion_type_t t = {.code = ion_type_int, .bits = 32, .lanes = 1};

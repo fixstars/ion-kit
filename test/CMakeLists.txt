@@ -31,6 +31,9 @@ ion_jit_executable(array_input SRCS array_input.cc)
 # Array Output test
 ion_jit_executable(array_output SRCS array_output.cc)
 
+# Scalar array Input test
+ion_jit_executable(scalar_array_input SRCS scalar_array_input.cc)
+
 # Duplicate array names test
 ion_jit_executable(array_dup_names SRCS array_dup_names.cc)
 
