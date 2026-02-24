@@ -1477,6 +1477,7 @@ public:
 
             log_get_frame_event("GenDC/Came1USB2", frame_cnt_, latest_cnt);
 
+            frame_cnt_ = latest_cnt;
             ::memcpy(outs[0], arv_buffer_get_data(bufs[device_idx_], nullptr), devices_[device_idx_].u3v_payload_size_);
             // ::memcpy(outs[1], &(devices_[device_idx_].header_info_), sizeof(ion::bb::image_io::rawHeader));
             arv_stream_push_buffer(devices_[device_idx_].stream_, bufs[device_idx_]);
