@@ -31,6 +31,42 @@ namespace image_io {
 
 class U3V {
 protected:
+
+// ---- illeagal frame test logging (enable/disable) ----
+#ifndef U3V_IFT_LOG_ENABLE
+#define U3V_IFT_LOG_ENABLE 0
+#endif
+
+    static inline void log_get_frame_event(const char *tag, uint32_t before, uint32_t after) {
+#if U3V_IFT_LOG_ENABLE
+        std::cerr << "[U3V][GETF][" << tag << "] Get frame: before=0x"
+                  << std::hex << before << " after=0x" << after
+                  << std::dec << " (" << before << " -> " << after << ")"
+                  << std::endl;
+#else
+        (void)tag;
+        (void)before;
+        (void)after;
+#endif
+    }
+
+    static inline void log_det_illegal_frame_event(const char *tag, uint32_t before, uint32_t after, uint32_t frame_cnt_, int64_t adiff) {
+#if U3V_IFT_LOG_ENABLE
+        std::cerr << "[U3V][DIFE][" << tag << "] latest_cnt updated: before=0x"
+                  << std::hex << before << " after=0x" << after
+                  << std::dec << " (" << before << " -> " << after << ")"
+                  << " frame_cnt_=" << frame_cnt_
+                  << " abs(diff)=" << adiff
+                  << std::endl;
+#else
+        (void)tag;
+        (void)before;
+        (void)after;
+        (void)frame_cnt_;
+        (void)adiff;
+#endif
+    }
+
     struct GError {
         uint32_t domain;
         int32_t code;
@@ -935,6 +971,57 @@ protected:
         }
     }
 
+    // NOTE: The following are assumed to be class members:
+    // - device_idx_
+    // - devices_[device_idx_].stream_
+    // - devices_[device_idx_].frame_count_
+    // - frame_count_method_ (only TYPESPECIFIC3 or TIMESTAMP are expected)
+    // - get_frame_count_from_genDC_descriptor(...)
+
+    /**
+     * Always re-pop a buffer from the stream, update the frame count,
+     * and return the updated frame count.
+     *
+     * @param bufs        Vector of ArvBuffer pointers (bufs[device_idx_] will be updated)
+     * @param timeout_us  Timeout for arv_stream_timeout_pop_buffer() in microseconds
+     * @return            Updated frame count
+     *
+     * @throws std::runtime_error if buffer pop times out
+     */
+    uint32_t repop_and_update_framecount(std::vector<ArvBuffer *> &bufs, int32_t timeout_us) {
+        // 1) Always pop a new buffer and overwrite the current one
+        ArvBuffer *new_buf =
+            arv_stream_timeout_pop_buffer(devices_[device_idx_].stream_, timeout_us);
+
+        if (new_buf == nullptr) {
+            // Failed to obtain a buffer within the timeout
+            throw std::runtime_error(
+                "arv_stream_timeout_pop_buffer() returned null (timeout)");
+        }
+
+        bufs[device_idx_] = new_buf;
+
+        // 2) Update the frame count (only two methods are expected)
+        uint32_t frame_count;
+
+        if (frame_count_method_ == FrameCountMethod::TYPESPECIFIC3) {
+            // Extract frame count from GenDC descriptor
+            frame_count = static_cast<uint32_t>(
+                get_frame_count_from_genDC_descriptor(
+                    bufs[device_idx_], devices_[device_idx_]));
+        } else {
+            // FrameCountMethod::TIMESTAMP is assumed here
+            // Use the lower 32 bits of the timestamp as the frame count
+            frame_count = static_cast<uint32_t>(
+                arv_buffer_get_timestamp(bufs[device_idx_]) & 0x00000000FFFFFFFFULL);
+        }
+
+        devices_[device_idx_].frame_count_ = frame_count;
+
+        // 3) Return the updated frame count
+        return frame_count;
+
+
     g_object_unref_t g_object_unref;
 
     arv_get_major_version_t arv_get_major_version;
@@ -1180,6 +1267,23 @@ public:
                     latest_cnt = skip_invalid_framecount_0xFFFFFFFF(bufs, latest_cnt, timeout_us);
                 }
 
+                const int64_t diff = static_cast<int64_t>(latest_cnt) - static_cast<int64_t>(frame_cnt_);
+                const int64_t adiff = std::abs(diff);
+
+                // frame counterの差分がFrame_Jump_Thresholdより大きいまたはframe_ccnt_が0の場合にバッファ再取得
+                if (adiff > Frame_Jump_Threshold && frame_cnt_ != 0) {
+
+                    // repop前後の latest_cnt を記録
+                    const uint32_t before = latest_cnt;
+
+                    // repop を実行（必ずバッファ取り直し＆framecount更新）
+                    const uint32_t after = repop_and_update_framecount(bufs, timeout_us);
+                    latest_cnt = after;
+
+                    // ログ出力
+                    log_det_illegal_frame_event("RealCam/REPOP", before, after, frame_cnt_, adiff);
+                }
+
                 int internal_count = 0;
                 int max_internal_count = 1000;
 
@@ -1202,6 +1306,8 @@ public:
                         throw ::std::runtime_error("Invalid framecount");
                     }
                 }
+
+                log_get_frame_event("RealCam/Came1USB2", frame_cnt_, latest_cnt);
 
                 frame_cnt_ = latest_cnt;
                 auto sz = (std::min)(devices_[device_idx_].image_payload_size_, static_cast<int32_t>(outs[0].size_in_bytes()));
@@ -1333,6 +1439,24 @@ public:
                 latest_cnt = skip_invalid_framecount_0xFFFFFFFF(bufs, latest_cnt, timeout_us);
             }
 
+            const int64_t diff = static_cast<int64_t>(latest_cnt) - static_cast<int64_t>(frame_cnt_);
+            const int64_t adiff = std::abs(diff);
+
+            // frame counterの差分がFrame_Jump_Thresholdより大きいまたはframe_ccnt_が0の場合にバッファ再取得
+            if (adiff > Frame_Jump_Threshold && frame_cnt_ != 0) {
+
+                // repop前後の latest_cnt を記録
+                const uint32_t before = latest_cnt;
+
+                // repop を実行（必ずバッファ取り直し＆framecount更新）
+                const uint32_t after = repop_and_update_framecount(bufs, timeout_us);
+                latest_cnt = after;
+
+                // ログ出力
+                log_det_illegal_frame_event("GenDC/REPOP", before, after, frame_cnt_, adiff);
+            }
+
+
             int internal_count = 0;
             int max_internal_count = 1000;
 
@@ -1354,6 +1478,8 @@ public:
                     throw ::std::runtime_error("Invalid framecount");
                 }
             }
+
+            log_get_frame_event("GenDC/Came1USB2", frame_cnt_, latest_cnt);
 
             frame_cnt_ = latest_cnt;
             ::memcpy(outs[0], arv_buffer_get_data(bufs[device_idx_], nullptr), devices_[device_idx_].u3v_payload_size_);
