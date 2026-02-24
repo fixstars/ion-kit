@@ -1020,6 +1020,7 @@ protected:
 
         // 3) Return the updated frame count
         return frame_count;
+    }
 
 
     g_object_unref_t g_object_unref;
