@@ -28,6 +28,7 @@ namespace image_io {
 
 #define TIMEOUT_IN_US_SHORTER 3 * 1000 * 1000
 #define TIMEOUT_IN_US_LONGER 30 * 1000 * 1000
+#define Frame_Jump_Threshold 1000
 
 class U3V {
 protected:
