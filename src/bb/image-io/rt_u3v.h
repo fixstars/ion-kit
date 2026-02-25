@@ -28,7 +28,7 @@ namespace image_io {
 
 #define TIMEOUT_IN_US_SHORTER 3 * 1000 * 1000
 #define TIMEOUT_IN_US_LONGER 30 * 1000 * 1000
-#define Frame_Jump_Threshold 1000
+#define FRAME_JUMP_THRESHOLD 1000
 
 class U3V {
 protected:
@@ -38,35 +38,7 @@ protected:
 #define U3V_IFT_LOG_ENABLE 0
 #endif
 
-    static inline void log_get_frame_event(const char *tag, uint32_t before, uint32_t after) {
-#if U3V_IFT_LOG_ENABLE
-        std::cerr << "[U3V][GETF][" << tag << "] Get frame: before=0x"
-                  << std::hex << before << " after=0x" << after
-                  << std::dec << " (" << before << " -> " << after << ")"
-                  << std::endl;
-#else
-        (void)tag;
-        (void)before;
-        (void)after;
-#endif
-    }
 
-    static inline void log_det_illegal_frame_event(const char *tag, uint32_t before, uint32_t after, uint32_t frame_cnt_, int64_t adiff) {
-#if U3V_IFT_LOG_ENABLE
-        std::cerr << "[U3V][DIFE][" << tag << "] latest_cnt updated: before=0x"
-                  << std::hex << before << " after=0x" << after
-                  << std::dec << " (" << before << " -> " << after << ")"
-                  << " frame_cnt_=" << frame_cnt_
-                  << " abs(diff)=" << adiff
-                  << std::endl;
-#else
-        (void)tag;
-        (void)before;
-        (void)after;
-        (void)frame_cnt_;
-        (void)adiff;
-#endif
-    }
 
     struct GError {
         uint32_t domain;
@@ -1272,18 +1244,21 @@ public:
                 const int64_t diff = static_cast<int64_t>(latest_cnt) - static_cast<int64_t>(frame_cnt_);
                 const int64_t adiff = std::abs(diff);
 
-                // frame counterの差分がFrame_Jump_Thresholdより大きいまたはframe_ccnt_が0の場合にバッファ再取得
-                if (adiff > Frame_Jump_Threshold && frame_cnt_ != 0) {
+                // Re-acquire buffer if frame counter diff exceeds FRAME_JUMP_THRESHOLD or frame_cnt_ is 0
+                if (adiff > FRAME_JUMP_THRESHOLD && frame_cnt_ != 0) {
 
-                    // repop前後の latest_cnt を記録
+                    // Record latest_cnt before and after repop
                     const uint32_t before = latest_cnt;
 
-                    // repop を実行（必ずバッファ取り直し＆framecount更新）
+                    // Execute repop (always re-acquire buffer & update framecount)
                     const uint32_t after = repop_and_update_framecount(bufs, timeout_us);
                     latest_cnt = after;
 
-                    // ログ出力
-                    log_det_illegal_frame_event("RealCam/REPOP", before, after, frame_cnt_, adiff);
+                    // Log output
+#if U3V_IFT_LOG_ENABLE
+                    log::debug("[U3V][DIFE][RealCam/REPOP] latest_cnt updated: before=0x{:x} after=0x{:x} ({} -> {}) frame_cnt_={} abs(diff)={}",
+                                    before, after, before, after, frame_cnt_, adiff);
+#endif
                 }
 
                 int internal_count = 0;
@@ -1309,7 +1284,10 @@ public:
                     }
                 }
 
-                log_get_frame_event("RealCam/Came1USB2", frame_cnt_, latest_cnt);
+#if U3V_IFT_LOG_ENABLE
+                log::debug("[U3V][GETF][RealCam/Came1USB2] Get frame: before=0x{:x} after=0x{:x} ({} -> {})",
+                           frame_cnt_, latest_cnt, frame_cnt_, latest_cnt);
+#endif
 
                 frame_cnt_ = latest_cnt;
                 auto sz = (std::min)(devices_[device_idx_].image_payload_size_, static_cast<int32_t>(outs[0].size_in_bytes()));
@@ -1444,18 +1422,21 @@ public:
             const int64_t diff = static_cast<int64_t>(latest_cnt) - static_cast<int64_t>(frame_cnt_);
             const int64_t adiff = std::abs(diff);
 
-            // frame counterの差分がFrame_Jump_Thresholdより大きいまたはframe_ccnt_が0の場合にバッファ再取得
-            if (adiff > Frame_Jump_Threshold && frame_cnt_ != 0) {
+            // Re-acquire buffer if frame counter diff exceeds FRAME_JUMP_THRESHOLD or frame_cnt_ is 0
+            if (adiff > FRAME_JUMP_THRESHOLD && frame_cnt_ != 0) {
 
-                // repop前後の latest_cnt を記録
+                // Record latest_cnt before and after repop
                 const uint32_t before = latest_cnt;
 
-                // repop を実行（必ずバッファ取り直し＆framecount更新）
+                // Execute repop (always re-acquire buffer & update framecount)
                 const uint32_t after = repop_and_update_framecount(bufs, timeout_us);
                 latest_cnt = after;
 
-                // ログ出力
-                log_det_illegal_frame_event("GenDC/REPOP", before, after, frame_cnt_, adiff);
+                // Log output
+#if U3V_IFT_LOG_ENABLE
+                log::debug("[U3V][DIFE][GenDC/REPOP] latest_cnt updated: before=0x{:x} after=0x{:x} ({} -> {}) frame_cnt_={} abs(diff)={}",
+                           before, after, before, after, frame_cnt_, adiff);
+#endif
             }
 
 
@@ -1481,7 +1462,10 @@ public:
                 }
             }
 
-            log_get_frame_event("GenDC/Came1USB2", frame_cnt_, latest_cnt);
+#if U3V_IFT_LOG_ENABLE
+            log::debug("[U3V][GETF][GenDC/Came1USB2] Get frame: before=0x{:x} after=0x{:x} ({} -> {})",
+                       frame_cnt_, latest_cnt, frame_cnt_, latest_cnt);
+#endif
 
             frame_cnt_ = latest_cnt;
             ::memcpy(outs[0], arv_buffer_get_data(bufs[device_idx_], nullptr), devices_[device_idx_].u3v_payload_size_);
