@@ -31,8 +31,6 @@ namespace image_io {
 
 class U3V {
 protected:
-
-
     struct GError
     {
         uint32_t       domain;
