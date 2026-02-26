@@ -32,7 +32,6 @@ namespace image_io {
 
 class U3V {
 protected:
-
     struct GError {
         uint32_t domain;
         int32_t code;
@@ -1248,7 +1247,6 @@ public:
                     latest_cnt = after;
 
                     // Log output
-
                     log::debug("[U3V][DIFE][RealCam/REPOP] latest_cnt updated: before=0x{:x} after=0x{:x} ({} -> {}) frame_cnt_={} abs(diff)={}",
                                     before, after, before, after, frame_cnt_, adiff);
                 }
@@ -1424,7 +1422,6 @@ public:
                 latest_cnt = after;
 
                 // Log output
-
                 log::debug("[U3V][DIFE][GenDC/REPOP] latest_cnt updated: before=0x{:x} after=0x{:x} ({} -> {}) frame_cnt_={} abs(diff)={}",
                            before, after, before, after, frame_cnt_, adiff);
             }
