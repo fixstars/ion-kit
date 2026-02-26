@@ -32,12 +32,6 @@ namespace image_io {
 class U3V {
 protected:
 
-// ---- illeagal frame test logging (enable/disable) ----
-#ifndef U3V_IFT_LOG_ENABLE
-#define U3V_IFT_LOG_ENABLE 0
-#endif
-
-
 
     struct GError
     {
@@ -892,10 +886,8 @@ public:
                     latest_cnt = after;
 
                     // Log output
-#if U3V_IFT_LOG_ENABLE
                     log::debug("[U3V][DIFE][RealCam/REPOP] latest_cnt updated: before=0x{:x} after=0x{:x} ({} -> {}) frame_cnt_={} abs(diff)={}",
                                     before, after, before, after, frame_cnt_, adiff);
-#endif
                 }
 
 
@@ -925,10 +917,9 @@ public:
                     }
                 }
 
-#if U3V_IFT_LOG_ENABLE
+
                 log::debug("[U3V][GETF][RealCam/Came1USB2] Get frame: before=0x{:x} after=0x{:x} ({} -> {})",
                            frame_cnt_, latest_cnt, frame_cnt_, latest_cnt);
-#endif
 
                 frame_cnt_ = latest_cnt;
                 auto sz = (std::min)(devices_[device_idx_].image_payload_size_, static_cast<int32_t>(outs[0].size_in_bytes()));
@@ -1424,10 +1415,9 @@ public:
                 latest_cnt = after;
 
                 // Log output
-#if U3V_IFT_LOG_ENABLE
+
                 log::debug("[U3V][DIFE][GenDC/REPOP] latest_cnt updated: before=0x{:x} after=0x{:x} ({} -> {}) frame_cnt_={} abs(diff)={}",
                            before, after, before, after, frame_cnt_, adiff);
-#endif
             }
 
             int internal_count = 0;
@@ -1455,10 +1445,8 @@ public:
                 }
             }
 
-#if U3V_IFT_LOG_ENABLE
             log::debug("[U3V][GETF][GenDC/Came1USB2] Get frame: before=0x{:x} after=0x{:x} ({} -> {})",
                        frame_cnt_, latest_cnt, frame_cnt_, latest_cnt);
-#endif
 
             frame_cnt_ = latest_cnt;
             ::memcpy(outs[0], arv_buffer_get_data(bufs[device_idx_], nullptr), devices_[device_idx_].u3v_payload_size_);
